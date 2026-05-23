@@ -39,6 +39,9 @@ function ProfilePanel({
 
   function handleRadiusChange(value: number) {
     setRadius(value)
+  }
+
+  function handleRadiusCommit(value: number) {
     if (session) {
       db.upsertProfile({ id: session.user.id, radius_km: value })
     }
@@ -299,6 +302,7 @@ function ProfilePanel({
                     max="50"
                     value={radius}
                     onChange={e => handleRadiusChange(Number(e.target.value))}
+                    onPointerUp={e => handleRadiusCommit(Number((e.target as HTMLInputElement).value))}
                     style={{
                       position: 'absolute',
                       inset: 0,

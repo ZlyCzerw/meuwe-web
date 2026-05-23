@@ -31,6 +31,8 @@ i18n.use(initReactI18next).init({
   lng: detectInitialLang(),
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
+  pluralSeparator: '_',
+  compatibilityJSON: 'v3',
 })
 
 export async function refineLangByGeo() {

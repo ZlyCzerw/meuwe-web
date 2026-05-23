@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
@@ -20,7 +19,8 @@ function dayIdxToOffset(idx: number): number {
   if (idx <= 2) return idx - 1 // 0→yesterday(-1), 1→today(0), 2→tomorrow(+1)
   const targetDow = idx === 3 ? 5 : idx === 4 ? 6 : 0 // Fri=5, Sat=6, Sun=0
   const dow = new Date().getDay()
-  return (targetDow - dow + 7) % 7 // days until the upcoming target weekday
+  const diff = (targetDow - dow + 7) % 7
+  return diff === 0 ? 7 : diff // if already that weekday, show next week's
 }
 
 function MapScreen({
