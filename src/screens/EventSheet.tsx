@@ -65,7 +65,11 @@ function EventSheet({
   }
 
   async function handleEndEvent() {
-    await db.endEvent(event.id)
+    const { error } = await db.endEvent(event.id)
+    if (error) {
+      console.error('endEvent failed:', error)
+      return
+    }
     onClose()
   }
 

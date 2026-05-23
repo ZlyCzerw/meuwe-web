@@ -37,6 +37,13 @@ function CreateSheet({
     if (!title.trim() || submitting) return
     setSubmitting(true)
     setErr('')
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    if (end <= start) {
+      setErr('Czas zakończenia musi być po czasie rozpoczęcia')
+      setSubmitting(false)
+      return
+    }
     const pos = defaultPos || { lat: 52.2297, lng: 21.0122 }
     const { data, error } = await db.createEvent({
       title: title.trim(),

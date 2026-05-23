@@ -15,31 +15,26 @@ describe('isOnDay', () => {
 })
 
 describe('getMyEvents mapping', () => {
-  it('maps event_messages count correctly', () => {
-    const raw = { id:'1', title:'Test', lat:0, lng:0, category:'party',
-      start_time:'2026-05-23T10:00:00Z', end_time:'2026-05-24T10:00:00Z',
-      status:'live', created_at:'2026-05-23T09:00:00Z', creator_id:'u1',
-      description:null, place_name:null,
-      event_tags:[{tag:'outdoor'}],
-      event_messages:[{count:7}],
-    }
-    // Replicate the mapping from getMyEvents
-    const mapped = {
-      ...raw,
-      tags: raw.event_tags.map((t:any) => t.tag),
-      distKm: 0,
-      distStr: '',
-      profiles: null,
-      msgCount: raw.event_messages?.[0]?.count ?? 0,
-    }
-    expect(mapped.tags).toEqual(['outdoor'])
-    expect(mapped.msgCount).toBe(7)
-    expect(mapped.distKm).toBe(0)
+  it('accumulates message counts from countMap correctly', () => {
+    const eventId = 'event-1'
+    // Simulate what getMyEvents does: builds countMap from flat event_id rows
+    const rows: Array<{ event_id: string }> = [
+      { event_id: eventId },
+      { event_id: eventId },
+      { event_id: 'event-2' },
+    ]
+    const countMap: Record<string, number> = {}
+    rows.forEach(r => {
+      countMap[r.event_id] = (countMap[r.event_id] || 0) + 1
+    })
+    expect(countMap[eventId]).toBe(2)
+    expect(countMap['event-2']).toBe(1)
+    expect(countMap['event-3'] ?? 0).toBe(0) // missing key defaults to 0
   })
 
-  it('handles missing event_messages gracefully', () => {
-    const raw:any = { event_messages: undefined }
-    const msgCount = raw.event_messages?.[0]?.count ?? 0
+  it('handles empty message rows gracefully', () => {
+    const countMap: Record<string, number> = {}
+    const msgCount = countMap['event-X'] ?? 0
     expect(msgCount).toBe(0)
   })
 })
