@@ -5,15 +5,17 @@ import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
 import { getCurrentPosition } from './lib/geo'
 import { refineLangByGeo } from './lib/i18n'
-import type { EventWithMeta } from './lib/types'
+import type { EventWithMeta, EventWithMsgCount } from './lib/types'
 import Welcome from './screens/Welcome'
 import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
 import Toast from './components/Toast'
 import ProfilePanel from './screens/ProfilePanel'
+import ConfettiBurst from './components/ConfettiBurst'
+import MyEventsScreen from './screens/MyEventsScreen'
 
-type Screen = 'loading' | 'welcome' | 'map'
+type Screen = 'loading' | 'welcome' | 'map' | 'myEvents'
 
 export default function App() {
   const { t } = useTranslation()
@@ -25,6 +27,8 @@ export default function App() {
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
 
   // On mount: refine language by geo and get position
   useEffect(() => {
@@ -54,6 +58,8 @@ export default function App() {
 
   function handleSubmit(_data: unknown) {
     setCreateOpen(false)
+    setShowConfetti(true)
+    setTimeout(() => setShowConfetti(false), 900)
     showToast(t('create.added'))
   }
 
@@ -84,6 +90,27 @@ export default function App() {
       if (mode === 'skip') { setScreen('map'); return }
       db.signInGoogle()
     }} />
+  )
+
+  if (screen === 'myEvents') return (
+    <>
+      <MyEventsScreen
+        session={session}
+        onBack={() => setScreen('map')}
+        onOpenEvent={ev => {
+          setMyEventSelected(ev)
+          setScreen('map')
+        }}
+      />
+      {myEventSelected && (
+        <EventSheet
+          event={myEventSelected}
+          onClose={() => setMyEventSelected(null)}
+          session={session}
+          profile={profile}
+        />
+      )}
+    </>
   )
 
   // map screen
@@ -121,7 +148,9 @@ export default function App() {
         onSignOut={handleSignOut}
         onSignIn={() => db.signInGoogle()}
         reloadProfile={reloadProfile}
+        onOpenMyEvents={() => { setProfileOpen(false); setScreen('myEvents') }}
       />
+      <ConfettiBurst visible={showConfetti} />
     </>
   )
 }
