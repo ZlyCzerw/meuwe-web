@@ -47,6 +47,7 @@ const pl = {
     interests: 'Twoje zainteresowania',
     interestsHint: 'Powiadomimy Cię o pasujących wydarzeniach',
     radius: 'Promień powiadomień',
+    myEvents: 'Moje wydarzenia',
     signOut: 'Wyloguj',
     language: 'Język',
   },

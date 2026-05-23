@@ -49,6 +49,7 @@ const es: Resources = {
     interests: 'Tus intereses',
     interestsHint: 'Te avisaremos de eventos que coincidan',
     radius: 'Radio de notificaciones',
+    myEvents: 'Mis eventos',
     signOut: 'Cerrar sesión',
     language: 'Idioma',
   },

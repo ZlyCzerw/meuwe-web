@@ -49,6 +49,7 @@ const en: Resources = {
     interests: 'Your interests',
     interestsHint: "We'll notify you about matching events",
     radius: 'Notification radius',
+    myEvents: 'My events',
     signOut: 'Sign out',
     language: 'Language',
   },

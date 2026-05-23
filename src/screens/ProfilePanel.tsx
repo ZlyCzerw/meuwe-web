@@ -17,6 +17,7 @@ function ProfilePanel({
   onSignOut,
   onSignIn,
   reloadProfile,
+  onOpenMyEvents,
 }: {
   open: boolean
   onClose: () => void
@@ -25,6 +26,7 @@ function ProfilePanel({
   onSignOut: () => void
   onSignIn: () => void
   reloadProfile: () => void
+  onOpenMyEvents: () => void
 }) {
   const { t } = useTranslation()
 
@@ -378,6 +380,42 @@ function ProfilePanel({
                   })}
                 </div>
               </div>
+
+              {/* Moje wydarzenia */}
+              <button
+                onClick={onOpenMyEvents}
+                style={{
+                  marginTop: 28,
+                  padding: '16px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderBottom: `1px solid ${C.inkSoft}33`,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: F.display,
+                    fontSize: 17,
+                    fontWeight: 800,
+                    color: C.ink,
+                  }}
+                >
+                  {t('profile.myEvents')}
+                </div>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 900,
+                    color: C.ink,
+                  }}
+                >
+                  ›
+                </div>
+              </button>
 
               {/* Sign out */}
               <button
