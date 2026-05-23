@@ -11,6 +11,7 @@ import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
 import Toast from './components/Toast'
+import ProfilePanel from './screens/ProfilePanel'
 
 type Screen = 'loading' | 'welcome' | 'map'
 
@@ -112,8 +113,15 @@ export default function App() {
         defaultPos={userPos}
       />
       <Toast visible={!!toast} label={toast || ''} />
-      {/* handleSignOut and reloadProfile are used in Stage 4 */}
-      {false && (handleSignOut(), reloadProfile())}
+      <ProfilePanel
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        session={session}
+        profile={profile}
+        onSignOut={handleSignOut}
+        onSignIn={() => db.signInGoogle()}
+        reloadProfile={reloadProfile}
+      />
     </>
   )
 }
