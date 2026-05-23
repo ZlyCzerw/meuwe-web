@@ -7,6 +7,7 @@ import { refineLangByGeo } from './lib/i18n'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import MapScreen from './screens/MapScreen'
+import EventSheet from './screens/EventSheet'
 
 type Screen = 'loading' | 'welcome' | 'map'
 
@@ -87,6 +88,14 @@ export default function App() {
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
       />
+      {selEvent && (
+        <EventSheet
+          event={selEvent}
+          onClose={() => setSelEvent(null)}
+          session={session}
+          profile={profile}
+        />
+      )}
       {/* toast, showToast, handleSignOut, reloadProfile referenced to satisfy noUnusedLocals */}
       <button
         style={{ display: 'none' }}
