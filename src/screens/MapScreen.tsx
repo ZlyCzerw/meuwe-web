@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
+import { haversineKm } from '../lib/geo'
 import { pinHTML, meHTML } from '../components/mapIcons'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
@@ -46,6 +47,8 @@ function MapScreen({
   const leafRef = useRef<L.Map | null>(null)
   const meRef = useRef<L.Marker | null>(null)
   const pinsRef = useRef<Record<string, L.Marker>>({})
+  const userPosRef = useRef<{ lat: number; lng: number } | null>(userPos)
+  useEffect(() => { userPosRef.current = userPos }, [userPos])
 
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
@@ -76,7 +79,12 @@ function MapScreen({
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map)
-    map.on('move', () => setRecenter(true))
+    map.on('moveend', () => {
+      const up = userPosRef.current
+      if (!up) return
+      const center = map.getCenter()
+      setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
+    })
     leafRef.current = map
     return () => { map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
