@@ -9,6 +9,7 @@ import { useEvents } from '../hooks/useEvents'
 import { pinHTML, meHTML } from '../components/mapIcons'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
+import SearchBar from './SearchBar'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 
@@ -146,22 +147,9 @@ function MapScreen({
         />
       </div>
 
-      {/* Search shell */}
+      {/* Search bar */}
       <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10 }}>
-        <div style={{
-          background: '#fff', borderRadius: 999,
-          border: `2px solid ${INK}`, boxShadow: `0 3px 0 ${INK}22`,
-          padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 20 20">
-            <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
-            <path d="M13 13 L17 17" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
-          </svg>
-          <input
-            placeholder={t('map.search')}
-            style={{ flex: 1, fontSize: 14, fontWeight: 600, color: C.ink, border: 'none', outline: 'none', background: 'transparent' }}
-          />
-        </div>
+        <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
       </div>
 
       {/* Recenter button */}
