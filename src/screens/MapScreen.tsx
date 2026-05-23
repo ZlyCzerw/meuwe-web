@@ -16,6 +16,13 @@ const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const DAY_KEYS = ['yesterday', 'today', 'tomorrow', 'friday', 'saturday', 'sunday'] as const
 function dayKey(i: number): typeof DAY_KEYS[number] { return DAY_KEYS[i] }
 
+function dayIdxToOffset(idx: number): number {
+  if (idx <= 2) return idx - 1 // 0→yesterday(-1), 1→today(0), 2→tomorrow(+1)
+  const targetDow = idx === 3 ? 5 : idx === 4 ? 6 : 0 // Fri=5, Sat=6, Sun=0
+  const dow = new Date().getDay()
+  return (targetDow - dow + 7) % 7 // days until the upcoming target weekday
+}
+
 function MapScreen({
   session,
   profile,
@@ -44,7 +51,7 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
 
-  const { events, loading } = useEvents(userPos || WARSAW, dayIdx - 1)
+  const { events, loading } = useEvents(userPos || WARSAW, dayIdxToOffset(dayIdx))
 
   // Timeline drag
   const tlDrag = useRef({ startX: 0, base: 0, on: false })
