@@ -34,6 +34,10 @@ export interface EventWithMeta extends EventRow {
   profiles?: { display_name: string | null; avatar_color: string | null } | null
 }
 
+export interface EventWithMsgCount extends EventWithMeta {
+  msgCount: number
+}
+
 export interface Message {
   id: string
   event_id: string

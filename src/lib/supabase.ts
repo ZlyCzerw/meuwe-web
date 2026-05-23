@@ -1,5 +1,5 @@
 import { createClient, type Session } from '@supabase/supabase-js'
-import type { EventWithMeta, Message, Profile } from './types'
+import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm } from './geo'
 
 const SUPABASE_URL = 'https://bcfhsbnbvsuxsiwmeway.supabase.co'
@@ -39,16 +39,39 @@ export const db = {
           distKm:dk, distStr:dk<1?`${Math.round(dk*1000)} m`:`${dk.toFixed(1)} km`}
       })
   },
-  async createEvent(ev:{title:string;description?:string;lat:number;lng:number;placeName?:string;category?:string;tags?:string[]}) {
+  async createEvent(ev:{
+    title:string; description?:string; lat:number; lng:number;
+    placeName?:string; category?:string; tags?:string[];
+    start_time?:string; end_time?:string;
+  }) {
     const sess=await this.getSession(); if(!sess) return {data:null,error:{message:'not authenticated'}}
     const {data,error}=await supabase.from('events').insert({
       title:ev.title, description:ev.description, lat:ev.lat, lng:ev.lng,
       place_name:ev.placeName, category:ev.category||'party',
-      start_time:new Date().toISOString(), end_time:new Date(Date.now()+86400000).toISOString(),
+      start_time: ev.start_time || new Date().toISOString(),
+      end_time: ev.end_time || new Date(Date.now()+86400000).toISOString(),
       creator_id:sess.user.id, status:'live',
     }).select().single()
     if(!error && ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data!.id,tag})))
     return {data,error}
+  },
+  async getMyEvents(userId:string):Promise<EventWithMsgCount[]> {
+    const {data,error}=await supabase.from('events')
+      .select('*, event_tags(tag), event_messages(count)')
+      .eq('creator_id',userId)
+      .order('start_time',{ascending:false})
+    if(error){console.error(error);return[]}
+    return (data||[]).map((e:any)=>({
+      ...e,
+      tags:(e.event_tags||[]).map((t:any)=>t.tag),
+      distKm:0,
+      distStr:'',
+      profiles:null,
+      msgCount:e.event_messages?.[0]?.count ?? 0,
+    })) as EventWithMsgCount[]
+  },
+  async endEvent(eventId:string) {
+    return supabase.from('events').update({status:'ended'}).eq('id',eventId)
   },
   async getMessages(eid:string,limit=60):Promise<Message[]> {
     const {data}=await supabase.from('event_messages').select('*').eq('event_id',eid).order('created_at',{ascending:true}).limit(limit)
