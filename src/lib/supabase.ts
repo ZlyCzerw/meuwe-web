@@ -57,17 +57,33 @@ export const db = {
   },
   async getMyEvents(userId:string):Promise<EventWithMsgCount[]> {
     const {data,error}=await supabase.from('events')
-      .select('*, event_tags(tag), event_messages(count)')
+      .select('*, event_tags(tag)')
       .eq('creator_id',userId)
       .order('start_time',{ascending:false})
     if(error){console.error(error);return[]}
+
+    // Get message counts separately — event_messages(count) selects a literal
+    // column named "count" (which doesn't exist), not a COUNT aggregate.
+    const eventIds=(data||[]).map((e:any)=>e.id)
+    let countMap:Record<string,number>={}
+    if(eventIds.length>0){
+      const {data:counts}=await supabase.from('event_messages')
+        .select('event_id')
+        .in('event_id',eventIds)
+      if(counts){
+        counts.forEach((r:any)=>{
+          countMap[r.event_id]=(countMap[r.event_id]||0)+1
+        })
+      }
+    }
+
     return (data||[]).map((e:any)=>({
       ...e,
       tags:(e.event_tags||[]).map((t:any)=>t.tag),
       distKm:0,
       distStr:'',
       profiles:null,
-      msgCount:e.event_messages?.[0]?.count ?? 0,
+      msgCount:countMap[e.id]??0,
     })) as EventWithMsgCount[]
   },
   async endEvent(eventId:string) {
