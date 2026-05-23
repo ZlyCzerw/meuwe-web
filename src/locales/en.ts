@@ -16,6 +16,10 @@ const en: Resources = {
       yesterday: 'Yesterday', today: 'Today', tomorrow: 'Tomorrow',
       friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
     },
+    daysShort: {
+      yesterday: 'Yest', today: 'Today', tomorrow: 'Tmrw',
+      friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+    },
   },
   event: {
     organizer: 'Organizer',

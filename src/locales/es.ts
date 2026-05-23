@@ -16,6 +16,10 @@ const es: Resources = {
       yesterday: 'Ayer', today: 'Hoy', tomorrow: 'Mañana',
       friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo',
     },
+    daysShort: {
+      yesterday: 'Ayer', today: 'Hoy', tomorrow: 'Mañ',
+      friday: 'Vie', saturday: 'Sáb', sunday: 'Dom',
+    },
   },
   event: {
     organizer: 'Organizador',

@@ -14,6 +14,10 @@ const pl = {
       yesterday: 'Wczoraj', today: 'Dziś', tomorrow: 'Jutro',
       friday: 'Piątek', saturday: 'Sobota', sunday: 'Niedziela',
     },
+    daysShort: {
+      yesterday: 'Wcz', today: 'Dziś', tomorrow: 'Jutro',
+      friday: 'Pt', saturday: 'Sb', sunday: 'Nd',
+    },
   },
   event: {
     organizer: 'Organizator',
