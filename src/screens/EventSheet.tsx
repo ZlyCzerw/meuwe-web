@@ -64,6 +64,11 @@ function EventSheet({
     await db.sendMessage(event.id, text, authorName, authorColor)
   }
 
+  async function handleEndEvent() {
+    await db.endEvent(event.id)
+    onClose()
+  }
+
   function onTS(e: React.TouchEvent) {
     touchStartY.current = e.touches[0].clientY
   }
@@ -133,8 +138,14 @@ function EventSheet({
                     fontFamily: F.display, fontSize: 15, fontWeight: 800, color: C.ink,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{event.title}</div>
-                  <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 700, marginTop: 2 }}>
-                    {t('event.messageCount', { count: messages.length })}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%', background: C.grass,
+                      animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite',
+                    }} />
+                    <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 700 }}>
+                      {t('event.messageCount', { count: messages.length })}
+                    </div>
                   </div>
                 </div>
                 <button onClick={onClose} style={{
@@ -189,7 +200,7 @@ function EventSheet({
                       initials={(event.profiles?.display_name || '?')[0].toUpperCase()}
                       color={event.profiles?.avatar_color || C.sky}
                     />
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
                         {event.profiles?.display_name || '?'}
                       </div>
@@ -197,7 +208,28 @@ function EventSheet({
                         {t('event.organizer')}
                       </div>
                     </div>
+                    {session?.user.id === event.creator_id && (
+                      <span style={{
+                        padding: '4px 10px', borderRadius: 999,
+                        background: C.primarySoft, color: C.primaryPress,
+                        fontSize: 11, fontWeight: 800,
+                      }}>Moderator</span>
+                    )}
                   </div>
+                  {session?.user.id === event.creator_id && event.status !== 'ended' && (
+                    <button
+                      onClick={handleEndEvent}
+                      style={{
+                        width: '100%', padding: '12px 16px', marginBottom: 14,
+                        borderRadius: 999, background: 'transparent',
+                        border: `2px solid ${C.primarySoft}`,
+                        color: C.primaryPress,
+                        fontSize: 14, fontWeight: 800,
+                      }}
+                    >
+                      Zakończ wydarzenie
+                    </button>
+                  )}
                   {event.description && (
                     <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, marginBottom: 12 }}>
                       {event.description}
@@ -211,6 +243,21 @@ function EventSheet({
                       display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80,
                     }}
                   >
+                    {messages.length > 0 && (
+                      <div style={{ display: 'flex', marginRight: -4 }}>
+                        {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()]
+                          .slice(0, 3)
+                          .map((color, i) => (
+                            <div key={i} style={{
+                              width: 28, height: 28, borderRadius: '50%',
+                              background: color || C.sky,
+                              border: `2px solid ${INK}`,
+                              marginLeft: i === 0 ? 0 : -10,
+                            }} />
+                          ))
+                        }
+                      </div>
+                    )}
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
                       <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
