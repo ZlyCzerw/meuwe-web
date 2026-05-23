@@ -6,6 +6,7 @@ import { getCurrentPosition } from './lib/geo'
 import { refineLangByGeo } from './lib/i18n'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
+import MapScreen from './screens/MapScreen'
 
 type Screen = 'loading' | 'welcome' | 'map'
 
@@ -74,41 +75,32 @@ export default function App() {
     }} />
   )
 
-  // map screen — placeholder (Stage 2 will replace this)
+  // map screen
   return (
-    <div style={{
-      width: '100%', height: '100%', display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
-      background: C.cream, color: C.inkSoft, fontWeight: 800,
-      flexDirection: 'column', gap: 8,
-    }}>
-      <div>map placeholder — signed in: {String(!!session)}</div>
-      <div style={{ fontSize: 12, fontWeight: 400 }}>
-        pos: {userPos ? `${userPos.lat.toFixed(3)},${userPos.lng.toFixed(3)}` : 'acquiring…'}
-        {' | '}
-        profile: {profile?.display_name ?? 'none'}
-      </div>
-      {/* state wired for Stage 2/3/4 */}
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: C.primary, color: '#fff', padding: '10px 20px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
-          {toast}
-        </div>
-      )}
-      {/* selEvent, createOpen, profileOpen, showToast, handleSignOut, reloadProfile consumed below to avoid TS unused-var errors */}
+    <>
+      <MapScreen
+        session={session}
+        profile={profile}
+        onOpenProfile={() => setProfileOpen(true)}
+        onOpenCreate={() => { setSelEvent(null); setCreateOpen(true) }}
+        onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false) }}
+        onAuthNeeded={() => setScreen('welcome')}
+        userPos={userPos}
+      />
+      {/* toast, showToast, handleSignOut, reloadProfile referenced to satisfy noUnusedLocals */}
       <button
         style={{ display: 'none' }}
         onClick={() => {
-          void selEvent
-          void setSelEvent
-          void createOpen
-          void setCreateOpen
-          void profileOpen
-          void setProfileOpen
           showToast('test')
           handleSignOut()
           reloadProfile()
         }}
       />
-    </div>
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: C.primary, color: '#fff', padding: '10px 20px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
+          {toast}
+        </div>
+      )}
+    </>
   )
 }
