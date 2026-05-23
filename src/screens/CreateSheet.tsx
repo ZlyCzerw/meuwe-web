@@ -24,6 +24,14 @@ function CreateSheet({
   const [desc, setDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState('')
+  const [photos, setPhotos] = useState<string[]>([])
+  const [startTime, setStartTime] = useState<string>(
+    () => new Date().toISOString().slice(0, 16)
+  )
+  const [endTime, setEndTime] = useState<string>(
+    () => new Date(Date.now() + 86400000).toISOString().slice(0, 16)
+  )
+  const [timeExpanded, setTimeExpanded] = useState(false)
 
   async function submit() {
     if (!title.trim() || submitting) return
@@ -37,6 +45,8 @@ function CreateSheet({
       lng: pos.lng,
       tags,
       category: tags[0] || 'party',
+      start_time: new Date(startTime).toISOString(),
+      end_time: new Date(endTime).toISOString(),
     })
     setSubmitting(false)
     if (error) {
@@ -46,6 +56,8 @@ function CreateSheet({
     setTitle('')
     setTags([])
     setDesc('')
+    setPhotos([])
+    setTimeExpanded(false)
     onSubmit(data)
   }
 
@@ -111,44 +123,35 @@ function CreateSheet({
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 100px' }}>
-        {/* Location card */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: 12,
-            borderRadius: 20,
-            background: C.cream,
-            marginBottom: 18,
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: `${C.primary}22`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 22,
-            }}
-          >
-            📍
+        {/* Mini-map preview */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: 10, borderRadius: 20, background: C.cream, marginBottom: 18,
+        }}>
+          <div style={{
+            width: 76, height: 76, borderRadius: 16, overflow: 'hidden',
+            position: 'relative', flexShrink: 0, background: C.cream,
+          }}>
+            <svg width="76" height="76" viewBox="0 0 76 76" style={{ position: 'absolute', inset: 0 }}>
+              <rect width="76" height="76" fill="#FFF6EC"/>
+              <rect x="-4" y="18" width="84" height="10" rx="5" fill="#B8E3F2"/>
+              <ellipse cx="58" cy="56" rx="14" ry="11" fill="#C8E6BD"/>
+              <rect x="32" y="0" width="6" height="76" fill="#fff" opacity="0.8"/>
+            </svg>
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 16, height: 16, borderRadius: '50%',
+              background: C.primary, border: `2.5px solid #2D2B2A`,
+              boxShadow: '0 2px 0 rgba(45,43,42,0.3)',
+              animation: 'meuwe-breathe-sm 2.5s ease-in-out infinite',
+            }}/>
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
               {t('create.myLocation')}
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: C.inkSoft,
-                fontWeight: 600,
-                marginTop: 2,
-              }}
-            >
+            <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
               {t('create.gpsBased')}
             </div>
           </div>
@@ -174,6 +177,68 @@ function CreateSheet({
             boxSizing: 'border-box',
           }}
         />
+
+        {/* Photos section */}
+        <div style={{ marginBottom: 22 }}>
+          <div style={{
+            fontSize: 11, color: C.inkSoft, fontWeight: 800,
+            textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8,
+          }}>Zdjęcia</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {[0, 1, 2].map(i => {
+              const src = photos[i]
+              return (
+                <label key={i} style={{ cursor: 'pointer', display: 'block' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const url = URL.createObjectURL(file)
+                      setPhotos(prev => {
+                        const next = [...prev]
+                        next[i] = url
+                        return next
+                      })
+                      e.target.value = ''
+                    }}
+                  />
+                  <div style={{
+                    width: 80, height: 80, borderRadius: 22,
+                    background: src ? 'transparent' : '#fff',
+                    border: src ? 'none' : `2px dashed ${C.inkSoft}66`,
+                    position: 'relative', overflow: 'hidden',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {src ? (
+                      <>
+                        <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                        <button
+                          onClick={e => {
+                            e.preventDefault()
+                            URL.revokeObjectURL(src)
+                            setPhotos(prev => prev.filter((_, idx) => idx !== i))
+                          }}
+                          style={{
+                            position: 'absolute', top: 4, right: 4,
+                            width: 22, height: 22, borderRadius: '50%',
+                            background: 'rgba(45,43,42,0.6)', color: '#fff',
+                            fontSize: 12, fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >×</button>
+                      </>
+                    ) : (
+                      <span style={{ fontWeight: 300, fontSize: 28, color: C.inkSoft }}>+</span>
+                    )}
+                  </div>
+                </label>
+              )
+            })}
+          </div>
+        </div>
 
         {/* Tags section */}
         <div style={{ marginBottom: 22 }}>
@@ -221,6 +286,57 @@ function CreateSheet({
               ))}
           </div>
         </div>
+
+        {/* Time section */}
+        <button
+          onClick={() => setTimeExpanded(te => !te)}
+          style={{
+            width: '100%', textAlign: 'left',
+            padding: '14px 16px', borderRadius: 20,
+            background: C.cream, marginBottom: 18, display: 'block',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{
+                fontSize: 11, color: C.inkSoft, fontWeight: 800,
+                textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2,
+              }}>Czas</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                {timeExpanded ? 'Wybierz godziny' : (
+                  <>Teraz · <span style={{ color: C.primary }}>za 24h</span></>
+                )}
+              </div>
+            </div>
+            <div style={{
+              fontSize: 18, color: C.inkSoft, fontWeight: 800,
+              transform: timeExpanded ? 'rotate(180deg)' : 'rotate(0)',
+              transition: 'transform 220ms ease',
+            }}>⌄</div>
+          </div>
+          {timeExpanded && (
+            <div style={{ marginTop: 14, display: 'flex', gap: 10 }} onClick={e => e.stopPropagation()}>
+              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>OD</div>
+                <input
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={e => setStartTime(e.target.value)}
+                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                />
+              </div>
+              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>DO</div>
+                <input
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={e => setEndTime(e.target.value)}
+                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                />
+              </div>
+            </div>
+          )}
+        </button>
 
         {/* Description */}
         <div
