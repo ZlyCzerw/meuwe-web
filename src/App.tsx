@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
@@ -8,10 +9,13 @@ import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
+import CreateSheet from './screens/CreateSheet'
+import Toast from './components/Toast'
 
 type Screen = 'loading' | 'welcome' | 'map'
 
 export default function App() {
+  const { t } = useTranslation()
   const { session, profile, ready, reloadProfile } = useSession()
 
   const [screen, setScreen] = useState<Screen>('loading')
@@ -45,6 +49,11 @@ export default function App() {
   async function handleSignOut() {
     await db.signOut()
     setScreen('welcome')
+  }
+
+  function handleSubmit(_data: unknown) {
+    setCreateOpen(false)
+    showToast(t('create.added'))
   }
 
   // Loading screen — faithful port of prototype lines 1077-1089
@@ -96,20 +105,15 @@ export default function App() {
           profile={profile}
         />
       )}
-      {/* toast, showToast, handleSignOut, reloadProfile referenced to satisfy noUnusedLocals */}
-      <button
-        style={{ display: 'none' }}
-        onClick={() => {
-          showToast('test')
-          handleSignOut()
-          reloadProfile()
-        }}
+      <CreateSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={handleSubmit}
+        defaultPos={userPos}
       />
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: C.primary, color: '#fff', padding: '10px 20px', borderRadius: 999, fontWeight: 700, fontSize: 14 }}>
-          {toast}
-        </div>
-      )}
+      <Toast visible={!!toast} label={toast || ''} />
+      {/* handleSignOut and reloadProfile are used in Stage 4 */}
+      {false && (handleSignOut(), reloadProfile())}
     </>
   )
 }
