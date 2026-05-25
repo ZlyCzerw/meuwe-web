@@ -195,6 +195,27 @@ function EventSheet({
                       {event.tags.map(tag => <TagChip key={tag} category={tag} selected />)}
                     </div>
                   )}
+                  {event.photos && event.photos.length > 0 && (
+                    <div style={{
+                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16,
+                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                      paddingBottom: 4,
+                    }}>
+                      {event.photos.map((url, i) => (
+                        <img
+                          key={i}
+                          src={url}
+                          alt=""
+                          style={{
+                            width: 160, height: 120, borderRadius: 16,
+                            objectFit: 'cover', flexShrink: 0,
+                            scrollSnapAlign: 'start',
+                            border: `2px solid ${INK}11`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
                     borderRadius: 18, background: C.cream, marginBottom: 14,

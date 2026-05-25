@@ -26,7 +26,7 @@ function CreateSheet({
   const [desc, setDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState('')
-  const [photos, setPhotos] = useState<string[]>([])
+  const [photos, setPhotos] = useState<Array<{ file: File; preview: string } | null>>([null, null, null])
   const [startTime, setStartTime] = useState<string>(
     () => new Date().toISOString().slice(0, 16)
   )
@@ -46,6 +46,18 @@ function CreateSheet({
       setSubmitting(false)
       return
     }
+    // Upload photos
+    const files = photos.filter((p): p is { file: File; preview: string } => p !== null)
+    let photoUrls: string[] = []
+    if (files.length > 0) {
+      try {
+        photoUrls = await Promise.all(files.map(p => db.uploadEventPhoto(p.file)))
+      } catch (e) {
+        setErr('Błąd przesyłania zdjęcia: ' + (e instanceof Error ? e.message : String(e)))
+        setSubmitting(false)
+        return
+      }
+    }
     const pos = defaultPos || { lat: 52.2297, lng: 21.0122 }
     const { data, error } = await db.createEvent({
       title: title.trim(),
@@ -56,6 +68,7 @@ function CreateSheet({
       category: tags[0] || 'party',
       start_time: new Date(startTime).toISOString(),
       end_time: new Date(endTime).toISOString(),
+      photos: photoUrls,
     })
     setSubmitting(false)
     if (error) {
@@ -65,7 +78,7 @@ function CreateSheet({
     setTitle('')
     setTags([])
     setDesc('')
-    setPhotos([])
+    setPhotos([null, null, null])
     setTimeExpanded(false)
     onSubmit(data)
   }
@@ -204,7 +217,7 @@ function CreateSheet({
           }}>Zdjęcia</div>
           <div style={{ display: 'flex', gap: 10 }}>
             {[0, 1, 2].map(i => {
-              const src = photos[i]
+              const slot = photos[i]
               return (
                 <label key={i} style={{ cursor: 'pointer', display: 'block' }}>
                   <input
@@ -214,10 +227,10 @@ function CreateSheet({
                     onChange={e => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      const url = URL.createObjectURL(file)
+                      const preview = URL.createObjectURL(file)
                       setPhotos(prev => {
-                        const next = [...prev]
-                        next[i] = url
+                        const next = [...prev] as typeof prev
+                        next[i] = { file, preview }
                         return next
                       })
                       e.target.value = ''
@@ -225,19 +238,23 @@ function CreateSheet({
                   />
                   <div style={{
                     width: 80, height: 80, borderRadius: 22,
-                    background: src ? 'transparent' : '#fff',
-                    border: src ? 'none' : `2px dashed ${C.inkSoft}66`,
+                    background: slot ? 'transparent' : '#fff',
+                    border: slot ? 'none' : `2px dashed ${C.inkSoft}66`,
                     position: 'relative', overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {src ? (
+                    {slot ? (
                       <>
-                        <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                        <img src={slot.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                         <button
                           onClick={e => {
                             e.preventDefault()
-                            URL.revokeObjectURL(src)
-                            setPhotos(prev => prev.filter((_, idx) => idx !== i))
+                            URL.revokeObjectURL(slot.preview)
+                            setPhotos(prev => {
+                              const next = [...prev] as typeof prev
+                              next[i] = null
+                              return next
+                            })
                           }}
                           style={{
                             position: 'absolute', top: 4, right: 4,

@@ -39,10 +39,19 @@ export const db = {
           distKm:dk, distStr:dk<1?`${Math.round(dk*1000)} m`:`${dk.toFixed(1)} km`}
       })
   },
+  async uploadEventPhoto(file:File):Promise<string> {
+    const sess=await this.getSession(); if(!sess) throw new Error('not authenticated')
+    const ext=file.name.split('.').pop()||'jpg'
+    const path=`${sess.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const {error}=await supabase.storage.from('event-photos').upload(path,file,{contentType:file.type})
+    if(error) throw error
+    const {data}=supabase.storage.from('event-photos').getPublicUrl(path)
+    return data.publicUrl
+  },
   async createEvent(ev:{
     title:string; description?:string; lat:number; lng:number;
     placeName?:string; category?:string; tags?:string[];
-    start_time?:string; end_time?:string;
+    start_time?:string; end_time?:string; photos?:string[];
   }) {
     const sess=await this.getSession(); if(!sess) return {data:null,error:{message:'not authenticated'}}
     const {data,error}=await supabase.from('events').insert({
@@ -51,6 +60,7 @@ export const db = {
       start_time: ev.start_time || new Date().toISOString(),
       end_time: ev.end_time || new Date(Date.now()+86400000).toISOString(),
       creator_id:sess.user.id, status:'live',
+      photos: ev.photos||[],
     }).select().single()
     if(!error && ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data!.id,tag})))
     return {data,error}

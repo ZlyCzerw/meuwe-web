@@ -25,6 +25,7 @@ export interface EventRow {
   creator_id: string | null
   status: EventStatus
   created_at: string
+  photos: string[] | null
 }
 
 export interface EventWithMeta extends EventRow {
