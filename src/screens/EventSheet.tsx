@@ -310,6 +310,16 @@ function EventSheet({
                       ))}
                     </div>
                   )}
+                  {event.description && (
+                    <div style={{
+                      fontSize: 13, color: C.ink, fontWeight: 500,
+                      lineHeight: 1.55, marginBottom: 12,
+                      padding: '10px 14px', borderRadius: 16,
+                      background: C.cream,
+                    }}>
+                      {event.description}
+                    </div>
+                  )}
                   <div style={{
                     fontSize: 11, color: C.inkSoft, fontWeight: 700,
                     textAlign: 'center', margin: '8px 0 16px', letterSpacing: 0.5,
