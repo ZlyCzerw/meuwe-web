@@ -25,7 +25,7 @@ export const db = {
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
     const {data,error}=await supabase.from('events')
-      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
+      .select('*,profiles!left(display_name,avatar_color),event_tags!left(tag)')
       .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
       .in('status',['live','upcoming','extended'])
       .order('created_at',{ascending:false})
