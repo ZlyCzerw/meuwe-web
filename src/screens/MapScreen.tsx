@@ -173,7 +173,7 @@ function MapScreen({
       )}
 
       {/* Avatar top-left */}
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, filter: 'url(#meuwe-wobble)' }}>
+      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
         <Avatar
           size={48}
           onClick={onOpenProfile}
@@ -184,7 +184,7 @@ function MapScreen({
       </div>
 
       {/* Search bar */}
-      <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10, filter: 'url(#meuwe-wobble)' }}>
+      <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10 }}>
         <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
       </div>
 
@@ -195,14 +195,13 @@ function MapScreen({
           width: 48, height: 48, borderRadius: '50%',
           background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          filter: 'url(#meuwe-wobble)',
         }}>
           <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.primary, border: `2px solid ${INK}` }} />
         </button>
       )}
 
       {/* Timeline */}
-      <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, filter: 'url(#meuwe-wobble)' }}>
+      <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
         {!timelineOpen
           ? (
             <button onClick={() => setTimelineOpen(true)} style={{
@@ -267,7 +266,7 @@ function MapScreen({
       </div>
 
       {/* ADD button */}
-      <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, filter: 'url(#meuwe-wobble)' }}>
+      <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
         <AddButton size={76} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
       </div>
 
@@ -280,7 +279,6 @@ function MapScreen({
             padding: '52px 20px 16px',
             background: 'linear-gradient(180deg, rgba(255,246,236,0.97) 0%, rgba(255,246,236,0.85) 100%)',
             display: 'flex', alignItems: 'center', gap: 12,
-            filter: 'url(#meuwe-wobble)',
           }}>
             <button
               onClick={() => onLocationPicked?.(userPos || WARSAW)}
@@ -328,7 +326,6 @@ function MapScreen({
           <div style={{
             position: 'absolute', bottom: 48, left: 0, right: 0,
             display: 'flex', justifyContent: 'center', zIndex: 30,
-            filter: 'url(#meuwe-wobble)',
           }}>
             <button
               onClick={() => {
@@ -355,7 +352,6 @@ function MapScreen({
           position: 'absolute', top: '38%', left: '50%',
           transform: 'translate(-50%,-50%)',
           animation: 'bob 4s ease-in-out infinite', pointerEvents: 'none', zIndex: 5,
-          filter: 'url(#meuwe-wobble)',
         }}>
           <div style={{
             padding: '14px 20px', background: '#fff',
