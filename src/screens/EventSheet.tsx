@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import DragHandle from '../components/DragHandle'
-import WobblyBorder from '../components/WobblyBorder'
 import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
 import Avatar from '../components/Avatar'
@@ -198,26 +197,28 @@ function EventSheet({
                   )}
                   {event.photos && event.photos.length > 0 && (
                     <div style={{
-                      display: 'flex', gap: 12, overflowX: 'auto', marginBottom: 16,
+                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16,
                       scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
-                      paddingBottom: 6, paddingTop: 4,
+                      paddingBottom: 4,
                     }}>
                       {event.photos.map((url, i) => (
-                        <div key={i} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: 'start' }}>
-                          <WobblyBorder radius={14} />
-                          <img src={url} alt="" style={{
-                            width: 160, height: 120, borderRadius: 14,
-                            objectFit: 'cover', display: 'block',
-                          }} />
-                        </div>
+                        <img
+                          key={i}
+                          src={url}
+                          alt=""
+                          style={{
+                            width: 160, height: 120, borderRadius: 16,
+                            objectFit: 'cover', flexShrink: 0,
+                            scrollSnapAlign: 'start',
+                            border: `2px solid ${INK}11`,
+                          }}
+                        />
                       ))}
                     </div>
                   )}
-                  <div style={{ position: 'relative', marginBottom: 14 }}>
-                  <WobblyBorder radius={18} />
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                    borderRadius: 18, background: C.cream,
+                    borderRadius: 18, background: C.cream, marginBottom: 14,
                   }}>
                     <Avatar
                       size={40}
@@ -240,7 +241,6 @@ function EventSheet({
                       }}>Moderator</span>
                     )}
                   </div>
-                  </div>
                   {session?.user.id === event.creator_id && event.status !== 'ended' && (
                     <button
                       onClick={handleEndEvent}
@@ -256,21 +256,16 @@ function EventSheet({
                     </button>
                   )}
                   {event.description && (
-                    <div style={{ position: 'relative', marginBottom: 14 }}>
-                      <WobblyBorder radius={16} />
-                      <div style={{ padding: '11px 15px', borderRadius: 16, background: C.cream, fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55 }}>
-                        {event.description}
-                      </div>
+                    <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, marginBottom: 12 }}>
+                      {event.description}
                     </div>
                   )}
-                  <div style={{ position: 'relative', marginBottom: 80 }}>
-                  <WobblyBorder radius={20} />
                   <button
                     onClick={() => setSnap('full')}
                     style={{
                       width: '100%', padding: '14px 16px', borderRadius: 20,
-                      background: C.cream,
-                      display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+                      background: C.cream, border: `2px solid ${INK}22`,
+                      display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80,
                     }}
                   >
                     {messages.length > 0 && (
@@ -296,7 +291,6 @@ function EventSheet({
                     </div>
                     <div style={{ fontSize: 18, color: C.primary, fontWeight: 900 }}>↑</div>
                   </button>
-                  </div>
                 </>
               )}
 
@@ -304,28 +298,26 @@ function EventSheet({
                 <div style={{ paddingBottom: 80 }}>
                   {event.photos && event.photos.length > 0 && (
                     <div style={{
-                      display: 'flex', gap: 12, overflowX: 'auto', marginBottom: 12,
+                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12,
                       scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
                       marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20,
-                      paddingTop: 4, paddingBottom: 6,
                     }}>
                       {event.photos.map((url, i) => (
-                        <div key={i} style={{ position: 'relative', flexShrink: 0, scrollSnapAlign: 'start' }}>
-                          <WobblyBorder radius={14} />
-                          <img src={url} alt="" style={{
-                            width: 160, height: 110, borderRadius: 14,
-                            objectFit: 'cover', display: 'block',
-                          }} />
-                        </div>
+                        <img key={i} src={url} alt="" style={{
+                          width: 160, height: 110, borderRadius: 14,
+                          objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'start',
+                        }} />
                       ))}
                     </div>
                   )}
                   {event.description && (
-                    <div style={{ position: 'relative', marginBottom: 12 }}>
-                      <WobblyBorder radius={16} />
-                      <div style={{ padding: '10px 14px', borderRadius: 16, background: C.cream, fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.55 }}>
-                        {event.description}
-                      </div>
+                    <div style={{
+                      fontSize: 13, color: C.ink, fontWeight: 500,
+                      lineHeight: 1.55, marginBottom: 12,
+                      padding: '10px 14px', borderRadius: 16,
+                      background: C.cream,
+                    }}>
+                      {event.description}
                     </div>
                   )}
                   <div style={{
