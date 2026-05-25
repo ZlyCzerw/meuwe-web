@@ -97,6 +97,7 @@ function EventSheet({
       boxShadow: '0 -8px 32px rgba(45,43,42,0.12)',
       transition: 'height 380ms cubic-bezier(0.32,1.4,0.4,1)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 40,
+      filter: 'url(#meuwe-wobble)',
     }}>
       <div onTouchStart={onTS} onTouchEnd={onTE} style={{ flexShrink: 0, position: 'relative' }}>
         <DragHandle />

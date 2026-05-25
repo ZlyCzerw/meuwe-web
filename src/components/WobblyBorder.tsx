@@ -22,7 +22,6 @@ export default function WobblyBorder({
         inset: 0,
         border: `${width}px solid ${color}`,
         borderRadius: radius,
-        filter: 'url(#meuwe-wobble)',
         pointerEvents: 'none',
         zIndex: 2,
       }}

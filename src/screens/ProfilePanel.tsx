@@ -99,6 +99,7 @@ function ProfilePanel({
           transform: open ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 380ms cubic-bezier(0.32,1.4,0.4,1)',
           boxShadow: '8px 0 32px rgba(45,43,42,0.15)',
+          filter: 'url(#meuwe-wobble)',
           zIndex: 31,
           display: 'flex',
           flexDirection: 'column',
