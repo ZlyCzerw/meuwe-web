@@ -80,11 +80,8 @@ function EventSheet({
     if (touchStartY.current === null) return
     const dy = e.changedTouches[0].clientY - touchStartY.current
     touchStartY.current = null
-    if (dy > 80) {
-      snap === 'full' ? setSnap('half') : snap === 'half' ? setSnap('peek') : onClose()
-    } else if (dy < -80) {
-      snap === 'peek' ? setSnap('half') : snap === 'half' ? setSnap('full') : null
-    }
+    if (dy > 60) onClose()
+    else if (dy < -60) setSnap('full')
   }
 
   if (!event) return null
