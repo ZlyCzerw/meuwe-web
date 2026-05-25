@@ -262,6 +262,17 @@ function CreateSheet({
                     onChange={e => {
                       const file = e.target.files?.[0]
                       if (!file) return
+                      if (!file.type.startsWith('image/')) {
+                        setErr('Plik musi być zdjęciem')
+                        e.target.value = ''
+                        return
+                      }
+                      if (file.size > 6 * 1024 * 1024) {
+                        setErr('Zdjęcie nie może przekraczać 6 MB')
+                        e.target.value = ''
+                        return
+                      }
+                      setErr('')
                       const preview = URL.createObjectURL(file)
                       setPhotos(prev => {
                         const next = [...prev] as typeof prev
