@@ -105,7 +105,7 @@ function MapScreen({
       meRef.current.setLatLng([userPos.lat, userPos.lng])
     } else {
       const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
-      meRef.current = L.marker([userPos.lat, userPos.lng], { icon, zIndexOffset: 1000 }).addTo(map)
+      meRef.current = L.marker([userPos.lat, userPos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
     }
     // Center map only once on first GPS fix
     if (!centeredRef.current) {
