@@ -30,6 +30,7 @@ export default function App() {
   const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
   const [pickingLocation, setPickingLocation] = useState(false)
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
 
   // On mount: refine language by geo and watch position
@@ -67,6 +68,7 @@ export default function App() {
   function handleSubmit(_data: unknown) {
     setCreateOpen(false)
     setCreatePos(null)
+    setLocationPicked(false)
     setEventsRefreshKey(k => k + 1)
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 900)
@@ -138,6 +140,7 @@ export default function App() {
         pickingLocation={pickingLocation}
         onLocationPicked={pos => {
           setCreatePos(pos)
+          setLocationPicked(true)
           setPickingLocation(false)
           setCreateOpen(true)
         }}
@@ -152,9 +155,10 @@ export default function App() {
       )}
       <CreateSheet
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false) }}
         onSubmit={handleSubmit}
         defaultPos={createPos || userPos}
+        locationPicked={locationPicked}
         onPickLocation={() => { setCreateOpen(false); setPickingLocation(true) }}
       />
       <Toast visible={!!toast} label={toast || ''} />

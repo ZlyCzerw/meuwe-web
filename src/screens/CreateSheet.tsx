@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
@@ -7,17 +7,39 @@ import { db } from '../lib/supabase'
 
 const suggested = ['outdoor', 'culture', 'party', 'family', 'sport', 'food']
 
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      { headers: { 'Accept-Language': 'pl' } }
+    )
+    const d = await r.json()
+    const a = d.address || {}
+    return (
+      [a.road, a.house_number].filter(Boolean).join(' ') ||
+      a.suburb || a.city_district || a.quarter || a.neighbourhood ||
+      a.city || a.town || a.village ||
+      d.display_name?.split(',')[0] ||
+      null
+    )
+  } catch {
+    return null
+  }
+}
+
 function CreateSheet({
   open,
   onClose,
   onSubmit,
   defaultPos,
+  locationPicked,
   onPickLocation,
 }: {
   open: boolean
   onClose: () => void
   onSubmit: (data: unknown) => void
   defaultPos: { lat: number; lng: number } | null
+  locationPicked: boolean
   onPickLocation: () => void
 }) {
   const { t } = useTranslation()
@@ -34,6 +56,17 @@ function CreateSheet({
     () => new Date(Date.now() + 86400000).toISOString().slice(0, 16)
   )
   const [timeExpanded, setTimeExpanded] = useState(false)
+  const [pickedAddress, setPickedAddress] = useState<string | null>(null)
+  const [addressLoading, setAddressLoading] = useState(false)
+
+  useEffect(() => {
+    if (!locationPicked || !defaultPos) { setPickedAddress(null); return }
+    setAddressLoading(true)
+    reverseGeocode(defaultPos.lat, defaultPos.lng).then(addr => {
+      setPickedAddress(addr)
+      setAddressLoading(false)
+    })
+  }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
 
   async function submit() {
     if (!title.trim() || submitting) return
@@ -177,12 +210,15 @@ function CreateSheet({
               animation: 'meuwe-breathe-sm 2.5s ease-in-out infinite',
             }}/>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
-              {t('create.myLocation')}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 14, fontWeight: 800, color: C.ink,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {addressLoading ? 'Szukam adresu…' : pickedAddress || t('create.myLocation')}
             </div>
             <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
-              {t('create.gpsBased')}
+              {pickedAddress ? 'Wybrana lokalizacja' : t('create.gpsBased')}
             </div>
           </div>
           <div style={{ fontSize: 18, color: C.inkSoft, flexShrink: 0 }}>›</div>
