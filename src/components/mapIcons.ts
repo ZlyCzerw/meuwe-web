@@ -1,9 +1,15 @@
 import { BLOBS, TAG_META, type Category } from '../lib/tokens'
 
-export function pinHTML(category: string, idx: number): string {
+export function pinHTML(category: string, idx: number, status?: string): string {
   const meta = TAG_META[category as Category] || TAG_META.party
   const path = BLOBS[idx % BLOBS.length]
+  const isLive = status === 'live' || status === 'extended'
+  const halos = isLive ? `
+    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s ease-out infinite;opacity:0;pointer-events:none"></div>
+    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
+  ` : ''
   return `<div style="position:relative;width:44px;height:56px;">
+    ${halos}
     <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
       <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
     </svg>

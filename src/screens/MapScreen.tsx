@@ -128,7 +128,7 @@ function MapScreen({
     pinsRef.current = {}
     events.forEach((ev, i) => {
       const icon = L.divIcon({
-        html: pinHTML(ev.category, i),
+        html: pinHTML(ev.category, i, ev.status),
         className: 'meuwe-icon',
         iconSize: [44, 56],
         iconAnchor: [22, 56],
