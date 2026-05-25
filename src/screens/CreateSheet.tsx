@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
+import WobblyBorder from '../components/WobblyBorder'
 import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
 
@@ -283,12 +284,13 @@ function CreateSheet({
                     }}
                   />
                   <div style={{
-                    width: 80, height: 80, borderRadius: 22,
+                    width: 80, height: 80, borderRadius: 18,
                     background: slot ? 'transparent' : '#fff',
-                    border: slot ? 'none' : `2px dashed ${C.inkSoft}66`,
-                    position: 'relative', overflow: 'hidden',
+                    position: 'relative',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden',
                   }}>
+                    <WobblyBorder radius={18} color={slot ? INK : `${C.inkSoft}88`} width={slot ? 3 : 2} />
                     {slot ? (
                       <>
                         <img src={slot.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
@@ -303,7 +305,7 @@ function CreateSheet({
                             })
                           }}
                           style={{
-                            position: 'absolute', top: 4, right: 4,
+                            position: 'absolute', top: 4, right: 4, zIndex: 3,
                             width: 22, height: 22, borderRadius: '50%',
                             background: 'rgba(45,43,42,0.6)', color: '#fff',
                             fontSize: 12, fontWeight: 700,
