@@ -296,6 +296,20 @@ function EventSheet({
 
               {isFull && (
                 <div style={{ paddingBottom: 80 }}>
+                  {event.photos && event.photos.length > 0 && (
+                    <div style={{
+                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12,
+                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                      marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20,
+                    }}>
+                      {event.photos.map((url, i) => (
+                        <img key={i} src={url} alt="" style={{
+                          width: 160, height: 110, borderRadius: 14,
+                          objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'start',
+                        }} />
+                      ))}
+                    </div>
+                  )}
                   <div style={{
                     fontSize: 11, color: C.inkSoft, fontWeight: 700,
                     textAlign: 'center', margin: '8px 0 16px', letterSpacing: 0.5,
