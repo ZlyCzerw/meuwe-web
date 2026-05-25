@@ -10,14 +10,7 @@ const pl = {
     search: 'Szukaj miejsca…',
     empty: 'Tu jeszcze cisza…',
     emptyCta: 'bądź pierwszy!',
-    days: {
-      yesterday: 'Wczoraj', today: 'Dziś', tomorrow: 'Jutro',
-      friday: 'Piątek', saturday: 'Sobota', sunday: 'Niedziela',
-    },
-    daysShort: {
-      yesterday: 'Wcz', today: 'Dziś', tomorrow: 'Jutro',
-      friday: 'Pt', saturday: 'Sb', sunday: 'Nd',
-    },
+    today: 'Dziś', yesterday: 'Wczoraj',
   },
   event: {
     organizer: 'Organizator',

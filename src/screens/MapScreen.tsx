@@ -13,15 +13,16 @@ import SearchBar from './SearchBar'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 
-const DAY_KEYS = ['yesterday', 'today', 'tomorrow', 'friday', 'saturday', 'sunday'] as const
-function dayKey(i: number): typeof DAY_KEYS[number] { return DAY_KEYS[i] }
+const DAYS_COUNT = 7          // yesterday + today + 5 future days
+const TODAY_IDX  = 1          // index 1 = today
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES' }
 
-function dayIdxToOffset(idx: number): number {
-  if (idx <= 2) return idx - 1 // 0→yesterday(-1), 1→today(0), 2→tomorrow(+1)
-  const targetDow = idx === 3 ? 5 : idx === 4 ? 6 : 0 // Fri=5, Sat=6, Sun=0
-  const dow = new Date().getDay()
-  const diff = (targetDow - dow + 7) % 7
-  return diff === 0 ? 7 : diff // if already that weekday, show next week's
+function idxToOffset(idx: number) { return idx - TODAY_IDX }  // 0→-1, 1→0, 2→+1 …
+
+function idxToDate(idx: number): Date {
+  const d = new Date()
+  d.setDate(d.getDate() + idxToOffset(idx))
+  return d
 }
 
 function MapScreen({
@@ -47,7 +48,8 @@ function MapScreen({
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
   eventsRefreshKey?: number
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const loc = LOC_MAP[i18n.language] || 'en-US'
 
   const mapRef = useRef<HTMLDivElement>(null)
   const leafRef = useRef<L.Map | null>(null)
@@ -64,7 +66,7 @@ function MapScreen({
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const eventsPos = mapCenter || userPos || WARSAW
-  const { events, loading } = useEvents(eventsPos, dayIdxToOffset(dayIdx), eventsRefreshKey)
+  const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey)
 
   // Timeline drag
   const tlDrag = useRef({ startX: 0, base: 0, on: false })
@@ -75,7 +77,7 @@ function MapScreen({
   function tlPM(e: React.PointerEvent<HTMLDivElement>) {
     if (!tlDrag.current.on) return
     const delta = -Math.round((e.clientX - tlDrag.current.startX) / 78)
-    const next = Math.max(0, Math.min(DAY_KEYS.length - 1, tlDrag.current.base + delta))
+    const next = Math.max(0, Math.min(DAYS_COUNT - 1, tlDrag.current.base + delta))
     if (next !== dayIdx) setDayIdx(next)
   }
   function tlPU() { tlDrag.current.on = false }
@@ -209,67 +211,89 @@ function MapScreen({
 
       {/* Timeline */}
       <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-        {!timelineOpen
-          ? (
-            <button onClick={() => setTimelineOpen(true)} style={{
-              padding: '10px 20px', borderRadius: 999,
-              background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
-              fontSize: 13, fontWeight: 800, color: INK,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.primary, border: `1.5px solid ${INK}` }} />
-              {t('map.days.' + dayKey(dayIdx))}
-            </button>
-          )
-          : (
-            <div
-              onPointerDown={tlPD}
-              onPointerMove={tlPM}
-              onPointerUp={tlPU}
-              onPointerCancel={tlPU}
-              style={{
-                padding: '6px 8px', borderRadius: 999, background: '#fff',
-                border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
-                display: 'flex', alignItems: 'center', gap: 4,
-                touchAction: 'pan-y', cursor: 'grab', userSelect: 'none',
-              }}
-            >
-              <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx > 0 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>‹</div>
-              <div style={{ width: 270, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
-                <div style={{
-                  display: 'flex', gap: 4,
-                  transition: 'transform 320ms cubic-bezier(0.32,1.4,0.4,1)',
-                  transform: `translateX(${(3 - dayIdx) * 58}px)`,
-                }}>
-                  {DAY_KEYS.map((dk, i) => (
+        {!timelineOpen ? (
+          <button onClick={() => setTimelineOpen(true)} style={{
+            padding: '10px 20px', borderRadius: 999,
+            background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
+            fontSize: 13, fontWeight: 800, color: INK,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.primary, border: `1.5px solid ${INK}` }} />
+            {(() => {
+              const d = idxToDate(dayIdx)
+              const offset = idxToOffset(dayIdx)
+              const dayLabel = offset === 0 ? t('map.today')
+                : offset === -1 ? t('map.yesterday')
+                : d.toLocaleDateString(loc, { weekday: 'long' })
+              const dateLabel = d.toLocaleDateString(loc, { day: 'numeric', month: 'short' })
+              return `${dayLabel} · ${dateLabel}`
+            })()}
+          </button>
+        ) : (
+          <div
+            onPointerDown={tlPD}
+            onPointerMove={tlPM}
+            onPointerUp={tlPU}
+            onPointerCancel={tlPU}
+            style={{
+              padding: '6px 8px', borderRadius: 999, background: '#fff',
+              border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
+              display: 'flex', alignItems: 'center', gap: 4,
+              touchAction: 'pan-y', cursor: 'grab', userSelect: 'none',
+            }}
+          >
+            <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx > 0 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>‹</div>
+            <div style={{ width: 270, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+              <div style={{
+                display: 'flex', gap: 4,
+                transition: 'transform 320ms cubic-bezier(0.32,1.4,0.4,1)',
+                transform: `translateX(${(2 - dayIdx) * 62}px)`,
+              }}>
+                {Array.from({ length: DAYS_COUNT }, (_, i) => {
+                  const d = idxToDate(i)
+                  const offset = idxToOffset(i)
+                  const isToday = offset === 0
+                  const active = dayIdx === i
+                  return (
                     <button
-                      key={dk}
+                      key={i}
                       onPointerDown={e => e.stopPropagation()}
                       onClick={() => setDayIdx(i)}
                       style={{
-                        flex: '0 0 54px', padding: '7px 0', borderRadius: 999,
-                        background: dayIdx === i ? C.primary : 'transparent',
-                        color: dayIdx === i ? '#fff' : INK,
-                        border: dayIdx === i ? `2px solid ${INK}` : '2px solid transparent',
-                        fontSize: 12, fontWeight: 800, opacity: Math.abs(i - dayIdx) > 2 ? 0.3 : 1,
+                        flex: '0 0 56px', borderRadius: 14,
+                        padding: '6px 0', display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', gap: 1,
+                        background: active ? C.primary : isToday ? C.primarySoft : 'transparent',
+                        color: active ? '#fff' : C.ink,
+                        border: active ? `2px solid ${INK}` : '2px solid transparent',
+                        fontSize: 11, fontWeight: 800,
+                        opacity: Math.abs(i - dayIdx) > 3 ? 0.25 : 1,
+                        transition: 'all 200ms ease',
                       }}
                     >
-                      {t('map.daysShort.' + dk)}
+                      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.75 }}>
+                        {isToday ? t('map.today').slice(0, 3)
+                          : d.toLocaleDateString(loc, { weekday: 'short' }).replace('.', '')}
+                      </span>
+                      <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1.1 }}>
+                        {d.getDate()}
+                      </span>
+                      <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.7 }}>
+                        {d.toLocaleDateString(loc, { month: 'short' }).replace('.', '')}
+                      </span>
                     </button>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-              <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx < DAY_KEYS.length - 1 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>›</div>
-              <button
-                onPointerDown={e => e.stopPropagation()}
-                onClick={() => setTimelineOpen(false)}
-                style={{ flex: '0 0 24px', color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16, background: 'transparent', border: 'none', cursor: 'pointer' }}
-              >
-                ×
-              </button>
             </div>
-          )
-        }
+            <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx < DAYS_COUNT - 1 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>›</div>
+            <button
+              onPointerDown={e => e.stopPropagation()}
+              onClick={() => setTimelineOpen(false)}
+              style={{ flex: '0 0 24px', color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >×</button>
+          </div>
+        )}
       </div>
 
       {/* ADD button */}

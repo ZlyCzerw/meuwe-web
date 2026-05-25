@@ -12,14 +12,7 @@ const es: Resources = {
     search: 'Busca un lugar…',
     empty: 'Todo tranquilo aquí…',
     emptyCta: '¡sé el primero!',
-    days: {
-      yesterday: 'Ayer', today: 'Hoy', tomorrow: 'Mañana',
-      friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo',
-    },
-    daysShort: {
-      yesterday: 'Ayer', today: 'Hoy', tomorrow: 'Mañ',
-      friday: 'Vie', saturday: 'Sáb', sunday: 'Dom',
-    },
+    today: 'Hoy', yesterday: 'Ayer',
   },
   event: {
     organizer: 'Organizador',
