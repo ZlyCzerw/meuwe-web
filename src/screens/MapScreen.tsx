@@ -49,6 +49,7 @@ function MapScreen({
   const pinsRef = useRef<Record<string, L.Marker>>({})
   const userPosRef = useRef<{ lat: number; lng: number } | null>(userPos)
   useEffect(() => { userPosRef.current = userPos }, [userPos])
+  const centeredRef = useRef(false) // track if we've done the initial center
 
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
@@ -89,14 +90,22 @@ function MapScreen({
     return () => { map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Me marker — update on userPos change
+  // Me marker — update on userPos change; center map only on first GPS fix
   useEffect(() => {
     const map = leafRef.current
     if (!userPos || !map) return
-    if (meRef.current) { meRef.current.remove(); meRef.current = null }
-    const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
-    meRef.current = L.marker([userPos.lat, userPos.lng], { icon, zIndexOffset: 1000 }).addTo(map)
-    map.setView([userPos.lat, userPos.lng], 15, { animate: true })
+    // Update marker position
+    if (meRef.current) {
+      meRef.current.setLatLng([userPos.lat, userPos.lng])
+    } else {
+      const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
+      meRef.current = L.marker([userPos.lat, userPos.lng], { icon, zIndexOffset: 1000 }).addTo(map)
+    }
+    // Center map only once on first GPS fix
+    if (!centeredRef.current) {
+      centeredRef.current = true
+      map.setView([userPos.lat, userPos.lng], 15, { animate: true })
+    }
   }, [userPos])
 
   // Pins — update on events change

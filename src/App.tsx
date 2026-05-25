@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
-import { getCurrentPosition } from './lib/geo'
 import { refineLangByGeo } from './lib/i18n'
 import type { EventWithMeta, EventWithMsgCount } from './lib/types'
 import Welcome from './screens/Welcome'
@@ -30,10 +29,16 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
 
-  // On mount: refine language by geo and get position
+  // On mount: refine language by geo and watch position
   useEffect(() => {
     refineLangByGeo()
-    getCurrentPosition().then(p => { if (p) setUserPos(p) })
+    if (!navigator.geolocation) return
+    const watchId = navigator.geolocation.watchPosition(
+      p => setUserPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
+    )
+    return () => navigator.geolocation.clearWatch(watchId)
   }, [])
 
   // Initial routing once session is resolved
