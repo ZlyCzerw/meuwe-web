@@ -30,6 +30,7 @@ export default function App() {
   const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
   const [pickingLocation, setPickingLocation] = useState(false)
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
+  const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
 
   // On mount: refine language by geo and watch position
   useEffect(() => {
@@ -65,6 +66,8 @@ export default function App() {
 
   function handleSubmit(_data: unknown) {
     setCreateOpen(false)
+    setCreatePos(null)
+    setEventsRefreshKey(k => k + 1)
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 900)
     showToast(t('create.added'))
@@ -131,6 +134,7 @@ export default function App() {
         onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false) }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
+        eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation}
         onLocationPicked={pos => {
           setCreatePos(pos)

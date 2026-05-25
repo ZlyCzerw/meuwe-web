@@ -34,6 +34,7 @@ function MapScreen({
   userPos,
   pickingLocation,
   onLocationPicked,
+  eventsRefreshKey,
 }: {
   session: Session | null
   profile: Profile | null
@@ -44,6 +45,7 @@ function MapScreen({
   userPos: { lat: number; lng: number } | null
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
+  eventsRefreshKey?: number
 }) {
   const { t } = useTranslation()
 
@@ -59,7 +61,7 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
 
-  const { events, loading } = useEvents(userPos || WARSAW, dayIdxToOffset(dayIdx))
+  const { events, loading } = useEvents(userPos || WARSAW, dayIdxToOffset(dayIdx), eventsRefreshKey)
 
   // Timeline drag
   const tlDrag = useRef({ startX: 0, base: 0, on: false })
