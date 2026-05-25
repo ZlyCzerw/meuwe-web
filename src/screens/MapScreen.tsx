@@ -179,7 +179,7 @@ function MapScreen({
       {/* Recenter button */}
       {recenter && (
         <button onClick={doRecenter} style={{
-          position: 'absolute', bottom: 180, right: 16, zIndex: 10,
+          position: 'absolute', bottom: 180, right: 16, zIndex: 20,
           width: 48, height: 48, borderRadius: '50%',
           background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
