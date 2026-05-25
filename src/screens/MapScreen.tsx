@@ -60,8 +60,11 @@ function MapScreen({
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
+  const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { events, loading } = useEvents(userPos || WARSAW, dayIdxToOffset(dayIdx), eventsRefreshKey)
+  const eventsPos = mapCenter || userPos || WARSAW
+  const { events, loading } = useEvents(eventsPos, dayIdxToOffset(dayIdx), eventsRefreshKey)
 
   // Timeline drag
   const tlDrag = useRef({ startX: 0, base: 0, on: false })
@@ -88,9 +91,12 @@ function MapScreen({
     }).addTo(map)
     map.on('moveend', () => {
       const up = userPosRef.current
-      if (!up) return
       const center = map.getCenter()
-      setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
+      if (up) setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
+      if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
+      moveTimerRef.current = setTimeout(() => {
+        setMapCenter({ lat: center.lat, lng: center.lng })
+      }, 1000)
     })
     leafRef.current = map
     return () => { map.remove(); leafRef.current = null }
