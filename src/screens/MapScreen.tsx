@@ -99,7 +99,14 @@ function MapScreen({
       }, 1000)
     })
     leafRef.current = map
-    return () => { map.remove(); leafRef.current = null }
+    // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
+    // add the me marker immediately using the always-current ref.
+    const pos = userPosRef.current
+    if (pos && !meRef.current) {
+      const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
+      meRef.current = L.marker([pos.lat, pos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
+    }
+    return () => { meRef.current = null; map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Me marker — update on userPos change; center map only on first GPS fix
