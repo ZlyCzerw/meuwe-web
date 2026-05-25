@@ -32,6 +32,8 @@ function MapScreen({
   onOpenEvent,
   onAuthNeeded,
   userPos,
+  pickingLocation,
+  onLocationPicked,
 }: {
   session: Session | null
   profile: Profile | null
@@ -40,6 +42,8 @@ function MapScreen({
   onOpenEvent: (ev: EventWithMeta) => void
   onAuthNeeded: () => void
   userPos: { lat: number; lng: number } | null
+  pickingLocation?: boolean
+  onLocationPicked?: (pos: { lat: number; lng: number }) => void
 }) {
   const { t } = useTranslation()
 
@@ -258,8 +262,84 @@ function MapScreen({
         <AddButton size={76} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
       </div>
 
+      {/* Location picker overlay */}
+      {pickingLocation && (
+        <>
+          {/* Top banner */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
+            padding: '52px 20px 16px',
+            background: 'linear-gradient(180deg, rgba(255,246,236,0.97) 0%, rgba(255,246,236,0.85) 100%)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <button
+              onClick={() => onLocationPicked?.(userPos || WARSAW)}
+              style={{
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: '#fff', border: `2px solid ${INK}22`,
+                fontSize: 18, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >‹</button>
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 17, color: C.ink }}>
+                Wybierz miejsce
+              </div>
+              <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
+                Przesuń mapę, aby wybrać lokalizację
+              </div>
+            </div>
+            <div style={{ width: 40 }} />
+          </div>
+
+          {/* Crosshair pin — always at center */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', zIndex: 25,
+            transform: 'translate(-50%, -100%)',
+            pointerEvents: 'none',
+          }}>
+            {/* Pin body */}
+            <div style={{
+              width: 36, height: 36, borderRadius: '50% 50% 50% 0',
+              background: C.primary, border: `3px solid ${INK}`,
+              transform: 'rotate(-45deg)',
+              boxShadow: '0 4px 12px rgba(255,122,69,0.45)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{ transform: 'rotate(45deg)', width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />
+            </div>
+            {/* Shadow */}
+            <div style={{
+              width: 12, height: 4, borderRadius: '50%',
+              background: 'rgba(45,43,42,0.25)', margin: '2px auto 0',
+            }} />
+          </div>
+
+          {/* Confirm button */}
+          <div style={{
+            position: 'absolute', bottom: 48, left: 0, right: 0,
+            display: 'flex', justifyContent: 'center', zIndex: 30,
+          }}>
+            <button
+              onClick={() => {
+                const center = leafRef.current?.getCenter()
+                if (center) onLocationPicked?.({ lat: center.lat, lng: center.lng })
+              }}
+              style={{
+                padding: '16px 40px', borderRadius: 999,
+                background: C.primary, color: '#fff',
+                fontSize: 16, fontWeight: 800,
+                border: `2.5px solid ${INK}`,
+                boxShadow: '0 8px 20px rgba(255,122,69,0.35)',
+              }}
+            >
+              Potwierdź miejsce
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Empty state */}
-      {events.length === 0 && !loading && (
+      {events.length === 0 && !loading && !pickingLocation && (
         <div style={{
           position: 'absolute', top: '38%', left: '50%',
           transform: 'translate(-50%,-50%)',

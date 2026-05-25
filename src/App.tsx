@@ -28,6 +28,8 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
+  const [pickingLocation, setPickingLocation] = useState(false)
+  const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
 
   // On mount: refine language by geo and watch position
   useEffect(() => {
@@ -129,6 +131,12 @@ export default function App() {
         onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false) }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
+        pickingLocation={pickingLocation}
+        onLocationPicked={pos => {
+          setCreatePos(pos)
+          setPickingLocation(false)
+          setCreateOpen(true)
+        }}
       />
       {selEvent && (
         <EventSheet
@@ -142,7 +150,8 @@ export default function App() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onSubmit={handleSubmit}
-        defaultPos={userPos}
+        defaultPos={createPos || userPos}
+        onPickLocation={() => { setCreateOpen(false); setPickingLocation(true) }}
       />
       <Toast visible={!!toast} label={toast || ''} />
       <ProfilePanel

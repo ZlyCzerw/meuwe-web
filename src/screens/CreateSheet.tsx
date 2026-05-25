@@ -12,11 +12,13 @@ function CreateSheet({
   onClose,
   onSubmit,
   defaultPos,
+  onPickLocation,
 }: {
   open: boolean
   onClose: () => void
   onSubmit: (data: unknown) => void
   defaultPos: { lat: number; lng: number } | null
+  onPickLocation: () => void
 }) {
   const { t } = useTranslation()
   const [title, setTitle] = useState('')
@@ -131,10 +133,18 @@ function CreateSheet({
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 100px' }}>
         {/* Mini-map preview */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          padding: 10, borderRadius: 20, background: C.cream, marginBottom: 18,
-        }}>
+        <button
+          onClick={onPickLocation}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: 10, borderRadius: 20, background: C.cream, marginBottom: 18,
+            width: '100%', textAlign: 'left', cursor: 'pointer',
+            border: `2px solid transparent`,
+            transition: 'border-color 180ms ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = `${C.primary}55`)}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+        >
           <div style={{
             width: 76, height: 76, borderRadius: 16, overflow: 'hidden',
             position: 'relative', flexShrink: 0, background: C.cream,
@@ -162,7 +172,8 @@ function CreateSheet({
               {t('create.gpsBased')}
             </div>
           </div>
-        </div>
+          <div style={{ fontSize: 18, color: C.inkSoft, flexShrink: 0 }}>›</div>
+        </button>
 
         {/* Title input */}
         <input
