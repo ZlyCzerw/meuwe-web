@@ -7,8 +7,9 @@ export function useEvents(pos: { lat: number; lng: number } | null, dayOffset: n
   const [loading, setLoading] = useState(true)
   const chanRef = useRef<ReturnType<typeof db.subscribeEvents> | null>(null)
 
-  const lat = pos?.lat ?? null
-  const lng = pos?.lng ?? null
+  // Round to 4 decimal places (~11m) to avoid refetching on tiny GPS jitter
+  const lat = pos != null ? Math.round(pos.lat * 1e4) / 1e4 : null
+  const lng = pos != null ? Math.round(pos.lng * 1e4) / 1e4 : null
 
   const load = useCallback(async () => {
     if (lat === null || lng === null) return
