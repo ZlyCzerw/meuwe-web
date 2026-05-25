@@ -129,9 +129,9 @@ export default function App() {
       <MapScreen
         session={session}
         profile={profile}
-        onOpenProfile={() => setProfileOpen(true)}
+        onOpenProfile={() => { setProfileOpen(true); setSelEvent(null) }}
         onOpenCreate={() => { setSelEvent(null); setCreateOpen(true) }}
-        onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false) }}
+        onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
         eventsRefreshKey={eventsRefreshKey}
