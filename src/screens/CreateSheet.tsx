@@ -15,13 +15,12 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
     )
     const d = await r.json()
     const a = d.address || {}
-    return (
-      [a.road, a.house_number].filter(Boolean).join(' ') ||
-      a.suburb || a.city_district || a.quarter || a.neighbourhood ||
-      a.city || a.town || a.village ||
-      d.display_name?.split(',')[0] ||
-      null
-    )
+    const street = [a.road, a.house_number].filter(Boolean).join(' ')
+    const city = a.city || a.town || a.village || a.municipality || ''
+    if (street && city) return `${street}, ${city}`
+    if (street) return street
+    if (city) return city
+    return d.display_name?.split(',')[0] || null
   } catch {
     return null
   }
