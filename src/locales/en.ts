@@ -53,7 +53,12 @@ const en: Resources = {
     signOut: 'Sign out',
     language: 'Language',
   },
-  tags: { party: 'party', outdoor: 'picnic', family: 'family', culture: 'concert', sport: 'sport', food: 'food' },
+  tags: {
+    party: 'party', outdoor: 'outdoor', family: 'family', culture: 'culture', sport: 'sport', food: 'food',
+    music: 'music', art: 'art', film: 'film', gaming: 'gaming', tech: 'tech', nature: 'nature',
+    travel: 'travel', yoga: 'yoga', dance: 'dance', comedy: 'comedy', kids: 'kids', pets: 'pets',
+    volunteering: 'volunteering', workshop: 'workshop',
+  },
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
 }
 

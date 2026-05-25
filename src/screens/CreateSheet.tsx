@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
+import TagPickerModal from '../components/TagPickerModal'
 import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
 
-const suggested = ['outdoor', 'culture', 'party', 'family', 'sport', 'food']
+const QUICK_TAGS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
 
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
@@ -47,6 +48,7 @@ function CreateSheet({
   const [desc, setDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState('')
+  const [tagModalOpen, setTagModalOpen] = useState(false)
   const [photos, setPhotos] = useState<Array<{ file: File; preview: string } | null>>([null, null, null])
   const [startTime, setStartTime] = useState<string>(
     () => new Date().toISOString().slice(0, 16)
@@ -323,50 +325,44 @@ function CreateSheet({
 
         {/* Tags section */}
         <div style={{ marginBottom: 22 }}>
-          <div
-            style={{
-              fontSize: 11,
-              color: C.inkSoft,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: 0.6,
-              marginBottom: 8,
-            }}
-          >
+          <div style={{
+            fontSize: 11, color: C.inkSoft, fontWeight: 800,
+            textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8,
+          }}>
             {t('create.tags')}
           </div>
-          {tags.length > 0 && (
-            <div
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {/* Quick picks */}
+            {QUICK_TAGS.filter(tag => !tags.includes(tag)).map(tag => (
+              <TagChip key={tag} category={tag} onClick={() => setTags([...tags, tag])} />
+            ))}
+            {/* Selected tags */}
+            {tags.map(tag => (
+              <TagChip key={tag} category={tag} selected removable onRemove={() => setTags(tags.filter(x => x !== tag))} />
+            ))}
+            {/* More button */}
+            <button
+              onClick={() => setTagModalOpen(true)}
               style={{
-                display: 'flex',
-                gap: 6,
-                flexWrap: 'wrap',
-                marginBottom: 8,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '6px 12px', borderRadius: 999,
+                background: C.cream, color: C.inkSoft,
+                fontSize: 13, fontWeight: 800,
+                border: `2px solid ${C.inkSoft}44`,
               }}
             >
-              {tags.map(tag => (
-                <TagChip
-                  key={tag}
-                  category={tag}
-                  selected
-                  removable
-                  onRemove={() => setTags(tags.filter(x => x !== tag))}
-                />
-              ))}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {suggested
-              .filter(tag => !tags.includes(tag))
-              .map(tag => (
-                <TagChip
-                  key={tag}
-                  category={tag}
-                  onClick={() => setTags([...tags, tag])}
-                />
-              ))}
+              <span style={{ fontSize: 15 }}>＋</span> więcej
+            </button>
           </div>
         </div>
+
+        {tagModalOpen && (
+          <TagPickerModal
+            selected={tags}
+            onChange={setTags}
+            onClose={() => setTagModalOpen(false)}
+          />
+        )}
 
         {/* Time section */}
         <button

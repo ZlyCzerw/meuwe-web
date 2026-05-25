@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import TagChip from '../components/TagChip'
-import { C, INK, F } from '../lib/tokens'
+import TagPickerModal from '../components/TagPickerModal'
+import { C, INK, F, ALL_CATEGORIES } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import i18n, { setLanguage } from '../lib/i18n'
 import type { Profile, Lang } from '../lib/types'
 
-const ALL_TAGS = ['party', 'outdoor', 'family', 'culture', 'sport', 'food']
+const QUICK_INTERESTS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
 
 function ProfilePanel({
   open,
@@ -32,6 +33,7 @@ function ProfilePanel({
 
   const [radius, setRadius] = useState<number>(profile?.radius_km ?? 10)
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? [])
+  const [interestModalOpen, setInterestModalOpen] = useState(false)
 
   // Sync local state when profile loads / changes
   useEffect(() => {
@@ -212,38 +214,47 @@ function ProfilePanel({
             <>
               {/* Interests */}
               <div style={{ marginTop: 28 }}>
-                <div
-                  style={{
-                    fontFamily: F.display,
-                    fontSize: 17,
-                    fontWeight: 800,
-                    color: C.ink,
-                  }}
-                >
+                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
                   {t('profile.interests')}
                 </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: C.inkSoft,
-                    marginTop: 4,
-                    marginBottom: 12,
-                    fontWeight: 600,
-                  }}
-                >
+                <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 4, marginBottom: 12, fontWeight: 600 }}>
                   {t('profile.interestsHint')}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {ALL_TAGS.map(tag => (
-                    <TagChip
-                      key={tag}
-                      category={tag}
-                      selected={interests.includes(tag)}
-                      onClick={() => handleToggleInterest(tag)}
-                    />
+                  {/* Quick picks (unselected) */}
+                  {QUICK_INTERESTS.filter(tag => !interests.includes(tag)).map(tag => (
+                    <TagChip key={tag} category={tag} onClick={() => handleToggleInterest(tag)} />
                   ))}
+                  {/* All selected interests */}
+                  {interests.map(tag => (
+                    <TagChip key={tag} category={tag} selected removable onRemove={() => handleToggleInterest(tag)} />
+                  ))}
+                  {/* More button */}
+                  <button
+                    onClick={() => setInterestModalOpen(true)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '6px 12px', borderRadius: 999,
+                      background: '#fff', color: C.inkSoft,
+                      fontSize: 13, fontWeight: 800,
+                      border: `2px solid ${C.inkSoft}44`,
+                    }}
+                  >
+                    <span style={{ fontSize: 15 }}>＋</span> więcej
+                  </button>
                 </div>
               </div>
+
+              {interestModalOpen && (
+                <TagPickerModal
+                  selected={interests}
+                  onChange={newTags => {
+                    setInterests(newTags)
+                    if (session) db.upsertProfile({ id: session.user.id, interests: newTags }).then(() => reloadProfile())
+                  }}
+                  onClose={() => setInterestModalOpen(false)}
+                />
+              )}
 
               {/* Radius */}
               <div style={{ marginTop: 28 }}>
