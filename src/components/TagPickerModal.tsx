@@ -96,7 +96,7 @@ export default function TagPickerModal({
                     transform: isOn ? 'scale(1.05)' : 'scale(1)',
                   }}
                 >
-                  <span style={{ fontSize: 15 }}>{meta.glyph}</span>
+                  <span style={{ fontSize: 15, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
                   <span>{t('tags.' + cat)}</span>
                 </button>
               )

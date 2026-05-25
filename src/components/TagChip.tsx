@@ -37,7 +37,7 @@ export default function TagChip({
         transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
-      <span style={{ fontSize: 14, lineHeight: 1 }}>{meta.glyph}</span>
+      <span style={{ fontSize: 14, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
       <span>{text}</span>
       {removable && (
         <span
