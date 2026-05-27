@@ -118,8 +118,16 @@ export const db = {
     const unique=[...new Set((data||[]).map((r:any)=>r.tag as string))]
     return unique
   },
-  async endEvent(eventId:string) {
-    return supabase.from('events').update({status:'ended'}).eq('id',eventId)
+  async endEvent(eventId: string) {
+    const sess = await this.getSession()
+    if (!sess) return { data: null, error: { message: 'not authenticated' } }
+    // `.eq('creator_id', sess.user.id)` is a defense-in-depth check.
+    // The DB already enforces this via RLS (events_update policy).
+    return supabase
+      .from('events')
+      .update({ status: 'ended' })
+      .eq('id', eventId)
+      .eq('creator_id', sess.user.id)
   },
   async getMessages(eid:string,limit=60):Promise<Message[]> {
     const {data}=await supabase.from('event_messages').select('*').eq('event_id',eid).order('created_at',{ascending:true}).limit(limit)

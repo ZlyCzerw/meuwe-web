@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { isOnDay } from './supabase'
+import { describe, it, expect, vi } from 'vitest'
+import { isOnDay, db, supabase } from './supabase'
 
 describe('isOnDay', () => {
   const base = new Date('2026-05-23T12:00:00')
@@ -36,5 +36,16 @@ describe('getMyEvents mapping', () => {
     const countMap: Record<string, number> = {}
     const msgCount = countMap['event-X'] ?? 0
     expect(msgCount).toBe(0)
+  })
+})
+
+describe('db.endEvent', () => {
+  it('returns error when session is null', async () => {
+    // Mock getSession to return null session
+    const mockGetSession = vi.fn().mockResolvedValue({ data: { session: null }, error: null })
+    vi.spyOn(supabase.auth, 'getSession').mockImplementation(mockGetSession)
+
+    const result = await db.endEvent('some-event-id')
+    expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
   })
 })
