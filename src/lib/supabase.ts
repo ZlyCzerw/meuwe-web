@@ -85,35 +85,36 @@ export const db = {
     if(!error && ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data!.id,tag})))
     return {data,error}
   },
-  async getMyEvents(userId:string):Promise<EventWithMsgCount[]> {
-    const {data,error}=await supabase.from('events')
+  async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {
+    const { data, error } = await supabase
+      .from('events')
       .select('*, event_tags(tag)')
-      .eq('creator_id',userId)
-      .order('start_time',{ascending:false})
-    if(error){console.error(error);return[]}
+      .eq('creator_id', userId)
+      .order('start_time', { ascending: false })
+    if (error) { console.error(error); return [] }
 
-    // Get message counts separately — event_messages(count) selects a literal
-    // column named "count" (which doesn't exist), not a COUNT aggregate.
-    const eventIds=(data||[]).map((e:any)=>e.id)
-    let countMap:Record<string,number>={}
-    if(eventIds.length>0){
-      const {data:counts}=await supabase.from('event_messages')
-        .select('event_id')
-        .in('event_id',eventIds)
-      if(counts){
-        counts.forEach((r:any)=>{
-          countMap[r.event_id]=(countMap[r.event_id]||0)+1
+    const eventIds = (data || []).map((e: any) => e.id)
+    let countMap: Record<string, number> = {}
+
+    if (eventIds.length > 0) {
+      // Single SQL COUNT query via RPC — replaces fetching all message rows
+      const { data: counts, error: countErr } = await supabase
+        .rpc('get_event_message_counts', { event_ids: eventIds })
+      if (countErr) console.error('[getMyEvents] count rpc error:', countErr)
+      if (counts) {
+        ;(counts as { event_id: string; msg_count: number }[]).forEach(r => {
+          countMap[r.event_id] = r.msg_count
         })
       }
     }
 
-    return (data||[]).map((e:any)=>({
+    return (data || []).map((e: any) => ({
       ...e,
-      tags:(e.event_tags||[]).map((t:any)=>t.tag),
-      distKm:0,
-      distStr:'',
-      profiles:null,
-      msgCount:countMap[e.id]??0,
+      tags: (e.event_tags || []).map((t: any) => t.tag),
+      distKm: 0,
+      distStr: '',
+      profiles: null,
+      msgCount: countMap[e.id] ?? 0,
     })) as EventWithMsgCount[]
   },
   upsertTag(name:string):string {
