@@ -44,6 +44,7 @@ function EventSheet({
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
+  const lastSendRef = useRef<number>(0)
 
   const isFull = snap === 'full'
   const isPeek = snap === 'peek'
@@ -86,6 +87,9 @@ function EventSheet({
 
   async function send() {
     if (!input.trim() || !session) return
+    const now = Date.now()
+    if (now - lastSendRef.current < 1500) return   // 1.5 s cooldown
+    lastSendRef.current = now
     const text = input.trim()
     setInput('')
     setSendErr('')
