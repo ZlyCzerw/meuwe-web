@@ -55,6 +55,12 @@ const en: Resources = {
     photoSizeError: 'Image cannot exceed 6 MB',
     photoUploadError: 'Photo upload error',
     timeError: 'End time must be after start time',
+    timeLabel: 'Time',
+    timeNow: 'Now',
+    timeIn24h: 'in 24h',
+    timePick: 'Set hours',
+    timeFrom: 'FROM',
+    timeTo: 'TO',
   },
   profile: {
     guest: 'Guest',

@@ -414,10 +414,10 @@ function CreateSheet({
               <div style={{
                 fontSize: 11, color: C.inkSoft, fontWeight: 800,
                 textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2,
-              }}>Czas</div>
+              }}>{t('create.timeLabel')}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
-                {timeExpanded ? 'Wybierz godziny' : (
-                  <>Teraz · <span style={{ color: C.primary }}>za 24h</span></>
+                {timeExpanded ? t('create.timePick') : (
+                  <>{t('create.timeNow')} · <span style={{ color: C.primary }}>{t('create.timeIn24h')}</span></>
                 )}
               </div>
             </div>
@@ -430,7 +430,7 @@ function CreateSheet({
           {timeExpanded && (
             <div style={{ marginTop: 14, display: 'flex', gap: 10 }} onClick={e => e.stopPropagation()}>
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
-                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>OD</div>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeFrom')}</div>
                 <input
                   type="datetime-local"
                   value={startTime}
@@ -439,7 +439,7 @@ function CreateSheet({
                 />
               </div>
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
-                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>DO</div>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeTo')}</div>
                 <input
                   type="datetime-local"
                   value={endTime}

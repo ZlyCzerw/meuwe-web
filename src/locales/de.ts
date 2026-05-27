@@ -55,6 +55,12 @@ const de: Resources = {
     photoSizeError: 'Bild darf 6 MB nicht überschreiten',
     photoUploadError: 'Fehler beim Hochladen des Fotos',
     timeError: 'Endzeit muss nach der Startzeit liegen',
+    timeLabel: 'Zeit',
+    timeNow: 'Jetzt',
+    timeIn24h: 'in 24h',
+    timePick: 'Stunden wählen',
+    timeFrom: 'VON',
+    timeTo: 'BIS',
   },
   profile: {
     guest: 'Gast',

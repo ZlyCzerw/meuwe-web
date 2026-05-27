@@ -55,6 +55,12 @@ const es: Resources = {
     photoSizeError: 'La imagen no puede superar 6 MB',
     photoUploadError: 'Error al subir la foto',
     timeError: 'La hora de fin debe ser posterior a la de inicio',
+    timeLabel: 'Hora',
+    timeNow: 'Ahora',
+    timeIn24h: 'en 24h',
+    timePick: 'Elige horas',
+    timeFrom: 'DESDE',
+    timeTo: 'HASTA',
   },
   profile: {
     guest: 'Invitado',

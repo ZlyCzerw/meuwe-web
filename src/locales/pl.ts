@@ -53,6 +53,12 @@ const pl = {
     photoSizeError: 'Zdjęcie nie może przekraczać 6 MB',
     photoUploadError: 'Błąd przesyłania zdjęcia',
     timeError: 'Czas zakończenia musi być po czasie rozpoczęcia',
+    timeLabel: 'Czas',
+    timeNow: 'Teraz',
+    timeIn24h: 'za 24h',
+    timePick: 'Wybierz godziny',
+    timeFrom: 'OD',
+    timeTo: 'DO',
   },
   profile: {
     guest: 'Gość',
