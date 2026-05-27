@@ -10,29 +10,37 @@ import TagChip from '../components/TagChip'
 import { C, INK, F, TAG_META } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
+import { haversineKm } from '../lib/geo'
+import { computeStatus } from '../lib/eventStatus'
 import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
 
 const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' }
 
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
 function EventSheet({
   event,
   onClose,
   session,
   profile,
+  userPos,
+  onLocate,
 }: {
   event: EventWithMeta
   onClose: () => void
   session: Session | null
   profile: { display_name: string | null; avatar_color: string | null } | null
+  userPos?: { lat: number; lng: number } | null
+  onLocate?: () => void
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const [sendErr, setSendErr] = useState('')
+  const [photoIdx, setPhotoIdx] = useState(0)
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -42,26 +50,50 @@ function EventSheet({
   const meta = TAG_META[event.category as Category] || TAG_META.party
   const loc = LOC_MAP[i18n.language] || 'en-US'
 
+  const computedStatus = computeStatus(event, messages)
+
+  const distStr = userPos
+    ? (() => {
+        const dk = haversineKm(userPos.lat, userPos.lng, event.lat, event.lng)
+        return dk < 1 ? `${Math.round(dk * 1000)} m` : `${dk.toFixed(1)} km`
+      })()
+    : null
+
   useEffect(() => {
     if (!event?.id) return
+    setSnap('half')
     db.getMessages(event.id).then(setMessages)
     db.unsub(chanRef.current)
     chanRef.current = db.subscribeMessages(event.id, m => setMessages(p => [...p, m]))
     return () => db.unsub(chanRef.current)
   }, [event?.id])
 
+  // Scroll to bottom in chat (full), to top in half view
   useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
-  }, [messages])
+    if (!listRef.current) return
+    if (isFull) {
+      listRef.current.scrollTop = listRef.current.scrollHeight
+    }
+  }, [messages, isFull])
+
+  // Reset scroll + photo when event opens or snap returns to half
+  useEffect(() => {
+    if (listRef.current && !isFull) listRef.current.scrollTop = 0
+  }, [event?.id, isFull])
+
+  // Reset photo index on new event
+  useEffect(() => { setPhotoIdx(0) }, [event?.id])
 
   async function send() {
     if (!input.trim() || !session) return
     const text = input.trim()
     setInput('')
+    setSendErr('')
     const authorName =
       profile?.display_name || session.user?.email?.split('@')[0] || '?'
     const authorColor = profile?.avatar_color || C.primary
-    await db.sendMessage(event.id, text, authorName, authorColor)
+    const result = await db.sendMessage(event.id, text, authorName, authorColor)
+    if (result?.error) setSendErr(t('event.sendError'))
   }
 
   async function handleEndEvent() {
@@ -118,8 +150,8 @@ function EventSheet({
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>{event.title}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <StatusPill status={event.status} size="sm" />
-                <span style={{ fontSize: 12, color: C.inkSoft, fontWeight: 700 }}>· {event.distStr || '—'}</span>
+                <StatusPill status={computedStatus} size="sm" />
+                <span style={{ fontSize: 12, color: C.inkSoft, fontWeight: 700 }}>· {distStr}</span>
               </div>
             </div>
             <button onClick={onClose} style={{
@@ -166,56 +198,145 @@ function EventSheet({
             >
               {!isFull && (
                 <>
+                  {/* Title */}
                   <div style={{
                     fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink,
-                    lineHeight: 1.15, marginBottom: 10, letterSpacing: -0.5,
+                    lineHeight: 1.15, marginBottom: 12, letterSpacing: -0.5,
                   }}>{event.title}</div>
+
+                  {/* Photo carousel */}
+                  {event.photos && event.photos.length > 0 && (
+                    <div style={{ position: 'relative', marginBottom: 16 }}>
+                      <img
+                        src={event.photos[Math.min(photoIdx, event.photos.length - 1)]}
+                        alt=""
+                        style={{
+                          width: '100%', height: 180, borderRadius: 20,
+                          objectFit: 'cover', display: 'block',
+                          border: `2px solid ${INK}11`,
+                        }}
+                      />
+                      {event.photos.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => setPhotoIdx(i => Math.max(0, i - 1))}
+                            disabled={photoIdx === 0}
+                            style={{
+                              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                              width: 32, height: 32, borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`,
+                              boxShadow: `0 2px 8px ${INK}22`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 16, fontWeight: 900, color: photoIdx === 0 ? C.inkSoft : C.ink,
+                              opacity: photoIdx === 0 ? 0.4 : 1,
+                              transition: 'opacity 150ms ease',
+                            }}
+                          >‹</button>
+                          <button
+                            onClick={() => setPhotoIdx(i => Math.min(event.photos!.length - 1, i + 1))}
+                            disabled={photoIdx === event.photos.length - 1}
+                            style={{
+                              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                              width: 32, height: 32, borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`,
+                              boxShadow: `0 2px 8px ${INK}22`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 16, fontWeight: 900, color: photoIdx === event.photos.length - 1 ? C.inkSoft : C.ink,
+                              opacity: photoIdx === event.photos.length - 1 ? 0.4 : 1,
+                              transition: 'opacity 150ms ease',
+                            }}
+                          >›</button>
+                          <div style={{
+                            position: 'absolute', bottom: 10, left: 0, right: 0,
+                            display: 'flex', justifyContent: 'center', gap: 5,
+                          }}>
+                            {event.photos.map((_, i) => (
+                              <div key={i} onClick={() => setPhotoIdx(i)} style={{
+                                width: i === photoIdx ? 18 : 6, height: 6, borderRadius: 999,
+                                background: i === photoIdx ? '#fff' : 'rgba(255,255,255,0.55)',
+                                border: `1.5px solid ${INK}33`,
+                                transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)',
+                                cursor: 'pointer',
+                              }} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {/* Date + distance — one line */}
                   <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12,
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'nowrap',
                   }}>
-                    <StatusPill status={event.status} />
+                    <StatusPill status={computedStatus} />
                     {event.start_time && (
-                      <span style={{ fontSize: 13, color: C.ink, fontWeight: 700 }}>
+                      <span style={{ fontSize: 13, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap' }}>
                         {new Date(event.start_time).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     )}
+                    <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
+                    <button
+                      onClick={onLocate}
+                      disabled={!onLocate}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        background: 'none', border: 'none', padding: 0,
+                        cursor: onLocate ? 'pointer' : 'default',
+                      }}
+                    >
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: C.primary, boxShadow: `0 0 0 3px ${C.primarySoft}` }} />
+                      <span style={{
+                        fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
+                        color: onLocate ? C.primary : C.inkSoft,
+                        textDecoration: onLocate ? 'underline' : 'none',
+                        textDecorationStyle: 'dotted',
+                        textUnderlineOffset: 3,
+                      }}>
+                        {t('event.distanceFrom', { dist: distStr })}
+                      </span>
+                    </button>
                   </div>
-                  <div style={{
-                    fontSize: 13, color: C.inkSoft, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14,
-                  }}>
-                    <div style={{
-                      width: 14, height: 14, borderRadius: '50%',
-                      background: C.primary, boxShadow: `0 0 0 4px ${C.primarySoft}`,
-                    }} />
-                    {t('event.distanceFrom', { dist: event.distStr || '—' })}{event.place_name && ` · ${event.place_name}`}
-                  </div>
-                  {event.tags?.length > 0 && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                      {event.tags.map(tag => <TagChip key={tag} category={tag} selected />)}
-                    </div>
-                  )}
-                  {event.photos && event.photos.length > 0 && (
-                    <div style={{
-                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16,
-                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
-                      paddingBottom: 4,
-                    }}>
-                      {event.photos.map((url, i) => (
-                        <img
-                          key={i}
-                          src={url}
-                          alt=""
-                          style={{
-                            width: 160, height: 120, borderRadius: 16,
-                            objectFit: 'cover', flexShrink: 0,
-                            scrollSnapAlign: 'start',
-                            border: `2px solid ${INK}11`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
+
+                  {/* Tags — single row, overflow → comic "…" chip */}
+                  {event.tags?.length > 0 && (() => {
+                    const MAX = 3
+                    const visible = event.tags.slice(0, MAX)
+                    const hidden = event.tags.length - MAX
+                    return (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 16, overflow: 'hidden' }}>
+                        {visible.map(tag => <TagChip key={tag} category={tag} selected />)}
+                        {hidden > 0 && (
+                          <div style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '5px 10px', borderRadius: 999,
+                            background: C.cream, border: `2.5px solid ${INK}`,
+                            boxShadow: `2px 2px 0 ${INK}`,
+                            fontSize: 12, fontWeight: 900, color: C.ink,
+                            letterSpacing: 1, lineHeight: 1,
+                            position: 'relative', flexShrink: 0,
+                          }}>
+                            +{hidden}
+                            {/* comic tail */}
+                            <div style={{
+                              position: 'absolute', bottom: -7, left: 10,
+                              width: 0, height: 0,
+                              borderLeft: '5px solid transparent',
+                              borderRight: '5px solid transparent',
+                              borderTop: `7px solid ${INK}`,
+                            }} />
+                            <div style={{
+                              position: 'absolute', bottom: -5, left: 11,
+                              width: 0, height: 0,
+                              borderLeft: '4px solid transparent',
+                              borderRight: '4px solid transparent',
+                              borderTop: `6px solid ${C.cream}`,
+                            }} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
                     borderRadius: 18, background: C.cream, marginBottom: 14,
@@ -238,10 +359,10 @@ function EventSheet({
                         padding: '4px 10px', borderRadius: 999,
                         background: C.primarySoft, color: C.primaryPress,
                         fontSize: 11, fontWeight: 800,
-                      }}>Moderator</span>
+                      }}>{t('event.moderator')}</span>
                     )}
                   </div>
-                  {session?.user.id === event.creator_id && event.status !== 'ended' && (
+                  {session?.user.id === event.creator_id && computedStatus !== 'ended' && (
                     <button
                       onClick={handleEndEvent}
                       style={{
@@ -252,7 +373,7 @@ function EventSheet({
                         fontSize: 14, fontWeight: 800,
                       }}
                     >
-                      Zakończ wydarzenie
+                      {t('event.endEvent')}
                     </button>
                   )}
                   {event.description && (
@@ -372,8 +493,15 @@ function EventSheet({
             {isFull && (
               <div style={{
                 padding: '12px 16px 28px', background: 'rgba(255,255,255,0.96)',
-                borderTop: '1px solid #F1E9DA', display: 'flex', gap: 10, alignItems: 'center',
+                borderTop: '1px solid #F1E9DA',
               }}>
+                {sendErr && (
+                  <div style={{
+                    marginBottom: 8, padding: '6px 12px', borderRadius: 10,
+                    background: '#FFE8E8', color: '#c0392b', fontSize: 12, fontWeight: 700,
+                  }}>{sendErr}</div>
+                )}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <div style={{
                   flex: 1, padding: '10px 18px', borderRadius: 999, background: C.cream,
                   display: 'flex', alignItems: 'center',
@@ -407,6 +535,7 @@ function EventSheet({
                     />
                   </svg>
                 </button>
+              </div>
               </div>
             )}
           </div>

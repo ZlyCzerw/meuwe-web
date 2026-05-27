@@ -76,7 +76,7 @@ function CreateSheet({
     const start = new Date(startTime)
     const end = new Date(endTime)
     if (end <= start) {
-      setErr('Czas zakończenia musi być po czasie rozpoczęcia')
+      setErr(t('create.timeError'))
       setSubmitting(false)
       return
     }
@@ -87,7 +87,7 @@ function CreateSheet({
       try {
         photoUrls = await Promise.all(files.map(p => db.uploadEventPhoto(p.file)))
       } catch (e) {
-        setErr('Błąd przesyłania zdjęcia: ' + (e instanceof Error ? e.message : String(e)))
+        setErr(t('create.photoUploadError') + ': ' + (e instanceof Error ? e.message : String(e)))
         setSubmitting(false)
         return
       }
@@ -216,10 +216,10 @@ function CreateSheet({
               fontSize: 14, fontWeight: 800, color: C.ink,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
-              {addressLoading ? 'Szukam adresu…' : pickedAddress || t('create.myLocation')}
+              {addressLoading ? t('common.loading') : pickedAddress || t('create.myLocation')}
             </div>
             <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
-              {pickedAddress ? 'Wybrana lokalizacja' : t('create.gpsBased')}
+              {pickedAddress ? t('map.pickLocation') : t('create.gpsBased')}
             </div>
           </div>
           <div style={{ fontSize: 18, color: C.inkSoft, flexShrink: 0 }}>›</div>
@@ -251,8 +251,8 @@ function CreateSheet({
           <div style={{
             fontSize: 11, color: C.inkSoft, fontWeight: 800,
             textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8,
-          }}>Zdjęcia</div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          }}>{t('create.photos')}</div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {[0, 1, 2].map(i => {
               const slot = photos[i]
               return (
@@ -265,12 +265,12 @@ function CreateSheet({
                       const file = e.target.files?.[0]
                       if (!file) return
                       if (!file.type.startsWith('image/')) {
-                        setErr('Plik musi być zdjęciem')
+                        setErr(t('create.photoError'))
                         e.target.value = ''
                         return
                       }
                       if (file.size > 6 * 1024 * 1024) {
-                        setErr('Zdjęcie nie może przekraczać 6 MB')
+                        setErr(t('create.photoSizeError'))
                         e.target.value = ''
                         return
                       }
@@ -320,6 +320,42 @@ function CreateSheet({
                 </label>
               )
             })}
+
+            {/* Camera button — hidden when all 3 slots filled */}
+            {photos.filter(p => p !== null).length < 3 && (
+              <label style={{ cursor: 'pointer', display: 'block', flexShrink: 0 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 6 * 1024 * 1024) { setErr(t('create.photoSizeError')); e.target.value = ''; return }
+                    setErr('')
+                    const preview = URL.createObjectURL(file)
+                    setPhotos(prev => {
+                      const next = [...prev] as typeof prev
+                      const emptyIdx = next.findIndex(s => s === null)
+                      if (emptyIdx !== -1) next[emptyIdx] = { file, preview }
+                      return next
+                    })
+                    e.target.value = ''
+                  }}
+                />
+                <div style={{
+                  width: 48, height: 48,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: C.inkSoft,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+              </label>
+            )}
           </div>
         </div>
 
@@ -351,7 +387,7 @@ function CreateSheet({
                 border: `2px solid ${C.inkSoft}44`,
               }}
             >
-              <span style={{ fontSize: 15 }}>＋</span> więcej
+              <span style={{ fontSize: 15 }}>＋</span> {t('tagPicker.addButton')}
             </button>
           </div>
         </div>

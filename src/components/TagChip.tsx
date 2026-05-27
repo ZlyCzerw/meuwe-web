@@ -18,8 +18,9 @@ export default function TagChip({
   onRemove?: () => void;
 }) {
   const { t } = useTranslation();
+  const isKnown = category in TAG_META;
   const meta = TAG_META[category as Category] || { color: C.berry, glyph: '✦' };
-  const text = label || t('tags.' + category);
+  const text = label ?? (isKnown ? t('tags.' + category) : category);
   return (
     <button
       onClick={onClick}

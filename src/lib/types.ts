@@ -1,6 +1,6 @@
 import type { Category } from './tokens'
 
-export type Lang = 'pl' | 'en' | 'es'
+export type Lang = 'pl' | 'en' | 'es' | 'de'
 export type EventStatus = 'live' | 'upcoming' | 'extended' | 'ended'
 
 export interface Profile {
@@ -9,8 +9,13 @@ export interface Profile {
   avatar_color: string | null
   radius_km: number | null
   interests: string[] | null
+  last_lat: number | null
+  last_lng: number | null
+  last_seen_at: string | null
   created_at: string
 }
+
+export type PushStatus = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'
 
 export interface EventRow {
   id: string

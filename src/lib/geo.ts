@@ -7,10 +7,13 @@ export function haversineKm(lat1:number,lng1:number,lat2:number,lng2:number):num
 }
 
 const ES_COUNTRIES = new Set(['ES','MX','AR','CO','CL','PE','VE','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PA','UY','GQ','PR'])
+const DE_COUNTRIES = new Set(['DE','AT','CH','LI'])
+
 export function countryToLang(code:string):Lang {
   const c=(code||'').toUpperCase()
   if (c==='PL') return 'pl'
   if (ES_COUNTRIES.has(c)) return 'es'
+  if (DE_COUNTRIES.has(c)) return 'de'
   return 'en'
 }
 

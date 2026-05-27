@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
-import { C, INK, F, ALL_CATEGORIES } from '../lib/tokens'
+import { C, INK, F } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import i18n, { setLanguage } from '../lib/i18n'
-import type { Profile, Lang } from '../lib/types'
-
-const QUICK_INTERESTS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
+import { subscribePush, unsubscribePush, getPushStatus } from '../lib/push'
+import type { Profile, Lang, PushStatus } from '../lib/types'
 
 function ProfilePanel({
   open,
@@ -34,12 +33,32 @@ function ProfilePanel({
   const [radius, setRadius] = useState<number>(profile?.radius_km ?? 10)
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? [])
   const [interestModalOpen, setInterestModalOpen] = useState(false)
+  const [pushStatus, setPushStatus] = useState<PushStatus>('unsubscribed')
+  const [pushLoading, setPushLoading] = useState(false)
 
   // Sync local state when profile loads / changes
   useEffect(() => {
     setRadius(profile?.radius_km ?? 10)
     setInterests(profile?.interests ?? [])
   }, [profile])
+
+  // Sprawdź stan push przy otwarciu panelu
+  useEffect(() => {
+    if (open && session) getPushStatus().then(setPushStatus)
+  }, [open, session])
+
+  async function handleTogglePush() {
+    if (!session) return
+    setPushLoading(true)
+    if (pushStatus === 'subscribed') {
+      await unsubscribePush()
+      setPushStatus('unsubscribed')
+    } else {
+      const status = await subscribePush(session.user.id)
+      setPushStatus(status)
+    }
+    setPushLoading(false)
+  }
 
   function handleRadiusChange(value: number) {
     setRadius(value)
@@ -221,15 +240,16 @@ function ProfilePanel({
                   {t('profile.interestsHint')}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {/* Quick picks (unselected) */}
-                  {QUICK_INTERESTS.filter(tag => !interests.includes(tag)).map(tag => (
-                    <TagChip key={tag} category={tag} onClick={() => handleToggleInterest(tag)} />
-                  ))}
-                  {/* All selected interests */}
+                  {/* Tylko zaznaczone zainteresowania */}
+                  {interests.length === 0 && (
+                    <div style={{ fontSize: 13, color: C.inkSoft, fontWeight: 600, fontStyle: 'italic' }}>
+                      Brak zainteresowań
+                    </div>
+                  )}
                   {interests.map(tag => (
                     <TagChip key={tag} category={tag} selected removable onRemove={() => handleToggleInterest(tag)} />
                   ))}
-                  {/* More button */}
+                  {/* Przycisk dodawania */}
                   <button
                     onClick={() => setInterestModalOpen(true)}
                     style={{
@@ -240,7 +260,7 @@ function ProfilePanel({
                       border: `2px solid ${C.inkSoft}44`,
                     }}
                   >
-                    <span style={{ fontSize: 15 }}>＋</span> więcej
+                    <span style={{ fontSize: 15 }}>＋</span> {t('tagPicker.addButton')}
                   </button>
                 </div>
               </div>
@@ -354,6 +374,83 @@ function ProfilePanel({
                 </div>
               </div>
 
+              {/* Push notifications */}
+              <div style={{ marginTop: 28 }}>
+                <div style={{
+                  fontFamily: F.display, fontSize: 17, fontWeight: 800,
+                  color: C.ink, marginBottom: 12,
+                }}>
+                  {t('profile.notifications')}
+                </div>
+                {pushStatus === 'unsupported' ? (
+                  <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
+                    {t('profile.notificationsUnsupported')}
+                  </div>
+                ) : pushStatus === 'denied' ? (
+                  <div style={{
+                    fontSize: 12, color: C.inkSoft, fontWeight: 600,
+                    padding: '10px 14px', borderRadius: 14, background: C.cream,
+                  }}>
+                    {t('profile.notificationsDenied')}
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleTogglePush}
+                    disabled={pushLoading}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '12px 16px', borderRadius: 20,
+                      background: pushStatus === 'subscribed' ? C.primarySoft : C.cream,
+                      border: `2px solid ${pushStatus === 'subscribed' ? C.primary : INK + '22'}`,
+                      cursor: pushLoading ? 'default' : 'pointer',
+                      transition: 'all 200ms ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>
+                        {pushStatus === 'subscribed' ? '🔔' : '🔕'}
+                      </span>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
+                          {pushStatus === 'subscribed'
+                            ? t('profile.notificationsOn')
+                            : t('profile.notificationsOff')}
+                        </div>
+                        <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 1 }}>
+                          {t('profile.notificationsHint')}
+                        </div>
+                      </div>
+                    </div>
+                    {pushLoading ? (
+                      <div style={{
+                        width: 20, height: 20, borderRadius: '50%',
+                        border: `2.5px solid ${C.inkSoft}44`,
+                        borderTopColor: C.primary,
+                        animation: 'spin 0.8s linear infinite',
+                        flexShrink: 0,
+                      }} />
+                    ) : (
+                      <div style={{
+                        width: 44, height: 24, borderRadius: 999,
+                        background: pushStatus === 'subscribed' ? C.primary : '#E0D8CF',
+                        border: `2px solid ${pushStatus === 'subscribed' ? INK : 'transparent'}`,
+                        position: 'relative', transition: 'all 200ms ease',
+                        flexShrink: 0,
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: 2,
+                          left: pushStatus === 'subscribed' ? 22 : 2,
+                          width: 16, height: 16, borderRadius: '50%',
+                          background: pushStatus === 'subscribed' ? '#fff' : C.inkSoft,
+                          transition: 'left 200ms cubic-bezier(0.34,1.56,0.64,1)',
+                        }} />
+                      </div>
+                    )}
+                  </button>
+                )}
+              </div>
+
               {/* Language switcher */}
               <div style={{ marginTop: 28 }}>
                 <div
@@ -368,7 +465,7 @@ function ProfilePanel({
                   {t('profile.language')}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(['pl', 'en', 'es'] as Lang[]).map(code => {
+                  {(['pl', 'en', 'de', 'es'] as Lang[]).map(code => {
                     const active = currentLang === code
                     return (
                       <button

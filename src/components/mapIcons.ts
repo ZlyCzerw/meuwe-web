@@ -1,9 +1,12 @@
 import { BLOBS, TAG_META, type Category } from '../lib/tokens'
+import { isCurrentlyLive } from '../lib/eventStatus'
 
-export function pinHTML(category: string, idx: number, status?: string): string {
+export function pinHTML(category: string, idx: number, _dbStatus?: string, startTime?: string, endTime?: string): string {
   const meta = TAG_META[category as Category] || TAG_META.party
   const path = BLOBS[idx % BLOBS.length]
-  const isLive = status === 'live' || status === 'extended'
+  const isLive = startTime && endTime
+    ? isCurrentlyLive({ start_time: startTime, end_time: endTime })
+    : false
   const halos = isLive ? `
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s ease-out infinite;opacity:0;pointer-events:none"></div>
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>

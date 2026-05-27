@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { C, INK, ALL_CATEGORIES, TAG_META } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
+import { db } from '../lib/supabase'
 
 export default function TagPickerModal({
   selected,
@@ -14,18 +15,22 @@ export default function TagPickerModal({
 }) {
   const { t } = useTranslation()
   const [custom, setCustom] = useState('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
+
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => { db.getTags().then(setSuggestions) }, [])
 
   function toggle(tag: string) {
     onChange(selected.includes(tag) ? selected.filter(x => x !== tag) : [...selected, tag])
   }
 
   function addCustom() {
-    const val = custom.trim().toLowerCase().replace(/\s+/g, '-')
-    if (!val || selected.includes(val)) { setCustom(''); return }
-    onChange([...selected, val])
+    const canonical = db.upsertTag(custom)
+    if (!canonical || selected.includes(canonical)) { setCustom(''); return }
+    onChange([...selected, canonical])
+    setSuggestions(prev => prev.includes(canonical) ? prev : [...prev, canonical].sort())
     setCustom('')
   }
 
@@ -104,11 +109,11 @@ export default function TagPickerModal({
 
             {/* Custom tags already added */}
             {selected
-              .filter(t => !ALL_CATEGORIES.includes(t as Category))
-              .map(tag => (
+              .filter(tag2 => !ALL_CATEGORIES.includes(tag2 as Category))
+              .map(tag2 => (
                 <button
-                  key={tag}
-                  onClick={() => toggle(tag)}
+                  key={tag2}
+                  onClick={() => toggle(tag2)}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '8px 14px', borderRadius: 999,
@@ -119,40 +124,71 @@ export default function TagPickerModal({
                   }}
                 >
                   <span style={{ fontSize: 15 }}>✏</span>
-                  <span>{tag}</span>
+                  <span>{tag2}</span>
                 </button>
               ))}
           </div>
 
           {/* Custom tag input */}
-          <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-            <input
-              ref={inputRef}
-              value={custom}
-              onChange={e => setCustom(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addCustom()}
-              placeholder="Własny tag…"
-              style={{
-                flex: 1, padding: '10px 16px', borderRadius: 999,
-                background: C.cream, fontSize: 14, fontWeight: 600,
-                border: `2px solid transparent`,
-                outline: 'none',
-              }}
-            />
-            <button
-              onClick={addCustom}
-              disabled={!custom.trim()}
-              style={{
-                padding: '10px 18px', borderRadius: 999,
-                background: custom.trim() ? C.primary : '#E8DFD0',
-                color: custom.trim() ? '#fff' : C.inkSoft,
-                fontSize: 14, fontWeight: 800,
-                border: `2px solid ${custom.trim() ? INK : 'transparent'}`,
-                transition: 'all 200ms ease',
-              }}
-            >
-              Dodaj
-            </button>
+          <div style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                ref={inputRef}
+                value={custom}
+                onChange={e => setCustom(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCustom()}
+                placeholder={t('tagPicker.customPlaceholder')}
+                style={{
+                  flex: 1, padding: '10px 16px', borderRadius: 999,
+                  background: C.cream, fontSize: 14, fontWeight: 600,
+                  border: `2px solid transparent`,
+                  outline: 'none',
+                }}
+              />
+              <button
+                onClick={addCustom}
+                disabled={!custom.trim()}
+                style={{
+                  padding: '10px 18px', borderRadius: 999,
+                  background: custom.trim() ? C.primary : '#E8DFD0',
+                  color: custom.trim() ? '#fff' : C.inkSoft,
+                  fontSize: 14, fontWeight: 800,
+                  border: `2px solid ${custom.trim() ? INK : 'transparent'}`,
+                  transition: 'all 200ms ease',
+                  minWidth: 72,
+                }}
+              >
+                {t('tagPicker.addButton')}
+              </button>
+            </div>
+
+            {/* Suggestions from DB */}
+            {(() => {
+              const filtered = suggestions.filter(s =>
+                !ALL_CATEGORIES.includes(s as Category) &&
+                !selected.includes(s) &&
+                (custom.trim() === '' || s.includes(custom.trim().toLowerCase().replace(/\s+/g, '-')))
+              )
+              if (filtered.length === 0) return null
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {filtered.slice(0, 12).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => { onChange([...selected, s]); setCustom('') }}
+                      style={{
+                        padding: '5px 12px', borderRadius: 999,
+                        background: C.cream, border: `1.5px solid ${INK}33`,
+                        fontSize: 12, fontWeight: 700, color: C.inkSoft,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                      }}
+                    >
+                      <span style={{ fontSize: 10, opacity: 0.6 }}>✏</span>{s}
+                    </button>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         </div>
 
@@ -168,7 +204,7 @@ export default function TagPickerModal({
               boxShadow: '0 6px 16px rgba(255,122,69,0.35)',
             }}
           >
-            Gotowe · {selected.length > 0 ? `${selected.length} wybranych` : 'brak'}
+            {t('tagPicker.done')} · {selected.length > 0 ? t('tagPicker.selectedCount', { count: selected.length }) : t('tagPicker.selectedNone')}
           </button>
         </div>
       </div>

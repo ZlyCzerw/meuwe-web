@@ -22,6 +22,14 @@ export const db = {
     const {data}=await supabase.from('profiles').select('*').eq('id',uid).single(); return data as Profile|null
   },
   async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p) },
+  async updateProfileLocation(uid:string, lat:number, lng:number) {
+    return supabase.from('profiles').upsert({
+      id: uid,
+      last_lat: lat,
+      last_lng: lng,
+      last_seen_at: new Date().toISOString(),
+    })
+  },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
     const {data,error}=await supabase.from('events')
@@ -95,6 +103,14 @@ export const db = {
       profiles:null,
       msgCount:countMap[e.id]??0,
     })) as EventWithMsgCount[]
+  },
+  upsertTag(name:string):string {
+    return name.trim().toLowerCase().replace(/\s+/g,'-')
+  },
+  async getTags():Promise<string[]> {
+    const {data}=await supabase.from('event_tags').select('tag').order('tag')
+    const unique=[...new Set((data||[]).map((r:any)=>r.tag as string))]
+    return unique
   },
   async endEvent(eventId:string) {
     return supabase.from('events').update({status:'ended'}).eq('id',eventId)

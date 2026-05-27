@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
 import { refineLangByGeo } from './lib/i18n'
+import { registerServiceWorker, refreshPushSubscription } from './lib/push'
 import type { EventWithMeta, EventWithMsgCount } from './lib/types'
 import Welcome from './screens/Welcome'
 import MapScreen from './screens/MapScreen'
@@ -32,6 +33,7 @@ export default function App() {
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
+  const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
 
   // On mount: refine language by geo and watch position
   useEffect(() => {
@@ -44,6 +46,36 @@ export default function App() {
     )
     return () => navigator.geolocation.clearWatch(watchId)
   }, [])
+
+  // Rejestruj service worker przy starcie
+  useEffect(() => {
+    registerServiceWorker().then(reg => {
+      if (!reg) return
+      // Nasłuchuj wiadomości od SW (OPEN_EVENT, PUSH_SUBSCRIPTION_CHANGED)
+      navigator.serviceWorker.addEventListener('message', e => {
+        const { type, eventId } = e.data || {}
+        if (type === 'OPEN_EVENT' && eventId) {
+          // TODO: otworzyć event po ID — wymaga dodania db.getEventById
+          // setSelEvent(...)
+        }
+        if (type === 'PUSH_SUBSCRIPTION_CHANGED' && session) {
+          refreshPushSubscription(session.user.id)
+        }
+      })
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Aktualizuj lokalizację w profilu co 5 minut gdy zalogowany
+  // (Edge Functions jej potrzebują do filtrowania "w okolicy")
+  useEffect(() => {
+    if (!session || !userPos) return
+    // Zapisz natychmiast przy pierwszym GPS fix
+    db.updateProfileLocation(session.user.id, userPos.lat, userPos.lng)
+    const interval = setInterval(() => {
+      db.updateProfileLocation(session.user.id, userPos.lat, userPos.lng)
+    }, 5 * 60_000)
+    return () => clearInterval(interval)
+  }, [session?.user.id, !!userPos]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial routing once session is resolved
   useEffect(() => {
@@ -120,6 +152,7 @@ export default function App() {
           onClose={() => setMyEventSelected(null)}
           session={session}
           profile={profile}
+          userPos={userPos}
         />
       )}
     </>
@@ -131,8 +164,10 @@ export default function App() {
       <MapScreen
         session={session}
         profile={profile}
-        onOpenProfile={() => { setProfileOpen(true); setSelEvent(null) }}
-        onOpenCreate={() => { setSelEvent(null); setCreateOpen(true) }}
+        onMapClick={() => { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) }}
+        onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
+        onOpenProfile={() => { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) }}
+        onOpenCreate={() => { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) }}
         onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
@@ -151,6 +186,8 @@ export default function App() {
           onClose={() => setSelEvent(null)}
           session={session}
           profile={profile}
+          userPos={userPos}
+          onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
         />
       )}
       <CreateSheet

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
-import { C, INK, F } from '../lib/tokens'
+import { C, INK, F, ALL_CATEGORIES, TAG_META } from '../lib/tokens'
+import type { Category } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm } from '../lib/geo'
@@ -15,7 +16,7 @@ const WARSAW = { lat: 52.2297, lng: 21.0122 }
 
 const DAYS_COUNT = 7          // yesterday + today + 5 future days
 const TODAY_IDX  = 1          // index 1 = today
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
 function idxToOffset(idx: number) { return idx - TODAY_IDX }  // 0→-1, 1→0, 2→+1 …
 
@@ -36,6 +37,8 @@ function MapScreen({
   pickingLocation,
   onLocationPicked,
   eventsRefreshKey,
+  onMapClick,
+  onRegisterFlyTo,
 }: {
   session: Session | null
   profile: Profile | null
@@ -47,6 +50,8 @@ function MapScreen({
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
   eventsRefreshKey?: number
+  onMapClick?: () => void
+  onRegisterFlyTo?: (fn: (lat: number, lng: number) => void) => void
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -57,16 +62,20 @@ function MapScreen({
   const pinsRef = useRef<Record<string, L.Marker>>({})
   const userPosRef = useRef<{ lat: number; lng: number } | null>(userPos)
   useEffect(() => { userPosRef.current = userPos }, [userPos])
+  const onMapClickRef = useRef(onMapClick)
+  useEffect(() => { onMapClickRef.current = onMapClick }, [onMapClick])
   const centeredRef = useRef(false) // track if we've done the initial center
 
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<Category | null>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const eventsPos = mapCenter || userPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey)
+  const visibleEvents = categoryFilter ? events.filter(e => e.category === categoryFilter) : events
 
   // Timeline drag
   const tlDrag = useRef({ startX: 0, base: 0, on: false })
@@ -85,12 +94,15 @@ function MapScreen({
   // Leaflet init — runs once
   useEffect(() => {
     if (leafRef.current || !mapRef.current) return
+    const initialPos = userPosRef.current
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([(userPos || WARSAW).lat, (userPos || WARSAW).lng], 15)
+      .setView([(initialPos || WARSAW).lat, (initialPos || WARSAW).lng], 15)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map)
+    map.on('click', () => onMapClickRef.current?.())
+    onRegisterFlyTo?.((lat, lng) => map.flyTo([lat, lng], 16, { duration: 0.7 }))
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
@@ -103,10 +115,10 @@ function MapScreen({
     leafRef.current = map
     // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
     // add the me marker immediately using the always-current ref.
-    const pos = userPosRef.current
-    if (pos && !meRef.current) {
+    if (initialPos && !meRef.current) {
       const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
-      meRef.current = L.marker([pos.lat, pos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
+      meRef.current = L.marker([initialPos.lat, initialPos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
+      centeredRef.current = true  // started on real GPS — no need to re-center later
     }
     return () => { meRef.current = null; map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -135,9 +147,9 @@ function MapScreen({
     if (!map) return
     Object.values(pinsRef.current).forEach(m => m.remove())
     pinsRef.current = {}
-    events.forEach((ev, i) => {
+    visibleEvents.forEach((ev, i) => {
       const icon = L.divIcon({
-        html: pinHTML(ev.category, i, ev.status),
+        html: pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time),
         className: 'meuwe-icon',
         iconSize: [44, 56],
         iconAnchor: [22, 56],
@@ -146,7 +158,7 @@ function MapScreen({
       m.on('click', () => onOpenEvent(ev))
       pinsRef.current[ev.id] = m
     })
-  }, [events]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function doRecenter() {
     const p = userPos || WARSAW
@@ -182,25 +194,81 @@ function MapScreen({
       )}
 
       {/* Avatar top-left */}
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <Avatar
-          size={48}
-          onClick={onOpenProfile}
-          initials={(profile?.display_name || session?.user?.email || '?')[0].toUpperCase()}
-          color={profile?.avatar_color || C.berry}
-          hasUnread={false}
-        />
-      </div>
+      {!pickingLocation && (
+        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+          <Avatar
+            size={48}
+            onClick={onOpenProfile}
+            initials={(profile?.display_name || session?.user?.email || '?')[0].toUpperCase()}
+            color={profile?.avatar_color || C.berry}
+            hasUnread={false}
+          />
+        </div>
+      )}
 
       {/* Search bar */}
-      <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10 }}>
-        <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
-      </div>
+      {!pickingLocation && (
+        <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10 }}>
+          <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+        </div>
+      )}
+
+      {/* Category filter bar */}
+      {!pickingLocation && (
+        <div style={{
+          position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10,
+          display: 'flex', overflowX: 'auto', gap: 8,
+          padding: '0 16px',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch' as any,
+        }}>
+          {/* All button */}
+          <button
+            onClick={() => setCategoryFilter(null)}
+            style={{
+              flexShrink: 0, padding: '6px 14px', borderRadius: 999,
+              background: !categoryFilter ? C.ink : '#fff',
+              color: !categoryFilter ? '#fff' : C.inkSoft,
+              fontSize: 12, fontWeight: 800,
+              border: `2px solid ${!categoryFilter ? C.ink : INK + '22'}`,
+              boxShadow: !categoryFilter ? `0 2px 0 ${INK}` : '0 2px 8px rgba(45,43,42,0.1)',
+              transition: 'all 180ms ease',
+              whiteSpace: 'nowrap',
+            }}
+          >{t('map.allCategories')}</button>
+
+          {ALL_CATEGORIES.map(cat => {
+            const meta = TAG_META[cat as Category]
+            const active = categoryFilter === cat
+            return (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(active ? null : cat as Category)}
+                style={{
+                  flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 999,
+                  background: active ? meta.color : '#fff',
+                  color: active ? '#fff' : C.ink,
+                  fontSize: 12, fontWeight: 800,
+                  border: `2px solid ${active ? C.ink : INK + '22'}`,
+                  boxShadow: active ? `0 2px 0 ${C.ink}` : '0 2px 8px rgba(45,43,42,0.1)',
+                  transition: 'all 180ms ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
+                {t('tags.' + cat)}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Recenter button */}
       {recenter && (
         <button onClick={doRecenter} style={{
-          position: 'absolute', bottom: 180, right: 16, zIndex: 20,
+          position: 'absolute', bottom: 53, right: 24, zIndex: 20,
           width: 48, height: 48, borderRadius: '50%',
           background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -210,7 +278,7 @@ function MapScreen({
       )}
 
       {/* Timeline */}
-      <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+      {!pickingLocation && <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
         {!timelineOpen ? (
           <button onClick={() => setTimelineOpen(true)} style={{
             padding: '10px 20px', borderRadius: 999,
@@ -294,12 +362,14 @@ function MapScreen({
             >×</button>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* ADD button */}
-      <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-        <AddButton size={76} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
-      </div>
+      {!pickingLocation && (
+        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+          <AddButton size={76} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
+        </div>
+      )}
 
       {/* Location picker overlay */}
       {pickingLocation && (
@@ -321,10 +391,10 @@ function MapScreen({
             >‹</button>
             <div style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 17, color: C.ink }}>
-                Wybierz miejsce
+                {t('map.pickLocation')}
               </div>
               <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
-                Przesuń mapę, aby wybrać lokalizację
+                {t('map.pickLocationHint')}
               </div>
             </div>
             <div style={{ width: 40 }} />
@@ -371,14 +441,14 @@ function MapScreen({
                 boxShadow: '0 8px 20px rgba(255,122,69,0.35)',
               }}
             >
-              Potwierdź miejsce
+              {t('map.confirmLocation')}
             </button>
           </div>
         </>
       )}
 
       {/* Empty state */}
-      {events.length === 0 && !loading && !pickingLocation && (
+      {visibleEvents.length === 0 && !loading && !pickingLocation && (
         <div style={{
           position: 'absolute', top: '38%', left: '50%',
           transform: 'translate(-50%,-50%)',

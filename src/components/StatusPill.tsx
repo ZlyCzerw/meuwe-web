@@ -5,7 +5,7 @@ export default function StatusPill({
   status = 'live',
   size = 'md',
 }: {
-  status?: 'live' | 'upcoming' | 'extended' | 'ended';
+  status?: 'live' | 'upcoming' | 'extended' | 'ended' | string;
   size?: 'sm' | 'md';
 }) {
   const { t } = useTranslation();
@@ -15,7 +15,7 @@ export default function StatusPill({
     extended: { bg: C.primary,  fg: '#fff',    pulse: false },
     ended:    { bg: '#D8D2C7',  fg: '#5C564E', pulse: false },
   };
-  const s = map[status] || map.live;
+  const s = map[status as keyof typeof map] || map.live;
   return (
     <span
       style={{
