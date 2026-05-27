@@ -1,29 +1,30 @@
 -- ============================================================
 -- RLS policies for: events, profiles, event_tags, event_messages
 -- Apply in Supabase Dashboard → SQL Editor → Run
+-- Idempotent: safe to run multiple times (drops existing policies first)
 -- ============================================================
 
 -- ── events ──────────────────────────────────────────────────
 
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 
--- Everyone can read events (map is public)
+DROP POLICY IF EXISTS "events_select" ON events;
 CREATE POLICY "events_select"
   ON events FOR SELECT
   USING (true);
 
--- Authenticated users can create events — they must be the creator
+DROP POLICY IF EXISTS "events_insert" ON events;
 CREATE POLICY "events_insert"
   ON events FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = creator_id);
 
--- Only the creator can update their event (e.g. mark as ended)
+DROP POLICY IF EXISTS "events_update" ON events;
 CREATE POLICY "events_update"
   ON events FOR UPDATE TO authenticated
   USING (auth.uid() = creator_id)
   WITH CHECK (auth.uid() = creator_id);
 
--- Only the creator can delete their event
+DROP POLICY IF EXISTS "events_delete" ON events;
 CREATE POLICY "events_delete"
   ON events FOR DELETE TO authenticated
   USING (auth.uid() = creator_id);
@@ -32,17 +33,17 @@ CREATE POLICY "events_delete"
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Everyone can read profiles (needed to display organizer name/avatar)
+DROP POLICY IF EXISTS "profiles_select" ON profiles;
 CREATE POLICY "profiles_select"
   ON profiles FOR SELECT
   USING (true);
 
--- Users can create only their own profile
+DROP POLICY IF EXISTS "profiles_insert" ON profiles;
 CREATE POLICY "profiles_insert"
   ON profiles FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = id);
 
--- Users can update only their own profile
+DROP POLICY IF EXISTS "profiles_update" ON profiles;
 CREATE POLICY "profiles_update"
   ON profiles FOR UPDATE TO authenticated
   USING (auth.uid() = id)
@@ -52,12 +53,12 @@ CREATE POLICY "profiles_update"
 
 ALTER TABLE event_tags ENABLE ROW LEVEL SECURITY;
 
--- Everyone can read tags (needed for event display and filtering)
+DROP POLICY IF EXISTS "event_tags_select" ON event_tags;
 CREATE POLICY "event_tags_select"
   ON event_tags FOR SELECT
   USING (true);
 
--- Only the event's creator can add tags to it
+DROP POLICY IF EXISTS "event_tags_insert" ON event_tags;
 CREATE POLICY "event_tags_insert"
   ON event_tags FOR INSERT TO authenticated
   WITH CHECK (
@@ -68,7 +69,7 @@ CREATE POLICY "event_tags_insert"
     )
   );
 
--- Only the event's creator can remove tags
+DROP POLICY IF EXISTS "event_tags_delete" ON event_tags;
 CREATE POLICY "event_tags_delete"
   ON event_tags FOR DELETE TO authenticated
   USING (
@@ -83,17 +84,17 @@ CREATE POLICY "event_tags_delete"
 
 ALTER TABLE event_messages ENABLE ROW LEVEL SECURITY;
 
--- Everyone can read messages (public chat, needed for Realtime)
+DROP POLICY IF EXISTS "event_messages_select" ON event_messages;
 CREATE POLICY "event_messages_select"
   ON event_messages FOR SELECT
   USING (true);
 
--- Authenticated users can post — they must be the author
+DROP POLICY IF EXISTS "event_messages_insert" ON event_messages;
 CREATE POLICY "event_messages_insert"
   ON event_messages FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = author_id);
 
--- Authors can delete their own messages
+DROP POLICY IF EXISTS "event_messages_delete" ON event_messages;
 CREATE POLICY "event_messages_delete"
-  ON event_messages FOR DELETE TO authenticated
+  ON event_messages FOR DELETE to authenticated
   USING (auth.uid() = author_id);
