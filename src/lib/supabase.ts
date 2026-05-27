@@ -2,8 +2,14 @@ import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm } from './geo'
 
-const SUPABASE_URL = 'https://bcfhsbnbvsuxsiwmeway.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjZmhzYm5idnN1eHNpd21ld2F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzM5NzgsImV4cCI6MjA5NDk0OTk3OH0.pA-qmhLr0ez3lZ_7WZb6kZGVQMgoMti3CkxM8fbFQbY'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error(
+    'Missing Supabase env vars. Copy .env.example to .env and fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  )
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
