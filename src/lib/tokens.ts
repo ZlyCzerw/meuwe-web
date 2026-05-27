@@ -31,6 +31,9 @@ export const ALL_CATEGORIES: Category[] = [
   'volunteering', 'workshop',
 ]
 
+// SAFETY: icon() returns a static, hardcoded SVG string — not user input.
+// dangerouslySetInnerHTML in MapScreen.tsx is safe because these values
+// are compile-time constants defined in this file only.
 // Inline SVG helper — monochrome, stroke-only, hand-drawn feel
 function icon(paths: string): string {
   return `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-0.125em">${paths}</svg>`

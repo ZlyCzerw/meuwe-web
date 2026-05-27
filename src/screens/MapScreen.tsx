@@ -257,6 +257,7 @@ function MapScreen({
                   whiteSpace: 'nowrap',
                 }}
               >
+                {/* SAFETY: meta.glyph is a static SVG from tokens.ts — not user input */}
                 <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
                 {t('tags.' + cat)}
               </button>
