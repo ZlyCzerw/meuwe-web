@@ -38,20 +38,26 @@ export const db = {
   },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
+    // Compute the target day's start/end in local time, then convert to UTC.
+    // This replicates the same semantics as the previous toDateString() comparison.
+    const target = new Date()
+    target.setDate(target.getDate() + dayOffset)
+    const dayStart = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0)
+    const dayEnd   = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999)
+
     const {data,error}=await supabase.from('events')
       .select('*,profiles(display_name,avatar_color),event_tags(tag)')
       .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
       .in('status',['live','upcoming','extended'])
+      .gte('start_time', dayStart.toISOString())
+      .lte('start_time', dayEnd.toISOString())
       .order('created_at',{ascending:false})
     if(error){console.error(error);return[]}
-    const today=new Date()
-    return (data||[])
-      .filter((e:any)=>isOnDay(e.start_time,today,dayOffset))
-      .map((e:any)=>{
-        const dk=haversineKm(lat,lng,e.lat,e.lng)
-        return {...e, tags:(e.event_tags||[]).map((t:any)=>t.tag),
-          distKm:dk, distStr:dk<1?`${Math.round(dk*1000)} m`:`${dk.toFixed(1)} km`}
-      })
+    return (data||[]).map((e:any)=>{
+      const dk=haversineKm(lat,lng,e.lat,e.lng)
+      return {...e, tags:(e.event_tags||[]).map((t:any)=>t.tag),
+        distKm:dk, distStr:dk<1?`${Math.round(dk*1000)} m`:`${dk.toFixed(1)} km`}
+    })
   },
   async uploadEventPhoto(file:File):Promise<string> {
     const sess=await this.getSession(); if(!sess) throw new Error('not authenticated')
