@@ -546,6 +546,7 @@ function EventSheet({
                     onKeyDown={e => e.key === 'Enter' && send()}
                     placeholder={session ? t('event.writeMessage') : t('event.loginToWrite')}
                     disabled={!session}
+                    maxLength={500}
                     style={{ flex: 1, fontSize: 14, fontWeight: 600 }}
                   />
                 </div>

@@ -6,9 +6,14 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY')!
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY')!
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT')!
+const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') ?? ''
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
+
+  if (!WEBHOOK_SECRET || req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    return new Response('Unauthorized', { status: 401 })
+  }
 
   let record: Record<string, unknown>
   try {
@@ -22,7 +27,8 @@ Deno.serve(async (req) => {
 
   const eventId    = record.event_id as string
   const authorId   = record.author_id as string | null
-  const authorName = (record.author_name as string | null) ?? 'Ktoś'
+  const rawName = (record.author_name as string | null) ?? 'Ktoś'
+  const authorName = rawName.slice(0, 50)
   const text       = record.text as string
 
   console.log(`[push-new-message] event=${eventId} author=${authorId}`)

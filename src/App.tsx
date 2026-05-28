@@ -105,6 +105,7 @@ export default function App() {
 
   async function handleSignOut() {
     await db.signOut()
+    try { localStorage.removeItem('meuwe_last_pos') } catch {}
     setScreen('welcome')
   }
 

@@ -24,7 +24,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
 
-  if (CRON_SECRET && req.headers.get('x-cron-secret') !== CRON_SECRET) {
+  if (!CRON_SECRET || req.headers.get('x-cron-secret') !== CRON_SECRET) {
     return new Response('Unauthorized', { status: 401 })
   }
 
