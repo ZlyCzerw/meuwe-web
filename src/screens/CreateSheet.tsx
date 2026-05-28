@@ -69,6 +69,11 @@ function CreateSheet({
     })
   }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
 
+  // Auto-set end time to start + 24h whenever start changes
+  useEffect(() => {
+    setEndTime(new Date(new Date(startTime).getTime() + 86_400_000).toISOString().slice(0, 16))
+  }, [startTime])
+
   async function submit() {
     if (!title.trim() || submitting) return
     setSubmitting(true)
@@ -443,6 +448,7 @@ function CreateSheet({
                 <input
                   type="datetime-local"
                   value={endTime}
+                  min={startTime}
                   onChange={e => setEndTime(e.target.value)}
                   style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
