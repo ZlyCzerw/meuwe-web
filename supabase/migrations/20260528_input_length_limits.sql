@@ -4,11 +4,21 @@
 -- ============================================================
 
 ALTER TABLE events
-  ADD CONSTRAINT IF NOT EXISTS check_title_length        CHECK (char_length(title) <= 200),
-  ADD CONSTRAINT IF NOT EXISTS check_description_length  CHECK (char_length(description) <= 5000);
+  DROP CONSTRAINT IF EXISTS check_title_length,
+  DROP CONSTRAINT IF EXISTS check_description_length;
+
+ALTER TABLE events
+  ADD CONSTRAINT check_title_length        CHECK (char_length(title) <= 200),
+  ADD CONSTRAINT check_description_length  CHECK (char_length(description) <= 5000);
 
 ALTER TABLE messages
-  ADD CONSTRAINT IF NOT EXISTS check_message_text_length CHECK (char_length(text) <= 500);
+  DROP CONSTRAINT IF EXISTS check_message_text_length;
+
+ALTER TABLE messages
+  ADD CONSTRAINT check_message_text_length CHECK (char_length(text) <= 500);
 
 ALTER TABLE event_tags
-  ADD CONSTRAINT IF NOT EXISTS check_tag_length          CHECK (char_length(tag) <= 100);
+  DROP CONSTRAINT IF EXISTS check_tag_length;
+
+ALTER TABLE event_tags
+  ADD CONSTRAINT check_tag_length          CHECK (char_length(tag) <= 100);
