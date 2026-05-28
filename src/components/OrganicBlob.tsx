@@ -1,15 +1,6 @@
 import React from 'react';
 import { C, INK, BLOBS } from '../lib/tokens';
 
-const PULSE_CSS = `
-@keyframes blobPulse {
-  0%   { transform: scale(1)    rotate(0deg);  }
-  25%  { transform: scale(1.06) rotate(2deg);  }
-  50%  { transform: scale(1.02) rotate(-1deg); }
-  75%  { transform: scale(0.96) rotate(3deg);  }
-  100% { transform: scale(1)    rotate(0deg);  }
-}`;
-
 export default function OrganicBlob({
   size = 60,
   color = C.primary,
@@ -27,7 +18,6 @@ export default function OrganicBlob({
   const sw = size <= 28 ? 4 : size <= 44 ? 4.5 : 5;
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
-      {animated && <style>{PULSE_CSS}</style>}
       <svg
         width={size}
         height={size}
