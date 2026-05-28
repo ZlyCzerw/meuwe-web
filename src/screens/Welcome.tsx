@@ -2,9 +2,11 @@ import { useTranslation } from 'react-i18next'
 import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
 import { C, INK, F } from '../lib/tokens'
+import { useBlobPhysics } from '../hooks/useBlobPhysics'
 
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'skip') => void }) {
   const { t } = useTranslation()
+  const blobs = useBlobPhysics(6)
 
   return (
     <div style={{
@@ -12,28 +14,29 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
       background: `linear-gradient(180deg,${C.cream} 0%,#FFF1E0 40%,#FFE8DC 75%,#FFE0E8 100%)`,
       overflow: 'hidden', display: 'flex', flexDirection: 'column',
     }}>
-      {[
-        { x: -30, y: 80,  s: 120, c: '#fff',          o: 0.7, d: 11 },
-        { x: 260, y: 140, s: 90,  c: '#fff',          o: 0.6, d: 9  },
-        { x: 40,  y: 520, s: 140, c: C.primarySoft,   o: 0.4, d: 10 },
-        { x: 250, y: 420, s: 70,  c: C.sunshine,      o: 0.45, d: 8 },
-      ].map((b, i) => (
-        <div key={i} style={{
-          position: 'absolute', left: b.x, top: b.y, width: b.s, height: b.s,
-          borderRadius: '52% 48% 55% 45%/48% 52% 48% 52%',
-          background: b.c, opacity: b.o,
-          animation: `drift ${b.d}s ${i * 0.8}s ease-in-out infinite`,
-          pointerEvents: 'none',
-        }} />
-      ))}
-
-      <div style={{ position: 'absolute', top: 140, left: 30, animation: 'bob 5s 0.2s ease-in-out infinite' }}>
-        <OrganicBlob size={36} color={C.sky} idx={0} face={<BlobFace size={24} />} />
+      {/* Physics blobs — behind all UI (zIndex 0) */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {blobs.map(b => (
+          <div
+            key={b.id}
+            style={{
+              position: 'absolute',
+              left: b.x - b.size / 2,
+              top: b.y - b.size / 2,
+            }}
+          >
+            <OrganicBlob
+              size={b.size}
+              color={b.color}
+              idx={b.blobIdx}
+              animated
+              face={<BlobFace size={b.size * 0.55} />}
+            />
+          </div>
+        ))}
       </div>
-      <div style={{ position: 'absolute', top: 170, right: 28, animation: 'bob 6s 1.4s ease-in-out infinite' }}>
-        <OrganicBlob size={32} color={C.grass} idx={1} face={<BlobFace size={22} />} />
-      </div>
 
+      {/* Logo + tagline */}
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
@@ -56,6 +59,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
         </div>
       </div>
 
+      {/* Buttons */}
       <div style={{ padding: '0 24px 52px', position: 'relative', zIndex: 1 }}>
         <button
           onClick={() => onSignIn('google')}
