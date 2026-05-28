@@ -555,7 +555,7 @@ function EventSheet({
         <div
           onClick={() => setPhotoModal(null)}
           style={{
-            position: 'fixed', inset: 0, zIndex: 200,
+            position: 'fixed', inset: 0, zIndex: 210,
             background: 'rgba(0,0,0,0.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
