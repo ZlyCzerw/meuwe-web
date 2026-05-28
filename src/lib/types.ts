@@ -13,6 +13,7 @@ export interface Profile {
   last_lng: number | null
   last_seen_at: string | null
   created_at: string
+  push_enabled: boolean | null
 }
 
 export type PushStatus = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'
