@@ -203,11 +203,18 @@ function EventSheet({
             >
               {!isFull && (
                 <>
-                  {/* Title */}
-                  <div style={{
-                    fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink,
-                    lineHeight: 1.15, marginBottom: 12, letterSpacing: -0.5,
-                  }}>{event.title}</div>
+                  {/* Title row with close button */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
+                    <div style={{
+                      flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink,
+                      lineHeight: 1.15, letterSpacing: -0.5,
+                    }}>{event.title}</div>
+                    <button onClick={onClose} style={{
+                      flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: C.cream,
+                      fontSize: 18, color: C.ink, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>×</button>
+                  </div>
 
                   {/* Photo carousel */}
                   {event.photos && event.photos.length > 0 && (
