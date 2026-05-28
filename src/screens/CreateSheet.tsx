@@ -92,7 +92,7 @@ function CreateSheet({
       try {
         photoUrls = await Promise.all(files.map(p => db.uploadEventPhoto(p.file)))
       } catch (e) {
-        setErr(t('create.photoUploadError') + ': ' + (e instanceof Error ? e.message : String(e)))
+        setErr(t('create.photoUploadError'))
         setSubmitting(false)
         return
       }
@@ -111,7 +111,7 @@ function CreateSheet({
     })
     setSubmitting(false)
     if (error) {
-      setErr((error as { message?: string }).message || JSON.stringify(error))
+      setErr(t('create.submitError'))
       return
     }
     setTitle('')

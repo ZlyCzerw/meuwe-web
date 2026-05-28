@@ -54,6 +54,7 @@ const pl = {
     photoError: 'Plik musi być zdjęciem',
     photoSizeError: 'Zdjęcie nie może przekraczać 6 MB',
     photoUploadError: 'Błąd przesyłania zdjęcia',
+    submitError: 'Nie udało się utworzyć wydarzenia. Spróbuj ponownie.',
     timeError: 'Czas zakończenia musi być po czasie rozpoczęcia',
     timeLabel: 'Czas',
     timeNow: 'Teraz',

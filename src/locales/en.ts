@@ -56,6 +56,7 @@ const en: Resources = {
     photoError: 'File must be an image',
     photoSizeError: 'Image cannot exceed 6 MB',
     photoUploadError: 'Photo upload error',
+    submitError: 'Failed to create event. Please try again.',
     timeError: 'End time must be after start time',
     timeLabel: 'Time',
     timeNow: 'Now',
