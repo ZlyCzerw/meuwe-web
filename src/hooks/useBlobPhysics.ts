@@ -13,7 +13,10 @@ export function useBlobPhysics(count = 6): BlobParticle[] {
     )
   )
   const nextId = useRef(count)
-  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+  // Mirror of blobs state — kept in sync so the rAF loop can read current
+  // blobs without a stale closure and without triggering re-renders.
+  const blobsRef = useRef<BlobParticle[]>(blobs)
 
   useEffect(() => {
     let animId: number
@@ -23,25 +26,30 @@ export function useBlobPhysics(count = 6): BlobParticle[] {
       const w = window.innerWidth
       const h = window.innerHeight
 
-      setBlobs(prev => {
-        const stepped = stepBlobs(prev, now)
+      const prev = blobsRef.current
+      const stepped = stepBlobs(prev, now)
+      const alive = stepped.filter(b => !isOffScreen(b, w, h))
+      const departed = stepped.filter(b => isOffScreen(b, w, h))
 
-        return stepped.filter(b => {
-          if (!isOffScreen(b, w, h)) return true
+      // Update state — pure, no side-effects inside the setter
+      blobsRef.current = alive
+      setBlobs(alive)
 
-          // Schedule a replacement blob to enter from an edge
-          const delay = Math.random() * 2000
-          const t = setTimeout(() => {
-            const id = ++nextId.current
-            setBlobs(curr => [
-              ...curr.filter(x => x.id !== b.id),
-              spawnFromEdge(id, window.innerWidth, window.innerHeight),
-            ])
-          }, delay)
-          timeoutsRef.current.push(t)
-          return false
-        })
-      })
+      // Schedule respawns outside the setter — no React double-invocation risk
+      for (const b of departed) {
+        const delay = Math.random() * 2000
+        const t = setTimeout(() => {
+          const id = ++nextId.current
+          timeoutsRef.current.delete(t)
+          const next = [
+            ...blobsRef.current.filter(x => x.id !== b.id),
+            spawnFromEdge(id, window.innerWidth, window.innerHeight),
+          ]
+          blobsRef.current = next
+          setBlobs(next)
+        }, delay)
+        timeoutsRef.current.add(t)
+      }
 
       animId = requestAnimationFrame(step)
     }
@@ -51,7 +59,7 @@ export function useBlobPhysics(count = 6): BlobParticle[] {
     return () => {
       cancelAnimationFrame(animId)
       timeoutsRef.current.forEach(clearTimeout)
-      timeoutsRef.current = []
+      timeoutsRef.current.clear()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
