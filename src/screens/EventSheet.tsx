@@ -271,10 +271,11 @@ function EventSheet({
                       )}
                     </div>
                   )}
-                  {/* Status + datetime range + distance */}
+                  {/* Status + datetime range + directions */}
                   <div style={{ marginBottom: 12 }}>
-                    <StatusPill status={computedStatus} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'nowrap' }}>
+                    {/* Line 1: status pill + time range */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
+                      <StatusPill status={computedStatus} />
                       {event.start_time && event.end_time && (
                         <span style={{ fontSize: 12, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap' }}>
                           {new Date(event.start_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
@@ -282,7 +283,9 @@ function EventSheet({
                           {new Date(event.end_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
-                      <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
+                    </div>
+                    {/* Line 2: distance + directions link */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                       <button
                         onClick={onLocate}
                         disabled={!onLocate}
@@ -303,6 +306,21 @@ function EventSheet({
                           {t('event.distanceFrom', { dist: distStr })}
                         </span>
                       </button>
+                      <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335"/>
+                          <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                        </svg>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>
+                          {t('event.directions')}
+                        </span>
+                      </a>
                     </div>
                   </div>
 

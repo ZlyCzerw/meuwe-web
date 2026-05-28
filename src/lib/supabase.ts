@@ -34,17 +34,21 @@ export const db = {
     const d=km/111
     // Compute the target day's start/end in local time, then convert to UTC.
     // This replicates the same semantics as the previous toDateString() comparison.
+    const now    = new Date()
     const target = new Date()
     target.setDate(target.getDate() + dayOffset)
     const dayStart = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0)
     const dayEnd   = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999)
+    // For today: hide events whose end_time has already passed.
+    // For future days: show all events that overlap that day.
+    const endTimeFloor = dayOffset === 0 ? now : dayStart
 
     const {data,error}=await supabase.from('events')
       .select('*,profiles(display_name,avatar_color),event_tags(tag)')
       .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
       .in('status',['live','upcoming','extended'])
       .lte('start_time', dayEnd.toISOString())
-      .gte('end_time',   dayStart.toISOString())
+      .gte('end_time',   endTimeFloor.toISOString())
       .order('created_at',{ascending:false})
     if(error){console.error(error);return[]}
     return (data||[]).map((e:any)=>{

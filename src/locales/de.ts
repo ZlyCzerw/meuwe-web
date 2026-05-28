@@ -21,8 +21,9 @@ const de: Resources = {
   },
   event: {
     organizer: 'Organisator',
-    conversation: 'Gespräch ist aktiv',
+    conversation: 'Chat',
     distanceFrom: '{{dist}} von dir',
+    directions: 'Route',
     messageCount_one: '{{count}} Nachricht',
     messageCount_few: '{{count}} Nachrichten',
     messageCount_many: '{{count}} Nachrichten',
@@ -42,7 +43,7 @@ const de: Resources = {
     muteOff: 'Stummschaltung aufheben',
   },
   create: {
-    title: 'Was ist los?',
+    title: 'Neues Event',
     myLocation: 'Mein Standort',
     gpsBased: 'Basierend auf deinem GPS',
     namePlaceholder: 'z. B. Picknick bei Sonnenuntergang',

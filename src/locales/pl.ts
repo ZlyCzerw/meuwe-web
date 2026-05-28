@@ -19,8 +19,9 @@ const pl = {
   },
   event: {
     organizer: 'Organizator',
-    conversation: 'Rozmowa trwa',
+    conversation: 'Czat',
     distanceFrom: '{{dist}} od Ciebie',
+    directions: 'trasa',
     messageCount_one: '{{count}} wiadomość',
     messageCount_few: '{{count}} wiadomości',
     messageCount_many: '{{count}} wiadomości',
@@ -40,7 +41,7 @@ const pl = {
     muteOff: 'Włącz powiadomienia',
   },
   create: {
-    title: 'Co się dzieje?',
+    title: 'Nowe wydarzenie',
     myLocation: 'Moja lokalizacja',
     gpsBased: 'Oparte na Twoim GPS',
     namePlaceholder: 'np. Piknik o zachodzie słońca',

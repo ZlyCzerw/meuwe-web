@@ -21,8 +21,9 @@ const es: Resources = {
   },
   event: {
     organizer: 'Organizador',
-    conversation: 'La conversación está activa',
+    conversation: 'Chat',
     distanceFrom: '{{dist}} de ti',
+    directions: 'ruta',
     messageCount_one: '{{count}} mensaje',
     messageCount_few: '{{count}} mensajes',
     messageCount_many: '{{count}} mensajes',
@@ -42,7 +43,7 @@ const es: Resources = {
     muteOff: 'Reactivar notificaciones',
   },
   create: {
-    title: '¿Qué está pasando?',
+    title: 'Nuevo evento',
     myLocation: 'Mi ubicación',
     gpsBased: 'Según tu GPS',
     namePlaceholder: 'p. ej. Picnic al atardecer',

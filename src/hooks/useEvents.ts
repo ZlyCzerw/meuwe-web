@@ -21,6 +21,12 @@ export function useEvents(pos: { lat: number; lng: number } | null, dayOffset: n
   // reload whenever load changes OR refreshKey bumps
   useEffect(() => { load() }, [load, refreshKey])
 
+  // auto-refresh every 5 minutes so ended events disappear without user action
+  useEffect(() => {
+    const id = setInterval(load, 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [load])
+
   useEffect(() => {
     if (lat === null || lng === null) return
     db.unsub(chanRef.current)

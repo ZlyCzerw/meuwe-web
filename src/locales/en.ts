@@ -21,8 +21,9 @@ const en: Resources = {
   },
   event: {
     organizer: 'Organizer',
-    conversation: 'Conversation is live',
+    conversation: 'Chat',
     distanceFrom: '{{dist}} from you',
+    directions: 'directions',
     messageCount_one: '{{count}} message',
     messageCount_few: '{{count}} messages',
     messageCount_many: '{{count}} messages',
@@ -42,7 +43,7 @@ const en: Resources = {
     muteOff: 'Unmute notifications',
   },
   create: {
-    title: "What's happening?",
+    title: 'New event',
     myLocation: 'My location',
     gpsBased: 'Based on your GPS',
     namePlaceholder: 'e.g. Picnic at sunset',
