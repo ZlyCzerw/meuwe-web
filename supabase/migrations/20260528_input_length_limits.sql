@@ -11,10 +11,10 @@ ALTER TABLE events
   ADD CONSTRAINT check_title_length        CHECK (char_length(title) <= 200),
   ADD CONSTRAINT check_description_length  CHECK (char_length(description) <= 5000);
 
-ALTER TABLE messages
+ALTER TABLE event_messages
   DROP CONSTRAINT IF EXISTS check_message_text_length;
 
-ALTER TABLE messages
+ALTER TABLE event_messages
   ADD CONSTRAINT check_message_text_length CHECK (char_length(text) <= 500);
 
 ALTER TABLE event_tags
