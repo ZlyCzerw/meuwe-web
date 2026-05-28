@@ -22,7 +22,13 @@ export default function App() {
   const { session, profile, ready, reloadProfile } = useSession()
 
   const [screen, setScreen] = useState<Screen>('loading')
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(() => {
+    try {
+      const s = localStorage.getItem('meuwe_last_pos')
+      if (s) return JSON.parse(s) as { lat: number; lng: number }
+    } catch {}
+    return null
+  })
   const [selEvent, setSelEvent] = useState<EventWithMeta | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -40,7 +46,11 @@ export default function App() {
     refineLangByGeo()
     if (!navigator.geolocation) return
     const watchId = navigator.geolocation.watchPosition(
-      p => setUserPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      p => {
+        const pos = { lat: p.coords.latitude, lng: p.coords.longitude }
+        try { localStorage.setItem('meuwe_last_pos', JSON.stringify(pos)) } catch {}
+        setUserPos(pos)
+      },
       () => {},
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
     )
