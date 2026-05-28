@@ -147,24 +147,34 @@ export default function App() {
     }} />
   )
 
-  if (screen === 'myEvents') return (
+  const isMyEvents = screen === 'myEvents'
+
+  // Single MapScreen instance shared between 'map' and 'myEvents' to prevent remount on screen switch
+  return (
     <>
       <MapScreen
         session={session}
         profile={profile}
-        onMapClick={() => {}}
+        onMapClick={() => { if (!isMyEvents) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
-        onOpenProfile={() => {}}
-        onOpenCreate={() => {}}
-        onOpenEvent={() => {}}
+        onOpenProfile={() => { if (!isMyEvents) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
+        onOpenCreate={() => { if (!isMyEvents) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
+        onOpenEvent={ev => { if (!isMyEvents) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         eventsRefreshKey={eventsRefreshKey}
-        pickingLocation={false}
-        onLocationPicked={() => {}}
+        pickingLocation={pickingLocation && !isMyEvents}
+        onLocationPicked={pos => {
+          setCreatePos(pos)
+          setLocationPicked(true)
+          setPickingLocation(false)
+          setCreateOpen(true)
+        }}
       />
-      {!myEventSelected && (
+
+      {/* MyEvents overlay */}
+      {isMyEvents && !myEventSelected && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
           <MyEventsScreen
             session={session}
@@ -176,7 +186,9 @@ export default function App() {
           />
         </div>
       )}
-      {myEventSelected && (
+
+      {/* EventSheet — from MyEvents or from map */}
+      {isMyEvents && myEventSelected && (
         <EventSheet
           event={myEventSelected}
           onClose={() => setMyEventSelected(null)}
@@ -186,33 +198,7 @@ export default function App() {
           onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
         />
       )}
-    </>
-  )
-
-  // map screen
-  return (
-    <>
-      <MapScreen
-        session={session}
-        profile={profile}
-        onMapClick={() => { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) }}
-        onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
-        onOpenProfile={() => { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) }}
-        onOpenCreate={() => { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) }}
-        onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) }}
-        onAuthNeeded={() => setScreen('welcome')}
-        userPos={userPos}
-        lastKnownPos={lastKnownPos}
-        eventsRefreshKey={eventsRefreshKey}
-        pickingLocation={pickingLocation}
-        onLocationPicked={pos => {
-          setCreatePos(pos)
-          setLocationPicked(true)
-          setPickingLocation(false)
-          setCreateOpen(true)
-        }}
-      />
-      {selEvent && (
+      {!isMyEvents && selEvent && (
         <EventSheet
           event={selEvent}
           onClose={() => setSelEvent(null)}
@@ -222,8 +208,9 @@ export default function App() {
           onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
         />
       )}
+
       <CreateSheet
-        open={createOpen}
+        open={createOpen && !isMyEvents}
         onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false) }}
         onSubmit={handleSubmit}
         defaultPos={createPos || userPos}
@@ -232,7 +219,7 @@ export default function App() {
       />
       <Toast visible={!!toast} label={toast || ''} />
       <ProfilePanel
-        open={profileOpen}
+        open={profileOpen && !isMyEvents}
         onClose={() => setProfileOpen(false)}
         session={session}
         profile={profile}
