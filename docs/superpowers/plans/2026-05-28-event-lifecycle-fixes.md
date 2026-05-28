@@ -90,7 +90,7 @@ describe('computeStatus', () => {
 - [ ] **Step 1b: Run tests — confirm `isCurrentlyLive` extended test fails**
 
 ```bash
-cd /Users/wiktormarc/meuwe-web && npm test -- --reporter=verbose src/lib/eventStatus.test.ts
+npm test -- --reporter=verbose src/lib/eventStatus.test.ts
 ```
 
 Expected: the test `'returns false when now is after end_time but within effectiveEnd (extended)'` FAILS because current `isCurrentlyLive` returns `true` for `extended`. All other tests may also fail since the file doesn't exist yet — that's expected.
@@ -187,7 +187,7 @@ export function isOnDay(startTime:string, today:Date, dayOffset:number):boolean 
 Verify no other file imports `isOnDay`:
 
 ```bash
-grep -r "isOnDay" /Users/wiktormarc/meuwe-web/src/
+grep -r "isOnDay" src/
 ```
 
 Expected: no results (if any appear, do NOT delete `isOnDay` — update this task accordingly).
