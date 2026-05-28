@@ -251,6 +251,58 @@ function CreateSheet({
           }}
         />
 
+        {/* Time section */}
+        <button
+          onClick={() => setTimeExpanded(te => !te)}
+          style={{
+            width: '100%', textAlign: 'left',
+            padding: '14px 16px', borderRadius: 20,
+            background: C.cream, marginBottom: 18, display: 'block',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{
+                fontSize: 11, color: C.inkSoft, fontWeight: 800,
+                textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2,
+              }}>{t('create.timeLabel')}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                {timeExpanded ? t('create.timePick') : (
+                  <>{t('create.timeNow')} · <span style={{ color: C.primary }}>{t('create.timeIn24h')}</span></>
+                )}
+              </div>
+            </div>
+            <div style={{
+              fontSize: 18, color: C.inkSoft, fontWeight: 800,
+              transform: timeExpanded ? 'rotate(180deg)' : 'rotate(0)',
+              transition: 'transform 220ms ease',
+            }}>⌄</div>
+          </div>
+          {timeExpanded && (
+            <div style={{ marginTop: 14, display: 'flex', gap: 10 }} onClick={e => e.stopPropagation()}>
+              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeFrom')}</div>
+                <input
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={e => setStartTime(e.target.value)}
+                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                />
+              </div>
+              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
+                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeTo')}</div>
+                <input
+                  type="datetime-local"
+                  value={endTime}
+                  min={startTime}
+                  onChange={e => setEndTime(e.target.value)}
+                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                />
+              </div>
+            </div>
+          )}
+        </button>
+
         {/* Photos section */}
         <div style={{ marginBottom: 22 }}>
           <div style={{
@@ -404,58 +456,6 @@ function CreateSheet({
             onClose={() => setTagModalOpen(false)}
           />
         )}
-
-        {/* Time section */}
-        <button
-          onClick={() => setTimeExpanded(te => !te)}
-          style={{
-            width: '100%', textAlign: 'left',
-            padding: '14px 16px', borderRadius: 20,
-            background: C.cream, marginBottom: 18, display: 'block',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{
-                fontSize: 11, color: C.inkSoft, fontWeight: 800,
-                textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2,
-              }}>{t('create.timeLabel')}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
-                {timeExpanded ? t('create.timePick') : (
-                  <>{t('create.timeNow')} · <span style={{ color: C.primary }}>{t('create.timeIn24h')}</span></>
-                )}
-              </div>
-            </div>
-            <div style={{
-              fontSize: 18, color: C.inkSoft, fontWeight: 800,
-              transform: timeExpanded ? 'rotate(180deg)' : 'rotate(0)',
-              transition: 'transform 220ms ease',
-            }}>⌄</div>
-          </div>
-          {timeExpanded && (
-            <div style={{ marginTop: 14, display: 'flex', gap: 10 }} onClick={e => e.stopPropagation()}>
-              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
-                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeFrom')}</div>
-                <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={e => setStartTime(e.target.value)}
-                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
-                />
-              </div>
-              <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
-                <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeTo')}</div>
-                <input
-                  type="datetime-local"
-                  value={endTime}
-                  min={startTime}
-                  onChange={e => setEndTime(e.target.value)}
-                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
-                />
-              </div>
-            </div>
-          )}
-        </button>
 
         {/* Description */}
         <div
