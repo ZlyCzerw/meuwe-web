@@ -41,6 +41,7 @@ function EventSheet({
   const [input, setInput] = useState('')
   const [sendErr, setSendErr] = useState('')
   const [photoIdx, setPhotoIdx] = useState(0)
+  const [photoModal, setPhotoModal] = useState<number | null>(null)
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -214,10 +215,12 @@ function EventSheet({
                       <img
                         src={event.photos[Math.min(photoIdx, event.photos.length - 1)]}
                         alt=""
+                        onClick={() => setPhotoModal(photoIdx)}
                         style={{
                           width: '100%', height: 180, borderRadius: 20,
                           objectFit: 'cover', display: 'block',
                           border: `2px solid ${INK}11`,
+                          cursor: 'pointer',
                         }}
                       />
                       {event.photos.length > 1 && (
@@ -547,6 +550,69 @@ function EventSheet({
           </div>
         )
       }
+      {/* Photo modal */}
+      {photoModal !== null && event?.photos && (
+        <div
+          onClick={() => setPhotoModal(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <button
+            onClick={() => setPhotoModal(null)}
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.35)',
+              color: '#fff', fontSize: 20, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >×</button>
+
+          <img
+            src={event.photos[photoModal]}
+            alt=""
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              objectFit: 'contain', borderRadius: 12,
+              display: 'block',
+            }}
+          />
+
+          {event.photos.length > 1 && (
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setPhotoModal(Math.max(0, photoModal - 1)) }}
+                disabled={photoModal === 0}
+                style={{
+                  position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.35)',
+                  color: '#fff', fontSize: 22, fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', opacity: photoModal === 0 ? 0.3 : 1,
+                }}
+              >‹</button>
+              <button
+                onClick={e => { e.stopPropagation(); setPhotoModal(Math.min(event.photos!.length - 1, photoModal + 1)) }}
+                disabled={photoModal === event.photos!.length - 1}
+                style={{
+                  position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.35)',
+                  color: '#fff', fontSize: 22, fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', opacity: photoModal === event.photos!.length - 1 ? 0.3 : 1,
+                }}
+              >›</button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
