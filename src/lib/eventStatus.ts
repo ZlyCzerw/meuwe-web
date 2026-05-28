@@ -45,12 +45,11 @@ export function computeStatus(
   return 'live'
 }
 
-/** True if the event is currently active (halo should pulse). */
+/** True if the event is within its scheduled window (halo should pulse). */
 export function isCurrentlyLive(
   event: { start_time: string; end_time: string },
   messages: { created_at: string }[] = [],
   now = new Date(),
 ): boolean {
-  const s = computeStatus(event, messages, now)
-  return s === 'live' || s === 'extended'
+  return computeStatus(event, messages, now) === 'live'
 }
