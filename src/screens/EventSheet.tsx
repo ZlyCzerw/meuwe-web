@@ -268,37 +268,39 @@ function EventSheet({
                       )}
                     </div>
                   )}
-                  {/* Date + distance — one line */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'nowrap',
-                  }}>
+                  {/* Status + datetime range + distance */}
+                  <div style={{ marginBottom: 12 }}>
                     <StatusPill status={computedStatus} />
-                    {event.start_time && (
-                      <span style={{ fontSize: 13, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                        {new Date(event.start_time).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    )}
-                    <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
-                    <button
-                      onClick={onLocate}
-                      disabled={!onLocate}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5,
-                        background: 'none', border: 'none', padding: 0,
-                        cursor: onLocate ? 'pointer' : 'default',
-                      }}
-                    >
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: C.primary, boxShadow: `0 0 0 3px ${C.primarySoft}` }} />
-                      <span style={{
-                        fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
-                        color: onLocate ? C.primary : C.inkSoft,
-                        textDecoration: onLocate ? 'underline' : 'none',
-                        textDecorationStyle: 'dotted',
-                        textUnderlineOffset: 3,
-                      }}>
-                        {t('event.distanceFrom', { dist: distStr })}
-                      </span>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'nowrap' }}>
+                      {event.start_time && event.end_time && (
+                        <span style={{ fontSize: 12, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          {new Date(event.start_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          {' → '}
+                          {new Date(event.end_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                      <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
+                      <button
+                        onClick={onLocate}
+                        disabled={!onLocate}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          background: 'none', border: 'none', padding: 0,
+                          cursor: onLocate ? 'pointer' : 'default',
+                        }}
+                      >
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: C.primary, boxShadow: `0 0 0 3px ${C.primarySoft}` }} />
+                        <span style={{
+                          fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
+                          color: onLocate ? C.primary : C.inkSoft,
+                          textDecoration: onLocate ? 'underline' : 'none',
+                          textDecorationStyle: 'dotted',
+                          textUnderlineOffset: 3,
+                        }}>
+                          {t('event.distanceFrom', { dist: distStr })}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Tags — single row, overflow → comic "…" chip */}
