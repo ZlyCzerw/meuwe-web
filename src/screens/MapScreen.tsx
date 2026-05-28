@@ -208,7 +208,7 @@ function MapScreen({
 
       {/* Search bar */}
       {!pickingLocation && (
-        <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 10 }}>
+        <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 20 }}>
           <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
         </div>
       )}
@@ -380,25 +380,31 @@ function MapScreen({
             position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
             padding: '52px 20px 16px',
             background: 'linear-gradient(180deg, rgba(255,246,236,0.97) 0%, rgba(255,246,236,0.85) 100%)',
-            display: 'flex', alignItems: 'center', gap: 12,
+            display: 'flex', flexDirection: 'column', gap: 10,
           }}>
-            <button
-              onClick={() => onLocationPicked?.(userPos || WARSAW)}
-              style={{
-                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                background: '#fff', border: `2px solid ${INK}22`,
-                fontSize: 18, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >‹</button>
-            <div style={{ flex: 1, textAlign: 'center' }}>
-              <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 17, color: C.ink }}>
+            {/* Title row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => onLocationPicked?.(userPos || WARSAW)}
+                style={{
+                  width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                  background: '#fff', border: `2px solid ${INK}22`,
+                  fontSize: 18, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >‹</button>
+              <div style={{ flex: 1, textAlign: 'center', fontFamily: F.display, fontWeight: 900, fontSize: 17, color: C.ink }}>
                 {t('map.pickLocation')}
               </div>
-              <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
-                {t('map.pickLocationHint')}
-              </div>
+              <div style={{ width: 40 }} />
             </div>
-            <div style={{ width: 40 }} />
+            {/* Address search */}
+            <div style={{ position: 'relative', zIndex: 50 }}>
+              <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+            </div>
+            {/* Hint */}
+            <div style={{ textAlign: 'center', fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
+              {t('map.pickLocationHintAlt')}
+            </div>
           </div>
 
           {/* Crosshair pin — always at center */}
