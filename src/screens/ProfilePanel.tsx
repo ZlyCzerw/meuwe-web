@@ -50,12 +50,18 @@ function ProfilePanel({
   async function handleTogglePush() {
     if (!session) return
     setPushLoading(true)
-    if (pushStatus === 'subscribed') {
+    const isEnabled = profile?.push_enabled ?? false
+    if (isEnabled) {
       await unsubscribePush()
-      setPushStatus('unsubscribed')
+      await db.upsertProfile({ id: session.user.id, push_enabled: false })
+      reloadProfile()
     } else {
       const status = await subscribePush(session.user.id)
       setPushStatus(status)
+      if (status === 'subscribed') {
+        await db.upsertProfile({ id: session.user.id, push_enabled: true })
+        reloadProfile()
+      }
     }
     setPushLoading(false)
   }
@@ -400,19 +406,19 @@ function ProfilePanel({
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       width: '100%', padding: '12px 16px', borderRadius: 20,
-                      background: pushStatus === 'subscribed' ? C.primarySoft : C.cream,
-                      border: `2px solid ${pushStatus === 'subscribed' ? C.primary : INK + '22'}`,
+                      background: !!(profile?.push_enabled) ? C.primarySoft : C.cream,
+                      border: `2px solid ${!!(profile?.push_enabled) ? C.primary : INK + '22'}`,
                       cursor: pushLoading ? 'default' : 'pointer',
                       transition: 'all 200ms ease',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: 20 }}>
-                        {pushStatus === 'subscribed' ? '🔔' : '🔕'}
+                        {!!(profile?.push_enabled) ? '🔔' : '🔕'}
                       </span>
                       <div style={{ textAlign: 'left' }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
-                          {pushStatus === 'subscribed'
+                          {!!(profile?.push_enabled)
                             ? t('profile.notificationsOn')
                             : t('profile.notificationsOff')}
                         </div>
@@ -432,17 +438,17 @@ function ProfilePanel({
                     ) : (
                       <div style={{
                         width: 44, height: 24, borderRadius: 999,
-                        background: pushStatus === 'subscribed' ? C.primary : '#E0D8CF',
-                        border: `2px solid ${pushStatus === 'subscribed' ? INK : 'transparent'}`,
+                        background: !!(profile?.push_enabled) ? C.primary : '#E0D8CF',
+                        border: `2px solid ${!!(profile?.push_enabled) ? INK : 'transparent'}`,
                         position: 'relative', transition: 'all 200ms ease',
                         flexShrink: 0,
                       }}>
                         <div style={{
                           position: 'absolute',
                           top: 2,
-                          left: pushStatus === 'subscribed' ? 22 : 2,
+                          left: !!(profile?.push_enabled) ? 22 : 2,
                           width: 16, height: 16, borderRadius: '50%',
-                          background: pushStatus === 'subscribed' ? '#fff' : C.inkSoft,
+                          background: !!(profile?.push_enabled) ? '#fff' : C.inkSoft,
                           transition: 'left 200ms cubic-bezier(0.34,1.56,0.64,1)',
                         }} />
                       </div>
