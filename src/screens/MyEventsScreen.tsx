@@ -61,6 +61,7 @@ export default function MyEventsScreen({
 
   function Section({ title, items, dim }: { title: string; items: EventWithMsgCount[]; dim?: boolean }) {
     if (items.length === 0) return null
+    const scrollable = items.length > 5
     return (
       <div style={{ marginBottom: 8 }}>
         <div style={{
@@ -68,76 +69,82 @@ export default function MyEventsScreen({
           textTransform: 'uppercase', letterSpacing: 0.8,
           padding: '10px 4px 6px',
         }}>{title}</div>
-        {items.map((ev, i) => {
-          const meta = TAG_META[ev.category as Category] || TAG_META.party
-          const computedStatus = computeStatus(ev)
-          return (
-            <button
-              key={ev.id}
-              onClick={() => onOpenEvent(ev)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: 12, marginBottom: 10, borderRadius: 22,
-                background: '#fff', boxShadow: '0 4px 16px rgba(78,50,30,0.08)',
-                textAlign: 'left',
-                opacity: dim ? 0.72 : 1,
-                filter: dim ? 'saturate(0.7)' : 'none',
-              }}
-            >
-              <OrganicBlob
-                size={56}
-                color={meta.color}
-                idx={i}
-                face={<BlobFace size={38} mood={dim ? 'sleepy' : 'happy'} />}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontFamily: F.display, fontSize: 16, fontWeight: 800, color: C.ink,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>{ev.title}</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-                  <StatusPill status={computedStatus} size="sm" />
-                  <span style={{ fontSize: 11, color: C.inkSoft, fontWeight: 700 }}>
-                    {formatDate(ev.start_time)}
-                  </span>
+        <div style={scrollable ? { maxHeight: 420, overflowY: 'auto', paddingRight: 2 } : {}}>
+          {items.map((ev, i) => {
+            const meta = TAG_META[ev.category as Category] || TAG_META.party
+            const computedStatus = computeStatus(ev)
+            return (
+              <div
+                key={ev.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpenEvent(ev)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpenEvent(ev) }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: 12, marginBottom: 10, borderRadius: 22,
+                  background: '#fff', boxShadow: '0 4px 16px rgba(78,50,30,0.08)',
+                  textAlign: 'left', cursor: 'pointer',
+                  opacity: dim ? 0.72 : 1,
+                  filter: dim ? 'saturate(0.7)' : 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <OrganicBlob
+                  size={56}
+                  color={meta.color}
+                  idx={i}
+                  face={<BlobFace size={38} mood={dim ? 'sleepy' : 'happy'} />}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: F.display, fontSize: 16, fontWeight: 800, color: C.ink,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{ev.title}</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+                    <StatusPill status={computedStatus} size="sm" />
+                    <span style={{ fontSize: 11, color: C.inkSoft, fontWeight: 700 }}>
+                      {formatDate(ev.start_time)}
+                    </span>
+                  </div>
+                  {ev.place_name && (
+                    <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
+                      {ev.place_name}
+                    </div>
+                  )}
                 </div>
-                {ev.place_name && (
-                  <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 2 }}>
-                    {ev.place_name}
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                {/* Mute toggle */}
-                <button
-                  onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}
-                  title={mutes.has(ev.id) ? t('event.muteOff') : t('event.muteOn')}
-                  style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: mutes.has(ev.id) ? C.cream : 'transparent',
-                    border: `1.5px solid ${mutes.has(ev.id) ? INK + '33' : 'transparent'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16, cursor: 'pointer',
-                  }}
-                >
-                  {mutes.has(ev.id) ? '🔕' : '🔔'}
-                </button>
-                {/* Message count */}
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  padding: '6px 10px', borderRadius: 14, background: C.cream,
-                }}>
-                  <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
-                    {ev.msgCount}
-                  </div>
-                  <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    {t('event.messages')}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                  {/* Mute toggle */}
+                  <button
+                    onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}
+                    title={mutes.has(ev.id) ? t('event.muteOff') : t('event.muteOn')}
+                    style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: mutes.has(ev.id) ? C.cream : 'transparent',
+                      border: `1.5px solid ${mutes.has(ev.id) ? INK + '33' : 'transparent'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, cursor: 'pointer',
+                    }}
+                  >
+                    {mutes.has(ev.id) ? '🔕' : '🔔'}
+                  </button>
+                  {/* Message count */}
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    padding: '6px 10px', borderRadius: 14, background: C.cream,
+                  }}>
+                    <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
+                      {ev.msgCount}
+                    </div>
+                    <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      {t('event.messages')}
+                    </div>
                   </div>
                 </div>
               </div>
-            </button>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     )
   }

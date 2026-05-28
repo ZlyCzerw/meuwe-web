@@ -35,7 +35,7 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [myEventSelected, setMyEventSelected] = useState<EventWithMsgCount | null>(null)
+  const [myEventSelected, setMyEventSelected] = useState<EventWithMeta | null>(null)
   const [pickingLocation, setPickingLocation] = useState(false)
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
@@ -149,14 +149,33 @@ export default function App() {
 
   if (screen === 'myEvents') return (
     <>
-      <MyEventsScreen
+      <MapScreen
         session={session}
-        onBack={() => setScreen('map')}
-        onOpenEvent={ev => {
-          setMyEventSelected(ev)
-          setScreen('map')
-        }}
+        profile={profile}
+        onMapClick={() => {}}
+        onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
+        onOpenProfile={() => {}}
+        onOpenCreate={() => {}}
+        onOpenEvent={() => {}}
+        onAuthNeeded={() => setScreen('welcome')}
+        userPos={userPos}
+        lastKnownPos={lastKnownPos}
+        eventsRefreshKey={eventsRefreshKey}
+        pickingLocation={false}
+        onLocationPicked={() => {}}
       />
+      {!myEventSelected && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
+          <MyEventsScreen
+            session={session}
+            onBack={() => { setScreen('map'); setMyEventSelected(null) }}
+            onOpenEvent={ev => {
+              setMyEventSelected({ ...ev, distKm: 0, distStr: '' })
+              flyToFnRef.current?.(ev.lat, ev.lng)
+            }}
+          />
+        </div>
+      )}
       {myEventSelected && (
         <EventSheet
           event={myEventSelected}
@@ -164,6 +183,7 @@ export default function App() {
           session={session}
           profile={profile}
           userPos={userPos}
+          onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
         />
       )}
     </>
