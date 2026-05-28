@@ -15,6 +15,7 @@ const de: Resources = {
     today: 'Heute', yesterday: 'Gestern',
     pickLocation: 'Ort auswählen',
     pickLocationHint: 'Karte verschieben, um Standort zu wählen',
+    pickLocationHintAlt: 'oder Karte verschieben, um Standort zu wählen',
     confirmLocation: 'Ort bestätigen',
     allCategories: 'Alle',
   },

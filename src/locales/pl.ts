@@ -13,6 +13,7 @@ const pl = {
     today: 'Dziś', yesterday: 'Wczoraj',
     pickLocation: 'Wybierz miejsce',
     pickLocationHint: 'Przesuń mapę, aby wybrać lokalizację',
+    pickLocationHintAlt: 'lub przesuń mapę, aby wybrać lokalizację',
     confirmLocation: 'Potwierdź miejsce',
     allCategories: 'Wszystkie',
   },

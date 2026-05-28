@@ -15,6 +15,7 @@ const es: Resources = {
     today: 'Hoy', yesterday: 'Ayer',
     pickLocation: 'Elige un lugar',
     pickLocationHint: 'Mueve el mapa para elegir la ubicación',
+    pickLocationHintAlt: 'o mueve el mapa para elegir la ubicación',
     confirmLocation: 'Confirmar lugar',
     allCategories: 'Todos',
   },
