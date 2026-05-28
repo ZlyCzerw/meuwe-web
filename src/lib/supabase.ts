@@ -13,12 +13,6 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-export function isOnDay(startTime:string, today:Date, dayOffset:number):boolean {
-  const target = new Date(today); target.setDate(today.getDate()+dayOffset)
-  const d = new Date(startTime)
-  return d.toDateString() === target.toDateString()
-}
-
 export const db = {
   signInGoogle() { return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } }) },
   signOut() { return supabase.auth.signOut() },
@@ -49,8 +43,8 @@ export const db = {
       .select('*,profiles(display_name,avatar_color),event_tags(tag)')
       .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
       .in('status',['live','upcoming','extended'])
-      .gte('start_time', dayStart.toISOString())
       .lte('start_time', dayEnd.toISOString())
+      .gte('end_time',   dayStart.toISOString())
       .order('created_at',{ascending:false})
     if(error){console.error(error);return[]}
     return (data||[]).map((e:any)=>{
