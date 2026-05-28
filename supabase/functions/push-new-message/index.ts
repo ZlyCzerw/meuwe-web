@@ -87,11 +87,25 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ sent: 0, reason: 'all muted' }), { status: 200 })
   }
 
-  // 5. Fetch push subscriptions
+  // 5a. Filter to users with push_enabled = true
+  const { data: enabledProfiles } = await admin
+    .from('profiles')
+    .select('id')
+    .in('id', finalRecipients)
+    .eq('push_enabled', true)
+
+  const enabledRecipients = (enabledProfiles ?? []).map((p: { id: string }) => p.id)
+  console.log(`[push-new-message] push-enabled recipients: ${enabledRecipients.length}`)
+
+  if (enabledRecipients.length === 0) {
+    return new Response(JSON.stringify({ sent: 0, reason: 'push not enabled' }), { status: 200 })
+  }
+
+  // 5b. Fetch push subscriptions
   const { data: subs, error: subErr } = await admin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth_key')
-    .in('user_id', finalRecipients)
+    .in('user_id', enabledRecipients)
 
   if (subErr) console.error('[push-new-message] subs error:', subErr)
   console.log(`[push-new-message] subscriptions: ${(subs ?? []).length}`)
