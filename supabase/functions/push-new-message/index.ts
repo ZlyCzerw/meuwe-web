@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { sendPushNotification } from '../_shared/webpush.ts'
+import { sendToMany } from '../_shared/webpush.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -34,51 +34,80 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+  // 1. Get event
   const { data: event, error: evErr } = await admin
     .from('events').select('id, title, creator_id').eq('id', eventId).single()
   if (evErr || !event) {
     console.error('[push-new-message] event not found:', evErr)
     return new Response(JSON.stringify({ sent: 0, reason: 'event not found' }), { status: 200 })
   }
-
   const creatorId = event.creator_id as string | null
-  if (!creatorId || authorId === creatorId) {
-    console.log('[push-new-message] skipping (author is creator or no creator)')
-    return new Response(JSON.stringify({ sent: 0, reason: 'author is creator' }), { status: 200 })
+
+  // 2. Get all previous commenters for this event
+  const { data: commentRows } = await admin
+    .from('messages')
+    .select('author_id')
+    .eq('event_id', eventId)
+    .not('author_id', 'is', null)
+
+  const commenterIds: string[] = [
+    ...new Set(
+      (commentRows ?? []).map((r: { author_id: string }) => r.author_id)
+    ),
+  ]
+
+  // 3. Build recipient set: creator + commenters − new message author
+  const recipientSet = new Set<string>()
+  if (creatorId) recipientSet.add(creatorId)
+  for (const id of commenterIds) recipientSet.add(id)
+  if (authorId) recipientSet.delete(authorId)
+
+  if (recipientSet.size === 0) {
+    console.log('[push-new-message] no recipients')
+    return new Response(JSON.stringify({ sent: 0, reason: 'no recipients' }), { status: 200 })
   }
 
-  // Sprawdź mute
-  const { data: mute } = await admin
+  const recipientList = [...recipientSet]
+  console.log(`[push-new-message] candidates: ${recipientList.length}`)
+
+  // 4. Remove muted users
+  const { data: mutes } = await admin
     .from('notification_mutes')
     .select('user_id')
-    .match({ user_id: creatorId, event_id: eventId })
-    .maybeSingle()
+    .eq('event_id', eventId)
+    .in('user_id', recipientList)
 
-  if (mute) {
-    console.log('[push-new-message] muted')
-    return new Response(JSON.stringify({ sent: 0, reason: 'muted' }), { status: 200 })
+  const mutedIds = new Set(
+    (mutes ?? []).map((m: { user_id: string }) => m.user_id)
+  )
+  const finalRecipients = recipientList.filter(id => !mutedIds.has(id))
+
+  if (finalRecipients.length === 0) {
+    console.log('[push-new-message] all muted')
+    return new Response(JSON.stringify({ sent: 0, reason: 'all muted' }), { status: 200 })
   }
 
+  // 5. Fetch push subscriptions
   const { data: subs, error: subErr } = await admin
-    .from('push_subscriptions').select('id, endpoint, p256dh, auth_key').eq('user_id', creatorId)
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth_key')
+    .in('user_id', finalRecipients)
+
   if (subErr) console.error('[push-new-message] subs error:', subErr)
-  console.log(`[push-new-message] subs for creator: ${(subs ?? []).length}`)
+  console.log(`[push-new-message] subscriptions: ${(subs ?? []).length}`)
 
   if (!subs || subs.length === 0) {
     return new Response(JSON.stringify({ sent: 0, reason: 'no push subs' }), { status: 200 })
   }
 
+  // 6. Send
   const preview = text.length > 80 ? text.slice(0, 77) + '…' : text
 
-  await Promise.allSettled(
-    subs.map(async (sub: { id: string; endpoint: string; p256dh: string; auth_key: string }) => {
-      const ok = await sendPushNotification(
-        sub,
-        { title: `💬 ${event.title}`, body: `${authorName}: ${preview}`, type: 'message', eventId },
-        VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
-      )
-      if (!ok) await admin.from('push_subscriptions').delete().eq('id', sub.id)
-    })
+  await sendToMany(
+    subs,
+    { title: `💬 ${event.title}`, body: `${authorName}: ${preview}`, type: 'message', eventId: event.id },
+    VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
+    admin
   )
 
   return new Response(JSON.stringify({ sent: subs.length }), { status: 200 })
