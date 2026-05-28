@@ -34,6 +34,7 @@ function MapScreen({
   onOpenEvent,
   onAuthNeeded,
   userPos,
+  lastKnownPos,
   pickingLocation,
   onLocationPicked,
   eventsRefreshKey,
@@ -47,6 +48,7 @@ function MapScreen({
   onOpenEvent: (ev: EventWithMeta) => void
   onAuthNeeded: () => void
   userPos: { lat: number; lng: number } | null
+  lastKnownPos?: { lat: number; lng: number } | null
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
   eventsRefreshKey?: number
@@ -73,7 +75,7 @@ function MapScreen({
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const eventsPos = mapCenter || userPos || WARSAW
+  const eventsPos = mapCenter || userPos || lastKnownPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey)
   const visibleEvents = categoryFilter ? events.filter(e => e.category === categoryFilter) : events
 
@@ -96,7 +98,7 @@ function MapScreen({
     if (leafRef.current || !mapRef.current) return
     const initialPos = userPosRef.current
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([(initialPos || WARSAW).lat, (initialPos || WARSAW).lng], 15)
+      .setView([(initialPos || lastKnownPos || WARSAW).lat, (initialPos || lastKnownPos || WARSAW).lng], 15)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
@@ -161,7 +163,7 @@ function MapScreen({
   }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function doRecenter() {
-    const p = userPos || WARSAW
+    const p = userPos || lastKnownPos || WARSAW
     leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })
     setRecenter(false)
   }
@@ -385,7 +387,7 @@ function MapScreen({
             {/* Title row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
-                onClick={() => onLocationPicked?.(userPos || WARSAW)}
+                onClick={() => onLocationPicked?.(userPos || lastKnownPos || WARSAW)}
                 style={{
                   width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
                   background: '#fff', border: `2px solid ${INK}22`,

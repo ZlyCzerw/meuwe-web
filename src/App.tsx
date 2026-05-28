@@ -22,7 +22,8 @@ export default function App() {
   const { session, profile, ready, reloadProfile } = useSession()
 
   const [screen, setScreen] = useState<Screen>('loading')
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(() => {
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [lastKnownPos] = useState<{ lat: number; lng: number } | null>(() => {
     try {
       const s = localStorage.getItem('meuwe_last_pos')
       if (s) return JSON.parse(s) as { lat: number; lng: number }
@@ -181,6 +182,7 @@ export default function App() {
         onOpenEvent={ev => { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) }}
         onAuthNeeded={() => setScreen('welcome')}
         userPos={userPos}
+        lastKnownPos={lastKnownPos}
         eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation}
         onLocationPicked={pos => {
