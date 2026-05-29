@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { ErrorBoundary } from './ErrorBoundary'
 
 // Component that always throws
-function Bomb() {
+function Bomb(): never {
   throw new Error('test explosion')
 }
 
