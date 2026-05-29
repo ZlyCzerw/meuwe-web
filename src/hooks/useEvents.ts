@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { db } from '../lib/supabase'
 import type { EventWithMeta } from '../lib/types'
 
-export function useEvents(pos: { lat: number; lng: number } | null, dayOffset: number, refreshKey = 0) {
+export function useEvents(pos: { lat: number; lng: number } | null, dayOffset: number, refreshKey = 0, km = 15) {
   const [events, setEvents] = useState<EventWithMeta[]>([])
   const [loading, setLoading] = useState(true)
   const chanRef = useRef<ReturnType<typeof db.subscribeEvents> | null>(null)
@@ -13,10 +13,10 @@ export function useEvents(pos: { lat: number; lng: number } | null, dayOffset: n
 
   const load = useCallback(async () => {
     if (lat === null || lng === null) return
-    const data = await db.getEvents(lat, lng, 15, dayOffset)
+    const data = await db.getEvents(lat, lng, km, dayOffset)
     setEvents(data)
     setLoading(false)
-  }, [lat, lng, dayOffset])
+  }, [lat, lng, dayOffset, km])
 
   // reload whenever load changes OR refreshKey bumps
   useEffect(() => { load() }, [load, refreshKey])

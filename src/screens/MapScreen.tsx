@@ -72,11 +72,12 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
+  const [mapRadiusKm, setMapRadiusKm] = useState(15)
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const eventsPos = mapCenter || userPos || lastKnownPos || WARSAW
-  const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey)
+  const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
   const visibleEvents = categoryFilter ? events.filter(e => e.category === categoryFilter) : events
 
   // Timeline drag
@@ -111,6 +112,10 @@ function MapScreen({
       if (up) setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
       if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
       moveTimerRef.current = setTimeout(() => {
+        const bounds = map.getBounds()
+        const corner = bounds.getNorthEast()
+        const rawKm = haversineKm(center.lat, center.lng, corner.lat, corner.lng)
+        setMapRadiusKm(Math.min(Math.ceil(rawKm), 200))
         setMapCenter({ lat: center.lat, lng: center.lng })
       }, 1000)
     })
