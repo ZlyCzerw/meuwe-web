@@ -9,10 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "event-sync": "tsx scripts/event-sync/index.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
+    "cheerio": "^1.0.0",
     "i18next": "^26.2.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.6",
@@ -36,6 +38,7 @@
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
+    "tsx": "^4.19.2",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
