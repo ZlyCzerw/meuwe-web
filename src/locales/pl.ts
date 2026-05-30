@@ -19,7 +19,7 @@ const pl = {
     allCategories: 'Wszystkie',
   },
   event: {
-    organizer: 'Organizator',
+    organizer: 'Dodane przez',
     conversation: 'Czat',
     distanceFrom: '{{dist}} od Ciebie',
     directions: 'trasa',

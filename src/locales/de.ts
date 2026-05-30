@@ -21,7 +21,7 @@ const de: Resources = {
     allCategories: 'Alle',
   },
   event: {
-    organizer: 'Organisator',
+    organizer: 'Hinzugefügt von',
     conversation: 'Chat',
     distanceFrom: '{{dist}} von dir',
     directions: 'Route',

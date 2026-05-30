@@ -21,7 +21,7 @@ const es: Resources = {
     allCategories: 'Todos',
   },
   event: {
-    organizer: 'Organizador',
+    organizer: 'Añadido por',
     conversation: 'Chat',
     distanceFrom: '{{dist}} de ti',
     directions: 'ruta',
