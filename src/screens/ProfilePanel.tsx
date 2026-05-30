@@ -549,6 +549,18 @@ function ProfilePanel({
               </button>
             </>
           )}
+        <a
+          href="/terms.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block', textAlign: 'center',
+            fontSize: 11, color: C.inkSoft, fontWeight: 500,
+            textDecoration: 'underline', padding: '12px 0 4px',
+          }}
+        >
+          {t('welcome.termsLink')}
+        </a>
         </div>
       </div>
     </>
