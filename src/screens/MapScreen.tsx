@@ -375,7 +375,7 @@ function MapScreen({
       {/* ADD button */}
       {!pickingLocation && (
         <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-          <AddButton size={76} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
+          <AddButton size={76} active={!!session} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
         </div>
       )}
 

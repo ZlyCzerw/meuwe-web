@@ -92,6 +92,7 @@ const pl = {
     travel: 'podróże', yoga: 'yoga', dance: 'taniec', comedy: 'komedia', kids: 'dzieci', pets: 'zwierzęta',
     volunteering: 'wolontariat', workshop: 'warsztaty',
   },
+  auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia' },
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
 }
 

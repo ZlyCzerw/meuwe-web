@@ -40,6 +40,7 @@ export default function App() {
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
 
   // On mount: refine language by geo and watch position
@@ -161,7 +162,7 @@ export default function App() {
         onOpenProfile={() => { if (!isMyEvents) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
         onOpenCreate={() => { if (!isMyEvents) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
         onOpenEvent={ev => { if (!isMyEvents) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
-        onAuthNeeded={() => setScreen('welcome')}
+        onAuthNeeded={() => setAuthModalOpen(true)}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         eventsRefreshKey={eventsRefreshKey}
@@ -230,6 +231,61 @@ export default function App() {
         onOpenMyEvents={() => { setProfileOpen(false); setScreen('myEvents') }}
       />
       <ConfettiBurst visible={showConfetti} />
+      {authModalOpen && (
+        <div
+          onClick={() => setAuthModalOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 300,
+            background: 'rgba(45,43,42,0.35)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            padding: '0 0 32px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: C.cream,
+              borderRadius: 28, border: `2.5px solid ${C.ink}`,
+              boxShadow: `0 6px 0 ${C.ink}22`,
+              padding: '32px 24px 28px', width: 'calc(100% - 32px)', maxWidth: 400,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 52, lineHeight: 1, display: 'flex', alignItems: 'baseline' }}>
+              <span style={{ color: C.primary }}>me</span>
+              <span style={{ color: C.sky }}>u</span>
+              <span style={{ color: C.grass }}>we</span>
+            </div>
+            <p style={{ margin: 0, fontFamily: F.body, fontWeight: 600, fontSize: 16, color: C.ink, lineHeight: 1.5, maxWidth: 260 }}>
+              {t('auth.createEventPrompt')}
+            </p>
+            <button
+              onClick={() => { setAuthModalOpen(false); db.signInGoogle() }}
+              style={{
+                width: '100%', padding: '16px 24px', borderRadius: 999,
+                background: '#fff', border: `2.5px solid ${C.ink}`, boxShadow: `0 4px 0 ${C.ink}33`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                fontSize: 16, fontWeight: 700, color: C.ink, cursor: 'pointer',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.5 6 29.5 4 24 4C13 4 4 13 4 24s9 20 20 20s20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+                <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.5 6 29.5 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z"/>
+                <path fill="#4CAF50" d="M24 44c5.4 0 10.3-2.1 14-5.5l-6.5-5.5c-2 1.5-4.6 2.4-7.5 2.4c-5.2 0-9.6-3.3-11.3-8L6.1 32.8C9.4 39.5 16.1 44 24 44z"/>
+                <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.5 5.5c-.5.4 7.4-5.4 7.4-15.2c0-1.3-.1-2.6-.4-3.9z"/>
+              </svg>
+              {t('welcome.google')}
+            </button>
+            <button
+              onClick={() => setAuthModalOpen(false)}
+              style={{ background: 'none', border: 'none', color: C.inkSoft, fontSize: 14, cursor: 'pointer', fontWeight: 700, fontFamily: F.body }}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

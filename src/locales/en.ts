@@ -94,6 +94,7 @@ const en: Resources = {
     selectedCount: '{{count}} selected',
     selectedNone: 'none',
   },
+  auth: { createEventPrompt: 'Only logged-in users can add events' },
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
 }
 

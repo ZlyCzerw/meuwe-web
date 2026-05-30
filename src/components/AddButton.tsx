@@ -4,9 +4,11 @@ import { C, INK, BLOBS } from '../lib/tokens';
 export default function AddButton({
   size = 76,
   onClick,
+  active = true,
 }: {
   size?: number;
   onClick?: () => void;
+  active?: boolean;
 }) {
   const [pressed, setPressed] = useState(false);
   const [blobIdx, setBlobIdx] = useState(0);
@@ -32,8 +34,8 @@ export default function AddButton({
           height: size * 1.15,
           borderRadius: '50%',
           border: `3px solid ${C.primary}`,
-          opacity: 0.22,
-          animation: 'halo 3.4s ease-out infinite',
+          opacity: active ? 0.22 : 0,
+          animation: active ? 'halo 3.4s ease-out infinite' : 'none',
         }}
       />
       <button
@@ -47,7 +49,7 @@ export default function AddButton({
           height: size,
           transition: 'transform 200ms cubic-bezier(0.34,1.56,0.64,1)',
           transform: pressed ? 'scale(0.92)' : 'scale(1)',
-          animation: 'breathe 3s ease-in-out infinite',
+          animation: active ? 'breathe 3s ease-in-out infinite' : 'none',
         }}
       >
         <svg
