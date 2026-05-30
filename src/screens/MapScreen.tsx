@@ -135,7 +135,7 @@ function MapScreen({
         const rawKm = haversineKm(center.lat, center.lng, corner.lat, corner.lng)
         setMapRadiusKm(Math.min(Math.ceil(rawKm), 200))
         setMapCenter({ lat: center.lat, lng: center.lng })
-      }, 1000)
+      }, 300)
     })
     leafRef.current = map
     // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
