@@ -412,10 +412,16 @@ function ProfilePanel({
                       transition: 'all 200ms ease',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>
-                        {!!(profile?.push_enabled) ? '🔔' : '🔕'}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke={!!(profile?.push_enabled) ? C.primary : C.inkSoft}
+                        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        {!!(profile?.push_enabled)
+                          ? null
+                          : <line x1="1" y1="1" x2="23" y2="23"/>}
+                      </svg>
                       <div style={{ textAlign: 'left' }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
                           {!!(profile?.push_enabled)
