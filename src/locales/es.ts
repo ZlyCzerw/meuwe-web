@@ -6,6 +6,7 @@ const es: Resources = {
     tagline: 'Descubre eventos\na tu alrededor',
     google: 'Inicia sesión con Google',
     terms: 'Al iniciar sesión aceptas los términos',
+    termsLink: 'términos',
     skip: 'Explorar sin iniciar sesión →',
   },
   map: {

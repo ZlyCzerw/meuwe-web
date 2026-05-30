@@ -6,6 +6,7 @@ const de: Resources = {
     tagline: 'Entdecke Events\nin deiner Nähe',
     google: 'Mit Google anmelden',
     terms: 'Mit der Anmeldung stimmst du den Nutzungsbedingungen zu',
+    termsLink: 'Nutzungsbedingungen',
     skip: 'Ohne Anmeldung stöbern →',
   },
   map: {

@@ -6,6 +6,7 @@ const en: Resources = {
     tagline: 'Discover events\naround you',
     google: 'Sign in with Google',
     terms: 'By signing in you accept the terms',
+    termsLink: 'terms',
     skip: 'Browse without signing in →',
   },
   map: {

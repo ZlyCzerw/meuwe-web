@@ -4,6 +4,7 @@ const pl = {
     tagline: 'Odkrywaj wydarzenia\nwokół Ciebie',
     google: 'Zaloguj się przez Google',
     terms: 'Logując się akceptujesz regulamin',
+    termsLink: 'regulamin',
     skip: 'Przeglądaj bez logowania →',
   },
   map: {

@@ -79,7 +79,12 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
           {t('welcome.google')}
         </button>
         <div style={{ marginTop: 14, textAlign: 'center', fontSize: 11, color: C.inkSoft, fontWeight: 500 }}>
-          {t('welcome.terms')}
+          {(() => {
+            const full = t('welcome.terms')
+            const word = t('welcome.termsLink')
+            const [before, after] = full.split(word)
+            return <>{before}<a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: C.inkSoft, textDecoration: 'underline' }}>{word}</a>{after}</>
+          })()}
         </div>
         <button
           onClick={() => onSignIn('skip')}
