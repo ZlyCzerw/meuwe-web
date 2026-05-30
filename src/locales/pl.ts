@@ -68,6 +68,7 @@ const pl = {
     guest: 'Gość',
     interests: 'Twoje zainteresowania',
     interestsHint: 'Powiadomimy Cię o pasujących wydarzeniach',
+    noInterests: 'Brak zainteresowań',
     radius: 'Promień powiadomień',
     myEvents: 'Moje wydarzenia',
     signOut: 'Wyloguj',

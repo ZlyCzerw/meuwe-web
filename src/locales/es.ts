@@ -70,6 +70,7 @@ const es: Resources = {
     guest: 'Invitado',
     interests: 'Tus intereses',
     interestsHint: 'Te avisaremos de eventos que coincidan',
+    noInterests: 'Sin intereses seleccionados',
     radius: 'Radio de notificaciones',
     myEvents: 'Mis eventos',
     signOut: 'Cerrar sesión',

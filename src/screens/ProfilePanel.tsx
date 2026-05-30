@@ -249,7 +249,7 @@ function ProfilePanel({
                   {/* Tylko zaznaczone zainteresowania */}
                   {interests.length === 0 && (
                     <div style={{ fontSize: 13, color: C.inkSoft, fontWeight: 600, fontStyle: 'italic' }}>
-                      Brak zainteresowań
+                      {t('profile.noInterests')}
                     </div>
                   )}
                   {interests.map(tag => (

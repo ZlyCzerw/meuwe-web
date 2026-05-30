@@ -7,5 +7,4 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS external_id TEXT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS events_external_id_idx
-  ON events (external_id)
-  WHERE external_id IS NOT NULL;
+  ON events (external_id);

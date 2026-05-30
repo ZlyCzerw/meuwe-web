@@ -74,7 +74,25 @@ function MapScreen({
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
   const [mapRadiusKm, setMapRadiusKm] = useState(15)
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null)
+  const [tagBarCanScrollLeft, setTagBarCanScrollLeft] = useState(false)
+  const [tagBarCanScrollRight, setTagBarCanScrollRight] = useState(false)
+  const tagBarRef = useRef<HTMLDivElement>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
+
+  function updateTagBarArrows() {
+    const el = tagBarRef.current
+    if (!el) return
+    setTagBarCanScrollLeft(el.scrollLeft > 4)
+    setTagBarCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  function scrollTagBar(dir: 'left' | 'right') {
+    const el = tagBarRef.current
+    if (!el) return
+    el.scrollBy({ left: dir === 'left' ? -160 : 160, behavior: 'smooth' })
+  }
 
   const eventsPos = mapCenter || userPos || lastKnownPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
@@ -150,6 +168,10 @@ function MapScreen({
 
   // Pins — update on events change
   useEffect(() => {
+    if (isDesktop) updateTagBarArrows()
+  }, [])
+
+  useEffect(() => {
     const map = leafRef.current
     if (!map) return
     Object.values(pinsRef.current).forEach(m => m.remove())
@@ -222,54 +244,130 @@ function MapScreen({
 
       {/* Category filter bar */}
       {!pickingLocation && (
-        <div style={{
-          position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10,
-          display: 'flex', overflowX: 'auto', gap: 8,
-          padding: '0 16px',
-          scrollbarWidth: 'none',
-          WebkitOverflowScrolling: 'touch' as any,
-        }}>
-          {/* All button */}
-          <button
-            onClick={() => setCategoryFilter(null)}
-            style={{
-              flexShrink: 0, padding: '6px 14px', borderRadius: 999,
-              background: !categoryFilter ? C.ink : '#fff',
-              color: !categoryFilter ? '#fff' : C.inkSoft,
-              fontSize: 12, fontWeight: 800,
-              border: `2px solid ${!categoryFilter ? C.ink : INK + '22'}`,
-              boxShadow: !categoryFilter ? `0 2px 0 ${INK}` : '0 2px 8px rgba(45,43,42,0.1)',
-              transition: 'all 180ms ease',
-              whiteSpace: 'nowrap',
-            }}
-          >{t('map.allCategories')}</button>
+        <div style={{ position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center' }}>
+          {/* Left arrow — desktop only */}
+          {isDesktop && tagBarCanScrollLeft && (
+            <button
+              onClick={() => scrollTagBar('left')}
+              style={{
+                position: 'absolute', left: 8, zIndex: 3,
+                width: 32, height: 32, borderRadius: '50%',
+                background: '#fff', border: `2px solid ${INK}22`,
+                boxShadow: '0 2px 8px rgba(45,43,42,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
 
-          {ALL_CATEGORIES.map(cat => {
-            const meta = TAG_META[cat as Category]
-            const active = categoryFilter === cat
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(active ? null : cat as Category)}
-                style={{
-                  flexShrink: 0,
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '6px 12px', borderRadius: 999,
-                  background: active ? meta.color : '#fff',
-                  color: active ? '#fff' : C.ink,
-                  fontSize: 12, fontWeight: 800,
-                  border: `2px solid ${active ? C.ink : INK + '22'}`,
-                  boxShadow: active ? `0 2px 0 ${C.ink}` : '0 2px 8px rgba(45,43,42,0.1)',
-                  transition: 'all 180ms ease',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {/* SAFETY: meta.glyph is a static SVG from tokens.ts — not user input */}
-                <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
-                {t('tags.' + cat)}
-              </button>
-            )
-          })}
+          <div
+            ref={tagBarRef}
+            onScroll={updateTagBarArrows}
+            style={{
+              flex: 1, display: 'flex', overflowX: 'auto', gap: 8,
+              padding: isDesktop ? '0 40px' : '0 16px',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch' as any,
+              maskImage: isDesktop
+                ? `linear-gradient(to right, transparent 0px, black ${tagBarCanScrollLeft ? '120px' : '0px'}, black calc(100% - ${tagBarCanScrollRight ? '120px' : '0px'}), transparent 100%)`
+                : undefined,
+              WebkitMaskImage: isDesktop
+                ? `linear-gradient(to right, transparent 0px, black ${tagBarCanScrollLeft ? '120px' : '0px'}, black calc(100% - ${tagBarCanScrollRight ? '120px' : '0px'}), transparent 100%)`
+                : undefined,
+            }}
+          >
+            {/* All button */}
+            <button
+              onClick={() => setCategoryFilter(null)}
+              style={{
+                flexShrink: 0, padding: '6px 14px', borderRadius: 999,
+                background: !categoryFilter ? C.ink : '#fff',
+                color: !categoryFilter ? '#fff' : C.inkSoft,
+                fontSize: 12, fontWeight: 800,
+                border: `2px solid ${!categoryFilter ? C.ink : INK + '22'}`,
+                boxShadow: !categoryFilter ? `0 2px 0 ${INK}` : 'none',
+                transition: 'all 180ms ease',
+                whiteSpace: 'nowrap',
+              }}
+            >{t('map.allCategories')}</button>
+
+            {ALL_CATEGORIES.map(cat => {
+              const meta = TAG_META[cat as Category]
+              const active = categoryFilter === cat
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(active ? null : cat as Category)}
+                  style={{
+                    flexShrink: 0,
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '6px 12px', borderRadius: 999,
+                    background: active ? meta.color : '#fff',
+                    color: active ? '#fff' : C.ink,
+                    fontSize: 12, fontWeight: 800,
+                    border: `2px solid ${active ? C.ink : INK + '22'}`,
+                    boxShadow: active ? `0 2px 0 ${C.ink}` : 'none',
+                    transition: 'all 180ms ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {/* SAFETY: meta.glyph is a static SVG from tokens.ts — not user input */}
+                  <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
+                  {t('tags.' + cat)}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Right arrow — desktop only */}
+          {isDesktop && tagBarCanScrollRight && (
+            <button
+              onClick={() => scrollTagBar('right')}
+              style={{
+                position: 'absolute', right: 8, zIndex: 3,
+                width: 32, height: 32, borderRadius: '50%',
+                background: '#fff', border: `2px solid ${INK}22`,
+                boxShadow: '0 2px 8px rgba(45,43,42,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Zoom controls — desktop only */}
+      {isDesktop && (
+        <div style={{
+          position: 'absolute', bottom: 113, right: 24, zIndex: 20,
+          display: 'flex', flexDirection: 'column',
+          width: 48,
+          border: `2.5px solid ${INK}`,
+          borderRadius: 16,
+          overflow: 'hidden',
+          background: '#fff',
+          boxShadow: `0 3px 0 ${INK}33`,
+        }}>
+          <button
+            onClick={() => leafRef.current?.zoomIn()}
+            style={{
+              height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', border: 'none', borderBottom: `2px solid ${INK}`,
+              cursor: 'pointer', fontSize: 22, fontWeight: 800, color: INK, lineHeight: 1,
+            }}
+          >+</button>
+          <button
+            onClick={() => leafRef.current?.zoomOut()}
+            style={{
+              height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', border: 'none',
+              cursor: 'pointer', fontSize: 22, fontWeight: 800, color: INK, lineHeight: 1,
+            }}
+          >−</button>
         </div>
       )}
 

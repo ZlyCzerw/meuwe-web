@@ -70,6 +70,7 @@ const de: Resources = {
     guest: 'Gast',
     interests: 'Deine Interessen',
     interestsHint: 'Wir benachrichtigen dich über passende Events',
+    noInterests: 'Keine Interessen ausgewählt',
     radius: 'Benachrichtigungsradius',
     myEvents: 'Meine Events',
     signOut: 'Abmelden',

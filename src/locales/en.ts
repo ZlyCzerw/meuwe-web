@@ -70,6 +70,7 @@ const en: Resources = {
     guest: 'Guest',
     interests: 'Your interests',
     interestsHint: "We'll notify you about matching events",
+    noInterests: 'No interests selected',
     radius: 'Notification radius',
     myEvents: 'My events',
     signOut: 'Sign out',
