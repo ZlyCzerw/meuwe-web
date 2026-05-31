@@ -20,7 +20,7 @@ const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' 
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
-async function handleShare(event: { id: string; title: string }, t: (k: string) => string, showToast: () => void) {
+async function handleShare(event: { id: string; title: string }, showToast: () => void) {
   const url = `${window.location.origin}/?event=${event.id}`
   if (navigator.share) {
     try {
@@ -326,7 +326,7 @@ function EventSheet({
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleShare(event, t, showShareToast)}
+                        onClick={() => handleShare(event, showShareToast)}
                         style={{
                           width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
                           background: C.cream,
