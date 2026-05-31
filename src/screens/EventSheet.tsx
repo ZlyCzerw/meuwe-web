@@ -20,6 +20,18 @@ const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' 
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
+async function handleShare(event: { id: string; title: string }, t: (k: string) => string, showToast: () => void) {
+  const url = `${window.location.origin}/?event=${event.id}`
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: event.title, url })
+    } catch {}
+  } else {
+    try { await navigator.clipboard.writeText(url) } catch {}
+    showToast()
+  }
+}
+
 function EventSheet({
   event,
   onClose,
@@ -27,6 +39,7 @@ function EventSheet({
   profile,
   userPos,
   onLocate,
+  onAuthNeeded,
 }: {
   event: EventWithMeta
   onClose: () => void
@@ -34,6 +47,7 @@ function EventSheet({
   profile: { display_name: string | null; avatar_color: string | null } | null
   userPos?: { lat: number; lng: number } | null
   onLocate?: () => void
+  onAuthNeeded?: () => void
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -42,6 +56,24 @@ function EventSheet({
   const [sendErr, setSendErr] = useState('')
   const [photoIdx, setPhotoIdx] = useState(0)
   const [photoModal, setPhotoModal] = useState<number | null>(null)
+  const [shareToast, setShareToast] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
+
+  function showShareToast() {
+    setShareToast(true)
+    setTimeout(() => setShareToast(false), 2200)
+  }
+
+  async function toggleFollow() {
+    if (!session) { onAuthNeeded?.(); return }
+    if (isFollowing) {
+      setIsFollowing(false)
+      await db.unfollowEvent(event.id)
+    } else {
+      setIsFollowing(true)
+      await db.followEvent(event.id)
+    }
+  }
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -60,6 +92,11 @@ function EventSheet({
         return dk < 1 ? `${Math.round(dk * 1000)} m` : `${dk.toFixed(1)} km`
       })()
     : null
+
+  useEffect(() => {
+    if (!event?.id || !session) return
+    db.isFollowingEvent(event.id).then(setIsFollowing)
+  }, [event?.id, session])
 
   useEffect(() => {
     if (!event?.id) return
@@ -203,246 +240,163 @@ function EventSheet({
             >
               {!isFull && (
                 <>
-                  {/* Title row with close button */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
-                    <div style={{
-                      flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink,
-                      lineHeight: 1.15, letterSpacing: -0.5,
-                    }}>{event.title}</div>
-                    <button onClick={onClose} style={{
-                      flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: C.cream,
-                      fontSize: 18, color: C.ink, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>×</button>
-                  </div>
-
-                  {/* Photo carousel */}
+                  {/* Photo carousel — full bleed at top */}
                   {event.photos && event.photos.length > 0 && (
-                    <div style={{ position: 'relative', marginBottom: 16 }}>
+                    <div style={{ position: 'relative', margin: '-4px -20px 16px' }}>
                       <img
                         src={event.photos[Math.min(photoIdx, event.photos.length - 1)]}
                         alt=""
                         onClick={() => setPhotoModal(photoIdx)}
-                        style={{
-                          width: '100%', height: 180, borderRadius: 20,
-                          objectFit: 'cover', display: 'block',
-                          border: `2px solid ${INK}11`,
-                          cursor: 'pointer',
-                        }}
+                        style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
                       />
                       {event.photos.length > 1 && (
                         <>
-                          <button
-                            onClick={() => setPhotoIdx(i => Math.max(0, i - 1))}
-                            disabled={photoIdx === 0}
-                            style={{
-                              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-                              width: 32, height: 32, borderRadius: '50%',
-                              background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`,
-                              boxShadow: `0 2px 8px ${INK}22`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 16, fontWeight: 900, color: photoIdx === 0 ? C.inkSoft : C.ink,
-                              opacity: photoIdx === 0 ? 0.4 : 1,
-                              transition: 'opacity 150ms ease',
-                            }}
-                          >‹</button>
-                          <button
-                            onClick={() => setPhotoIdx(i => Math.min(event.photos!.length - 1, i + 1))}
-                            disabled={photoIdx === event.photos.length - 1}
-                            style={{
-                              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                              width: 32, height: 32, borderRadius: '50%',
-                              background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`,
-                              boxShadow: `0 2px 8px ${INK}22`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 16, fontWeight: 900, color: photoIdx === event.photos.length - 1 ? C.inkSoft : C.ink,
-                              opacity: photoIdx === event.photos.length - 1 ? 0.4 : 1,
-                              transition: 'opacity 150ms ease',
-                            }}
-                          >›</button>
-                          <div style={{
-                            position: 'absolute', bottom: 10, left: 0, right: 0,
-                            display: 'flex', justifyContent: 'center', gap: 5,
-                          }}>
+                          <button onClick={() => setPhotoIdx(i => Math.max(0, i - 1))} disabled={photoIdx === 0}
+                            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900, opacity: photoIdx === 0 ? 0.4 : 1 }}>‹</button>
+                          <button onClick={() => setPhotoIdx(i => Math.min(event.photos!.length - 1, i + 1))} disabled={photoIdx === event.photos.length - 1}
+                            style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: `2px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900, opacity: photoIdx === event.photos.length - 1 ? 0.4 : 1 }}>›</button>
+                          <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5 }}>
                             {event.photos.map((_, i) => (
-                              <div key={i} onClick={() => setPhotoIdx(i)} style={{
-                                width: i === photoIdx ? 18 : 6, height: 6, borderRadius: 999,
-                                background: i === photoIdx ? '#fff' : 'rgba(255,255,255,0.55)',
-                                border: `1.5px solid ${INK}33`,
-                                transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)',
-                                cursor: 'pointer',
-                              }} />
+                              <div key={i} onClick={() => setPhotoIdx(i)} style={{ width: i === photoIdx ? 18 : 6, height: 6, borderRadius: 999, background: i === photoIdx ? '#fff' : 'rgba(255,255,255,0.55)', border: `1.5px solid ${INK}33`, transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)', cursor: 'pointer' }} />
                             ))}
                           </div>
                         </>
                       )}
                     </div>
                   )}
-                  {/* Status + datetime range + directions */}
-                  <div style={{ marginBottom: 12 }}>
-                    {/* Line 1: status pill + time range */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
-                      <StatusPill status={computedStatus} />
-                      {event.start_time && event.end_time && (
-                        <span style={{ fontSize: 12, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                          {new Date(event.start_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          {' → '}
-                          {new Date(event.end_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
+
+                  {/* Title + close */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                    <div style={{ flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink, lineHeight: 1.15, letterSpacing: -0.5 }}>{event.title}</div>
+                    <button onClick={onClose} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: C.cream, fontSize: 18, color: C.ink, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                  </div>
+
+                  {/* Status + time + Follow/Share row */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+                    {/* Left: two info lines */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Line 1: status + time */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <StatusPill status={computedStatus} />
+                        {event.start_time && event.end_time && (
+                          <span style={{ fontSize: 12, color: C.ink, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {new Date(event.start_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            {' → '}
+                            {new Date(event.end_time).toLocaleString(loc, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                      {/* Line 2: distance + trasa */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {distStr && (
+                          <button onClick={onLocate} disabled={!onLocate} style={{ background: 'none', border: 'none', padding: 0, cursor: onLocate ? 'pointer' : 'default', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: C.primary, boxShadow: `0 0 0 3px ${C.primarySoft}` }} />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: 3 }}>
+                              {t('event.distanceFrom', { dist: distStr })}
+                            </span>
+                          </button>
+                        )}
+                        {distStr && <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>}
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lng}`}
+                          target="_blank" rel="noopener noreferrer"
+                          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335"/><circle cx="12" cy="9" r="2.5" fill="#fff"/></svg>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{t('event.directions')}</span>
+                        </a>
+                      </div>
                     </div>
-                    {/* Line 2: distance + directions link */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    {/* Right: Follow + Share circles */}
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
                       <button
-                        onClick={onLocate}
-                        disabled={!onLocate}
+                        onClick={toggleFollow}
                         style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          background: 'none', border: 'none', padding: 0,
-                          cursor: onLocate ? 'pointer' : 'default',
+                          width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                          background: isFollowing ? C.primarySoft : C.cream,
+                          border: 'none',
+                          boxShadow: 'none',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 220ms cubic-bezier(0.34,1.56,0.64,1)',
                         }}
+                        title={isFollowing ? t('follow.following') : t('follow.follow')}
                       >
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: C.primary, boxShadow: `0 0 0 3px ${C.primarySoft}` }} />
-                        <span style={{
-                          fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
-                          color: onLocate ? C.primary : C.inkSoft,
-                          textDecoration: onLocate ? 'underline' : 'none',
-                          textDecorationStyle: 'dotted',
-                          textUnderlineOffset: 3,
-                        }}>
-                          {t('event.distanceFrom', { dist: distStr })}
-                        </span>
-                      </button>
-                      <span style={{ color: C.inkSoft, fontWeight: 700, fontSize: 13 }}>·</span>
-                      <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335"/>
-                          <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill={isFollowing ? C.primary : 'none'} stroke={isFollowing ? C.primary : INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                         </svg>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>
-                          {t('event.directions')}
-                        </span>
-                      </a>
+                      </button>
+                      <button
+                        onClick={() => handleShare(event, t, showShareToast)}
+                        style={{
+                          width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                          background: C.cream,
+                          border: 'none',
+                          boxShadow: 'none',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 220ms cubic-bezier(0.34,1.56,0.64,1)',
+                        }}
+                        title={t('share.share')}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 14 20 9 15 4"/>
+                          <path d="M4 20v-7a4 4 0 014-4h12"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Tags — single row, overflow → comic "…" chip */}
+                  {/* Tags */}
                   {event.tags?.length > 0 && (() => {
-                    const MAX = 3
-                    const visible = event.tags.slice(0, MAX)
-                    const hidden = event.tags.length - MAX
+                    const MAX = 3; const visible = event.tags.slice(0, MAX); const hidden = event.tags.length - MAX
                     return (
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 16, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 14, overflow: 'hidden' }}>
                         {visible.map(tag => <TagChip key={tag} category={tag} selected />)}
                         {hidden > 0 && (
-                          <div style={{
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            padding: '5px 10px', borderRadius: 999,
-                            background: C.cream, border: `2.5px solid ${INK}`,
-                            boxShadow: `2px 2px 0 ${INK}`,
-                            fontSize: 12, fontWeight: 900, color: C.ink,
-                            letterSpacing: 1, lineHeight: 1,
-                            position: 'relative', flexShrink: 0,
-                          }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', borderRadius: 999, background: C.cream, border: `2.5px solid ${INK}`, boxShadow: `2px 2px 0 ${INK}`, fontSize: 12, fontWeight: 900, color: C.ink, position: 'relative', flexShrink: 0 }}>
                             +{hidden}
-                            {/* comic tail */}
-                            <div style={{
-                              position: 'absolute', bottom: -7, left: 10,
-                              width: 0, height: 0,
-                              borderLeft: '5px solid transparent',
-                              borderRight: '5px solid transparent',
-                              borderTop: `7px solid ${INK}`,
-                            }} />
-                            <div style={{
-                              position: 'absolute', bottom: -5, left: 11,
-                              width: 0, height: 0,
-                              borderLeft: '4px solid transparent',
-                              borderRight: '4px solid transparent',
-                              borderTop: `6px solid ${C.cream}`,
-                            }} />
                           </div>
                         )}
                       </div>
                     )
                   })()}
 
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                    borderRadius: 18, background: C.cream, marginBottom: 14,
-                  }}>
-                    <Avatar
-                      size={40}
-                      initials={(event.profiles?.display_name || '?')[0].toUpperCase()}
-                      color={event.profiles?.avatar_color || C.sky}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
-                        {event.profiles?.display_name || '?'}
-                      </div>
-                      <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600 }}>
-                        {t('event.organizer')}
-                      </div>
-                    </div>
+                  {/* Creator — compact inline */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <Avatar size={28} initials={(event.profiles?.display_name || '?')[0].toUpperCase()} color={event.profiles?.avatar_color || C.sky} />
+                    <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500 }}>
+                      {t('event.organizer')} <strong style={{ color: C.ink }}>{event.profiles?.display_name || '?'}</strong>
+                    </span>
                     {session?.user.id === event.creator_id && (
-                      <span style={{
-                        padding: '4px 10px', borderRadius: 999,
-                        background: C.primarySoft, color: C.primaryPress,
-                        fontSize: 11, fontWeight: 800,
-                      }}>{t('event.moderator')}</span>
+                      <span style={{ marginLeft: 4, padding: '2px 8px', borderRadius: 999, background: C.primarySoft, color: C.primaryPress, fontSize: 11, fontWeight: 800 }}>{t('event.moderator')}</span>
                     )}
                   </div>
+
+                  {/* End event (creator only) */}
                   {session?.user.id === event.creator_id && computedStatus !== 'ended' && (
-                    <button
-                      onClick={handleEndEvent}
-                      style={{
-                        width: '100%', padding: '12px 16px', marginBottom: 14,
-                        borderRadius: 999, background: 'transparent',
-                        border: `2px solid ${C.primarySoft}`,
-                        color: C.primaryPress,
-                        fontSize: 14, fontWeight: 800,
-                      }}
-                    >
+                    <button onClick={handleEndEvent} style={{ width: '100%', padding: '12px 16px', marginBottom: 14, borderRadius: 999, background: 'transparent', border: `2px solid ${C.primarySoft}`, color: C.primaryPress, fontSize: 14, fontWeight: 800 }}>
                       {t('event.endEvent')}
                     </button>
                   )}
+
+                  {/* Description */}
                   {event.description && (
                     <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, marginBottom: 12 }}>
                       {event.description}
                     </div>
                   )}
-                  <button
-                    onClick={() => setSnap('full')}
-                    style={{
-                      width: '100%', padding: '14px 16px', borderRadius: 20,
-                      background: C.cream, border: `2px solid ${INK}22`,
-                      display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80,
-                    }}
-                  >
+
+                  {/* Chat button */}
+                  <button onClick={() => setSnap('full')} style={{ width: '100%', padding: '14px 16px', borderRadius: 20, background: C.cream, border: `2px solid ${INK}22`, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80 }}>
                     {messages.length > 0 && (
                       <div style={{ display: 'flex', marginRight: -4 }}>
-                        {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()]
-                          .slice(0, 3)
-                          .map((color, i) => (
-                            <div key={i} style={{
-                              width: 28, height: 28, borderRadius: '50%',
-                              background: color || C.sky,
-                              border: `2px solid ${INK}`,
-                              marginLeft: i === 0 ? 0 : -10,
-                            }} />
-                          ))
-                        }
+                        {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()].slice(0, 3).map((color, i) => (
+                          <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: color || C.sky, border: `2px solid ${INK}`, marginLeft: i === 0 ? 0 : -10 }} />
+                        ))}
                       </div>
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
-                      <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
-                        {t('event.messageCount', { count: messages.length })}
-                      </div>
+                      <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>{t('event.messageCount', { count: messages.length })}</div>
                     </div>
                     <div style={{ fontSize: 18, color: C.primary, fontWeight: 900 }}>↑</div>
                   </button>
@@ -637,6 +591,19 @@ function EventSheet({
               >›</button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Share — link copied toast */}
+      {shareToast && (
+        <div style={{
+          position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: C.ink, color: '#fff', borderRadius: 999,
+          padding: '8px 18px', fontSize: 13, fontWeight: 700,
+          whiteSpace: 'nowrap', zIndex: 10,
+          animation: 'meuwe-fade-in 180ms ease',
+        }}>
+          {t('share.linkCopied')}
         </div>
       )}
     </div>
