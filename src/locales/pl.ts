@@ -95,6 +95,8 @@ const pl = {
   },
   auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia' },
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
+  share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
+  follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować' },
 }
 
 export default pl

@@ -35,6 +35,7 @@ function MapScreen({
   onAuthNeeded,
   userPos,
   lastKnownPos,
+  initialZoom = 15,
   pickingLocation,
   onLocationPicked,
   eventsRefreshKey,
@@ -49,6 +50,7 @@ function MapScreen({
   onAuthNeeded: () => void
   userPos: { lat: number; lng: number } | null
   lastKnownPos?: { lat: number; lng: number } | null
+  initialZoom?: number
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
   eventsRefreshKey?: number
@@ -117,7 +119,7 @@ function MapScreen({
     if (leafRef.current || !mapRef.current) return
     const initialPos = userPosRef.current
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([(initialPos || lastKnownPos || WARSAW).lat, (initialPos || lastKnownPos || WARSAW).lng], 15)
+      .setView([(initialPos || lastKnownPos || WARSAW).lat, (initialPos || lastKnownPos || WARSAW).lng], initialZoom)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
@@ -170,6 +172,7 @@ function MapScreen({
   useEffect(() => {
     if (isDesktop) updateTagBarArrows()
   }, [])
+
 
   useEffect(() => {
     const map = leafRef.current

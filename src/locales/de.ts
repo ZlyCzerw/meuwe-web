@@ -97,6 +97,8 @@ const de: Resources = {
   },
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen' },
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
+  share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
+  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen' },
 }
 
 export default de

@@ -41,7 +41,30 @@ export default function App() {
   const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
+  const [initialMapZoom, setInitialMapZoom] = useState(15)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
+
+  // On mount: check ?event=<id> deep link
+  useEffect(() => {
+    const eventId = new URLSearchParams(window.location.search).get('event')
+    if (!eventId) return
+    window.history.replaceState({}, '', '/')
+    db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
+  }, [])
+
+  // Open deep link event once map is ready
+  useEffect(() => {
+    if (screen !== 'map' || !deepLinkEvent) return
+    setSelEvent(deepLinkEvent)
+    setDeepLinkEvent(null)
+    const ev = deepLinkEvent
+    const tryFly = () => {
+      if (flyToFnRef.current) flyToFnRef.current(ev.lat, ev.lng)
+      else setTimeout(tryFly, 150)
+    }
+    setTimeout(tryFly, 100)
+  }, [screen, deepLinkEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // On mount: refine language by geo and watch position
   useEffect(() => {
@@ -67,8 +90,7 @@ export default function App() {
       navigator.serviceWorker.addEventListener('message', e => {
         const { type, eventId } = e.data || {}
         if (type === 'OPEN_EVENT' && eventId) {
-          // TODO: otworzyć event po ID — wymaga dodania db.getEventById
-          // setSelEvent(...)
+          db.getEventById(eventId).then(ev => { if (ev) setSelEvent(ev) })
         }
         if (type === 'PUSH_SUBSCRIPTION_CHANGED' && session) {
           refreshPushSubscription(session.user.id)
@@ -91,13 +113,46 @@ export default function App() {
 
   // Initial routing once session is resolved
   useEffect(() => {
-    if (ready && screen === 'loading') setScreen(session ? 'map' : 'welcome')
+    if (!ready || screen !== 'loading') return
+    const hasDeepLink = !!new URLSearchParams(window.location.search).get('event')
+    if (hasDeepLink) { setScreen('map'); return }
+    if (session) { goToMap(); return }
+    setScreen('welcome')
   }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Login → map
   useEffect(() => {
-    if (session) setScreen('map')
-  }, [session])
+    if (session) goToMap()
+  }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Visible half-width on portrait phone = shorter screen edge / 2.
+  // Solve: (shortPx/2) × 40075 × cos(lat) / (256 × 2^Z) = targetKm
+  function kmToZoom(targetKm: number, lat: number): number {
+    const shortPx = Math.min(window.innerWidth, window.innerHeight)
+    const cosLat = Math.cos(lat * Math.PI / 180)
+    const z = Math.log2((shortPx / 2) * 40075 * cosLat / (256 * targetKm))
+    return Math.max(9, Math.min(15, Math.round(z)))
+  }
+
+  async function goToMap() {
+    const pos = userPos || lastKnownPos
+    const maxKm = profile?.radius_km ?? 30
+    let zoom = 15
+    if (pos) {
+      const nearby = await db.getEvents(pos.lat, pos.lng, 15, 0)
+      if (nearby.length === 0) {
+        const wider = await db.getEvents(pos.lat, pos.lng, maxKm, 0)
+        if (wider.length === 0) {
+          zoom = kmToZoom(maxKm, pos.lat)
+        } else {
+          const nearest = wider.reduce((a, b) => a.distKm < b.distKm ? a : b)
+          zoom = kmToZoom(Math.min(nearest.distKm * 2, maxKm), pos.lat)
+        }
+      }
+    }
+    setInitialMapZoom(zoom)
+    setScreen('map')
+  }
 
   function showToast(msg: string) {
     setToast(msg)
@@ -144,7 +199,7 @@ export default function App() {
 
   if (screen === 'welcome') return (
     <Welcome onSignIn={mode => {
-      if (mode === 'skip') { setScreen('map'); return }
+      if (mode === 'skip') { goToMap(); return }
       db.signInGoogle()
     }} />
   )
@@ -165,6 +220,7 @@ export default function App() {
         onAuthNeeded={() => setAuthModalOpen(true)}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
+        initialZoom={initialMapZoom}
         eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation && !isMyEvents}
         onLocationPicked={pos => {
@@ -198,6 +254,7 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
+          onAuthNeeded={() => setAuthModalOpen(true)}
         />
       )}
       {!isMyEvents && selEvent && (
@@ -208,6 +265,7 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
+          onAuthNeeded={() => setAuthModalOpen(true)}
         />
       )}
 

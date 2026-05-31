@@ -97,6 +97,8 @@ const es: Resources = {
   },
   auth: { createEventPrompt: 'Solo los usuarios registrados pueden añadir eventos' },
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
+  share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },
+  follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir' },
 }
 
 export default es

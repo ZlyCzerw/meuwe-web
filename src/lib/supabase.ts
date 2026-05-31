@@ -115,6 +115,30 @@ export const db = {
       msgCount: countMap[e.id] ?? 0,
     })) as EventWithMsgCount[]
   },
+  async getEventById(id: string): Promise<EventWithMeta | null> {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
+      .eq('id', id)
+      .single()
+    if (error || !data) return null
+    const e = data as any
+    return { ...e, tags: (e.event_tags || []).map((t: any) => t.tag), distKm: 0, distStr: '' }
+  },
+  async isFollowingEvent(eventId: string): Promise<boolean> {
+    const sess = await this.getSession(); if (!sess) return false
+    const { data } = await supabase.from('event_follows')
+      .select('event_id').eq('user_id', sess.user.id).eq('event_id', eventId).maybeSingle()
+    return !!data
+  },
+  async followEvent(eventId: string) {
+    const sess = await this.getSession(); if (!sess) return
+    await supabase.from('event_follows').insert({ user_id: sess.user.id, event_id: eventId })
+  },
+  async unfollowEvent(eventId: string) {
+    const sess = await this.getSession(); if (!sess) return
+    await supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
+  },
   upsertTag(name:string):string {
     return name.trim().toLowerCase().replace(/\s+/g,'-')
   },
