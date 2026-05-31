@@ -7,9 +7,13 @@ CREATE POLICY "tags_select" ON public.tags
   FOR SELECT TO anon, authenticated USING (true);
 
 -- ── 2. handle_new_user() — trigger function, must not be callable directly ───
--- It runs as owner via the auth.users trigger — direct calls by any role are wrong.
-REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM authenticated;
+-- Wrapped in DO block because the function may not exist in all deployments.
+DO $$
+BEGIN
+  REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon;
+  REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM authenticated;
+EXCEPTION WHEN undefined_function THEN NULL;
+END $$;
 
 -- ── 3. get_event_message_counts — remove anon access ─────────────────────────
 REVOKE EXECUTE ON FUNCTION public.get_event_message_counts(uuid[]) FROM anon;

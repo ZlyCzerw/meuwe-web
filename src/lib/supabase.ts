@@ -51,11 +51,22 @@ export const db = {
       .gte('end_time',   endTimeFloor.toISOString())
       .order('created_at',{ascending:false})
     if(error){console.error(error);return[]}
-    return (data||[]).map((e:any)=>{
+    const events = (data||[]).map((e:any)=>{
       const dk=haversineKm(lat,lng,e.lat,e.lng)
       return {...e, tags:(e.event_tags||[]).map((t:any)=>t.tag),
         distKm:dk, distStr:dk<1?`${Math.round(dk*1000)} m`:`${dk.toFixed(1)} km`}
     })
+    const eventIds = events.map((e:any) => e.id)
+    let interactionMap: Record<string, number> = {}
+    if (eventIds.length > 0) {
+      const { data: counts } = await supabase.rpc('get_event_interactions', { event_ids: eventIds })
+      if (counts) {
+        ;(counts as { event_id: string; interaction_count: number }[]).forEach(r => {
+          interactionMap[r.event_id] = Number(r.interaction_count)
+        })
+      }
+    }
+    return events.map((e:any) => ({ ...e, interactionCount: interactionMap[e.id] ?? 0 }))
   },
   async uploadEventPhoto(file:File):Promise<string> {
     const sess=await this.getSession(); if(!sess) throw new Error('not authenticated')
