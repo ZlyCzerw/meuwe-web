@@ -1,7 +1,7 @@
 import { BLOBS, TAG_META, type Category } from '../lib/tokens'
 import { isCurrentlyLive } from '../lib/eventStatus'
 
-export function pinHTML(category: string, idx: number, _dbStatus?: string, startTime?: string, endTime?: string): string {
+export function pinHTML(category: string, idx: number, _dbStatus?: string, startTime?: string, endTime?: string, scale = 1): string {
   const meta = TAG_META[category as Category] || TAG_META.party
   const path = BLOBS[idx % BLOBS.length]
   const isLive = startTime && endTime
@@ -11,7 +11,8 @@ export function pinHTML(category: string, idx: number, _dbStatus?: string, start
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s ease-out infinite;opacity:0;pointer-events:none"></div>
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
   ` : ''
-  return `<div style="position:relative;width:44px;height:56px;">
+  const scaleStyle = scale !== 1 ? `transform:scale(${scale.toFixed(3)});transform-origin:bottom center;` : ''
+  return `<div style="position:relative;width:44px;height:56px;${scaleStyle}">
     ${halos}
     <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
       <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>

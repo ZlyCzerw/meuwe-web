@@ -39,6 +39,7 @@ export interface EventWithMeta extends EventRow {
   distKm: number
   distStr: string
   profiles?: { display_name: string | null; avatar_color: string | null } | null
+  interactionCount?: number
 }
 
 export interface EventWithMsgCount extends EventWithMeta {

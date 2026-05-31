@@ -180,13 +180,15 @@ function MapScreen({
     Object.values(pinsRef.current).forEach(m => m.remove())
     pinsRef.current = {}
     visibleEvents.forEach((ev, i) => {
+      const interactions = ev.interactionCount ?? 0
+      const scale = 1 + Math.min(interactions, 100) / 100 * 0.5
       const icon = L.divIcon({
-        html: pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time),
+        html: pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time, scale),
         className: 'meuwe-icon',
         iconSize: [44, 56],
         iconAnchor: [22, 56],
       })
-      const m = L.marker([ev.lat, ev.lng], { icon }).addTo(map)
+      const m = L.marker([ev.lat, ev.lng], { icon, zIndexOffset: interactions }).addTo(map)
       m.on('click', () => onOpenEvent(ev))
       pinsRef.current[ev.id] = m
     })
