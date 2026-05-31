@@ -182,6 +182,10 @@ export const db = {
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'event_messages',filter:`event_id=eq.${eid}`},(p:any)=>cb(p.new))
       .subscribe()
   },
+  trackClick(action: 'browse_guest' | 'signin_google') {
+    // fire-and-forget — never block UI on analytics
+    supabase.from('analytics_clicks').insert({ action }).then(() => {})
+  },
   subscribeEvents(cb:()=>void) {
     return supabase.channel('events:all')
       .on('postgres_changes',{event:'*',schema:'public',table:'events'},()=>cb())

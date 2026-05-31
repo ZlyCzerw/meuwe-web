@@ -3,6 +3,7 @@ import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
+import { db } from '../lib/supabase'
 
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'skip') => void }) {
   const { t } = useTranslation()
@@ -62,7 +63,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
       {/* Buttons */}
       <div style={{ padding: '0 24px 52px', position: 'relative', zIndex: 1 }}>
         <button
-          onClick={() => onSignIn('google')}
+          onClick={() => { db.trackClick('signin_google'); onSignIn('google') }}
           style={{
             width: '100%', padding: '16px 24px', borderRadius: 999,
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
@@ -87,7 +88,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
           })()}
         </div>
         <button
-          onClick={() => onSignIn('skip')}
+          onClick={() => { db.trackClick('browse_guest'); onSignIn('skip') }}
           style={{
             marginTop: 12, width: '100%', padding: '12px',
             fontSize: 14, color: C.inkSoft, fontWeight: 700, textAlign: 'center',

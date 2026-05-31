@@ -319,7 +319,7 @@ export default function App() {
               {t('auth.createEventPrompt')}
             </p>
             <button
-              onClick={() => { setAuthModalOpen(false); db.signInGoogle() }}
+              onClick={() => { setAuthModalOpen(false); db.trackClick('signin_google'); db.signInGoogle() }}
               style={{
                 width: '100%', padding: '16px 24px', borderRadius: 999,
                 background: '#fff', border: `2.5px solid ${C.ink}`, boxShadow: `0 4px 0 ${C.ink}33`,
