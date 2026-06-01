@@ -9,7 +9,11 @@ export function useSession() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    // Fallback: if getSession() hangs (stale token + poor mobile network), unblock after 5s
+    const fallback = setTimeout(() => setReady(true), 5000)
+
     db.getSession().then(s => {
+      clearTimeout(fallback)
       setSession(s)
       if (s) loadProfile(s.user.id)
       setReady(true)
@@ -19,7 +23,7 @@ export function useSession() {
       if (s) loadProfile(s.user.id)
       else setProfile(null)
     })
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); clearTimeout(fallback) }
   }, [])
 
   async function loadProfile(uid: string) {
