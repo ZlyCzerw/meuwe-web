@@ -11,6 +11,12 @@ function pgTs(d: Date): string {
   return d.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '+00');
 }
 
+// Postgres text[] literal: '{}' when empty, ARRAY[...]::text[] otherwise
+function pgTextArray(arr: string[]): string {
+  if (!arr.length) return `'{}'`
+  return `ARRAY[${arr.map(s => `'${esc(s)}'`).join(', ')}]::text[]`
+}
+
 export function generateSql(
   events: MeuweEvent[],
   meta: { dateFrom: string; dateTo: string; generatedAt: string }
@@ -33,7 +39,7 @@ export function generateSql(
     lines.push(`-- ${esc(ev.title)} [${ev.externalId}]`);
     lines.push(
       `INSERT INTO events (id, title, description, lat, lng, place_name, ` +
-      `category, start_time, end_time, creator_id, status, external_id) VALUES (`
+      `category, start_time, end_time, creator_id, status, external_id, photos) VALUES (`
     );
     lines.push(`  gen_random_uuid(),`);
     lines.push(`  '${esc(ev.title)}',`);
@@ -43,7 +49,7 @@ export function generateSql(
     lines.push(`  '${ev.category}',`);
     lines.push(`  '${pgTs(ev.startTime)}',`);
     lines.push(`  '${pgTs(ev.endTime)}',`);
-    lines.push(`  team_id, 'upcoming', '${esc(ev.externalId)}'`);
+    lines.push(`  team_id, 'upcoming', '${esc(ev.externalId)}', ${pgTextArray(ev.photos)}`);
     lines.push(`) ON CONFLICT (external_id) DO NOTHING;`);
 
     if (ev.tags.length) {
