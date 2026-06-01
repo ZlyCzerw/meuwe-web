@@ -126,12 +126,21 @@ function MapScreen({
     const raw = tlDrag.current.baseTranslate + delta
     setLiveTranslate(Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, raw)))
   }
-  function tlPU() {
+  function tlPU(e: React.PointerEvent<HTMLDivElement>) {
     if (!tlDrag.current.on) return
     tlDrag.current.on = false
     if (tlDrag.current.moved && liveTranslate !== null) {
       setDayIdx(translateToIdx(liveTranslate))
+    } else if (!tlDrag.current.moved) {
+      // tap (not drag) — select the day under the pointer
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+      const dayEl = el?.closest('[data-day-idx]') as HTMLElement | null
+      if (dayEl?.dataset.dayIdx != null) setDayIdx(Number(dayEl.dataset.dayIdx))
     }
+    setLiveTranslate(null)
+  }
+  function tlCancel() {
+    tlDrag.current.on = false
     setLiveTranslate(null)
   }
 
@@ -446,7 +455,7 @@ function MapScreen({
             onPointerDown={tlPD}
             onPointerMove={tlPM}
             onPointerUp={tlPU}
-            onPointerCancel={tlPU}
+            onPointerCancel={tlCancel}
             style={{
               padding: '6px 8px', borderRadius: 999, background: '#fff',
               border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
@@ -480,6 +489,7 @@ function MapScreen({
                   return (
                     <button
                       key={i}
+                      data-day-idx={i}
                       onClick={() => setDayIdx(i)}
                       style={{
                         flexShrink: 0, width: 56, borderRadius: 14,
