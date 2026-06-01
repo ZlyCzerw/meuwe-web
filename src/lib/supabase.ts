@@ -91,7 +91,10 @@ export const db = {
       creator_id:sess.user.id, status:'live',
       photos: ev.photos||[],
     }).select().single()
-    if(!error && ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data!.id,tag})))
+    if(!error && data) {
+      if(ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data.id,tag})))
+      await supabase.from('event_follows').insert({ user_id: sess.user.id, event_id: data.id })
+    }
     return {data,error}
   },
   async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {
@@ -150,6 +153,35 @@ export const db = {
     const sess = await this.getSession(); if (!sess) return
     await supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
   },
+  async getFollowedEvents(userId: string): Promise<EventWithMsgCount[]> {
+    const { data: follows } = await supabase
+      .from('event_follows').select('event_id').eq('user_id', userId)
+    const eventIds = (follows ?? []).map((f: any) => f.event_id)
+    if (eventIds.length === 0) return []
+    const { data, error } = await supabase
+      .from('events')
+      .select('*, event_tags(tag)')
+      .in('id', eventIds)
+      .neq('creator_id', userId)
+      .order('start_time', { ascending: false })
+    if (error) { console.error(error); return [] }
+    const ids = (data || []).map((e: any) => e.id)
+    let countMap: Record<string, number> = {}
+    if (ids.length > 0) {
+      const { data: counts } = await supabase.rpc('get_event_message_counts', { event_ids: ids })
+      if (counts) {
+        ;(counts as { event_id: string; msg_count: number }[]).forEach(r => {
+          countMap[r.event_id] = r.msg_count
+        })
+      }
+    }
+    return (data || []).map((e: any) => ({
+      ...e,
+      tags: (e.event_tags || []).map((t: any) => t.tag),
+      distKm: 0, distStr: '', profiles: null,
+      msgCount: countMap[e.id] ?? 0,
+    })) as EventWithMsgCount[]
+  },
   upsertTag(name:string):string {
     return name.trim().toLowerCase().replace(/\s+/g,'-')
   },
@@ -165,7 +197,7 @@ export const db = {
     // The DB already enforces this via RLS (events_update policy).
     return supabase
       .from('events')
-      .update({ status: 'ended' })
+      .update({ status: 'ended', end_time: new Date().toISOString() })
       .eq('id', eventId)
       .eq('creator_id', sess.user.id)
   },

@@ -27,15 +27,12 @@ export function computeEffectiveEnd(
   return effectiveEnd
 }
 
-/**
- * Computes real-time status from actual timestamps.
- * Does NOT rely on the stale `status` field from the DB.
- */
 export function computeStatus(
-  event: { start_time: string; end_time: string },
+  event: { start_time: string; end_time: string; status?: string },
   messages: { created_at: string }[] = [],
   now = new Date(),
 ): ComputedStatus {
+  if (event.status === 'ended') return 'ended'
   const start = new Date(event.start_time)
   if (now < start) return 'upcoming'
 
@@ -47,7 +44,7 @@ export function computeStatus(
 
 /** True if the event is within its scheduled window (halo should pulse). */
 export function isCurrentlyLive(
-  event: { start_time: string; end_time: string },
+  event: { start_time: string; end_time: string; status?: string },
   messages: { created_at: string }[] = [],
   now = new Date(),
 ): boolean {

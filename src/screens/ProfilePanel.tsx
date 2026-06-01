@@ -18,6 +18,7 @@ function ProfilePanel({
   onSignIn,
   reloadProfile,
   onOpenMyEvents,
+  onOpenFollowedEvents,
 }: {
   open: boolean
   onClose: () => void
@@ -27,6 +28,7 @@ function ProfilePanel({
   onSignIn: () => void
   reloadProfile: () => void
   onOpenMyEvents: () => void
+  onOpenFollowedEvents: () => void
 }) {
   const { t } = useTranslation()
 
@@ -516,25 +518,30 @@ function ProfilePanel({
                   borderBottom: `1px solid ${C.inkSoft}33`,
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: F.display,
-                    fontSize: 17,
-                    fontWeight: 800,
-                    color: C.ink,
-                  }}
-                >
+                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
                   {t('profile.myEvents')}
                 </div>
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 900,
-                    color: C.ink,
-                  }}
-                >
-                  ›
+                <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
+              </button>
+
+              {/* Obserwowane wydarzenia */}
+              <button
+                onClick={onOpenFollowedEvents}
+                style={{
+                  padding: '16px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderBottom: `1px solid ${C.inkSoft}33`,
+                }}
+              >
+                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
+                  {t('profile.followedEvents')}
                 </div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
               </button>
 
               {/* Sign out */}
