@@ -1,6 +1,9 @@
 import type { Coords } from './types.ts';
 import { fallbackCoords } from './mapper.ts';
 
+/** Last-resort coordinates: centre of Tenerife. */
+export const TENERIFE_CENTER = { lat: 28.2916, lng: -16.6291 };
+
 const cache = new Map<string, Coords>();
 const UA = 'meuwe-event-sync/1.0 (meuwe@gmail.com)';
 let lastCall = 0;
@@ -50,7 +53,6 @@ export async function geocode(venueName: string, city: string, country = 'ES'): 
   if (fb) { cache.set(cacheKey, fb); return fb; }
 
   // 4. Centre of Tenerife as last resort
-  const fallback = { lat: 28.2916, lng: -16.6291 };
-  cache.set(cacheKey, fallback);
-  return fallback;
+  cache.set(cacheKey, TENERIFE_CENTER);
+  return TENERIFE_CENTER;
 }

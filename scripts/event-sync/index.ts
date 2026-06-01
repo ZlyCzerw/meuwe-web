@@ -3,55 +3,57 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SOURCES } from './sources/index.ts';
-import { geocode } from './geocoder.ts';
+import { geocode, TENERIFE_CENTER } from './geocoder.ts';
 import { mapCategory } from './mapper.ts';
 import { generateSql } from './sql.ts';
+import { normalizeEvent } from './normalize.ts';
+import { localCanaryToUtc } from './timezone.ts';
 import type { MeuweEvent, RawEvent } from './types.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SEEDS_DIR = path.resolve(__dirname, '..', '..', 'supabase', 'seeds');
 const LOOKAHEAD_DAYS = 21;
 
-// Canary Islands = UTC+1 in summer (WEST).
-// Convert 'YYYY-MM-DD' + 'HH:MM' local → UTC Date.
-function localToUtc(date: string, hour: string, utcOffsetHours = 1): Date {
-  const [y, mo, d] = date.split('-').map(Number);
-  const [h, min]   = hour.split(':').map(Number);
-  return new Date(Date.UTC(y, mo - 1, d, h - utcOffsetHours, min));
-}
-
 function addHours(d: Date, h: number): Date {
   return new Date(d.getTime() + h * 3_600_000);
 }
 
-async function toMeuweEvent(raw: RawEvent): Promise<MeuweEvent> {
+async function toMeuweEvent(
+  raw: RawEvent,
+): Promise<{ event: MeuweEvent; usedFallbackCoords: boolean }> {
   const startHour = raw.startHour ?? '19:00';
-  const startUtc  = localToUtc(raw.date, startHour);
+  const startUtc = localCanaryToUtc(raw.date, startHour);
 
   let endUtc: Date;
   if (raw.endHour) {
-    endUtc = localToUtc(raw.date, raw.endHour);
+    endUtc = localCanaryToUtc(raw.date, raw.endHour);
     // Handle midnight crossover (e.g. start 23:00, end 01:00)
     if (endUtc <= startUtc) endUtc = addHours(endUtc, 24);
   } else {
     endUtc = addHours(startUtc, 2);
   }
 
-  const coords   = await geocode(raw.venueName, raw.city, raw.country);
+  const coords = await geocode(raw.venueName, raw.city, raw.country);
+  const usedFallbackCoords =
+    coords.lat === TENERIFE_CENTER.lat && coords.lng === TENERIFE_CENTER.lng;
   const { category, tags } = mapCategory(raw.categories);
   const placeName = [raw.venueName, raw.city].filter(Boolean).join(', ');
 
   return {
-    externalId:  raw.externalId,
-    title:       raw.title,
-    description: raw.description,
-    lat:         coords.lat,
-    lng:         coords.lng,
-    placeName,
-    category,
-    startTime:   startUtc,
-    endTime:     endUtc,
-    tags,
+    event: {
+      externalId: raw.externalId,
+      title: raw.title,
+      description: raw.description,
+      lat: coords.lat,
+      lng: coords.lng,
+      placeName,
+      category,
+      startTime: startUtc,
+      endTime: endUtc,
+      tags,
+      photos: raw.imageUrl ? [raw.imageUrl] : [],
+    },
+    usedFallbackCoords,
   };
 }
 
@@ -91,21 +93,38 @@ async function main() {
     return;
   }
 
-  // 2. Geocode + map each event to meuwe schema
-  console.log('\nGeocoding...');
+  // 2. Normalize (fill defaults, never drop for missing data) → geocode → map
+  console.log('\nNormalizing + geocoding...');
   const meuweEvents: MeuweEvent[] = [];
-  let skipped = 0;
+  const warningCounts: Record<string, number> = {};
+  let dropped = 0;
+
+  const bump = (key: string) => {
+    warningCounts[key] = (warningCounts[key] ?? 0) + 1;
+  };
 
   for (const raw of allRaw) {
-    try {
-      meuweEvents.push(await toMeuweEvent(raw));
-    } catch (err) {
-      console.warn(`  ⚠ Skipping ${raw.externalId}: ${(err as Error).message}`);
-      skipped++;
+    const { event: normalized, warnings } = normalizeEvent(raw);
+    warnings.forEach(bump);
+
+    if (!normalized) {
+      dropped++;
+      console.warn(`  ⚠ Dropped ${raw.externalId}: ${warnings.join(', ')}`);
+      continue;
     }
+
+    const { event, usedFallbackCoords } = await toMeuweEvent(normalized);
+    if (usedFallbackCoords) bump('island-center-coords');
+    meuweEvents.push(event);
   }
 
-  console.log(`Mapped: ${meuweEvents.length} events (${skipped} skipped)`);
+  console.log('\n── Run summary ──');
+  console.log(`Collected: ${allRaw.length}`);
+  console.log(`Kept:      ${meuweEvents.length} (${dropped} dropped)`);
+  const wc = Object.entries(warningCounts);
+  if (wc.length) {
+    console.log('Fallbacks: ' + wc.map(([k, v]) => `${v}× ${k}`).join(', '));
+  }
 
   // 3. Generate SQL file
   const sql = generateSql(meuweEvents, {
