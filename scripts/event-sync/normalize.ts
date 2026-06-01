@@ -32,7 +32,7 @@ export function normalizeEvent(raw: RawEvent): NormalizeResult {
     warnings.push('empty-description')
   }
 
-  let startHour = raw.startHour
+  let startHour = (raw.startHour ?? '').trim()
   if (!startHour) {
     startHour = '19:00'
     warnings.push('default-time')

@@ -53,4 +53,16 @@ describe('normalizeEvent', () => {
     expect(event?.venueName).toBe('Santa Cruz de Tenerife')
     expect(warnings).toContain('default-venue')
   })
+
+  it('treats a whitespace-only start time as missing', () => {
+    const { event, warnings } = normalizeEvent(raw({ startHour: '   ' }))
+    expect(event?.startHour).toBe('19:00')
+    expect(warnings).toContain('default-time')
+  })
+
+  it('drops an event with an empty title', () => {
+    const { event, warnings } = normalizeEvent(raw({ title: '   ' }))
+    expect(event).toBeNull()
+    expect(warnings).toContain('no-title')
+  })
 })
