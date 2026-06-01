@@ -14,8 +14,9 @@ import Toast from './components/Toast'
 import ProfilePanel from './screens/ProfilePanel'
 import ConfettiBurst from './components/ConfettiBurst'
 import MyEventsScreen from './screens/MyEventsScreen'
+import FollowedEventsScreen from './screens/FollowedEventsScreen'
 
-type Screen = 'loading' | 'welcome' | 'map' | 'myEvents'
+type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
 export default function App() {
   const { t } = useTranslation()
@@ -36,6 +37,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [myEventSelected, setMyEventSelected] = useState<EventWithMeta | null>(null)
+  const [followedEventSelected, setFollowedEventSelected] = useState<EventWithMeta | null>(null)
   const [pickingLocation, setPickingLocation] = useState(false)
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
@@ -205,6 +207,8 @@ export default function App() {
   )
 
   const isMyEvents = screen === 'myEvents'
+  const isFollowedEvents = screen === 'followedEvents'
+  const isOverlay = isMyEvents || isFollowedEvents
 
   // Single MapScreen instance shared between 'map' and 'myEvents' to prevent remount on screen switch
   return (
@@ -212,17 +216,17 @@ export default function App() {
       <MapScreen
         session={session}
         profile={profile}
-        onMapClick={() => { if (!isMyEvents) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
+        onMapClick={() => { if (!isOverlay) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
-        onOpenProfile={() => { if (!isMyEvents) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
-        onOpenCreate={() => { if (!isMyEvents) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
-        onOpenEvent={ev => { if (!isMyEvents) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
+        onOpenProfile={() => { if (!isOverlay) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
+        onOpenCreate={() => { if (!isOverlay) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
+        onOpenEvent={ev => { if (!isOverlay) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
         onAuthNeeded={() => setAuthModalOpen(true)}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         initialZoom={initialMapZoom}
         eventsRefreshKey={eventsRefreshKey}
-        pickingLocation={pickingLocation && !isMyEvents}
+        pickingLocation={pickingLocation && !isOverlay}
         onLocationPicked={pos => {
           setCreatePos(pos)
           setLocationPicked(true)
@@ -245,7 +249,7 @@ export default function App() {
         </div>
       )}
 
-      {/* EventSheet — from MyEvents or from map */}
+      {/* EventSheet — from MyEvents, FollowedEvents, or from map */}
       {isMyEvents && myEventSelected && (
         <EventSheet
           event={myEventSelected}
@@ -257,7 +261,18 @@ export default function App() {
           onAuthNeeded={() => setAuthModalOpen(true)}
         />
       )}
-      {!isMyEvents && selEvent && (
+      {isFollowedEvents && followedEventSelected && (
+        <EventSheet
+          event={followedEventSelected}
+          onClose={() => setFollowedEventSelected(null)}
+          session={session}
+          profile={profile}
+          userPos={userPos}
+          onLocate={() => flyToFnRef.current?.(followedEventSelected.lat, followedEventSelected.lng)}
+          onAuthNeeded={() => setAuthModalOpen(true)}
+        />
+      )}
+      {!isOverlay && selEvent && (
         <EventSheet
           event={selEvent}
           onClose={() => setSelEvent(null)}
@@ -269,8 +284,22 @@ export default function App() {
         />
       )}
 
+      {/* FollowedEvents overlay */}
+      {isFollowedEvents && !followedEventSelected && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
+          <FollowedEventsScreen
+            session={session}
+            onBack={() => { setScreen('map'); setFollowedEventSelected(null) }}
+            onOpenEvent={ev => {
+              setFollowedEventSelected({ ...ev, distKm: 0, distStr: '' })
+              flyToFnRef.current?.(ev.lat, ev.lng)
+            }}
+          />
+        </div>
+      )}
+
       <CreateSheet
-        open={createOpen && !isMyEvents}
+        open={createOpen && !isOverlay}
         onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false) }}
         onSubmit={handleSubmit}
         defaultPos={createPos || userPos}
@@ -279,7 +308,7 @@ export default function App() {
       />
       <Toast visible={!!toast} label={toast || ''} />
       <ProfilePanel
-        open={profileOpen && !isMyEvents}
+        open={profileOpen && !isOverlay}
         onClose={() => setProfileOpen(false)}
         session={session}
         profile={profile}
@@ -287,6 +316,7 @@ export default function App() {
         onSignIn={() => db.signInGoogle()}
         reloadProfile={reloadProfile}
         onOpenMyEvents={() => { setProfileOpen(false); setScreen('myEvents') }}
+        onOpenFollowedEvents={() => { setProfileOpen(false); setScreen('followedEvents') }}
       />
       <ConfettiBurst visible={showConfetti} />
       {authModalOpen && (
