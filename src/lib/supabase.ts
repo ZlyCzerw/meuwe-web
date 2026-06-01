@@ -91,7 +91,10 @@ export const db = {
       creator_id:sess.user.id, status:'live',
       photos: ev.photos||[],
     }).select().single()
-    if(!error && ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data!.id,tag})))
+    if(!error && data) {
+      if(ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data.id,tag})))
+      await supabase.from('event_follows').insert({ user_id: sess.user.id, event_id: data.id })
+    }
     return {data,error}
   },
   async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {

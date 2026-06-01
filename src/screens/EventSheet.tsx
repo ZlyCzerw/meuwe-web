@@ -131,6 +131,11 @@ function EventSheet({
     const text = input.trim()
     setInput('')
     setSendErr('')
+    // Auto-follow when sending a message while not following
+    if (!isFollowing) {
+      setIsFollowing(true)
+      db.followEvent(event.id)
+    }
     const authorName =
       profile?.display_name || session.user?.email?.split('@')[0] || '?'
     const authorColor = profile?.avatar_color || C.primary

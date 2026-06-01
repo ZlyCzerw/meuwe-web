@@ -40,32 +40,24 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-  // 1. Get event
+  // 1. Get event title
   const { data: event, error: evErr } = await admin
-    .from('events').select('id, title, creator_id').eq('id', eventId).single()
+    .from('events').select('id, title').eq('id', eventId).single()
   if (evErr || !event) {
     console.error('[push-new-message] event not found:', evErr)
     return new Response(JSON.stringify({ sent: 0, reason: 'event not found' }), { status: 200 })
   }
-  const creatorId = event.creator_id as string | null
 
-  // 2. Get all previous commenters for this event
-  const { data: commentRows } = await admin
-    .from('messages')
-    .select('author_id')
+  // 2. Get all followers — event_follows is the single source of truth for notifications
+  const { data: followRows } = await admin
+    .from('event_follows')
+    .select('user_id')
     .eq('event_id', eventId)
-    .not('author_id', 'is', null)
 
-  const commenterIds: string[] = [
-    ...new Set(
-      (commentRows ?? []).map((r: { author_id: string }) => r.author_id)
-    ),
-  ]
+  const followerIds: string[] = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
 
-  // 3. Build recipient set: creator + commenters − new message author
-  const recipientSet = new Set<string>()
-  if (creatorId) recipientSet.add(creatorId)
-  for (const id of commenterIds) recipientSet.add(id)
+  // 3. Recipient set: followers − message author
+  const recipientSet = new Set<string>(followerIds)
   if (authorId) recipientSet.delete(authorId)
 
   if (recipientSet.size === 0) {

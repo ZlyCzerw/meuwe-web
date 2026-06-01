@@ -14,7 +14,7 @@ import SearchBar from './SearchBar'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 
-const DAYS_COUNT = 7          // yesterday + today + 5 future days
+const DAYS_COUNT = 15         // yesterday + today + 13 future days (2 weeks forward)
 const TODAY_IDX  = 1          // index 1 = today
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
@@ -100,19 +100,36 @@ function MapScreen({
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
   const visibleEvents = categoryFilter ? events.filter(e => e.category === categoryFilter) : events
 
-  // Timeline drag
-  const tlDrag = useRef({ startX: 0, base: 0, on: false })
+  // Timeline drag — smooth dial/drum scroll, snap on release
+  const MAX_TRANSLATE = 0
+  const MIN_TRANSLATE = -(DAYS_COUNT * 56 + (DAYS_COUNT - 1) * 4 - 270)
+  function idxToTranslate(idx: number) {
+    return Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, 107 - idx * 60))
+  }
+  function translateToIdx(tx: number) {
+    return Math.max(0, Math.min(DAYS_COUNT - 1, Math.round((107 - tx) / 60)))
+  }
+
+  const [liveTranslate, setLiveTranslate] = useState<number | null>(null)
+  const tlDrag = useRef({ startX: 0, baseTranslate: 0, on: false })
+
   function tlPD(e: React.PointerEvent<HTMLDivElement>) {
     ;(e.currentTarget as Element & { setPointerCapture?: (id: number) => void }).setPointerCapture?.(e.pointerId)
-    tlDrag.current = { startX: e.clientX, base: dayIdx, on: true }
+    tlDrag.current = { startX: e.clientX, baseTranslate: idxToTranslate(dayIdx), on: true }
   }
   function tlPM(e: React.PointerEvent<HTMLDivElement>) {
     if (!tlDrag.current.on) return
-    const delta = -Math.round((e.clientX - tlDrag.current.startX) / 78)
-    const next = Math.max(0, Math.min(DAYS_COUNT - 1, tlDrag.current.base + delta))
-    if (next !== dayIdx) setDayIdx(next)
+    const raw = tlDrag.current.baseTranslate + (e.clientX - tlDrag.current.startX)
+    setLiveTranslate(Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, raw)))
   }
-  function tlPU() { tlDrag.current.on = false }
+  function tlPU() {
+    if (!tlDrag.current.on) return
+    tlDrag.current.on = false
+    if (liveTranslate !== null) {
+      setDayIdx(translateToIdx(liveTranslate))
+      setLiveTranslate(null)
+    }
+  }
 
   // Leaflet init — runs once
   useEffect(() => {
@@ -421,12 +438,23 @@ function MapScreen({
               touchAction: 'pan-y', cursor: 'grab', userSelect: 'none',
             }}
           >
-            <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx > 0 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>‹</div>
-            <div style={{ width: 270, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+            {/* Left arrow */}
+            <button
+              onPointerDown={e => e.stopPropagation()}
+              onClick={() => setDayIdx(i => Math.max(0, i - 1))}
+              style={{
+                flexShrink: 0, width: 20, background: 'none', border: 'none', padding: 0,
+                color: INK, opacity: dayIdx > 0 ? 0.7 : 0.2,
+                fontWeight: 900, fontSize: 18, cursor: dayIdx > 0 ? 'pointer' : 'default',
+              }}
+            >‹</button>
+
+            {/* Date track — fixed width, clipped */}
+            <div style={{ width: 270, flexShrink: 0, overflow: 'hidden' }}>
               <div style={{
                 display: 'flex', gap: 4,
-                transition: 'transform 320ms cubic-bezier(0.32,1.4,0.4,1)',
-                transform: `translateX(${(2 - dayIdx) * 62}px)`,
+                transition: liveTranslate !== null ? 'none' : 'transform 300ms cubic-bezier(0.32,1.2,0.4,1)',
+                transform: `translateX(${liveTranslate !== null ? liveTranslate : idxToTranslate(dayIdx)}px)`,
               }}>
                 {Array.from({ length: DAYS_COUNT }, (_, i) => {
                   const d = idxToDate(i)
@@ -439,14 +467,13 @@ function MapScreen({
                       onPointerDown={e => e.stopPropagation()}
                       onClick={() => setDayIdx(i)}
                       style={{
-                        flex: '0 0 56px', borderRadius: 14,
+                        flexShrink: 0, width: 56, borderRadius: 14,
                         padding: '6px 0', display: 'flex', flexDirection: 'column',
                         alignItems: 'center', gap: 1,
                         background: active ? C.primary : isToday ? C.primarySoft : 'transparent',
                         color: active ? '#fff' : C.ink,
                         border: active ? `2px solid ${INK}` : '2px solid transparent',
                         fontSize: 11, fontWeight: 800,
-                        opacity: Math.abs(i - dayIdx) > 3 ? 0.25 : 1,
                         transition: 'all 200ms ease',
                       }}
                     >
@@ -465,11 +492,23 @@ function MapScreen({
                 })}
               </div>
             </div>
-            <div style={{ flex: '0 0 14px', textAlign: 'center', color: INK, opacity: dayIdx < DAYS_COUNT - 1 ? 0.5 : 0.15, fontWeight: 900, fontSize: 16 }}>›</div>
+
+            {/* Right arrow */}
+            <button
+              onPointerDown={e => e.stopPropagation()}
+              onClick={() => setDayIdx(i => Math.min(DAYS_COUNT - 1, i + 1))}
+              style={{
+                flexShrink: 0, width: 20, background: 'none', border: 'none', padding: 0,
+                color: INK, opacity: dayIdx < DAYS_COUNT - 1 ? 0.7 : 0.2,
+                fontWeight: 900, fontSize: 18, cursor: dayIdx < DAYS_COUNT - 1 ? 'pointer' : 'default',
+              }}
+            >›</button>
+
+            {/* Close */}
             <button
               onPointerDown={e => e.stopPropagation()}
               onClick={() => setTimelineOpen(false)}
-              style={{ flex: '0 0 24px', color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              style={{ flexShrink: 0, width: 24, color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16, background: 'transparent', border: 'none', cursor: 'pointer' }}
             >×</button>
           </div>
         )}
