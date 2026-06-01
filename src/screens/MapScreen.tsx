@@ -112,24 +112,27 @@ function MapScreen({
   }
 
   const [liveTranslate, setLiveTranslate] = useState<number | null>(null)
-  const tlDrag = useRef({ startX: 0, baseTranslate: 0, on: false })
+  const tlDrag = useRef({ startX: 0, baseTranslate: 0, on: false, moved: false })
 
   function tlPD(e: React.PointerEvent<HTMLDivElement>) {
-    ;(e.currentTarget as Element & { setPointerCapture?: (id: number) => void }).setPointerCapture?.(e.pointerId)
-    tlDrag.current = { startX: e.clientX, baseTranslate: idxToTranslate(dayIdx), on: true }
+    e.currentTarget.setPointerCapture(e.pointerId)
+    tlDrag.current = { startX: e.clientX, baseTranslate: idxToTranslate(dayIdx), on: true, moved: false }
   }
   function tlPM(e: React.PointerEvent<HTMLDivElement>) {
     if (!tlDrag.current.on) return
-    const raw = tlDrag.current.baseTranslate + (e.clientX - tlDrag.current.startX)
+    const delta = e.clientX - tlDrag.current.startX
+    if (Math.abs(delta) > 8) tlDrag.current.moved = true
+    if (!tlDrag.current.moved) return
+    const raw = tlDrag.current.baseTranslate + delta
     setLiveTranslate(Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, raw)))
   }
   function tlPU() {
     if (!tlDrag.current.on) return
     tlDrag.current.on = false
-    if (liveTranslate !== null) {
+    if (tlDrag.current.moved && liveTranslate !== null) {
       setDayIdx(translateToIdx(liveTranslate))
-      setLiveTranslate(null)
     }
+    setLiveTranslate(null)
   }
 
   // Leaflet init — runs once
@@ -448,7 +451,7 @@ function MapScreen({
               padding: '6px 8px', borderRadius: 999, background: '#fff',
               border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
               display: 'flex', alignItems: 'center', gap: 4,
-              touchAction: 'pan-y', cursor: 'grab', userSelect: 'none',
+              touchAction: 'none', cursor: 'grab', userSelect: 'none',
             }}
           >
             {/* Left arrow */}
@@ -477,7 +480,6 @@ function MapScreen({
                   return (
                     <button
                       key={i}
-                      onPointerDown={e => e.stopPropagation()}
                       onClick={() => setDayIdx(i)}
                       style={{
                         flexShrink: 0, width: 56, borderRadius: 14,
