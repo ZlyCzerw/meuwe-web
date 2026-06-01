@@ -32,4 +32,10 @@ describe('parseDetail (real fixture)', () => {
   it('extracts categories from JSON-LD', () => {
     expect(result.categories).toEqual(['Fiestas', 'fiestas populares'])
   })
+  it('extracts the city from the first /lugares/ link (main event, not sidebar)', () => {
+    expect(result.city).toBe('Adeje')
+  })
+  it('extracts a non-empty description', () => {
+    expect(result.description.length).toBeGreaterThan(30)
+  })
 })
