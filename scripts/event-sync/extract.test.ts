@@ -8,6 +8,7 @@ import {
   extractDescription,
   extractImage,
   extractCategories,
+  extractTimeVenue,
 } from './extract.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -56,5 +57,40 @@ describe('extract helpers (fallback behavior on empty doc)', () => {
 
   it('extractCategories returns empty array when none present', () => {
     expect(extractCategories($)).toEqual([])
+  })
+})
+
+describe('extract helpers (fallback paths when primary source absent)', () => {
+  it('extractImage falls back to itemprop="image" href', () => {
+    const $ = cheerio.load(
+      '<a itemprop="image" href="https://example.com/cover.jpg">img</a>',
+    )
+    expect(extractImage($)).toBe('https://example.com/cover.jpg')
+  })
+
+  it('extractCategories falls back to div.s-tags links (not related-events)', () => {
+    const $ = cheerio.load(`
+      <div class="s-tags"><a href="/categoria/fiestas-populares">fiestas populares</a></div>
+      <div class="post-category"><a href="/categoria/otro">Otro Evento</a></div>
+    `)
+    expect(extractCategories($)).toEqual(['fiestas populares'])
+  })
+
+  it('extractTimeVenue returns nulls when no time present', () => {
+    const $ = cheerio.load('<div class="group-datos"><p>Sin horario.</p></div>')
+    expect(extractTimeVenue($)).toEqual({
+      startHour: null,
+      endHour: null,
+      venueName: null,
+    })
+  })
+
+  it('extractTimeVenue parses the first HH:MM and venue', () => {
+    const $ = cheerio.load(
+      '<div class="group-datos"><p>- 20:30 Teatro Guimera</p></div>',
+    )
+    const r = extractTimeVenue($)
+    expect(r.startHour).toBe('20:30')
+    expect(r.venueName).toBe('Teatro Guimera')
   })
 })

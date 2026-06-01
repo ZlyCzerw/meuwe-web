@@ -45,6 +45,7 @@ export function extractImage($: CheerioAPI): string | null {
     $('meta[property="og:image"]').attr('content'),
     $('[itemprop="image"]').attr('content'),
     $('[itemprop="image"]').attr('src'),
+    $('[itemprop="image"]').attr('href'),
   )
   return img || null
 }
@@ -71,7 +72,7 @@ export function extractCategories($: CheerioAPI): string[] {
   })
 
   if (!cats.length) {
-    $('div.post-category a[href^="/categoria/"]').each((_, el) => {
+    $('div.s-tags a[href^="/categoria/"]').each((_, el) => {
       const c = $(el).text().trim()
       if (c && !cats.includes(c)) cats.push(c)
     })
