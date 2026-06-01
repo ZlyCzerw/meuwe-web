@@ -168,7 +168,7 @@ export const db = {
     // The DB already enforces this via RLS (events_update policy).
     return supabase
       .from('events')
-      .update({ status: 'ended' })
+      .update({ status: 'ended', end_time: new Date().toISOString() })
       .eq('id', eventId)
       .eq('creator_id', sess.user.id)
   },

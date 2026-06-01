@@ -80,6 +80,7 @@ function MapScreen({
   const [tagBarCanScrollRight, setTagBarCanScrollRight] = useState(false)
   const tagBarRef = useRef<HTMLDivElement>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingRecenterCheckRef = useRef(false)
 
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
 
@@ -146,7 +147,12 @@ function MapScreen({
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
-      if (up) setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
+      if (up) {
+        setRecenter(haversineKm(center.lat, center.lng, up.lat, up.lng) > 0.3)
+      } else {
+        // GPS not yet available — flag that we need a recenter check when it arrives
+        pendingRecenterCheckRef.current = true
+      }
       if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
       moveTimerRef.current = setTimeout(() => {
         const bounds = map.getBounds()
@@ -182,6 +188,13 @@ function MapScreen({
     if (!centeredRef.current) {
       centeredRef.current = true
       map.setView([userPos.lat, userPos.lng], 15, { animate: true })
+    } else {
+      // GPS fired — check if recenter needed (map may have moved while GPS was unavailable)
+      const center = map.getCenter()
+      if (pendingRecenterCheckRef.current || haversineKm(center.lat, center.lng, userPos.lat, userPos.lng) > 0.3) {
+        pendingRecenterCheckRef.current = false
+        setRecenter(haversineKm(center.lat, center.lng, userPos.lat, userPos.lng) > 0.3)
+      }
     }
   }, [userPos])
 
