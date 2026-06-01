@@ -30,7 +30,7 @@ export interface RawEvent {
   /** Original URL of the event page, for debugging */
   sourceUrl?: string;
   /** Cover image URL (e.g. og:image), if any */
-  imageUrl?: string
+  imageUrl?: string;
 }
 
 // ─── Source interface — implement this for every new event website ────────────
@@ -64,5 +64,5 @@ export interface MeuweEvent {
   endTime: Date;
   tags: string[];
   /** Cover image URLs (maps to events.photos text[]) */
-  photos: string[]
+  photos: string[];
 }

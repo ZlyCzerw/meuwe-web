@@ -13,8 +13,8 @@ function pgTs(d: Date): string {
 
 // Postgres text[] literal: '{}' when empty, ARRAY[...]::text[] otherwise
 function pgTextArray(arr: string[]): string {
-  if (!arr.length) return `'{}'`
-  return `ARRAY[${arr.map(s => `'${esc(s)}'`).join(', ')}]::text[]`
+  if (!arr.length) return `'{}'`;
+  return `ARRAY[${arr.map(s => `'${esc(s)}'`).join(', ')}]::text[]`;
 }
 
 export function generateSql(
