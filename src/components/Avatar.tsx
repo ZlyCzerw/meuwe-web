@@ -44,7 +44,7 @@ export default function Avatar({
             width: 14,
             height: 14,
             borderRadius: '50%',
-            background: C.primary,
+            background: C.sunshine,
             border: `2.5px solid ${INK}`,
             animation: 'breathe-sm 2s ease-in-out infinite',
           }}
