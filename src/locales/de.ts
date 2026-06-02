@@ -70,7 +70,7 @@ const de: Resources = {
   },
   profile: {
     guest: 'Gast',
-    interests: 'Deine Interessen',
+    interests: 'Meine Interessen',
     interestsHint: 'Wir benachrichtigen dich über passende Events',
     noInterests: 'Keine Interessen ausgewählt',
     radius: 'Benachrichtigungsradius',

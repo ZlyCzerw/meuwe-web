@@ -1,4 +1,5 @@
 import { C, INK, F } from '../lib/tokens';
+import NotificationDot from './NotificationDot';
 
 export default function Avatar({
   size = 44,
@@ -36,19 +37,7 @@ export default function Avatar({
         {initials}
       </div>
       {hasUnread && (
-        <div
-          style={{
-            position: 'absolute',
-            top: -2,
-            right: -2,
-            width: 14,
-            height: 14,
-            borderRadius: '50%',
-            background: C.sunshine,
-            border: `2.5px solid ${INK}`,
-            animation: 'breathe-sm 2s ease-in-out infinite',
-          }}
-        />
+        <NotificationDot size={18} style={{ position: 'absolute', top: -5, right: -5 }} />
       )}
     </button>
   );

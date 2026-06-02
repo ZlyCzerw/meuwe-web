@@ -70,7 +70,7 @@ const en: Resources = {
   },
   profile: {
     guest: 'Guest',
-    interests: 'Your interests',
+    interests: 'My interests',
     interestsHint: "We'll notify you about matching events",
     noInterests: 'No interests selected',
     radius: 'Notification radius',

@@ -70,7 +70,7 @@ const es: Resources = {
   },
   profile: {
     guest: 'Invitado',
-    interests: 'Tus intereses',
+    interests: 'Mis intereses',
     interestsHint: 'Te avisaremos de eventos que coincidan',
     noInterests: 'Sin intereses seleccionados',
     radius: 'Radio de notificaciones',
