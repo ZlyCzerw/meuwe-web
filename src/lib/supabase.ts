@@ -218,6 +218,35 @@ export const db = {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})
   },
+  async markEventRead(eventId:string) {
+    const sess=await this.getSession(); if(!sess) return
+    return supabase.from('event_reads').upsert(
+      { user_id:sess.user.id, event_id:eventId, last_read_at:new Date().toISOString() },
+      { onConflict:'user_id,event_id' },
+    )
+  },
+  async getUnreadEventIds():Promise<{eventId:string;isOwner:boolean}[]> {
+    const {data,error}=await supabase.rpc('get_unread_event_ids')
+    if(error){ console.error('[getUnreadEventIds]',error); return [] }
+    return (data||[]).map((r:any)=>({ eventId:r.event_id, isOwner:r.is_owner }))
+  },
+  async getNotifContext():Promise<{followedIds:string[];ownedIds:string[]}> {
+    const sess=await this.getSession(); if(!sess) return { followedIds:[], ownedIds:[] }
+    const uid=sess.user.id
+    const [follows,owned]=await Promise.all([
+      supabase.from('event_follows').select('event_id').eq('user_id',uid),
+      supabase.from('events').select('id').eq('creator_id',uid),
+    ])
+    return {
+      followedIds:(follows.data||[]).map((r:any)=>r.event_id),
+      ownedIds:(owned.data||[]).map((r:any)=>r.id),
+    }
+  },
+  subscribeAllMessages(cb:(m:Message)=>void) {
+    return supabase.channel('msgs:all')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'event_messages'},(p:any)=>cb(p.new))
+      .subscribe()
+  },
   subscribeEvents(cb:()=>void) {
     return supabase.channel('events:all')
       .on('postgres_changes',{event:'*',schema:'public',table:'events'},()=>cb())
