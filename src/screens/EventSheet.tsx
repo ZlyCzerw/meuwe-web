@@ -25,9 +25,9 @@ async function handleShare(event: { id: string; title: string }, showToast: () =
   if (navigator.share) {
     try {
       await navigator.share({ title: event.title, url })
-    } catch {}
+    } catch { /* share dismissed or unsupported */ }
   } else {
-    try { await navigator.clipboard.writeText(url) } catch {}
+    try { await navigator.clipboard.writeText(url) } catch { /* clipboard unavailable */ }
     showToast()
   }
 }
@@ -76,6 +76,7 @@ function EventSheet({
   }
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
+  const chatRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
   const lastSendRef = useRef<number>(0)
 
@@ -100,6 +101,7 @@ function EventSheet({
 
   useEffect(() => {
     if (!event?.id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset to half when a new event opens
     setSnap('half')
     db.getMessages(event.id).then(setMessages)
     db.unsub(chanRef.current)
@@ -107,11 +109,12 @@ function EventSheet({
     return () => db.unsub(chanRef.current)
   }, [event?.id])
 
-  // Scroll to bottom in chat (full), to top in half view
+  // Scroll the chat region to the newest message — both when expanding to full
+  // and whenever a new message arrives while full. The card region above keeps
+  // its own scroll position (independent).
   useEffect(() => {
-    if (!listRef.current) return
-    if (isFull) {
-      listRef.current.scrollTop = listRef.current.scrollHeight
+    if (isFull && chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
   }, [messages, isFull])
 
@@ -121,6 +124,7 @@ function EventSheet({
   }, [event?.id, isFull])
 
   // Reset photo index on new event
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when a new event opens
   useEffect(() => { setPhotoIdx(0) }, [event?.id])
 
   async function send() {
@@ -160,9 +164,12 @@ function EventSheet({
     const dy = e.changedTouches[0].clientY - touchStartY.current
     touchStartY.current = null
     if (dy > 80) {
-      snap === 'full' ? setSnap('half') : snap === 'half' ? setSnap('peek') : onClose()
+      if (snap === 'full') setSnap('half')
+      else if (snap === 'half') setSnap('peek')
+      else onClose()
     } else if (dy < -80) {
-      snap === 'peek' ? setSnap('half') : snap === 'half' ? setSnap('full') : null
+      if (snap === 'peek') setSnap('half')
+      else if (snap === 'half') setSnap('full')
     }
   }
 
@@ -210,49 +217,28 @@ function EventSheet({
         )
         : (
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {isFull && (
-              <div style={{
-                padding: '4px 20px 12px', borderBottom: '1px solid #F1E9DA',
-                display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.96)',
-              }}>
-                <OrganicBlob size={36} color={meta.color} idx={0} face={<BlobFace size={24} />} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontFamily: F.display, fontSize: 15, fontWeight: 800, color: C.ink,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{event.title}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: '50%', background: C.grass,
-                      animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite',
-                    }} />
-                    <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 700 }}>
-                      {t('event.messageCount', { count: messages.length })}
-                    </div>
-                  </div>
-                </div>
-                <button onClick={onClose} style={{
-                  width: 32, height: 32, borderRadius: '50%', background: C.cream,
-                  fontSize: 18, color: C.ink, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>×</button>
-              </div>
-            )}
-
             <div
               ref={listRef}
-              style={{ flex: 1, overflowY: 'auto', padding: isFull ? '12px 20px 0' : '4px 20px 0' }}
+              style={isFull
+                ? { flexShrink: 0, maxHeight: '50%', overflowY: 'auto', padding: '4px 20px 12px' }
+                : { flex: 1, overflowY: 'auto', padding: '4px 20px 0' }}
             >
-              {!isFull && (
-                <>
-                  {/* Photo carousel — full bleed at top */}
+              {/* Card content — shown in both half and full */}
+              <>
+                  {/* Title + close */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                    <div style={{ flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink, lineHeight: 1.15, letterSpacing: -0.5 }}>{event.title}</div>
+                    <button onClick={onClose} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: C.cream, fontSize: 18, color: C.ink, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                  </div>
+
+                  {/* Photo carousel — aligned with content width, rounded */}
                   {event.photos && event.photos.length > 0 && (
-                    <div style={{ position: 'relative', margin: '-4px -20px 16px' }}>
+                    <div style={{ position: 'relative', margin: '0 0 16px' }}>
                       <img
                         src={event.photos[Math.min(photoIdx, event.photos.length - 1)]}
                         alt=""
                         onClick={() => setPhotoModal(photoIdx)}
-                        style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                        style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block', cursor: 'pointer', borderRadius: 16 }}
                       />
                       {event.photos.length > 1 && (
                         <>
@@ -269,12 +255,6 @@ function EventSheet({
                       )}
                     </div>
                   )}
-
-                  {/* Title + close */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-                    <div style={{ flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink, lineHeight: 1.15, letterSpacing: -0.5 }}>{event.title}</div>
-                    <button onClick={onClose} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: C.cream, fontSize: 18, color: C.ink, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-                  </div>
 
                   {/* Status + time + Follow/Share row */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
@@ -390,98 +370,85 @@ function EventSheet({
                     </div>
                   )}
 
-                  {/* Chat button */}
-                  <button onClick={() => setSnap('full')} style={{ width: '100%', padding: '14px 16px', borderRadius: 20, background: C.cream, border: `2px solid ${INK}22`, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80 }}>
-                    {messages.length > 0 && (
-                      <div style={{ display: 'flex', marginRight: -4 }}>
-                        {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()].slice(0, 3).map((color, i) => (
-                          <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: color || C.sky, border: `2px solid ${INK}`, marginLeft: i === 0 ? 0 : -10 }} />
-                        ))}
+                  {/* Chat teaser (half only) — tap to expand to full */}
+                  {!isFull && (
+                    <button onClick={() => setSnap('full')} style={{ width: '100%', padding: '14px 16px', borderRadius: 20, background: C.cream, border: `2px solid ${INK}22`, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80 }}>
+                      {messages.length > 0 && (
+                        <div style={{ display: 'flex', marginRight: -4 }}>
+                          {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()].slice(0, 3).map((color, i) => (
+                            <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: color || C.sky, border: `2px solid ${INK}`, marginLeft: i === 0 ? 0 : -10 }} />
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
+                        <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>{t('event.messageCount', { count: messages.length })}</div>
                       </div>
-                    )}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
-                      <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>{t('event.messageCount', { count: messages.length })}</div>
-                    </div>
-                    <div style={{ fontSize: 18, color: C.primary, fontWeight: 900 }}>↑</div>
-                  </button>
+                      <div style={{ fontSize: 18, color: C.primary, fontWeight: 900 }}>↑</div>
+                    </button>
+                  )}
                 </>
-              )}
+            </div>
 
-              {isFull && (
-                <div style={{ paddingBottom: 80 }}>
-                  {event.photos && event.photos.length > 0 && (
-                    <div style={{
-                      display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12,
-                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
-                      marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20,
-                    }}>
-                      {event.photos.map((url, i) => (
-                        <img key={i} src={url} alt="" style={{
-                          width: 160, height: 110, borderRadius: 14,
-                          objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'start',
-                        }} />
-                      ))}
-                    </div>
-                  )}
-                  {event.description && (
-                    <div style={{
-                      fontSize: 13, color: C.ink, fontWeight: 500,
-                      lineHeight: 1.55, marginBottom: 12,
-                      padding: '10px 14px', borderRadius: 16,
-                      background: C.cream,
-                    }}>
-                      {event.description}
-                    </div>
-                  )}
-                  <div style={{
-                    fontSize: 11, color: C.inkSoft, fontWeight: 700,
-                    textAlign: 'center', margin: '8px 0 16px', letterSpacing: 0.5,
-                  }}>{t('event.today')}</div>
-                  {messages.map((m, i) => {
-                    const isMe = session && m.author_id === session.user.id
-                    return (
-                      <div
-                        key={m.id}
-                        style={{
-                          display: 'flex', flexDirection: 'column',
-                          alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 10,
-                        }}
-                      >
-                        {!isMe && i % 3 === 0 && (
+            {/* Chat region (full) — own scroll, independent of the card above */}
+            {isFull && (
+              <div
+                ref={chatRef}
+                style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 16px', borderTop: '1px solid #F1E9DA' }}
+              >
+                {/* Conversation header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.grass, animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite' }} />
+                  <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
+                  <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>· {t('event.messageCount', { count: messages.length })}</div>
+                </div>
+                <div style={{
+                  fontSize: 11, color: C.inkSoft, fontWeight: 700,
+                  textAlign: 'center', margin: '0 0 16px', letterSpacing: 0.5,
+                }}>{t('event.today')}</div>
+                {messages.map((m, i) => {
+                  const isMe = session && m.author_id === session.user.id
+                  return (
+                    <div
+                      key={m.id}
+                      style={{
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 10,
+                      }}
+                    >
+                      {!isMe && i % 3 === 0 && (
+                        <div style={{
+                          fontSize: 11, color: C.inkSoft, fontWeight: 700,
+                          marginBottom: 4, marginLeft: 44,
+                        }}>
+                          {m.author_name || '?'} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
+                        {!isMe && (
                           <div style={{
-                            fontSize: 11, color: C.inkSoft, fontWeight: 700,
-                            marginBottom: 4, marginLeft: 44,
+                            width: 32, height: 32, borderRadius: '50%',
+                            background: m.author_color || C.sky, border: `2px solid ${INK}`, flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, fontWeight: 900, color: INK,
                           }}>
-                            {m.author_name || '?'} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
+                            {(m.author_name || '?')[0].toUpperCase()}
                           </div>
                         )}
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
-                          {!isMe && (
-                            <div style={{
-                              width: 32, height: 32, borderRadius: '50%',
-                              background: m.author_color || C.sky, border: `2px solid ${INK}`, flexShrink: 0,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 12, fontWeight: 900, color: INK,
-                            }}>
-                              {(m.author_name || '?')[0].toUpperCase()}
-                            </div>
-                          )}
-                          <div style={{
-                            padding: '10px 14px',
-                            borderRadius: isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
-                            background: isMe ? C.primarySoft : '#fff', color: C.ink,
-                            fontSize: 14, fontWeight: 600, lineHeight: 1.4,
-                            boxShadow: isMe ? 'none' : '0 4px 16px rgba(45,43,42,0.08)',
-                            animation: isMe && i === messages.length - 1 ? 'bubble-up 280ms ease' : 'none',
-                          }}>{m.text}</div>
-                        </div>
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
+                          background: isMe ? C.primarySoft : '#fff', color: C.ink,
+                          fontSize: 14, fontWeight: 600, lineHeight: 1.4,
+                          boxShadow: isMe ? 'none' : '0 4px 16px rgba(45,43,42,0.08)',
+                          animation: isMe && i === messages.length - 1 ? 'bubble-up 280ms ease' : 'none',
+                        }}>{m.text}</div>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
             {isFull && (
               <div style={{
