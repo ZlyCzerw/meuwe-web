@@ -1,5 +1,6 @@
 const pl = {
   common: { loading: 'Ładowanie…', cancel: 'Anuluj', close: 'Zamknij' },
+  notifications: { unread: 'Nowe wiadomości' },
   welcome: {
     tagline: 'Odkrywaj wydarzenia\nwokół Ciebie',
     google: 'Zaloguj się przez Google',

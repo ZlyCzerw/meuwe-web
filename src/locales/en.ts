@@ -2,6 +2,7 @@ import type { Resources } from './pl'
 
 const en: Resources = {
   common: { loading: 'Loading…', cancel: 'Cancel', close: 'Close' },
+  notifications: { unread: 'New messages' },
   welcome: {
     tagline: 'Discover events\naround you',
     google: 'Sign in with Google',
