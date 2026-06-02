@@ -233,14 +233,23 @@ export const db = {
   async getNotifContext():Promise<{followedIds:string[];ownedIds:string[]}> {
     const sess=await this.getSession(); if(!sess) return { followedIds:[], ownedIds:[] }
     const uid=sess.user.id
-    const [follows,owned]=await Promise.all([
-      supabase.from('event_follows').select('event_id').eq('user_id',uid),
-      supabase.from('events').select('id').eq('creator_id',uid),
-    ])
-    return {
-      followedIds:(follows.data||[]).map((r:any)=>r.event_id),
-      ownedIds:(owned.data||[]).map((r:any)=>r.id),
+    // Followed events joined to their event row, so we can exclude ended events
+    // (keeps the realtime reducer's sets consistent with get_unread_event_ids).
+    // owned ⊆ followed (creators auto-follow), so derive owned from creator_id here.
+    const {data}=await supabase
+      .from('event_follows')
+      .select('event_id, events!inner(creator_id, status, end_time)')
+      .eq('user_id',uid)
+    const now=Date.now()
+    const followedIds:string[]=[]; const ownedIds:string[]=[]
+    for(const r of (data||[]) as any[]) {
+      const e=r.events; if(!e) continue
+      if(e.status==='ended') continue
+      if(new Date(e.end_time).getTime()+3_600_000<=now) continue
+      followedIds.push(r.event_id)
+      if(e.creator_id===uid) ownedIds.push(r.event_id)
     }
+    return { followedIds, ownedIds }
   },
   subscribeAllMessages(cb:(m:Message)=>void) {
     return supabase.channel('msgs:all')
