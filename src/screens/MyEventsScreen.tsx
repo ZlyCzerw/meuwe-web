@@ -10,6 +10,7 @@ import { db } from '../lib/supabase'
 import { computeStatus } from '../lib/eventStatus'
 import { muteEvent, unmuteEvent, getEventMutes } from '../lib/push'
 import type { EventWithMsgCount } from '../lib/types'
+import NotificationDot from '../components/NotificationDot'
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
@@ -17,10 +18,12 @@ export default function MyEventsScreen({
   session,
   onBack,
   onOpenEvent,
+  isUnread,
 }: {
   session: Session | null
   onBack: () => void
   onOpenEvent: (ev: EventWithMsgCount) => void
+  isUnread?: (id: string) => boolean
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -114,6 +117,7 @@ export default function MyEventsScreen({
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                  {isUnread?.(ev.id) && <NotificationDot />}
                   {/* Mute toggle */}
                   <button
                     onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}

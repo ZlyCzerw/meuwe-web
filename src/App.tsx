@@ -249,6 +249,7 @@ export default function App() {
               setMyEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
             }}
+            isUnread={unread.isUnread}
           />
         </div>
       )}
@@ -298,6 +299,7 @@ export default function App() {
               setFollowedEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
             }}
+            isUnread={unread.isUnread}
           />
         </div>
       )}
