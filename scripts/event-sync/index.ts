@@ -93,19 +93,19 @@ async function main() {
     return;
   }
 
-  // 2. Normalize (fill defaults, never drop for missing data) → geocode → map
+  // 2. Normalize → geocode → map. Missing fields get defaults (event is kept);
+  //    only an unparseable date or blank title drops an event.
   console.log('\nNormalizing + geocoding...');
   const meuweEvents: MeuweEvent[] = [];
-  const warningCounts: Record<string, number> = {};
+  const fallbackCounts: Record<string, number> = {};
   let dropped = 0;
 
   const bump = (key: string) => {
-    warningCounts[key] = (warningCounts[key] ?? 0) + 1;
+    fallbackCounts[key] = (fallbackCounts[key] ?? 0) + 1;
   };
 
   for (const raw of allRaw) {
     const { event: normalized, warnings } = normalizeEvent(raw);
-    warnings.forEach(bump);
 
     if (!normalized) {
       dropped++;
@@ -113,6 +113,8 @@ async function main() {
       continue;
     }
 
+    // Count soft fallbacks only for events we actually keep.
+    warnings.forEach(bump);
     const { event, usedFallbackCoords } = await toMeuweEvent(normalized);
     if (usedFallbackCoords) bump('island-center-coords');
     meuweEvents.push(event);
@@ -121,7 +123,7 @@ async function main() {
   console.log('\n── Run summary ──');
   console.log(`Collected: ${allRaw.length}`);
   console.log(`Kept:      ${meuweEvents.length} (${dropped} dropped)`);
-  const wc = Object.entries(warningCounts);
+  const wc = Object.entries(fallbackCounts);
   if (wc.length) {
     console.log('Fallbacks: ' + wc.map(([k, v]) => `${v}× ${k}`).join(', '));
   }
