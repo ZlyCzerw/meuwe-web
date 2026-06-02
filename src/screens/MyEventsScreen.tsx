@@ -101,7 +101,7 @@ export default function MyEventsScreen({
                     face={<BlobFace size={38} mood={dim ? 'sleepy' : 'happy'} />}
                   />
                   {isUnread?.(ev.id) && (
-                    <NotificationDot size={14} style={{ position: 'absolute', top: -2, right: -2 }} />
+                    <NotificationDot size={18} style={{ position: 'absolute', top: -4, right: -4 }} />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>

@@ -37,7 +37,7 @@ export default function Avatar({
         {initials}
       </div>
       {hasUnread && (
-        <NotificationDot size={18} style={{ position: 'absolute', top: -5, right: -5 }} />
+        <NotificationDot size={22} style={{ position: 'absolute', top: -6, right: -6 }} />
       )}
     </button>
   );

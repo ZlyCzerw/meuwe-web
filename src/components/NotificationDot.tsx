@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { INK } from '../lib/tokens'
 
 // White comic-style speech bubble with a tail pointing down-left.
-export default function NotificationDot({ size = 16, style }: { size?: number; style?: React.CSSProperties }) {
+export default function NotificationDot({ size = 18, style }: { size?: number; style?: React.CSSProperties }) {
   const { t } = useTranslation()
   return (
     <svg
@@ -13,7 +13,7 @@ export default function NotificationDot({ size = 16, style }: { size?: number; s
       aria-label={t('notifications.unread')}
       fill="#fff"
       stroke={INK}
-      strokeWidth="2.2"
+      strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
       style={{ flexShrink: 0, display: 'inline-block', ...style }}
