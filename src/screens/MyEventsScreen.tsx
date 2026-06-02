@@ -93,12 +93,17 @@ export default function MyEventsScreen({
                   boxSizing: 'border-box',
                 }}
               >
-                <OrganicBlob
-                  size={56}
-                  color={meta.color}
-                  idx={i}
-                  face={<BlobFace size={38} mood={dim ? 'sleepy' : 'happy'} />}
-                />
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <OrganicBlob
+                    size={56}
+                    color={meta.color}
+                    idx={i}
+                    face={<BlobFace size={38} mood={dim ? 'sleepy' : 'happy'} />}
+                  />
+                  {isUnread?.(ev.id) && (
+                    <NotificationDot size={14} style={{ position: 'absolute', top: -2, right: -2 }} />
+                  )}
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontFamily: F.display, fontSize: 16, fontWeight: 800, color: C.ink,
@@ -117,7 +122,6 @@ export default function MyEventsScreen({
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                  {isUnread?.(ev.id) && <NotificationDot />}
                   {/* Mute toggle */}
                   <button
                     onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}
