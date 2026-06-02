@@ -15,6 +15,7 @@ import ProfilePanel from './screens/ProfilePanel'
 import ConfettiBurst from './components/ConfettiBurst'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
+import { useUnreadEvents } from './hooks/useUnreadEvents'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -46,6 +47,8 @@ export default function App() {
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
+  const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
+  const unread = useUnreadEvents(session, openEventId)
 
   // On mount: check ?event=<id> deep link
   useEffect(() => {
@@ -219,6 +222,7 @@ export default function App() {
         onMapClick={() => { if (!isOverlay) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
         onOpenProfile={() => { if (!isOverlay) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
+        unreadMenu={unread.hasAny}
         onOpenCreate={() => { if (!isOverlay) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
         onOpenEvent={ev => { if (!isOverlay) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
         onAuthNeeded={() => setAuthModalOpen(true)}

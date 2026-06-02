@@ -30,6 +30,7 @@ function MapScreen({
   session,
   profile,
   onOpenProfile,
+  unreadMenu = false,
   onOpenCreate,
   onOpenEvent,
   onAuthNeeded,
@@ -45,6 +46,7 @@ function MapScreen({
   session: Session | null
   profile: Profile | null
   onOpenProfile: () => void
+  unreadMenu?: boolean
   onOpenCreate: () => void
   onOpenEvent: (ev: EventWithMeta) => void
   onAuthNeeded: () => void
@@ -277,7 +279,7 @@ function MapScreen({
             onClick={onOpenProfile}
             initials={(profile?.display_name || session?.user?.email || '?')[0].toUpperCase()}
             color={profile?.avatar_color || C.berry}
-            hasUnread={false}
+            hasUnread={unreadMenu}
           />
         </div>
       )}
