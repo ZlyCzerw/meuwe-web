@@ -321,6 +321,8 @@ export default function App() {
         reloadProfile={reloadProfile}
         onOpenMyEvents={() => { setProfileOpen(false); setScreen('myEvents') }}
         onOpenFollowedEvents={() => { setProfileOpen(false); setScreen('followedEvents') }}
+        myEventsUnread={unread.hasOwned}
+        followedUnread={unread.hasFollowed}
       />
       <ConfettiBurst visible={showConfetti} />
       {authModalOpen && (

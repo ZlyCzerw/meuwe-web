@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
 import { C, INK, F } from '../lib/tokens'
+import NotificationDot from '../components/NotificationDot'
 import { db } from '../lib/supabase'
 import i18n, { setLanguage } from '../lib/i18n'
 import { subscribePush, unsubscribePush, getPushStatus } from '../lib/push'
@@ -19,6 +20,8 @@ function ProfilePanel({
   reloadProfile,
   onOpenMyEvents,
   onOpenFollowedEvents,
+  myEventsUnread = false,
+  followedUnread = false,
 }: {
   open: boolean
   onClose: () => void
@@ -29,6 +32,8 @@ function ProfilePanel({
   reloadProfile: () => void
   onOpenMyEvents: () => void
   onOpenFollowedEvents: () => void
+  myEventsUnread?: boolean
+  followedUnread?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -518,8 +523,11 @@ function ProfilePanel({
                   borderBottom: `1px solid ${C.inkSoft}33`,
                 }}
               >
-                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
-                  {t('profile.myEvents')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
+                    {t('profile.myEvents')}
+                  </div>
+                  {myEventsUnread && <NotificationDot />}
                 </div>
                 <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
               </button>
@@ -538,8 +546,11 @@ function ProfilePanel({
                   borderBottom: `1px solid ${C.inkSoft}33`,
                 }}
               >
-                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
-                  {t('profile.followedEvents')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
+                    {t('profile.followedEvents')}
+                  </div>
+                  {followedUnread && <NotificationDot />}
                 </div>
                 <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
               </button>
