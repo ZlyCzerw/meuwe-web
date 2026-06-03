@@ -40,6 +40,7 @@ function EventSheet({
   userPos,
   onLocate,
   onAuthNeeded,
+  onEdit,
 }: {
   event: EventWithMeta
   onClose: () => void
@@ -48,6 +49,7 @@ function EventSheet({
   userPos?: { lat: number; lng: number } | null
   onLocate?: () => void
   onAuthNeeded?: () => void
+  onEdit?: (event: EventWithMeta) => void
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -356,11 +358,22 @@ function EventSheet({
                     )}
                   </div>
 
-                  {/* End event (creator only) */}
+                  {/* Edit + End (creator only, while not ended) */}
                   {session?.user.id === event.creator_id && computedStatus !== 'ended' && (
-                    <button onClick={handleEndEvent} style={{ width: '100%', padding: '12px 16px', marginBottom: 14, borderRadius: 999, background: 'transparent', border: `2px solid ${C.primarySoft}`, color: C.primaryPress, fontSize: 14, fontWeight: 800 }}>
-                      {t('event.endEvent')}
-                    </button>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                      <button
+                        onClick={() => onEdit?.(event)}
+                        style={{ flex: 1, padding: '12px 16px', borderRadius: 999, background: C.primary, border: `2px solid ${INK}`, color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(255,122,69,0.30)' }}
+                      >
+                        {t('event.editEvent')}
+                      </button>
+                      <button
+                        onClick={handleEndEvent}
+                        style={{ flex: 1, padding: '12px 16px', borderRadius: 999, background: 'transparent', border: `2px solid ${C.primarySoft}`, color: C.primaryPress, fontSize: 14, fontWeight: 800 }}
+                      >
+                        {t('event.endEvent')}
+                      </button>
+                    </div>
                   )}
 
                   {/* Description */}
