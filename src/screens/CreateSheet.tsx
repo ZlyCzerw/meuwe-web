@@ -152,8 +152,10 @@ function CreateSheet({
       })
       setSubmitting(false)
       if (error || !data) { setErr(t('create.submitError')); return }
+      // `data.event_tags` reflects the OLD tags — updateEvent re-selects the row
+      // before it deletes+reinserts tags. Use the submitted `tags` state instead.
       const e = data as any
-      const updated: EventWithMeta = { ...e, tags: (e.event_tags ?? []).map((t: any) => t.tag), distKm: 0, distStr: '' }
+      const updated: EventWithMeta = { ...e, tags, distKm: 0, distStr: '' }
       onUpdated?.(updated)
       return
     }
