@@ -34,6 +34,7 @@ const es: Resources = {
     loginToWrite: 'Inicia sesión para escribir',
     today: 'HOY',
     endEvent: 'Finalizar evento',
+    editEvent: 'Editar evento',
     moderator: 'Moderador',
     sectionLive: 'En curso',
     sectionUpcoming: 'Próximos',
@@ -67,6 +68,11 @@ const es: Resources = {
     timePick: 'Elige horas',
     timeFrom: 'DESDE',
     timeTo: 'HASTA',
+  },
+  edit: {
+    title: 'Editar evento',
+    submit: 'Guardar cambios',
+    updated: 'Evento actualizado',
   },
   profile: {
     guest: 'Invitado',

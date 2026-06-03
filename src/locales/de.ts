@@ -34,6 +34,7 @@ const de: Resources = {
     loginToWrite: 'Anmelden zum Schreiben',
     today: 'HEUTE',
     endEvent: 'Event beenden',
+    editEvent: 'Event bearbeiten',
     moderator: 'Moderator',
     sectionLive: 'Laufende',
     sectionUpcoming: 'Bevorstehende',
@@ -67,6 +68,11 @@ const de: Resources = {
     timePick: 'Stunden wählen',
     timeFrom: 'VON',
     timeTo: 'BIS',
+  },
+  edit: {
+    title: 'Event bearbeiten',
+    submit: 'Änderungen speichern',
+    updated: 'Event aktualisiert',
   },
   profile: {
     guest: 'Gast',

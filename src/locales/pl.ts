@@ -32,6 +32,7 @@ const pl = {
     loginToWrite: 'Zaloguj się aby pisać',
     today: 'DZIŚ',
     endEvent: 'Zakończ wydarzenie',
+    editEvent: 'Edytuj wydarzenie',
     moderator: 'Moderator',
     sectionLive: 'Trwające',
     sectionUpcoming: 'Nadchodzące',
@@ -65,6 +66,11 @@ const pl = {
     timePick: 'Wybierz godziny',
     timeFrom: 'OD',
     timeTo: 'DO',
+  },
+  edit: {
+    title: 'Edytuj wydarzenie',
+    submit: 'Zapisz zmiany',
+    updated: 'Wydarzenie zaktualizowane',
   },
   profile: {
     guest: 'Gość',
