@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
+import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -27,8 +28,7 @@ Deno.serve(async (req) => {
 
   const eventId    = record.event_id as string
   const authorId   = record.author_id as string | null
-  const rawName = (record.author_name as string | null) ?? 'Ktoś'
-  const authorName = rawName.slice(0, 50)
+  const rawName = record.author_name as string | null
   const text       = record.text as string
 
   console.log(`[push-new-message] event=${eventId} author=${authorId}`)
@@ -88,11 +88,14 @@ Deno.serve(async (req) => {
   // 5a. Filter to users with push_enabled = true
   const { data: enabledProfiles } = await admin
     .from('profiles')
-    .select('id')
+    .select('id, language')
     .in('id', finalRecipients)
     .eq('push_enabled', true)
 
   const enabledRecipients = (enabledProfiles ?? []).map((p: { id: string }) => p.id)
+  const langByUser = new Map<string, Lang>(
+    (enabledProfiles ?? []).map((p: { id: string; language: string | null }) => [p.id, pickLang(p.language)])
+  )
   console.log(`[push-new-message] push-enabled recipients: ${enabledRecipients.length}`)
 
   if (enabledRecipients.length === 0) {
@@ -102,7 +105,7 @@ Deno.serve(async (req) => {
   // 5b. Fetch push subscriptions
   const { data: subs, error: subErr } = await admin
     .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth_key')
+    .select('id, endpoint, p256dh, auth_key, user_id')
     .in('user_id', enabledRecipients)
 
   if (subErr) console.error('[push-new-message] subs error:', subErr)
@@ -115,12 +118,16 @@ Deno.serve(async (req) => {
   // 6. Send
   const preview = text.length > 80 ? text.slice(0, 77) + '…' : text
 
-  await sendToMany(
-    subs,
-    { title: `💬 ${event.title}`, body: `${authorName}: ${preview}`, type: 'message', eventId: event.id },
-    VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
-    admin
-  )
+  const groups = groupSubsByLang(subs, langByUser)
+  for (const [lang, langSubs] of groups) {
+    const authorName = (rawName ?? NOTIF_TEXT.message.body![lang]).slice(0, 50)
+    await sendToMany(
+      langSubs,
+      { title: event.title, body: `${authorName}: ${preview}`, type: 'message', eventId: event.id },
+      VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
+      admin
+    )
+  }
 
   return new Response(JSON.stringify({ sent: subs.length }), { status: 200 })
 })
