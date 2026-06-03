@@ -43,6 +43,7 @@ export default function App() {
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
+  const [editingEvent, setEditingEvent] = useState<EventWithMeta | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
@@ -170,6 +171,20 @@ export default function App() {
     setScreen('welcome')
   }
 
+  function handleEdit(ev: EventWithMeta) {
+    // Edit is launched from EventSheet, which can live in the MyEvents/Followed
+    // overlays where CreateSheet is gated `!isOverlay`. Route every edit through
+    // the map context so the single mounted CreateSheet is usable and we can
+    // re-open the updated event afterward.
+    setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
+    setProfileOpen(false)
+    setScreen('map')
+    setEditingEvent(ev)
+    setCreatePos({ lat: ev.lat, lng: ev.lng })
+    setLocationPicked(true)
+    setCreateOpen(true)
+  }
+
   function handleSubmit(_data: unknown) {
     setCreateOpen(false)
     setCreatePos(null)
@@ -264,6 +279,7 @@ export default function App() {
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
           onAuthNeeded={() => setAuthModalOpen(true)}
+          onEdit={handleEdit}
         />
       )}
       {isFollowedEvents && followedEventSelected && (
@@ -275,6 +291,7 @@ export default function App() {
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(followedEventSelected.lat, followedEventSelected.lng)}
           onAuthNeeded={() => setAuthModalOpen(true)}
+          onEdit={handleEdit}
         />
       )}
       {!isOverlay && selEvent && (
@@ -286,6 +303,7 @@ export default function App() {
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
           onAuthNeeded={() => setAuthModalOpen(true)}
+          onEdit={handleEdit}
         />
       )}
 
@@ -306,11 +324,22 @@ export default function App() {
 
       <CreateSheet
         open={createOpen && !isOverlay}
-        onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false) }}
+        onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null) }}
         onSubmit={handleSubmit}
         defaultPos={createPos || userPos}
         locationPicked={locationPicked}
         onPickLocation={() => { setCreateOpen(false); setPickingLocation(true) }}
+        editEvent={editingEvent}
+        onUpdated={(updated) => {
+          setEditingEvent(null)
+          setCreateOpen(false)
+          setCreatePos(null)
+          setLocationPicked(false)
+          setEventsRefreshKey(k => k + 1)
+          setSelEvent(updated)
+          flyToFnRef.current?.(updated.lat, updated.lng)
+          showToast(t('edit.updated'))
+        }}
       />
       <Toast visible={!!toast} label={toast || ''} />
       <ProfilePanel
