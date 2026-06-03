@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
+import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -53,14 +54,18 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ processed: 0 }), { status: 200 })
   }
 
-  type Profile = { id: string; interests: string[] | null; radius_km: number | null; last_lat: number; last_lng: number }
+  type Profile = { id: string; interests: string[] | null; radius_km: number | null; last_lat: number; last_lng: number; language: string | null }
 
   const { data: profiles } = await admin
     .from('profiles')
-    .select('id, interests, radius_km, last_lat, last_lng')
+    .select('id, interests, radius_km, last_lat, last_lng, language')
     .not('last_lat', 'is', null)
     .not('last_lng', 'is', null)
     .gte('last_seen_at', new Date(Date.now() - 30 * 86400_000).toISOString())
+
+  const langByUser = new Map<string, Lang>(
+    (profiles ?? []).map((p: Profile) => [p.id, pickLang(p.language)])
+  )
 
   let totalSent = 0
 
@@ -80,14 +85,17 @@ Deno.serve(async (req) => {
 
     if (targetIds.length > 0) {
       const { data: subs } = await admin
-        .from('push_subscriptions').select('id, endpoint, p256dh, auth_key').in('user_id', targetIds)
+        .from('push_subscriptions').select('id, endpoint, p256dh, auth_key, user_id').in('user_id', targetIds)
       if (subs && subs.length > 0) {
-        await sendToMany(
-          subs,
-          { title: 'Wydarzenie zaraz się zaczyna! 🎉', body: event.title, type: 'event_start', eventId: event.id },
-          VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
-          admin
-        )
+        const groups = groupSubsByLang(subs, langByUser)
+        for (const [lang, langSubs] of groups) {
+          await sendToMany(
+            langSubs,
+            { title: NOTIF_TEXT.event_start.title![lang], body: event.title, type: 'event_start', eventId: event.id },
+            VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
+            admin
+          )
+        }
         totalSent += subs.length
       }
     }
