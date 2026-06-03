@@ -30,6 +30,9 @@ export const db = {
       last_seen_at: new Date().toISOString(),
     })
   },
+  async updateProfileLanguage(uid: string, language: string) {
+    return supabase.from('profiles').upsert({ id: uid, language })
+  },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
     // Compute the target day's start/end in local time, then convert to UTC.

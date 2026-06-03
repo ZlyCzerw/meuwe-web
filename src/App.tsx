@@ -20,7 +20,7 @@ import { useUnreadEvents } from './hooks/useUnreadEvents'
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
 export default function App() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { session, profile, ready, reloadProfile } = useSession()
 
   const [screen, setScreen] = useState<Screen>('loading')
@@ -116,6 +116,15 @@ export default function App() {
     }, 5 * 60_000)
     return () => clearInterval(interval)
   }, [session?.user.id, !!userPos]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist the user's UI language so edge functions can localize push notifications.
+  useEffect(() => {
+    if (!session) return
+    const write = () => db.updateProfileLanguage(session.user.id, i18n.language)
+    write()
+    i18n.on('languageChanged', write)
+    return () => { i18n.off('languageChanged', write) }
+  }, [session?.user.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial routing once session is resolved
   useEffect(() => {
