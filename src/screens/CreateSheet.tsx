@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
 import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
+import { resolvePhotoUrls, type PhotoSlot } from '../lib/photoSlots'
+import type { EventWithMeta } from '../lib/types'
 
 const QUICK_TAGS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
 
@@ -34,6 +36,8 @@ function CreateSheet({
   defaultPos,
   locationPicked,
   onPickLocation,
+  editEvent,
+  onUpdated,
 }: {
   open: boolean
   onClose: () => void
@@ -41,6 +45,8 @@ function CreateSheet({
   defaultPos: { lat: number; lng: number } | null
   locationPicked: boolean
   onPickLocation: () => void
+  editEvent?: EventWithMeta | null
+  onUpdated?: (updated: EventWithMeta) => void
 }) {
   const { t } = useTranslation()
   const [title, setTitle] = useState('')
@@ -49,7 +55,8 @@ function CreateSheet({
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState('')
   const [tagModalOpen, setTagModalOpen] = useState(false)
-  const [photos, setPhotos] = useState<Array<{ file: File; preview: string } | null>>([null, null, null])
+  const [photos, setPhotos] = useState<PhotoSlot[]>([null, null, null])
+  const prefilledIdRef = useRef<string | null>(null)
   const [startTime, setStartTime] = useState<string>(
     () => new Date().toISOString().slice(0, 16)
   )
@@ -69,10 +76,33 @@ function CreateSheet({
     })
   }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
 
-  // Auto-set end time to start + 24h whenever start changes
+  // Auto-set end time to start + 24h whenever start changes — create mode only.
   useEffect(() => {
+    if (editEvent) return
     setEndTime(new Date(new Date(startTime).getTime() + 86_400_000).toISOString().slice(0, 16))
-  }, [startTime])
+  }, [startTime, editEvent]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prefill when entering edit mode. Keyed on editEvent.id and guarded so it runs
+  // once per event — it must NOT re-run after the location-picker round-trip (the
+  // component stays mounted; re-prefilling would wipe the moderator's edits).
+  useEffect(() => {
+    if (editEvent) {
+      if (prefilledIdRef.current === editEvent.id) return
+      prefilledIdRef.current = editEvent.id
+      setTitle(editEvent.title)
+      setDesc(editEvent.description ?? '')
+      setTags(editEvent.tags ?? [])
+      setStartTime(new Date(editEvent.start_time).toISOString().slice(0, 16))
+      setEndTime(new Date(editEvent.end_time).toISOString().slice(0, 16))
+      const slots: PhotoSlot[] = [null, null, null]
+      ;(editEvent.photos ?? []).slice(0, 3).forEach((url, i) => { slots[i] = { kind: 'existing', url } })
+      setPhotos(slots)
+      setTimeExpanded(true)
+      setErr('')
+    } else {
+      prefilledIdRef.current = null
+    }
+  }, [editEvent?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function submit() {
     if (!title.trim() || submitting) return
@@ -85,19 +115,36 @@ function CreateSheet({
       setSubmitting(false)
       return
     }
-    // Upload photos
-    const files = photos.filter((p): p is { file: File; preview: string } => p !== null)
-    let photoUrls: string[] = []
-    if (files.length > 0) {
-      try {
-        photoUrls = await Promise.all(files.map(p => db.uploadEventPhoto(p.file)))
-      } catch (e) {
-        setErr(t('create.photoUploadError'))
-        setSubmitting(false)
-        return
-      }
+    // Upload new photos, keep existing URLs, preserve slot order.
+    let photoUrls: string[]
+    try {
+      photoUrls = await resolvePhotoUrls(photos, f => db.uploadEventPhoto(f))
+    } catch {
+      setErr(t('create.photoUploadError'))
+      setSubmitting(false)
+      return
     }
     const pos = defaultPos || { lat: 52.2297, lng: 21.0122 }
+
+    if (editEvent) {
+      const { data, error } = await db.updateEvent(editEvent.id, {
+        title: title.trim(),
+        description: desc,
+        lat: pos.lat,
+        lng: pos.lng,
+        category: tags[0] || 'party',
+        tags,
+        start_time: new Date(startTime).toISOString(),
+        end_time: new Date(endTime).toISOString(),
+        photos: photoUrls,
+      })
+      setSubmitting(false)
+      if (error || !data) { setErr(t('create.submitError')); return }
+      const updated = { ...(data as any), tags: ((data as any).event_tags ?? []).map((x: any) => x.tag), distKm: 0, distStr: '' } as EventWithMeta
+      onUpdated?.(updated)
+      return
+    }
+
     const { data, error } = await db.createEvent({
       title: title.trim(),
       description: desc,
@@ -161,7 +208,7 @@ function CreateSheet({
             letterSpacing: -0.5,
           }}
         >
-          {t('create.title')}
+          {editEvent ? t('edit.title') : t('create.title')}
         </div>
         <button
           onClick={onClose}
@@ -334,8 +381,8 @@ function CreateSheet({
                       setErr('')
                       const preview = URL.createObjectURL(file)
                       setPhotos(prev => {
-                        const next = [...prev] as typeof prev
-                        next[i] = { file, preview }
+                        const next = [...prev]
+                        next[i] = { kind: 'new', file, preview }
                         return next
                       })
                       e.target.value = ''
@@ -350,13 +397,13 @@ function CreateSheet({
                   }}>
                     {slot ? (
                       <>
-                        <img src={slot.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                        <img src={slot.kind === 'existing' ? slot.url : slot.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                         <button
                           onClick={e => {
                             e.preventDefault()
-                            URL.revokeObjectURL(slot.preview)
+                            if (slot.kind === 'new') URL.revokeObjectURL(slot.preview)
                             setPhotos(prev => {
-                              const next = [...prev] as typeof prev
+                              const next = [...prev]
                               next[i] = null
                               return next
                             })
@@ -393,9 +440,9 @@ function CreateSheet({
                     setErr('')
                     const preview = URL.createObjectURL(file)
                     setPhotos(prev => {
-                      const next = [...prev] as typeof prev
+                      const next = [...prev]
                       const emptyIdx = next.findIndex(s => s === null)
-                      if (emptyIdx !== -1) next[emptyIdx] = { file, preview }
+                      if (emptyIdx !== -1) next[emptyIdx] = { kind: 'new', file, preview }
                       return next
                     })
                     e.target.value = ''
@@ -555,7 +602,7 @@ function CreateSheet({
               }}
             />
           ) : (
-            t('create.submit')
+            editEvent ? t('edit.submit') : t('create.submit')
           )}
         </button>
       </div>
