@@ -7,7 +7,7 @@ const SUPPORTED: readonly Lang[] = ['pl', 'en', 'es', 'de']
 
 export function pickLang(lang: string | null | undefined): Lang {
   const l = (lang ?? '').slice(0, 2).toLowerCase()
-  return (SUPPORTED as readonly string[]).includes(l) ? (l as Lang) : 'pl'
+  return (SUPPORTED as readonly string[]).includes(l) ? (l as Lang) : 'en'
 }
 
 export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Record<Lang, string>>>> = {
@@ -52,7 +52,7 @@ export function groupSubsByLang<T extends { user_id: string }>(
 ): Map<Lang, T[]> {
   const groups = new Map<Lang, T[]>()
   for (const sub of subs) {
-    const lang = langByUser.get(sub.user_id) ?? 'pl'
+    const lang = langByUser.get(sub.user_id) ?? 'en'
     const arr = groups.get(lang) ?? []
     arr.push(sub)
     groups.set(lang, arr)

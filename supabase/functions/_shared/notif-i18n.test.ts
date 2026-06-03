@@ -7,10 +7,10 @@ describe('pickLang', () => {
     expect(pickLang('es-ES')).toBe('es')
     expect(pickLang('DE')).toBe('de')
   })
-  it('falls back to pl for null/unknown', () => {
-    expect(pickLang(null)).toBe('pl')
-    expect(pickLang('fr')).toBe('pl')
-    expect(pickLang(undefined)).toBe('pl')
+  it('falls back to en for null/unknown', () => {
+    expect(pickLang(null)).toBe('en')
+    expect(pickLang('fr')).toBe('en')
+    expect(pickLang(undefined)).toBe('en')
   })
 })
 
@@ -30,16 +30,16 @@ describe('NOTIF_TEXT', () => {
 })
 
 describe('groupSubsByLang', () => {
-  it('buckets subs by their user language, defaulting to pl', () => {
-    const langByUser = new Map<string, Lang>([['u1', 'en'], ['u2', 'de']])
+  it('buckets subs by their user language, defaulting to en', () => {
+    const langByUser = new Map<string, Lang>([['u1', 'es'], ['u2', 'de']])
     const subs = [
       { id: 's1', user_id: 'u1' },
       { id: 's2', user_id: 'u2' },
-      { id: 's3', user_id: 'u3' }, // unknown → pl
+      { id: 's3', user_id: 'u3' }, // unknown → en
     ]
     const groups = groupSubsByLang(subs, langByUser)
-    expect(groups.get('en')!.map(s => s.id)).toEqual(['s1'])
+    expect(groups.get('es')!.map(s => s.id)).toEqual(['s1'])
     expect(groups.get('de')!.map(s => s.id)).toEqual(['s2'])
-    expect(groups.get('pl')!.map(s => s.id)).toEqual(['s3'])
+    expect(groups.get('en')!.map(s => s.id)).toEqual(['s3'])
   })
 })
