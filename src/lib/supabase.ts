@@ -201,6 +201,33 @@ export const db = {
       .eq('id', eventId)
       .eq('creator_id', sess.user.id)
   },
+  async updateEvent(eventId: string, ev: {
+    title: string; description?: string; lat: number; lng: number;
+    category?: string; tags?: string[];
+    start_time: string; end_time: string; photos: string[];
+  }) {
+    const sess = await this.getSession()
+    if (!sess) return { data: null, error: { message: 'not authenticated' } }
+    // `.eq('creator_id', …)` is defense-in-depth; RLS already enforces it (mirrors endEvent).
+    const { data, error } = await supabase
+      .from('events')
+      .update({
+        title: ev.title, description: ev.description, lat: ev.lat, lng: ev.lng,
+        category: ev.category || 'party',
+        start_time: ev.start_time, end_time: ev.end_time, photos: ev.photos,
+      })
+      .eq('id', eventId)
+      .eq('creator_id', sess.user.id)
+      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
+      .single()
+    if (!error && data) {
+      await supabase.from('event_tags').delete().eq('event_id', eventId)
+      if (ev.tags?.length) {
+        await supabase.from('event_tags').insert(ev.tags.map(tag => ({ event_id: eventId, tag })))
+      }
+    }
+    return { data, error }
+  },
   async getMessages(eid:string,limit=60):Promise<Message[]> {
     const {data}=await supabase.from('event_messages').select('*').eq('event_id',eid).order('created_at',{ascending:true}).limit(limit)
     return (data||[]) as Message[]

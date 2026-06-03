@@ -36,3 +36,16 @@ describe('db.endEvent', () => {
     expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
   })
 })
+
+describe('db.updateEvent', () => {
+  it('returns error when session is null', async () => {
+    const mockGetSession = vi.fn().mockResolvedValue({ data: { session: null }, error: null })
+    vi.spyOn(supabase.auth, 'getSession').mockImplementation(mockGetSession)
+
+    const result = await db.updateEvent('some-event-id', {
+      title: 'x', lat: 0, lng: 0, category: 'party',
+      tags: [], start_time: 'a', end_time: 'b', photos: [],
+    })
+    expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
+  })
+})
