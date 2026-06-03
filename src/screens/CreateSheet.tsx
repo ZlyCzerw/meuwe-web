@@ -100,7 +100,19 @@ function CreateSheet({
       setTimeExpanded(true)
       setErr('')
     } else {
-      prefilledIdRef.current = null
+      // Leaving edit mode → reset to create defaults so the create form isn't
+      // polluted with the previously-edited event's data.
+      if (prefilledIdRef.current !== null) {
+        prefilledIdRef.current = null
+        setTitle('')
+        setDesc('')
+        setTags([])
+        setPhotos([null, null, null])
+        setStartTime(new Date().toISOString().slice(0, 16))
+        setEndTime(new Date(Date.now() + 86_400_000).toISOString().slice(0, 16))
+        setTimeExpanded(false)
+        setErr('')
+      }
     }
   }, [editEvent?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -140,7 +152,8 @@ function CreateSheet({
       })
       setSubmitting(false)
       if (error || !data) { setErr(t('create.submitError')); return }
-      const updated = { ...(data as any), tags: ((data as any).event_tags ?? []).map((x: any) => x.tag), distKm: 0, distStr: '' } as EventWithMeta
+      const e = data as any
+      const updated: EventWithMeta = { ...e, tags: (e.event_tags ?? []).map((t: any) => t.tag), distKm: 0, distStr: '' }
       onUpdated?.(updated)
       return
     }
