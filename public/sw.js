@@ -33,7 +33,7 @@ self.addEventListener('push', e => {
     tag: eventId || type || 'meuwe',       // grupuje powiadomienia tego samego eventu
     renotify: type === 'message',           // przy wiadomościach wibruj za każdym razem
     data: { eventId, type },
-    actions: type === 'new_event' || type === 'event_start'
+    actions: type === 'new_event' || type === 'event_start' || type === 'update'
       ? [{ action: 'open', title: 'Zobacz' }]
       : [{ action: 'open', title: 'Odpisz' }],
     vibrate: [100, 50, 100],
