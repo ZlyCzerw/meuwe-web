@@ -14,11 +14,15 @@
 
 import type { Source } from '../types.ts';
 import { LagendaSource } from './lagenda.ts';
+import { TribeEventsSource } from './tribe.ts';
 
 // ─── Registered sources (all will run on every sync) ─────────────────────────
 
 export const SOURCES: Source[] = [
   new LagendaSource(),
+  // The Events Calendar (Tribe) REST API across municipal WordPress sites.
+  // No API key; add more towns in TRIBE_SITES (tribe.ts).
+  new TribeEventsSource(),
 
   // Examples of future sources:
   // new EventbriteSource({ location: 'Tenerife' }),

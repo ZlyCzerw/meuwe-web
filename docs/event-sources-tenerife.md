@@ -17,10 +17,26 @@
 
 ---
 
+## Implemented sources
+
+- **`lagenda`** — HTML scrape of lagenda.org (`scripts/event-sync/sources/lagenda.ts`).
+- **`tribe`** — The Events Calendar REST API across municipal WordPress sites
+  (`scripts/event-sync/sources/tribe.ts`). One adapter, config-driven URL list, no
+  key. Confirmed open endpoints (`/wp-json/tribe/events/v1/events`): **El Sauzal,
+  Candelaria, Santiago del Teide, San Miguel de Abona, La Guancha, El Tanque.**
+  REST present but 401-gated (revisit): Tegueste, Buenavista del Norte. Add towns
+  to `TRIBE_SITES`. Each `TribeSite.city` is a geocoding fallback for venue-less
+  events (must match a key in `mapper.ts` MUNICIPALITY_COORDS).
+
+> ❌ **Songkick — NOT viable.** It stopped issuing new API keys (and its HTML is
+> 403-blocked), so there's no way to feed an adapter. For concerts use the
+> obtainable-key alternatives: **Ticketmaster Discovery** (free key) or
+> **Bandsintown** (free `app_id`).
+
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`songkick` (public API) · `eventbrite` (HTML city listing) · `ecoentradas` · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · `tenerife.music` · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family).
+`eventbrite` (HTML city listing) · `ecoentradas` · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · `tenerife.music` · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -89,7 +105,7 @@
 
 | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|
-| Songkick (Tenerife) ⭐⭐ | https://www.songkick.com/metro-areas/54425-spain-tenerife | ✅ | **API** | Public developer API — best structured source |
+| Songkick (Tenerife) | https://www.songkick.com/metro-areas/54425-spain-tenerife | ❌ | API | NOT viable: no new API keys issued + HTML 403. Use Ticketmaster/Bandsintown for concerts |
 | Eventbrite (Tenerife) ⭐ | https://www.eventbrite.com/d/spain--tenerife/events/ | ✅ | HTML | 20+ events; discovery API dead but HTML listing live |
 | Ecoentradas ⭐ | https://www.ecoentradas.com/ | ✅ | HTML | 100+ across islands, Jun–Nov 2026 |
 | Tickety | https://tickety.es/ | ✅ | HTML | 50+ events Jun–Dec 2026 |
