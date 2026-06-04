@@ -25,13 +25,16 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 export interface TribeSite { id: string; url: string; city: string }
 
 export const TRIBE_SITES: TribeSite[] = [
-  { id: 'elsauzal',           url: 'https://elsauzal.es',              city: 'El Sauzal' },
-  { id: 'candelaria',         url: 'https://www.candelaria.es',        city: 'Candelaria' },
-  { id: 'santiago-del-teide', url: 'https://www.santiagodelteide.es',  city: 'Santiago del Teide' },
-  { id: 'san-miguel-abona',   url: 'https://www.sanmigueldeabona.es',  city: 'San Miguel de Abona' },
-  { id: 'la-guancha',         url: 'https://www.laguancha.es',         city: 'La Guancha' },
-  { id: 'el-tanque',          url: 'https://www.eltanque.es',          city: 'El Tanque' },
-  // REST present but 401-gated (add if they open up): tegueste.es, buenavistadelnorte.es
+  { id: 'elsauzal',           url: 'https://elsauzal.es',                  city: 'El Sauzal' },
+  { id: 'candelaria',         url: 'https://www.candelaria.es',            city: 'Candelaria' },
+  { id: 'santiago-del-teide', url: 'https://www.santiagodelteide.es',      city: 'Santiago del Teide' },
+  { id: 'san-miguel-abona',   url: 'https://www.sanmigueldeabona.es',      city: 'San Miguel de Abona' },
+  { id: 'granadilla-abona',   url: 'https://www.granadilladeabona.org',    city: 'Granadilla de Abona' },
+  { id: 'la-guancha',         url: 'https://www.laguancha.es',             city: 'La Guancha' },
+  { id: 'el-tanque',          url: 'https://www.eltanque.es',              city: 'El Tanque' },
+  // Tribe REST present but blocked/erroring (revisit): tegueste.es & buenavistadelnorte.es
+  // & elrosario (401), arico.org (403), fasnia (500). Cert-expired (Node fetch
+  // rejects): lossilos.es, santaursula.es, vilaflor.es, granadilladeabona.es.
 ];
 
 // ─── Minimal shape of a Tribe REST event (only fields we use) ─────────────────

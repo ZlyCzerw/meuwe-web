@@ -23,8 +23,11 @@
 - **`tribe`** — The Events Calendar REST API across municipal WordPress sites
   (`scripts/event-sync/sources/tribe.ts`). One adapter, config-driven URL list, no
   key. Confirmed open endpoints (`/wp-json/tribe/events/v1/events`): **El Sauzal,
-  Candelaria, Santiago del Teide, San Miguel de Abona, La Guancha, El Tanque.**
-  REST present but 401-gated (revisit): Tegueste, Buenavista del Norte. Add towns
+  Candelaria, Santiago del Teide, San Miguel de Abona, Granadilla de Abona,
+  La Guancha, El Tanque** (7 towns). Present but blocked/erroring (revisit):
+  Tegueste, Buenavista del Norte, El Rosario (401), Arico (403), Fasnia (500);
+  cert-expired (Node fetch rejects): Los Silos, Santa Úrsula, Vilaflor,
+  granadilladeabona.es (use the .org). Add towns
   to `TRIBE_SITES`. Each `TribeSite.city` is a geocoding fallback for venue-less
   events (must match a key in `mapper.ts` MUNICIPALITY_COORDS).
 
