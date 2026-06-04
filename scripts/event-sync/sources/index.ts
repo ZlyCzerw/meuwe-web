@@ -15,6 +15,7 @@
 import type { Source } from '../types.ts';
 import { LagendaSource } from './lagenda.ts';
 import { TribeEventsSource } from './tribe.ts';
+import { EcoEntradasSource } from './ecoentradas.ts';
 
 // ─── Registered sources (all will run on every sync) ─────────────────────────
 
@@ -23,6 +24,9 @@ export const SOURCES: Source[] = [
   // The Events Calendar (Tribe) REST API across municipal WordPress sites.
   // No API key; add more towns in TRIBE_SITES (tribe.ts).
   new TribeEventsSource(),
+  // ecoentradas.com — Canary Islands cultural ticketing, filtered to Tenerife.
+  // No API key; HTML scrape (listing → session detail pages).
+  new EcoEntradasSource(),
 
   // Examples of future sources:
   // new EventbriteSource({ location: 'Tenerife' }),

@@ -1,7 +1,7 @@
 # Tenerife Event Sources — Catalogue & Scrape Viability
 
 **Last verified:** 2026-06-03 (via automated fetch with a generic bot User-Agent).
-**Scraper:** `scripts/event-sync/sources/` — currently only `lagenda` is implemented. To add a source, follow the `Source` interface (see `sources/index.ts`).
+**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`. To add a source, follow the `Source` interface (see `sources/index.ts`).
 
 > ⚠️ **Verification caveat:** statuses below come from a single fetch with a generic UA. A `403`/`429` here usually means *bot-blocked / rate-limited*, **not** dead — those sites are often scrapable with a real browser UA, proper headers, or an official API. "JS-rendered" means the listing is hydrated client-side and needs a headless browser or the site's underlying JSON/GraphQL endpoint.
 >
@@ -30,6 +30,12 @@
   granadilladeabona.es (use the .org). Add towns
   to `TRIBE_SITES`. Each `TribeSite.city` is a geocoding fallback for venue-less
   events (must match a key in `mapper.ts` MUNICIPALITY_COORDS).
+- **`eco`** — HTML scrape of ecoentradas.com (`scripts/event-sync/sources/ecoentradas.ts`).
+  Canary Islands cultural ticketing; listing → `/elegirsesion/{id}` detail, filtered
+  to **island = Tenerife** (live: ~31 of ~82 shows). One RawEvent per session
+  (date+time+venue from `.table-sesion`; full `.description-eco` synopsis). Paid
+  sessions get an `EVENTO DE PAGO` notice prepended to the description (event's own
+  language, ES); free ones don't. No key.
 
 > ❌ **Songkick — NOT viable.** It stopped issuing new API keys (and its HTML is
 > 403-blocked), so there's no way to feed an adapter. For concerts use the
@@ -39,7 +45,7 @@
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`eventbrite` (HTML city listing) · `ecoentradas` · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · `tenerife.music` · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
+`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · `tenerife.music` · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -110,7 +116,7 @@
 |---|---|---|---|---|
 | Songkick (Tenerife) | https://www.songkick.com/metro-areas/54425-spain-tenerife | ❌ | API | NOT viable: no new API keys issued + HTML 403. Use Ticketmaster/Bandsintown for concerts |
 | Eventbrite (Tenerife) ⭐ | https://www.eventbrite.com/d/spain--tenerife/events/ | ✅ | HTML | 20+ events; discovery API dead but HTML listing live |
-| Ecoentradas ⭐ | https://www.ecoentradas.com/ | ✅ | HTML | 100+ across islands, Jun–Nov 2026 |
+| Ecoentradas ⭐ | https://www.ecoentradas.com/ | ✅ **INTEGRATED** | HTML | `eco`; Tenerife-filtered, session-level dates+times, paid-event notice |
 | Tickety | https://tickety.es/ | ✅ | HTML | 50+ events Jun–Dec 2026 |
 | Xceed (clubs) ⭐ | https://xceed.me/en/tenerife/events | ✅ | HTML | 25+ club events |
 | Fever | https://feverup.com/en/tenerife | ✅ | HTML | 50+ (mostly Candlelight/tours) |
