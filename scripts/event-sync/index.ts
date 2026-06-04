@@ -135,7 +135,7 @@ async function main() {
     generatedAt: runDate,
   });
 
-  const filename = `lagenda_${runDate.replace(/-/g, '')}.sql`;
+  const filename = `events_${runDate.replace(/-/g, '')}.sql`;
   const filepath = path.join(SEEDS_DIR, filename);
   fs.writeFileSync(filepath, sql, 'utf8');
 

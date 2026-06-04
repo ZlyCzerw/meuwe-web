@@ -38,7 +38,7 @@ export function generateSql(
   for (const ev of events) {
     lines.push(`-- ${esc(ev.title)} [${ev.externalId}]`);
     lines.push(
-      `INSERT INTO events (id, title, description, lat, lng, place_name, ` +
+      `INSERT INTO public.events (id, title, description, lat, lng, place_name, ` +
       `category, start_time, end_time, creator_id, status, external_id, photos) VALUES (`
     );
     lines.push(`  gen_random_uuid(),`);
@@ -53,9 +53,9 @@ export function generateSql(
     lines.push(`) ON CONFLICT (external_id) DO NOTHING;`);
 
     if (ev.tags.length) {
-      lines.push(`INSERT INTO event_tags (event_id, tag)`);
+      lines.push(`INSERT INTO public.event_tags (event_id, tag)`);
       lines.push(`  SELECT id, unnest(ARRAY[${ev.tags.map(t => `'${esc(t)}'`).join(', ')}])`);
-      lines.push(`  FROM events WHERE external_id = '${esc(ev.externalId)}'`);
+      lines.push(`  FROM public.events WHERE external_id = '${esc(ev.externalId)}'`);
       lines.push(`ON CONFLICT DO NOTHING;`);
     }
 
