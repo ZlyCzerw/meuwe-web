@@ -48,7 +48,7 @@
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
+`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `los-realejos` (wp/v2 JSON, date from content) · `casa-balcones` + `losrealejos.travel` (romerías/fiestas) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -88,6 +88,7 @@
 | Puerto de la Cruz | https://www.puertodelacruz.es/eventos/ | ✅ | HTML | 15+ |
 | CIT Puerto de la Cruz | https://citpuertodelacruz.com/programa-de-eventos/ | ✅ | HTML | 25+ |
 | La Orotava | http://www.laorotava.es/es/agenda | ✅ | HTML | ~15 |
+| Los Realejos ⭐ | https://losrealejos.es/agenda/ | ✅ | **wp/v2 JSON** + HTML | WordPress CPT `evento` is REST-public: `…/wp-json/wp/v2/evento?per_page=&page=` gives clean discovery (title, content, featured image, `/evento/{slug}/`). **Caveat:** Tribe REST is **off** (`rest_no_route`) and ACF is **not** exposed (`acf: []`) — the event date sits as free text in the content body (e.g. "23 de junio"), so it must be regex-parsed from content (or the detail page). Good source, date extraction needed. |
 | El Sauzal ⭐ | https://www.elsauzal.es/actividades/ | ✅ | HTML + **RSS** | 18 events; `/feed` is a working WP RSS |
 | Santa Cruz de Tenerife | https://www.santacruzdetenerife.es/web/noticias-y-agenda/agenda | ✅ | HTML | ~5, tabbed filters |
 | Granadilla (portal) | https://portal.granadilladeabona.es/Eventos | ⚠️ | HTML/JS | 88 items, some resident-only ("solo empadronados") |
@@ -97,7 +98,7 @@
 | Revista Integración (La Laguna) | https://www.revistaintegracion.es/agenda-cultural-de-la-laguna/ | ⚠️ | HTML | Snapshot looked stale (2024) |
 | Tegueste | https://www.tegueste.es/20870-2/ | 💀 | HTML | That page shows Nov 2024 — find current agenda URL |
 
-➡️ **Remaining ayuntamientos** (same `…/agenda` + WordPress `/feed` RSS pattern): La Laguna, Candelaria, Los Realejos, San Miguel de Abona, Guía de Isora, Santiago del Teide, Arico, Vilaflor, Buenavista del Norte, Los Silos, Garachico, Icod de los Vinos, Tacoronte, El Rosario, Santa Úrsula, La Victoria/La Matanza, Fasnia, Güímar. The **El Sauzal `/feed`** test confirms many of these expose a usable RSS feed — cheapest bulk integration.
+➡️ **Remaining ayuntamientos** (same `…/agenda` + WordPress `/feed` RSS pattern): La Laguna, Candelaria, San Miguel de Abona, Guía de Isora, Santiago del Teide, Arico, Vilaflor, Buenavista del Norte, Los Silos, Garachico, Icod de los Vinos, Tacoronte, El Rosario, Santa Úrsula, La Victoria/La Matanza, Fasnia, Güímar. The **El Sauzal `/feed`** test confirms many of these expose a usable RSS feed — cheapest bulk integration.
 
 ## C. Venues / theatres / clubs
 
@@ -155,6 +156,8 @@
 | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|
 | Casa de los Balcones (romerías) ⭐ | https://casa-balcones.com/calendario-de-romerias-en-tenerife-2026/ | ✅ | HTML | 150+ fiestas/romerías 2026 by month |
+| Los Realejos Travel — fiestas/romerías ⭐ | https://losrealejos.travel/en/festivals/calendar/ | ✅ | HTML | 50+ fiestas/romerías by month (Mayos = May Crosses + Fireworks, Romería de San Isidro, Virgen del Carmen). Server-rendered; **mixed date precision** (concrete days + relative "first weekend"/"last Sunday" + moveable feasts) — needs relative-date resolution |
+| Cabildo agenda (incl. fiestas) | https://www.tenerife.es/eventos | ✅ | HTML | Island-wide official agenda; the `…/fiestas-de-tenerife` path now redirects here |
 | Nests Hostels (festivals) ⭐ | https://nestshostels.com/en/music-festivals-tenerife-2026/ | ✅ | HTML | 14–20 festivals w/ dates |
 | Villa Adeje Beach (calendar) | https://villaadejebeachhotel.com/en/post/calendar-of-festivals-and-events-in-tenerife/ | ✅ | HTML | 20+ annual events |
 | Modo Festival | https://modofestival.es/ | ✅ | HTML | Festival aggregator, dated |
