@@ -16,6 +16,27 @@ const SITE_DELAY_MS = 400;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const FETCH_RETRIES = 2;
+const FETCH_BACKOFF_MS = 600;
+
+/**
+ * fetch() that retries on a thrown network error (e.g. transient "fetch failed"
+ * that intermittently drops a site like candelaria). HTTP error statuses are
+ * returned as-is — only a rejected fetch is retried.
+ */
+export async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= FETCH_RETRIES; attempt++) {
+    try {
+      return await fetch(url, init);
+    } catch (err) {
+      lastErr = err;
+      if (attempt < FETCH_RETRIES) await sleep(FETCH_BACKOFF_MS * (attempt + 1));
+    }
+  }
+  throw lastErr;
+}
+
 // ─── Registered Tribe sites ───────────────────────────────────────────────────
 // `id` becomes part of the externalId, so keep it stable & unique.
 // `city` is the municipality, used as a geocoding fallback — many municipal
@@ -165,7 +186,7 @@ export class TribeEventsSource implements Source {
         `${site.url}/wp-json/tribe/events/v1/events` +
         `?start_date=${from}&end_date=${to}&page=${page}&per_page=${PER_PAGE}`;
 
-      const res = await fetch(url, {
+      const res = await fetchWithRetry(url, {
         headers: {
           'User-Agent': 'meuwe-event-sync/1.0 (+https://meuwe.eu)',
           'Accept': 'application/json',

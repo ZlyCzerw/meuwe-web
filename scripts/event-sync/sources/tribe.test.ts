@@ -1,5 +1,39 @@
-import { describe, it, expect } from 'vitest';
-import { stripHtml, tribeToRawEvent, type TribeApiEvent } from './tribe.ts';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { stripHtml, tribeToRawEvent, fetchWithRetry, type TribeApiEvent } from './tribe.ts';
+
+describe('fetchWithRetry', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('retries a thrown network error and then returns the response', async () => {
+    const ok = { ok: true, status: 200 } as Response;
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(ok);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchWithRetry('https://x', {});
+    expect(res).toBe(ok);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does NOT retry an HTTP error status (returns it as-is)', async () => {
+    const notFound = { ok: false, status: 404 } as Response;
+    const fetchMock = vi.fn().mockResolvedValue(notFound);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchWithRetry('https://x', {});
+    expect(res).toBe(notFound);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up and rethrows after exhausting retries', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchWithRetry('https://x', {})).rejects.toThrow('fetch failed');
+    expect(fetchMock).toHaveBeenCalledTimes(3);   // initial + 2 retries
+  });
+});
 
 describe('stripHtml', () => {
   it('removes tags and decodes entities (named + numeric)', () => {
