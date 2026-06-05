@@ -1,7 +1,7 @@
 # Tenerife Event Sources — Catalogue & Scrape Viability
 
 **Last verified:** 2026-06-03 (via automated fetch with a generic bot User-Agent).
-**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`. To add a source, follow the `Source` interface (see `sources/index.ts`).
+**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`, `tenerifemusic`. To add a source, follow the `Source` interface (see `sources/index.ts`).
 
 > ⚠️ **Verification caveat:** statuses below come from a single fetch with a generic UA. A `403`/`429` here usually means *bot-blocked / rate-limited*, **not** dead — those sites are often scrapable with a real browser UA, proper headers, or an official API. "JS-rendered" means the listing is hydrated client-side and needs a headless browser or the site's underlying JSON/GraphQL endpoint.
 >
@@ -36,6 +36,9 @@
   (date+time+venue from `.table-sesion`; full `.description-eco` synopsis). Paid
   sessions get an `EVENTO DE PAGO` notice prepended to the description (event's own
   language, ES); free ones don't. No key.
+- **`tenerifemusic`** — tenerife.music concert agenda (`scripts/event-sync/sources/tenerifemusic.ts`).
+  Reads the `/events` JSON-LD `ItemList` (schema.org `Event`): name, ISO startDate,
+  venue + locality, image. ~37 listed island-wide (~10 in a 21-day window). No key.
 
 > ❌ **Songkick — NOT viable.** It stopped issuing new API keys (and its HTML is
 > 403-blocked), so there's no way to feed an adapter. For concerts use the
@@ -45,7 +48,7 @@
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · `tenerife.music` · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
+`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `casa-balcones` (fiestas/romerías) · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -63,7 +66,7 @@
 | Web Tenerife (oficial) ⭐ | https://www.webtenerife.co.uk/events/ | ✅ | HTML | ~60 events, fresh; ES at `webtenerife.com` |
 | Cierra por fuera ⭐ | https://www.cierraporfuera.com/tenerife | ✅ | HTML | Jun–Oct 2026 |
 | Cabildo de Tenerife | https://www.tenerife.es/portalcabtfe/es/agenda | ✅ | HTML | Sparse on default filter; also `/eventos`, `/fiestas-de-tenerife` |
-| Tenerife LIVE (music) ⭐ | https://tenerife.music/ | ✅ | HTML | "38 upcoming"; `/events` paths |
+| Tenerife LIVE (music) ⭐ | https://tenerife.music/events | ✅ **INTEGRATED** | JSON-LD | `tenerifemusic`; ItemList of schema.org Events |
 | Tenerife Co Tours | https://tenerifecotours.com/en/ | ✅ | HTML | Blog "News & Events" w/ dated posts |
 | Wonderful Tenerife | https://www.wonderfultenerife.com/es/events | ⚠️ | HTML | Mixed freshness (some 2025) |
 | Club Canary | https://clubcanary.com/events-in-tenerife/ | ⚠️ | HTML+JSON-LD | Mostly annual/recurring |
