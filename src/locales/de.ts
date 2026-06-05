@@ -107,7 +107,7 @@ const de: Resources = {
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen' },
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
-  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen' },
+  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },
 }
 
 export default de

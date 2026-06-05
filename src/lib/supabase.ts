@@ -103,7 +103,7 @@ export const db = {
   async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {
     const { data, error } = await supabase
       .from('events')
-      .select('*, event_tags(tag)')
+      .select('*, profiles(display_name,avatar_color), event_tags(tag)')
       .eq('creator_id', userId)
       .order('start_time', { ascending: false })
     if (error) { console.error(error); return [] }
@@ -128,7 +128,6 @@ export const db = {
       tags: (e.event_tags || []).map((t: any) => t.tag),
       distKm: 0,
       distStr: '',
-      profiles: null,
       msgCount: countMap[e.id] ?? 0,
     })) as EventWithMsgCount[]
   },
@@ -156,6 +155,10 @@ export const db = {
     const sess = await this.getSession(); if (!sess) return
     await supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
   },
+  async getEventFollowers(eventId: string): Promise<{ avatar_color: string | null; display_name: string | null }[]> {
+    const { data } = await supabase.rpc('get_event_follower_colors', { p_event_id: eventId })
+    return (data || []).map((r: any) => ({ avatar_color: r.avatar_color ?? null, display_name: r.display_name ?? null }))
+  },
   async getFollowedEvents(userId: string): Promise<EventWithMsgCount[]> {
     const { data: follows } = await supabase
       .from('event_follows').select('event_id').eq('user_id', userId)
@@ -163,7 +166,7 @@ export const db = {
     if (eventIds.length === 0) return []
     const { data, error } = await supabase
       .from('events')
-      .select('*, event_tags(tag)')
+      .select('*, profiles(display_name,avatar_color), event_tags(tag)')
       .in('id', eventIds)
       .neq('creator_id', userId)
       .order('start_time', { ascending: false })
@@ -181,7 +184,7 @@ export const db = {
     return (data || []).map((e: any) => ({
       ...e,
       tags: (e.event_tags || []).map((t: any) => t.tag),
-      distKm: 0, distStr: '', profiles: null,
+      distKm: 0, distStr: '',
       msgCount: countMap[e.id] ?? 0,
     })) as EventWithMsgCount[]
   },

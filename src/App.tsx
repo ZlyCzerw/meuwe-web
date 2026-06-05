@@ -51,6 +51,34 @@ export default function App() {
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
   const unread = useUnreadEvents(session, openEventId)
 
+  const NAV_KEY = 'meuwe_nav'
+  const NAV_TTL = 30 * 60_000
+  const navStateRef = useRef({ screen, myEventSelected, followedEventSelected })
+  const navRestoredRef = useRef(false)
+
+  useEffect(() => {
+    navStateRef.current = { screen, myEventSelected, followedEventSelected }
+  }, [screen, myEventSelected, followedEventSelected])
+
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (!document.hidden) return
+      const { screen, myEventSelected, followedEventSelected } = navStateRef.current
+      if (screen !== 'myEvents' && screen !== 'followedEvents') {
+        localStorage.removeItem(NAV_KEY)
+        return
+      }
+      localStorage.setItem(NAV_KEY, JSON.stringify({
+        screen,
+        myEventId: myEventSelected?.id ?? null,
+        followedEventId: followedEventSelected?.id ?? null,
+        ts: Date.now(),
+      }))
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
   // On mount: check ?event=<id> deep link
   useEffect(() => {
     const eventId = new URLSearchParams(window.location.search).get('event')
@@ -131,13 +159,33 @@ export default function App() {
     if (!ready || screen !== 'loading') return
     const hasDeepLink = !!new URLSearchParams(window.location.search).get('event')
     if (hasDeepLink) { setScreen('map'); return }
-    if (session) { goToMap(); return }
+    if (session) {
+      try {
+        const raw = localStorage.getItem(NAV_KEY)
+        if (raw) {
+          const saved = JSON.parse(raw)
+          localStorage.removeItem(NAV_KEY)
+          if (Date.now() - saved.ts < NAV_TTL && (saved.screen === 'myEvents' || saved.screen === 'followedEvents')) {
+            navRestoredRef.current = true
+            if (saved.myEventId) {
+              db.getEventById(saved.myEventId).then(ev => { setMyEventSelected(ev || null); setScreen(saved.screen) })
+            } else if (saved.followedEventId) {
+              db.getEventById(saved.followedEventId).then(ev => { setFollowedEventSelected(ev || null); setScreen(saved.screen) })
+            } else {
+              setScreen(saved.screen)
+            }
+            return
+          }
+        }
+      } catch {}
+      goToMap(); return
+    }
     setScreen('welcome')
   }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Login → map
+  // Login → map (skipped when restoring saved nav state)
   useEffect(() => {
-    if (session) goToMap()
+    if (session && !navRestoredRef.current) goToMap()
   }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Visible half-width on portrait phone = shorter screen edge / 2.

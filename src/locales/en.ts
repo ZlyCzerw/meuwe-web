@@ -107,7 +107,7 @@ const en: Resources = {
   auth: { createEventPrompt: 'Only logged-in users can add events' },
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
-  follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow' },
+  follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'follows this', followThis: 'follow this', othersFollowOne: 'and {{count}} other follows', othersFollowMany: 'and {{count}} others follow' },
 }
 
 export default en

@@ -23,7 +23,7 @@ export function getCurrentPosition():Promise<{lat:number;lng:number}|null> {
     navigator.geolocation.getCurrentPosition(
       p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
       ()=>resolve(null),
-      { enableHighAccuracy:false, timeout:8000 }
+      { enableHighAccuracy:false, timeout:8000, maximumAge:30000 }
     )
   })
 }

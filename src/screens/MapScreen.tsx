@@ -433,13 +433,13 @@ function MapScreen({
       )}
 
       {/* Timeline */}
-      {!pickingLocation && <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+      {!pickingLocation && <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
         {!timelineOpen ? (
           <button onClick={() => setTimelineOpen(true)} style={{
             padding: '10px 20px', borderRadius: 999,
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
             fontSize: 13, fontWeight: 800, color: INK,
-            display: 'flex', alignItems: 'center', gap: 8,
+            display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'auto',
           }}>
             <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.primary, border: `1.5px solid ${INK}` }} />
             {(() => {
@@ -462,7 +462,7 @@ function MapScreen({
               padding: '6px 8px', borderRadius: 999, background: '#fff',
               border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
               display: 'flex', alignItems: 'center', gap: 4,
-              touchAction: 'none', cursor: 'grab', userSelect: 'none',
+              touchAction: 'none', cursor: 'grab', userSelect: 'none', pointerEvents: 'auto',
             }}
           >
             {/* Left arrow */}
@@ -543,8 +543,10 @@ function MapScreen({
 
       {/* ADD button */}
       {!pickingLocation && (
-        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-          <AddButton size={76} active={!!session} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
+        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
+          <div style={{ pointerEvents: 'auto' }}>
+            <AddButton size={76} active={!!session} onClick={() => session ? onOpenCreate() : onAuthNeeded()} />
+          </div>
         </div>
       )}
 

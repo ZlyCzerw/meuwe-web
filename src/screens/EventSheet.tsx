@@ -60,6 +60,7 @@ function EventSheet({
   const [photoModal, setPhotoModal] = useState<number | null>(null)
   const [shareToast, setShareToast] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
 
   function showShareToast() {
     setShareToast(true)
@@ -100,6 +101,11 @@ function EventSheet({
     if (!event?.id || !session) return
     db.isFollowingEvent(event.id).then(setIsFollowing)
   }, [event?.id, session])
+
+  useEffect(() => {
+    if (!event?.id) return
+    db.getEventFollowers(event.id).then(setFollowers)
+  }, [event?.id])
 
   useEffect(() => {
     if (!event?.id) return
@@ -227,6 +233,36 @@ function EventSheet({
             >
               {/* Card content — shown in both half and full */}
               <>
+                  {/* Followers bar */}
+                  {followers.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <div style={{ display: 'flex' }}>
+                        {followers.slice(0, 3).map((f, i) => (
+                          <div key={i} style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: f.avatar_color || C.primary,
+                            border: `2.5px solid ${INK}`,
+                            boxShadow: `0 2px 0 ${INK}33`,
+                            marginLeft: i > 0 ? -8 : 0,
+                            zIndex: 3 - i,
+                            position: 'relative',
+                            flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, fontWeight: 900, color: INK,
+                            fontFamily: F.display, letterSpacing: -0.3,
+                          }}>
+                            {(f.display_name || '?')[0].toUpperCase()}
+                          </div>
+                        ))}
+                      </div>
+                      <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 600 }}>
+                        {followers.length <= 3
+                          ? t(followers.length === 1 ? 'follow.followsThis' : 'follow.followThis')
+                          : t(followers.length - 3 === 1 ? 'follow.othersFollowOne' : 'follow.othersFollowMany', { count: followers.length - 3 })}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Title + close */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
                     <div style={{ flex: 1, fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink, lineHeight: 1.15, letterSpacing: -0.5 }}>{event.title}</div>

@@ -107,7 +107,7 @@ const es: Resources = {
   auth: { createEventPrompt: 'Solo los usuarios registrados pueden añadir eventos' },
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
   share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },
-  follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir' },
+  follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir', followsThis: 'sigue esto', followThis: 'siguen esto', othersFollowOne: 'y {{count}} más sigue', othersFollowMany: 'y {{count}} más siguen' },
 }
 
 export default es
