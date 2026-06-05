@@ -18,6 +18,7 @@ import { TribeEventsSource } from './tribe.ts';
 import { EcoEntradasSource } from './ecoentradas.ts';
 import { TenerifeMusicSource } from './tenerifemusic.ts';
 import { RomeriasSource } from './romerias.ts';
+import { AronaSource } from './arona.ts';
 
 // ─── Registered sources (all will run on every sync) ─────────────────────────
 
@@ -33,6 +34,8 @@ export const SOURCES: Source[] = [
   new TenerifeMusicSource(),
   // Casa de los Balcones — island-wide romerías & fiestas calendar (HTML).
   new RomeriasSource(),
+  // Ayuntamiento de Arona — municipal agenda (DNN), page 1 (near-term).
+  new AronaSource(),
 
   // Examples of future sources:
   // new EventbriteSource({ location: 'Tenerife' }),
