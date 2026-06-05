@@ -1,7 +1,7 @@
 # Tenerife Event Sources — Catalogue & Scrape Viability
 
 **Last verified:** 2026-06-03 (via automated fetch with a generic bot User-Agent).
-**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`, `tenerifemusic`. To add a source, follow the `Source` interface (see `sources/index.ts`).
+**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`, `tenerifemusic`, `romerias`. To add a source, follow the `Source` interface (see `sources/index.ts`).
 
 > ⚠️ **Verification caveat:** statuses below come from a single fetch with a generic UA. A `403`/`429` here usually means *bot-blocked / rate-limited*, **not** dead — those sites are often scrapable with a real browser UA, proper headers, or an official API. "JS-rendered" means the listing is hydrated client-side and needs a headless browser or the site's underlying JSON/GraphQL endpoint.
 >
@@ -39,6 +39,10 @@
 - **`tenerifemusic`** — tenerife.music concert agenda (`scripts/event-sync/sources/tenerifemusic.ts`).
   Reads the `/events` JSON-LD `ItemList` (schema.org `Event`): name, ISO startDate,
   venue + locality, image. ~37 listed island-wide (~10 in a 21-day window). No key.
+- **`romerias`** — Casa de los Balcones romerías/fiestas calendar (`scripts/event-sync/sources/romerias.ts`).
+  157 dated `<p>` entries "DD/MM/YYYY Title – Municipality"; municipality is the
+  geocoding city → maps to the `culture` category (Baile de Magos, romerías). The
+  page is per-year — bump `PAGE_URL` each season. No key.
 
 > ❌ **Songkick — NOT viable.** It stopped issuing new API keys (and its HTML is
 > 403-blocked), so there's no way to feed an adapter. For concerts use the
@@ -48,7 +52,7 @@
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `los-realejos` (wp/v2 JSON, date from content) · `casa-balcones` + `losrealejos.travel` (romerías/fiestas) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
+`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · `arona.org` · `adeje.es` · `museosdetenerife` (RSS in footer) · `los-realejos` (wp/v2 JSON, date from content) · ~~`casa-balcones`~~ ✅ + `losrealejos.travel` (romerías/fiestas) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -155,7 +159,7 @@
 
 | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|
-| Casa de los Balcones (romerías) ⭐ | https://casa-balcones.com/calendario-de-romerias-en-tenerife-2026/ | ✅ | HTML | 150+ fiestas/romerías 2026 by month |
+| Casa de los Balcones (romerías) ⭐ | https://casa-balcones.com/calendario-de-romerias-en-tenerife-2026/ | ✅ **INTEGRATED** | HTML | `romerias`; 157 dated `<p>` entries "DD/MM/YYYY Title – Municipality"; municipality = geocode city. Bump URL per year. |
 | Los Realejos Travel — fiestas/romerías ⭐ | https://losrealejos.travel/en/festivals/calendar/ | ✅ | HTML | 50+ fiestas/romerías by month (Mayos = May Crosses + Fireworks, Romería de San Isidro, Virgen del Carmen). Server-rendered; **mixed date precision** (concrete days + relative "first weekend"/"last Sunday" + moveable feasts) — needs relative-date resolution |
 | Cabildo agenda (incl. fiestas) | https://www.tenerife.es/eventos | ✅ | HTML | Island-wide official agenda; the `…/fiestas-de-tenerife` path now redirects here |
 | Nests Hostels (festivals) ⭐ | https://nestshostels.com/en/music-festivals-tenerife-2026/ | ✅ | HTML | 14–20 festivals w/ dates |

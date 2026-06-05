@@ -17,6 +17,7 @@ import { LagendaSource } from './lagenda.ts';
 import { TribeEventsSource } from './tribe.ts';
 import { EcoEntradasSource } from './ecoentradas.ts';
 import { TenerifeMusicSource } from './tenerifemusic.ts';
+import { RomeriasSource } from './romerias.ts';
 
 // ─── Registered sources (all will run on every sync) ─────────────────────────
 
@@ -30,6 +31,8 @@ export const SOURCES: Source[] = [
   new EcoEntradasSource(),
   // tenerife.music — island-wide concert/music agenda via JSON-LD ItemList.
   new TenerifeMusicSource(),
+  // Casa de los Balcones — island-wide romerías & fiestas calendar (HTML).
+  new RomeriasSource(),
 
   // Examples of future sources:
   // new EventbriteSource({ location: 'Tenerife' }),
