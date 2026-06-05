@@ -1,7 +1,7 @@
 # Tenerife Event Sources — Catalogue & Scrape Viability
 
 **Last verified:** 2026-06-03 (via automated fetch with a generic bot User-Agent).
-**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`, `tenerifemusic`, `romerias`, `arona`. To add a source, follow the `Source` interface (see `sources/index.ts`).
+**Scraper:** `scripts/event-sync/sources/` — implemented: `lagenda`, `tribe`, `eco`, `tenerifemusic`, `romerias`, `arona`, `adeje`. To add a source, follow the `Source` interface (see `sources/index.ts`).
 
 > ⚠️ **Verification caveat:** statuses below come from a single fetch with a generic UA. A `403`/`429` here usually means *bot-blocked / rate-limited*, **not** dead — those sites are often scrapable with a real browser UA, proper headers, or an official API. "JS-rendered" means the listing is hydrated client-side and needs a headless browser or the site's underlying JSON/GraphQL endpoint.
 >
@@ -52,7 +52,7 @@
 ## Recommended build order
 
 **Tier 1 — build next (structured or high-volume, fresh):**
-`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · ~~`arona.org`~~ ✅ · `adeje.es` · `museosdetenerife` (RSS in footer) · `los-realejos` (wp/v2 JSON, date from content) · ~~`casa-balcones`~~ ✅ + `losrealejos.travel` (romerías/fiestas) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
+`eventbrite` (HTML city listing) · ~~`ecoentradas`~~ ✅ · `webtenerife` · `cierraporfuera` · ~~`arona.org`~~ ✅ · ~~`adeje.es`~~ ✅ · `museosdetenerife` (RSS in footer) · `los-realejos` (wp/v2 JSON, date from content) · ~~`casa-balcones`~~ ✅ + `losrealejos.travel` (romerías/fiestas) · `hardrock-cafe` (iCal/RSS export) · ~~`tenerife.music`~~ ✅ · `gesportcanarias` + `running.life` (sport) · `elchikiplan` (family) · more `tribe` towns.
 
 **Tier 2 — solid, plain HTML:**
 `tickety` · `xceed` · `feverup` · `civitatis` · `tenerife.es` (Cabildo) · `puertodelacruz.es` · `citpuertodelacruz` · `laorotava.es` · `elsauzal` (+ `/feed` RSS) · `sinfonicadetenerife` · `teatenerife` · `clubdeportivotenerife` · `gotrail.run` · `nestshostels` · `villaadejebeach` · `thegourmetjournal` · `esmartribu` · `timeintenerife` (WP `/feed`) · `tenerifeweekly` (WP `/feed`) · `taquilla` · `monkeybeachclub`.
@@ -88,7 +88,7 @@
 | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|
 | Arona ⭐ | https://www.arona.org/Agenda | ✅ **INTEGRATED** | HTML (DNN) | `arona`; page 1 (regular + featured cards). Pagination is ASP.NET `__doPostBack` (ViewState) — page 1 is date-sorted from today so covers the near-term window; later pages (further out) are a TODO. ~14 in a 21-day window |
-| Adeje ⭐ | https://www.adeje.es/agenda | ✅ | HTML | 15+, May–Nov 2026 |
+| Adeje ⭐ | https://www.adeje.es/agenda | ✅ **INTEGRATED** | HTML | `adeje`; LIST view = single page (`?pag` cosmetic), `.VistaAgendaListaItem` deduped by `/evento/{id}`. Rich descriptions + images; circle date (day can be a range, month abbrev ± year). ~9 in a 21-day window |
 | Puerto de la Cruz | https://www.puertodelacruz.es/eventos/ | ✅ | HTML | 15+ |
 | CIT Puerto de la Cruz | https://citpuertodelacruz.com/programa-de-eventos/ | ✅ | HTML | 25+ |
 | La Orotava | http://www.laorotava.es/es/agenda | ✅ | HTML | ~15 |

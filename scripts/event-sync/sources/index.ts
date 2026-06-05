@@ -19,6 +19,7 @@ import { EcoEntradasSource } from './ecoentradas.ts';
 import { TenerifeMusicSource } from './tenerifemusic.ts';
 import { RomeriasSource } from './romerias.ts';
 import { AronaSource } from './arona.ts';
+import { AdejeSource } from './adeje.ts';
 
 // ─── Registered sources (all will run on every sync) ─────────────────────────
 
@@ -36,6 +37,8 @@ export const SOURCES: Source[] = [
   new RomeriasSource(),
   // Ayuntamiento de Arona — municipal agenda (DNN), page 1 (near-term).
   new AronaSource(),
+  // Ayuntamiento de Adeje — municipal agenda (LIST view, single page).
+  new AdejeSource(),
 
   // Examples of future sources:
   // new EventbriteSource({ location: 'Tenerife' }),
