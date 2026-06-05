@@ -12,12 +12,14 @@ export function pinHTML(category: string, idx: number, _dbStatus?: string, start
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
   ` : ''
   const scaleStyle = scale !== 1 ? `transform:scale(${scale.toFixed(3)});transform-origin:bottom center;` : ''
-  return `<div style="position:relative;width:44px;height:56px;${scaleStyle}">
-    ${halos}
-    <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
-      <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
-    </svg>
-    <div style="position:absolute;top:10px;left:0;width:44px;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none">${meta.glyph}</div>
+  return `<div style="position:relative;width:44px;height:56px;">
+    <div style="position:absolute;top:0;left:0;width:44px;height:44px;${scaleStyle}">
+      ${halos}
+      <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+        <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:10px;left:0;width:44px;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none">${meta.glyph}</div>
+    </div>
     <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${meta.color};border:2.5px solid #2D2B2A"></div>
   </div>`
 }
