@@ -82,25 +82,27 @@ export const db = {
     const {data}=supabase.storage.from('event-photos').getPublicUrl(path)
     return data.publicUrl
   },
-  async createEvent(ev:{
-    title:string; description?:string; lat:number; lng:number;
-    placeName?:string; category?:string; tags?:string[];
-    start_time?:string; end_time?:string; photos?:string[];
+  async createEvent(ev: {
+    title: string; description?: string; lat: number; lng: number;
+    placeName?: string; category?: string; tags?: string[];
+    start_time?: string; end_time?: string; photos?: string[];
+    is_private?: boolean;
   }) {
-    const sess=await this.getSession(); if(!sess) return {data:null,error:{message:'not authenticated'}}
-    const {data,error}=await supabase.from('events').insert({
-      title:ev.title, description:ev.description, lat:ev.lat, lng:ev.lng,
-      place_name:ev.placeName, category:ev.category||'party',
+    const sess = await this.getSession(); if (!sess) return { data: null, error: { message: 'not authenticated' } }
+    const { data, error } = await supabase.from('events').insert({
+      title: ev.title, description: ev.description, lat: ev.lat, lng: ev.lng,
+      place_name: ev.placeName, category: ev.category || 'party',
       start_time: ev.start_time || new Date().toISOString(),
-      end_time: ev.end_time || new Date(Date.now()+86400000).toISOString(),
-      creator_id:sess.user.id, status:'live',
-      photos: ev.photos||[],
+      end_time: ev.end_time || new Date(Date.now() + 86400000).toISOString(),
+      creator_id: sess.user.id, status: 'live',
+      photos: ev.photos || [],
+      is_private: ev.is_private ?? false,
     }).select().single()
-    if(!error && data) {
-      if(ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag=>({event_id:data.id,tag})))
+    if (!error && data) {
+      if (ev.tags?.length) await supabase.from('event_tags').insert(ev.tags.map(tag => ({ event_id: data.id, tag })))
       await supabase.from('event_follows').insert({ user_id: sess.user.id, event_id: data.id })
     }
-    return {data,error}
+    return { data, error }
   },
   async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {
     const { data, error } = await supabase
@@ -134,14 +136,25 @@ export const db = {
     })) as EventWithMsgCount[]
   },
   async getEventById(id: string): Promise<EventWithMeta | null> {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
-      .eq('id', id)
+    // Use SECURITY DEFINER RPC to bypass RLS — needed so private events
+    // are fetchable by anyone who has the share link (UUID = credential).
+    const { data: evData, error } = await supabase
+      .rpc('get_event_by_id', { p_event_id: id })
       .single()
-    if (error || !data) return null
-    const e = data as any
-    return { ...e, tags: (e.event_tags || []).map((t: any) => t.tag), distKm: 0, distStr: '' }
+    if (error || !evData) return null
+    const e = evData as any
+    // Fetch joins separately — profiles and event_tags have open RLS (USING true).
+    const [{ data: prof }, { data: tagRows }] = await Promise.all([
+      supabase.from('profiles').select('display_name,avatar_color').eq('id', e.creator_id).maybeSingle(),
+      supabase.from('event_tags').select('tag').eq('event_id', id),
+    ])
+    return {
+      ...e,
+      profiles: prof || null,
+      tags: (tagRows || []).map((t: any) => t.tag),
+      distKm: 0,
+      distStr: '',
+    }
   },
   async isFollowingEvent(eventId: string): Promise<boolean> {
     const sess = await this.getSession(); if (!sess) return false

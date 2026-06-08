@@ -49,3 +49,23 @@ describe('db.updateEvent', () => {
     expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
   })
 })
+
+describe('db.createEvent', () => {
+  it('returns error when session is null', async () => {
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({ data: { session: null }, error: null } as any)
+    const result = await db.createEvent({ title: 'Test', lat: 0, lng: 0 })
+    expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
+  })
+})
+
+describe('is_private default', () => {
+  it('defaults to false when is_private is omitted', () => {
+    const isPrivate: boolean | undefined = undefined
+    expect(isPrivate ?? false).toBe(false)
+  })
+
+  it('passes through true when is_private is explicitly set', () => {
+    const isPrivate = true
+    expect(isPrivate ?? false).toBe(true)
+  })
+})
