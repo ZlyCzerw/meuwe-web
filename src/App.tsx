@@ -93,6 +93,13 @@ export default function App() {
     setSelEvent(deepLinkEvent)
     setDeepLinkEvent(null)
     const ev = deepLinkEvent
+    // Auto-follow private events for logged-in users who don't already follow them.
+    // Silent — no toast, no confirmation.
+    if (ev.is_private && session) {
+      db.isFollowingEvent(ev.id).then(following => {
+        if (!following) db.followEvent(ev.id)
+      })
+    }
     const tryFly = () => {
       if (flyToFnRef.current) flyToFnRef.current(ev.lat, ev.lng)
       else setTimeout(tryFly, 150)
