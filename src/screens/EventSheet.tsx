@@ -78,6 +78,7 @@ function EventSheet({
     }
   }
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
+  const followChanRef = useRef<ReturnType<typeof db.subscribeFollowers> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const chatRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -105,6 +106,12 @@ function EventSheet({
   useEffect(() => {
     if (!event?.id) return
     db.getEventFollowers(event.id).then(setFollowers)
+    db.unsub(followChanRef.current)
+    followChanRef.current = db.subscribeFollowers(event.id, () => {
+      db.getEventFollowers(event.id).then(setFollowers)
+      db.isFollowingEvent(event.id).then(setIsFollowing)
+    })
+    return () => db.unsub(followChanRef.current)
   }, [event?.id])
 
   useEffect(() => {

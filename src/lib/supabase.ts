@@ -259,6 +259,11 @@ export const db = {
     const sess=await this.getSession(); if(!sess) return
     return supabase.from('event_messages').insert({ event_id:eid, author_id:sess.user.id, author_name:name, author_color:color, text })
   },
+  subscribeFollowers(eid: string, cb: () => void) {
+    return supabase.channel('follows:' + eid)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_follows', filter: `event_id=eq.${eid}` }, () => cb())
+      .subscribe()
+  },
   subscribeMessages(eid:string,cb:(m:Message)=>void) {
     return supabase.channel('msgs:'+eid)
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'event_messages',filter:`event_id=eq.${eid}`},(p:any)=>cb(p.new))
