@@ -33,6 +33,7 @@ export interface EventRow {
   status: EventStatus
   created_at: string
   photos: string[] | null
+  is_private: boolean
 }
 
 export interface EventWithMeta extends EventRow {

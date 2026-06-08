@@ -66,6 +66,8 @@ const pl = {
     timePick: 'Wybierz godziny',
     timeFrom: 'OD',
     timeTo: 'DO',
+    privateEvent: 'Wydarzenie prywatne',
+    privateEventHint: 'Widoczny tylko dla osób z linkiem',
   },
   edit: {
     title: 'Edytuj wydarzenie',

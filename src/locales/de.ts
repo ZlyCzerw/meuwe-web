@@ -68,6 +68,8 @@ const de: Resources = {
     timePick: 'Stunden wählen',
     timeFrom: 'VON',
     timeTo: 'BIS',
+    privateEvent: 'Privates Event',
+    privateEventHint: 'Nur für Personen mit dem Link sichtbar',
   },
   edit: {
     title: 'Event bearbeiten',

@@ -68,6 +68,8 @@ const en: Resources = {
     timePick: 'Set hours',
     timeFrom: 'FROM',
     timeTo: 'TO',
+    privateEvent: 'Private event',
+    privateEventHint: 'Visible only to people with the link',
   },
   edit: {
     title: 'Edit event',
