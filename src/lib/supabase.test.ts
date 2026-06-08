@@ -59,13 +59,9 @@ describe('db.createEvent', () => {
 })
 
 describe('is_private default', () => {
-  it('defaults to false when is_private is omitted', () => {
-    const isPrivate: boolean | undefined = undefined
-    expect(isPrivate ?? false).toBe(false)
-  })
-
-  it('passes through true when is_private is explicitly set', () => {
-    const isPrivate = true
-    expect(isPrivate ?? false).toBe(true)
+  it('createEvent with is_private:true returns auth error when not logged in', async () => {
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({ data: { session: null }, error: null } as any)
+    const result = await db.createEvent({ title: 'Secret', lat: 0, lng: 0, is_private: true })
+    expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
   })
 })

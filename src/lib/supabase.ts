@@ -144,10 +144,12 @@ export const db = {
     if (error || !evData) return null
     const e = evData as any
     // Fetch joins separately — profiles and event_tags have open RLS (USING true).
-    const [{ data: prof }, { data: tagRows }] = await Promise.all([
+    const [{ data: prof, error: profErr }, { data: tagRows, error: tagErr }] = await Promise.all([
       supabase.from('profiles').select('display_name,avatar_color').eq('id', e.creator_id).maybeSingle(),
       supabase.from('event_tags').select('tag').eq('event_id', id),
     ])
+    if (profErr) console.error('[getEventById] profiles fetch:', profErr)
+    if (tagErr) console.error('[getEventById] event_tags fetch:', tagErr)
     return {
       ...e,
       profiles: prof || null,
