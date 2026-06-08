@@ -106,6 +106,13 @@ const de: Resources = {
     selectedCount: '{{count}} ausgewählt',
     selectedNone: 'keine',
   },
+  webview: {
+    title: 'In Safari öffnen',
+    body: 'Google erlaubt keine Anmeldung über Messenger oder andere Apps.\nÖffne meuwe in Safari oder Chrome.',
+    copyLink: 'Link kopieren',
+    copied: 'Kopiert!',
+    hint: 'Füge den Link in die Safari-Adressleiste ein',
+  },
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen' },
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },

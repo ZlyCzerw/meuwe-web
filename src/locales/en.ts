@@ -106,6 +106,13 @@ const en: Resources = {
     selectedCount: '{{count}} selected',
     selectedNone: 'none',
   },
+  webview: {
+    title: 'Open in Safari',
+    body: "Google doesn't allow sign-in from Messenger or other apps.\nOpen meuwe in Safari or Chrome.",
+    copyLink: 'Copy link',
+    copied: 'Copied!',
+    hint: 'Paste the link in the Safari address bar',
+  },
   auth: { createEventPrompt: 'Only logged-in users can add events' },
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },

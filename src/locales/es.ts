@@ -106,6 +106,13 @@ const es: Resources = {
     selectedCount: '{{count}} seleccionados',
     selectedNone: 'ninguno',
   },
+  webview: {
+    title: 'Abrir en Safari',
+    body: 'Google no permite iniciar sesión desde Messenger u otras apps.\nAbre meuwe en Safari o Chrome.',
+    copyLink: 'Copiar enlace',
+    copied: '¡Copiado!',
+    hint: 'Pega el enlace en la barra de direcciones de Safari',
+  },
   auth: { createEventPrompt: 'Solo los usuarios registrados pueden añadir eventos' },
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
   share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },

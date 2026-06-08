@@ -104,6 +104,13 @@ const pl = {
     travel: 'podróże', yoga: 'yoga', dance: 'taniec', comedy: 'komedia', kids: 'dzieci', pets: 'zwierzęta',
     volunteering: 'wolontariat', workshop: 'warsztaty',
   },
+  webview: {
+    title: 'Otwórz w Safari',
+    body: 'Google nie pozwala na logowanie w Messengerze ani innych aplikacjach.\nOtwórz meuwe w Safari lub Chrome.',
+    copyLink: 'Skopiuj link',
+    copied: 'Skopiowano!',
+    hint: 'Wklej link w pasku adresu Safari',
+  },
   auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia' },
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
