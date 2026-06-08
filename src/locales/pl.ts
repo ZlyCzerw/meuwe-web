@@ -67,7 +67,7 @@ const pl = {
     timeFrom: 'OD',
     timeTo: 'DO',
     privateEvent: 'Wydarzenie prywatne',
-    privateEventHint: 'Widoczny tylko dla osób z linkiem',
+    privateEventHint: 'Widoczne tylko dla osób z linkiem',
   },
   edit: {
     title: 'Edytuj wydarzenie',

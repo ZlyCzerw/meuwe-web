@@ -27,3 +27,5 @@ SET search_path = public
 AS $$
   SELECT * FROM events WHERE id = p_event_id;
 $$;
+
+GRANT EXECUTE ON FUNCTION get_event_by_id(uuid) TO anon, authenticated;
