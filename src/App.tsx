@@ -48,6 +48,10 @@ export default function App() {
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
+  // Captured at render time, before the mount effect strips ?event= from the URL.
+  const deepLinkIdRef = useRef<string | null>(
+    new URLSearchParams(window.location.search).get('event')
+  )
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
   const unread = useUnreadEvents(session, openEventId)
 
@@ -164,8 +168,7 @@ export default function App() {
   // Initial routing once session is resolved
   useEffect(() => {
     if (!ready || screen !== 'loading') return
-    const hasDeepLink = !!new URLSearchParams(window.location.search).get('event')
-    if (hasDeepLink) { setScreen('map'); return }
+    if (deepLinkIdRef.current) { setScreen('map'); return }
     if (session) {
       try {
         const raw = localStorage.getItem(NAV_KEY)
@@ -190,9 +193,16 @@ export default function App() {
     setScreen('welcome')
   }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Login → map (skipped when restoring saved nav state)
+  // Login → map (skipped when restoring saved nav state).
+  // Also recovers a deep-link event that was saved to sessionStorage before OAuth redirect.
   useEffect(() => {
-    if (session && !navRestoredRef.current) goToMap()
+    if (!session) return
+    const pendingId = sessionStorage.getItem('pending_event')
+    if (pendingId) {
+      sessionStorage.removeItem('pending_event')
+      db.getEventById(pendingId).then(ev => { if (ev) setDeepLinkEvent(ev) })
+    }
+    if (!navRestoredRef.current) goToMap()
   }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Visible half-width on portrait phone = shorter screen edge / 2.
@@ -284,6 +294,7 @@ export default function App() {
   if (screen === 'welcome') return (
     <Welcome onSignIn={mode => {
       if (mode === 'skip') { goToMap(); return }
+      if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
       db.signInGoogle()
     }} />
   )
@@ -450,7 +461,12 @@ export default function App() {
               {t('auth.createEventPrompt')}
             </p>
             <button
-              onClick={() => { setAuthModalOpen(false); db.trackClick('signin_google'); db.signInGoogle() }}
+              onClick={() => {
+                setAuthModalOpen(false)
+                db.trackClick('signin_google')
+                if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
+                db.signInGoogle()
+              }}
               style={{
                 width: '100%', padding: '16px 24px', borderRadius: 999,
                 background: '#fff', border: `2.5px solid ${C.ink}`, boxShadow: `0 4px 0 ${C.ink}33`,
