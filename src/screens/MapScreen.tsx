@@ -7,7 +7,8 @@ import type { Category } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm } from '../lib/geo'
-import { pinHTML, meHTML } from '../components/mapIcons'
+import { pinHTML, meHTML, privateHTML } from '../components/mapIcons'
+import { isCurrentlyLive } from '../lib/eventStatus'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
@@ -227,7 +228,9 @@ function MapScreen({
       const interactions = ev.interactionCount ?? 0
       const scale = 1 + Math.min(interactions, 100) / 100 * 0.5
       const icon = L.divIcon({
-        html: pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time, scale),
+        html: ev.is_private
+          ? privateHTML(isCurrentlyLive(ev))
+          : pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time, scale),
         className: 'meuwe-icon',
         iconSize: [44, 56],
         iconAnchor: [22, 56],
