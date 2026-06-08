@@ -11,7 +11,9 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   )
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { flowType: 'pkce' },
+})
 
 export const db = {
   signInGoogle() { return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } }) },
