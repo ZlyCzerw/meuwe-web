@@ -8,10 +8,11 @@ import { db } from '../lib/supabase'
 
 function isInAppBrowser(): boolean {
   const ua = navigator.userAgent
-  if (/FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Snapchat|TikTok|Twitter\/|Line\/|LinkedIn|Pinterest/i.test(ua)) return true
-  if (/iphone|ipad|ipod/i.test(ua) && !/safari|crios|fxios|edgios/i.test(ua)) return true
-  if (/android/i.test(ua) && /; wv\)/i.test(ua)) return true
-  return false
+  // Android apps use Chrome Custom Tabs → Google accepts them → no block
+  if (!/iphone|ipad|ipod/i.test(ua)) return false
+  // iOS: known in-app browser strings OR missing standalone browser identifier
+  return /FBAN|FBAV|FB_IAB|FBIOS|Messenger/i.test(ua)
+    || !/safari|crios|fxios|edgios/i.test(ua)
 }
 
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'skip') => void }) {
