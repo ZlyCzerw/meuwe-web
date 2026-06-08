@@ -66,6 +66,7 @@ function CreateSheet({
   const [timeExpanded, setTimeExpanded] = useState(false)
   const [pickedAddress, setPickedAddress] = useState<string | null>(null)
   const [addressLoading, setAddressLoading] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
 
   useEffect(() => {
     if (!locationPicked || !defaultPos) { setPickedAddress(null); return }
@@ -170,6 +171,7 @@ function CreateSheet({
       start_time: new Date(startTime).toISOString(),
       end_time: new Date(endTime).toISOString(),
       photos: photoUrls,
+      is_private: isPrivate,
     })
     setSubmitting(false)
     if (error) {
@@ -181,6 +183,7 @@ function CreateSheet({
     setDesc('')
     setPhotos([null, null, null])
     setTimeExpanded(false)
+    setIsPrivate(false)
     onSubmit(data)
   }
 
@@ -364,6 +367,55 @@ function CreateSheet({
             </div>
           )}
         </button>
+
+        {/* Private event toggle — create mode only */}
+        {!editEvent && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', borderRadius: 20, background: C.cream, marginBottom: 18,
+          }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                {t('create.privateEvent')}
+              </div>
+              {isPrivate && (
+                <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 3 }}>
+                  🔒 {t('create.privateEventHint')}
+                </div>
+              )}
+            </div>
+            <label style={{
+              position: 'relative', display: 'inline-block',
+              width: 44, height: 26, cursor: 'pointer', flexShrink: 0,
+            }}>
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={e => setIsPrivate(e.target.checked)}
+                style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+              />
+              <span style={{
+                position: 'absolute', inset: 0,
+                background: isPrivate ? C.primary : `${C.inkSoft}44`,
+                borderRadius: 13,
+                border: `2px solid ${isPrivate ? INK : `${C.inkSoft}66`}`,
+                transition: 'background 200ms, border-color 200ms',
+                boxShadow: isPrivate ? `0 2px 0 ${INK}33` : 'none',
+                display: 'block',
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  top: 2, left: isPrivate ? 18 : 2,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: isPrivate ? '#fff' : C.inkSoft,
+                  transition: 'left 200ms ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  display: 'block',
+                }}/>
+              </span>
+            </label>
+          </div>
+        )}
 
         {/* Photos section */}
         <div style={{ marginBottom: 22 }}>
