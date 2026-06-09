@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://meuwe.eu/sitemap.xml
