@@ -115,6 +115,43 @@ const pl = {
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
   follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'obserwuje to', followThis: 'obserwują to', othersFollowOne: 'i {{count}} obserwuje to', othersFollowMany: 'i {{count}} obserwują to' },
+  landing: {
+    problem: { title: 'Coś się dzieje. Tylko gdzie?' },
+    problem_p1: 'Eventy na Facebooku wymagają konta i algorytm je chowa',
+    problem_p2: 'Ogłoszenia na słupach nikt nie czyta',
+    problem_p3: 'Nie wiesz co dzieje się 500 metrów od Ciebie',
+    how: {
+      title: 'Jak to działa?',
+      s1: { title: 'Otwórz mapę', desc: 'Pinezki w pobliżu pokazują co się dzieje — bez konta, bez algorytmu' },
+      s2: { title: 'Znajdź coś dla siebie', desc: 'Muzyka, sport, pikniki, targi — filtruj po kategorii lub przeglądaj wszystko' },
+      s3: { title: 'Dołącz lub obserwuj', desc: 'Zaloguj się przez Google żeby dodać własne wydarzenie lub śledzić inne' },
+    },
+    features: {
+      title: 'Wszystko czego potrzebujesz',
+      f1: { title: 'Mapa na żywo', desc: 'Eventy w czasie rzeczywistym — bez odświeżania' },
+      f2: { title: 'Prywatne wydarzenia', desc: 'Stwórz event widoczny tylko dla zaproszonych' },
+      f3: { title: 'Powiadomienia push', desc: 'Obserwuj event i dostaj wiadomości gdy coś się zmieni' },
+      f4: { title: 'Bez konta', desc: 'Przeglądaj mapę anonimowo. Konto potrzebne tylko żeby dodać event' },
+    },
+    cta: {
+      title: 'Zacznij odkrywać',
+      sub: 'Dostępne w przeglądarce. Wkrótce w App Store i Google Play.',
+      openApp: 'Użyj w przeglądarce →',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+    },
+    nav: { openApp: 'Otwórz aplikację' },
+    footer: { terms: 'Regulamin' },
+  },
+  blog: {
+    title: 'Blog',
+    subtitle: 'Aktualności, porady i historie z mapy.',
+    articles: 'Artykuły',
+    noPostsYet: 'Brak artykułów',
+    noPostsSoon: 'Wkrótce pojawią się pierwsze wpisy.',
+    loading: 'Ładowanie…',
+    by: 'autor',
+  },
 }
 
 export default pl

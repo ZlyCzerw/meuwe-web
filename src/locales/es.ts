@@ -117,6 +117,43 @@ const es: Resources = {
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
   share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },
   follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir', followsThis: 'sigue esto', followThis: 'siguen esto', othersFollowOne: 'y {{count}} más sigue', othersFollowMany: 'y {{count}} más siguen' },
+  landing: {
+    problem: { title: 'Algo está pasando. ¿Pero dónde?' },
+    problem_p1: 'Los eventos de Facebook requieren cuenta y el algoritmo los oculta',
+    problem_p2: 'Nadie lee los carteles en los postes',
+    problem_p3: 'No sabes qué pasa a 500 metros de ti',
+    how: {
+      title: '¿Cómo funciona?',
+      s1: { title: 'Abre el mapa', desc: 'Los pins cercanos muestran qué está pasando — sin cuenta, sin algoritmo' },
+      s2: { title: 'Encuentra algo para ti', desc: 'Música, deporte, picnics, mercados — filtra por categoría o explora todo' },
+      s3: { title: 'Únete o sigue', desc: 'Inicia sesión con Google para añadir tu propio evento o seguir otros' },
+    },
+    features: {
+      title: 'Todo lo que necesitas',
+      f1: { title: 'Mapa en vivo', desc: 'Eventos en tiempo real — sin actualizar' },
+      f2: { title: 'Eventos privados', desc: 'Crea un evento visible solo para personas con el enlace' },
+      f3: { title: 'Notificaciones push', desc: 'Sigue un evento y recibe avisos cuando algo cambie' },
+      f4: { title: 'Sin cuenta', desc: 'Explora el mapa de forma anónima. Cuenta necesaria solo para añadir eventos' },
+    },
+    cta: {
+      title: 'Empieza a descubrir',
+      sub: 'Disponible en el navegador. Próximamente en App Store y Google Play.',
+      openApp: 'Usar en el navegador →',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+    },
+    nav: { openApp: 'Abrir app' },
+    footer: { terms: 'Términos' },
+  },
+  blog: {
+    title: 'Blog',
+    subtitle: 'Noticias, consejos e historias del mapa.',
+    articles: 'Artículos',
+    noPostsYet: 'Sin artículos todavía',
+    noPostsSoon: 'Los primeros artículos llegan pronto.',
+    loading: 'Cargando…',
+    by: 'por',
+  },
 }
 
 export default es

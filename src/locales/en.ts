@@ -117,6 +117,43 @@ const en: Resources = {
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
   follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'follows this', followThis: 'follow this', othersFollowOne: 'and {{count}} other follows', othersFollowMany: 'and {{count}} others follow' },
+  landing: {
+    problem: { title: 'Something is happening. But where?' },
+    problem_p1: 'Facebook events require an account and the algorithm buries them',
+    problem_p2: 'Nobody reads flyers on poles',
+    problem_p3: "You don't know what's happening 500 metres from you",
+    how: {
+      title: 'How does it work?',
+      s1: { title: 'Open the map', desc: "Nearby pins show what's going on — no account, no algorithm" },
+      s2: { title: 'Find something for you', desc: 'Music, sport, picnics, fairs — filter by category or browse everything' },
+      s3: { title: 'Join or follow', desc: 'Sign in with Google to add your own event or track others' },
+    },
+    features: {
+      title: 'Everything you need',
+      f1: { title: 'Live map', desc: 'Events in real time — no refreshing' },
+      f2: { title: 'Private events', desc: 'Create an event visible only to people with the link' },
+      f3: { title: 'Push notifications', desc: 'Follow an event and get notified when something changes' },
+      f4: { title: 'No account required', desc: 'Browse the map anonymously. Account needed only to add an event' },
+    },
+    cta: {
+      title: 'Start discovering',
+      sub: 'Available in browser. Coming soon to App Store and Google Play.',
+      openApp: 'Use in browser →',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+    },
+    nav: { openApp: 'Open app' },
+    footer: { terms: 'Terms' },
+  },
+  blog: {
+    title: 'Blog',
+    subtitle: 'News, tips and stories from the map.',
+    articles: 'Articles',
+    noPostsYet: 'No articles yet',
+    noPostsSoon: 'First posts coming soon.',
+    loading: 'Loading…',
+    by: 'by',
+  },
 }
 
 export default en

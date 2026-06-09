@@ -117,6 +117,43 @@ const de: Resources = {
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
   follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },
+  landing: {
+    problem: { title: 'Etwas passiert. Aber wo?' },
+    problem_p1: 'Facebook-Events erfordern ein Konto und der Algorithmus versteckt sie',
+    problem_p2: 'Niemand liest Aushänge an Litfaßsäulen',
+    problem_p3: 'Du weißt nicht, was 500 Meter von dir passiert',
+    how: {
+      title: 'Wie funktioniert es?',
+      s1: { title: 'Karte öffnen', desc: 'Pins in der Nähe zeigen, was los ist — kein Konto, kein Algorithmus' },
+      s2: { title: 'Etwas für dich finden', desc: 'Musik, Sport, Picknicks, Märkte — nach Kategorie filtern oder alles durchsuchen' },
+      s3: { title: 'Mitmachen oder folgen', desc: 'Mit Google anmelden, um eigene Events hinzuzufügen oder andere zu verfolgen' },
+    },
+    features: {
+      title: 'Alles, was du brauchst',
+      f1: { title: 'Live-Karte', desc: 'Events in Echtzeit — ohne Aktualisierung' },
+      f2: { title: 'Private Events', desc: 'Erstelle ein Event, das nur für eingeladene Personen sichtbar ist' },
+      f3: { title: 'Push-Benachrichtigungen', desc: 'Event verfolgen und benachrichtigt werden, wenn sich etwas ändert' },
+      f4: { title: 'Kein Konto nötig', desc: 'Karte anonym durchsuchen. Konto nur zum Hinzufügen von Events nötig' },
+    },
+    cta: {
+      title: 'Entdecke los',
+      sub: 'Im Browser verfügbar. Bald im App Store und Google Play.',
+      openApp: 'Im Browser öffnen →',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+    },
+    nav: { openApp: 'App öffnen' },
+    footer: { terms: 'Nutzungsbedingungen' },
+  },
+  blog: {
+    title: 'Blog',
+    subtitle: 'Neuigkeiten, Tipps und Geschichten von der Karte.',
+    articles: 'Artikel',
+    noPostsYet: 'Noch keine Artikel',
+    noPostsSoon: 'Die ersten Beiträge kommen bald.',
+    loading: 'Laden…',
+    by: 'von',
+  },
 }
 
 export default de
