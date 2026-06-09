@@ -7,6 +7,8 @@ import { refineLangByGeo } from './lib/i18n'
 import { registerServiceWorker, refreshPushSubscription } from './lib/push'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
+import { Landing } from './pages/Landing'
+import { isNativePlatform } from './lib/platform'
 import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
@@ -291,13 +293,15 @@ export default function App() {
     </div>
   )
 
-  if (screen === 'welcome') return (
-    <Welcome onSignIn={mode => {
+  if (screen === 'welcome') {
+    const signIn = (mode: 'google' | 'skip') => {
       if (mode === 'skip') { goToMap(); return }
       if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
       db.signInGoogle()
-    }} />
-  )
+    }
+    if (isNativePlatform()) return <Welcome onSignIn={signIn} />
+    return <Landing onSignIn={signIn} />
+  }
 
   const isMyEvents = screen === 'myEvents'
   const isFollowedEvents = screen === 'followedEvents'
