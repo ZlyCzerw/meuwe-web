@@ -1,33 +1,51 @@
 import { useTranslation } from 'react-i18next'
-import { C, F } from '../../../lib/tokens'
-
-const FEATURES = [
-  { icon: '📍', titleKey: 'landing.features.f1.title' as const, descKey: 'landing.features.f1.desc' as const },
-  { icon: '🔒', titleKey: 'landing.features.f2.title' as const, descKey: 'landing.features.f2.desc' as const },
-  { icon: '🔔', titleKey: 'landing.features.f3.title' as const, descKey: 'landing.features.f3.desc' as const },
-  { icon: '👤', titleKey: 'landing.features.f4.title' as const, descKey: 'landing.features.f4.desc' as const },
-]
+import { C } from '../../../lib/tokens'
+import { PhoneFrame } from '../PhoneFrame'
+import '../landing.css'
 
 export function FeaturesSection() {
   const { t } = useTranslation()
+  const steps = [
+    t('landing.step1'),
+    t('landing.step2'),
+    t('landing.step3'),
+  ]
   return (
-    <section id="features" style={{ background: C.cream, padding: '80px 24px' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: F.display, fontSize: 36, fontWeight: 900, color: C.ink, textAlign: 'center', marginBottom: 48 }}>
-          {t('landing.features.title')}
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
-          {FEATURES.map(({ icon, titleKey, descKey }) => (
-            <div key={titleKey} style={{
-              background: '#fff', border: `2.5px solid ${C.ink}`, borderRadius: 24,
-              boxShadow: `4px 4px 0 ${C.ink}`, padding: 24,
-              display: 'flex', flexDirection: 'column', gap: 12,
-            }}>
-              <div style={{ fontSize: 36 }}>{icon}</div>
-              <h3 style={{ fontFamily: F.display, fontSize: 20, fontWeight: 800, color: C.ink, margin: 0 }}>{t(titleKey)}</h3>
-              <p style={{ fontFamily: F.body, fontSize: 15, fontWeight: 600, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>{t(descKey)}</p>
-            </div>
-          ))}
+    <section className="lp-section" id="stworz" style={{ background: '#FFF0DF' }}>
+      <div className="lp-bignum">03</div>
+      <div className="lp-deco" style={{ width: 400, height: 400, background: '#FFD54F', top: 0, right: 0, opacity: 0.18 }} />
+      <div className="lp-deco" style={{ width: 280, height: 280, background: C.grass, bottom: 0, left: '30%', opacity: 0.13 }} />
+
+      <div className="lp-section-inner rev">
+        <div className="lp-text-col">
+          <span className="lp-eyebrow lp-anim lp-slide-right lp-delay-1">{t('landing.f3Eyebrow')}</span>
+          <h2 className="lp-h2 lp-anim lp-slide-right lp-delay-2" style={{ whiteSpace: 'pre-line' }}>
+            {t('landing.f3Title')}
+          </h2>
+          <p className="lp-body lp-anim lp-slide-right lp-delay-3">{t('landing.f3Body')}</p>
+
+          <div className="lp-anim lp-slide-right lp-delay-4" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {steps.map((text, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: C.primary, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: '"Hanken Grotesk", system-ui, sans-serif',
+                  fontWeight: 900, fontSize: 15, flexShrink: 0,
+                  border: '2px solid #2D2B2A',
+                }}>{i + 1}</div>
+                <span style={{
+                  fontFamily: '"Nunito", system-ui, sans-serif',
+                  fontWeight: 700, fontSize: 16, color: '#5C564E',
+                }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lp-phone-col lp-anim lp-slide-left lp-delay-2">
+          <PhoneFrame variant="create" />
         </div>
       </div>
     </section>

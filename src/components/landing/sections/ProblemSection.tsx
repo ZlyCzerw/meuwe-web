@@ -1,32 +1,38 @@
 import { useTranslation } from 'react-i18next'
-import { C, F } from '../../../lib/tokens'
-
-const PROBLEMS = [
-  { emoji: '📱', key: 'landing.problem_p1' as const },
-  { emoji: '📌', key: 'landing.problem_p2' as const },
-  { emoji: '🗺️', key: 'landing.problem_p3' as const },
-]
+import { C } from '../../../lib/tokens'
+import { PhoneFrame } from '../PhoneFrame'
+import '../landing.css'
 
 export function ProblemSection() {
   const { t } = useTranslation()
   return (
-    <section style={{ background: C.cream, padding: '80px 24px' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: F.display, fontSize: 36, fontWeight: 900, color: C.ink, textAlign: 'center', marginBottom: 48 }}>
-          {t('landing.problem.title')}
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
-          {PROBLEMS.map(({ emoji, key }) => (
-            <div key={key} style={{
-              background: '#fff', border: `2.5px solid ${C.ink}`, borderRadius: 24,
-              boxShadow: `4px 4px 0 ${C.ink}`, padding: 24,
-            }}>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>{emoji}</div>
-              <p style={{ fontFamily: F.body, fontSize: 16, fontWeight: 600, color: C.ink, lineHeight: 1.5, margin: 0 }}>
-                {t(key)}
-              </p>
-            </div>
-          ))}
+    <section className="lp-section" id="jak-dziala" style={{ background: '#FFF0DF' }}>
+      <div className="lp-bignum">01</div>
+      <div className="lp-deco" style={{ width: 420, height: 420, background: C.grass, top: 60, left: -100, opacity: 0.13 }} />
+      <div className="lp-deco" style={{ width: 280, height: 280, background: C.sky, bottom: 0, right: 200, opacity: 0.14 }} />
+
+      <div className="lp-section-inner rev">
+        <div className="lp-text-col">
+          <span className="lp-eyebrow lp-anim lp-slide-right lp-delay-1">{t('landing.f1Eyebrow')}</span>
+          <h2 className="lp-h2 lp-anim lp-slide-right lp-delay-2" style={{ whiteSpace: 'pre-line' }}>
+            {t('landing.f1Title')}
+          </h2>
+          <p className="lp-body lp-anim lp-slide-right lp-delay-3">{t('landing.f1Body')}</p>
+          <div className="lp-chips lp-anim lp-slide-right lp-delay-4">
+            {[
+              { label: 'impreza',  bg: '#E91E6328' },
+              { label: 'piknik',   bg: `${C.grass}28` },
+              { label: 'koncert',  bg: `${C.sky}28` },
+              { label: 'sport',    bg: `${C.primary}28` },
+              { label: 'rodzinne', bg: '#FFD54F28' },
+            ].map(ch => (
+              <span key={ch.label} className="lp-chip" style={{ background: ch.bg }}>{ch.label}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="lp-phone-col lp-anim lp-slide-left lp-delay-2">
+          <PhoneFrame variant="map" />
         </div>
       </div>
     </section>

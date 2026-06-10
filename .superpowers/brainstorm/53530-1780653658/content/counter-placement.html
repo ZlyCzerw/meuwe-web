@@ -1,0 +1,205 @@
+<h2>Gdzie pojawia się licznik interakcji?</h2>
+<p class="subtitle">Pin ma 44×56px. Licznik pojawia się kiedy jest ≥1 interakcja.</p>
+
+<style>
+  .pin-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .pin-wrap {
+    position: relative;
+    width: 44px;
+    height: 56px;
+  }
+  .pin-svg {
+    width: 44px;
+    height: 44px;
+  }
+  .pin-dot {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f97316;
+    border: 2.5px solid #2D2B2A;
+  }
+  .pin-glyph {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    width: 44px;
+    text-align: center;
+    font-size: 18px;
+    pointer-events: none;
+  }
+  /* Badge — top right */
+  .badge-topright {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #2D2B2A;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: system-ui, sans-serif;
+    border-radius: 10px;
+    padding: 1px 5px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 16px;
+    height: 16px;
+    border: 1.5px solid #fff;
+  }
+  /* Chip — below pin, above dot */
+  .chip-bottom {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2D2B2A;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: system-ui, sans-serif;
+    border-radius: 8px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    line-height: 14px;
+  }
+  /* Inline inside the blob shape */
+  .inline-count {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    width: 44px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #2D2B2A;
+    font-family: system-ui, sans-serif;
+    line-height: 1;
+  }
+  .pin-label {
+    font-size: 12px;
+    font-family: system-ui, sans-serif;
+    color: #666;
+    text-align: center;
+    max-width: 110px;
+  }
+</style>
+
+<div class="cards">
+
+  <!-- Option A: badge top-right -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 24px 0 16px; background: #f5f0eb">
+      <div style="display:flex;justify-content:center;gap:32px">
+        <!-- 0 interactions — no badge -->
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">0 interakcji<br><em>bez badge</em></div>
+        </div>
+        <!-- 10+ interactions — badge appears -->
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="badge-topright">12</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">12 interakcji<br><em>badge górny prawy</em></div>
+        </div>
+        <!-- 100+ -->
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="badge-topright" style="background:#ef4444">99+</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">100+ interakcji<br><em>czerwony badge</em></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Badge górny prawy</h3>
+      <p>Klasyczny notification badge. Dobrze znany wzorzec. Może nachodzić na inne piny.</p>
+    </div>
+  </div>
+
+  <!-- Option B: chip poniżej -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 24px 0 16px; background: #f5f0eb">
+      <div style="display:flex;justify-content:center;gap:32px">
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">0 interakcji<br><em>bez chipa</em></div>
+        </div>
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="chip-bottom">💬 12</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">12 interakcji</div>
+        </div>
+        <div class="pin-demo">
+          <div class="pin-wrap">
+            <svg class="pin-svg" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
+              <path d="M50 5 C20 5 5 25 5 50 C5 75 25 95 50 95 C75 95 95 75 95 50 C95 25 80 5 50 5Z" fill="#f97316" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+            </svg>
+            <div class="pin-glyph">🎉</div>
+            <div class="chip-bottom" style="background:#ef4444;font-size:8px">🔥 100+</div>
+            <div class="pin-dot"></div>
+          </div>
+          <div class="pin-label">100+ interakcji</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Chip pod emotikoną</h3>
+      <p>Chip nakłada się na dolną część blobu. Widoczny, nie nachodzi na inne piny z boku.</p>
+    </div>
+  </div>
+
+  <!-- Option C: bez licznika — tylko animacja -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 24px 0 16px; background: #f5f0eb">
+      <div style="display:flex;justify-content:center;align-items:center;gap:16px;font-size:13px;font-family:system-ui;color:#666;text-align:center">
+        <div>
+          <div style="font-size:36px;margin-bottom:8px">✨</div>
+          <div>Brak liczby<br>Tylko animacja pinu<br>na 10 i 100 interakcji</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Bez licznika, sama animacja</h3>
+      <p>Pin animuje się przy 10 i 100 interakcjach, ale nie pokazuje cyfry. Prostsze, mniej głośne wizualnie.</p>
+    </div>
+  </div>
+
+</div>

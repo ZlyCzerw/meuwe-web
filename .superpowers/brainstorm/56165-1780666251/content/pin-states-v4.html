@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EvoPin — stany</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 32px 24px 48px;
+  background: #efe9df;
+  font-family: "Nunito", system-ui, sans-serif;
+  color: #2D2B2A;
+  -webkit-font-smoothing: antialiased;
+}
+h2 { font-size: 20px; font-weight: 900; margin: 0 0 4px; }
+.sub { font-size: 13px; color: #8A8580; margin-bottom: 24px; font-weight: 600; }
+.stage {
+  display: flex; gap: 0; justify-content: center; align-items: center;
+  padding: 40px 16px; background: #FFF6EC; border-radius: 20px;
+  margin-bottom: 20px; border: 2.5px solid #2D2B2A;
+  box-shadow: 0 6px 0 rgba(45,43,42,.12);
+  min-height: 340px;
+}
+.pin-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 12px; }
+.tier-label { font-size: 11px; font-weight: 800; color: #8A8580; text-transform: uppercase; letter-spacing: 0.6px; }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+.btn { padding: 10px 18px; border-radius: 999px; border: 2.5px solid #2D2B2A; box-shadow: 0 3px 0 rgba(45,43,42,.2); font: 800 13px system-ui; cursor: pointer; background: #fff; }
+.btn-sky { background: #4FC3F7; color: #fff; }
+.btn-orange { background: #FF7A45; color: #fff; }
+</style>
+</head>
+<body>
+<h2>EvoPin — trzy stany</h2>
+<p class="sub">Kolory i ikony z aplikacji · korona bliżej pina · kliknij przyciski żeby zobaczyć animację</p>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+// ── kolory z tokens.ts ──────────────────────────────────────────────
+const C = {
+  primary: '#FF7A45',
+  sky: '#4FC3F7',
+  grass: '#7DD87A',
+  sunshine: '#FFD54F',
+  berry: '#FF8FA3',
+  ink: '#2D2B2A',
+};
+
+// ── ikony z TAG_META (tokens.ts) — stroke-only, viewBox 0 0 24 24 ──
+function Icon({ name, size, color }) {
+  const sw = 2.2;
+  const p = { fill: 'none', stroke: color, strokeWidth: sw, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const icons = {
+    outdoor: <path d="M2 20L9 6l5 8 3-5 5 11H2z" {...p}/>,
+    sport:   <><circle cx="12" cy="12" r="10" {...p}/><circle cx="12" cy="12" r="6" {...p}/><circle cx="12" cy="12" r="2" fill={color} stroke="none"/></>,
+    culture: <><circle cx="7" cy="9" r="4" {...p}/><path d="M7 12c0 2 1.5 3 4 4" {...p}/><path d="M4 8c.5 1 1.5 1.5 3 1.5" {...p}/><circle cx="17" cy="9" r="4" {...p}/><path d="M17 12c0 2-1.5 3-4 4" {...p}/><path d="M14 8c.5-1 1.5-1.5 3-1.5" {...p}/></>,
+    party:   <><polyline points="20 12 20 22 4 22 4 12" {...p}/><rect x="2" y="7" width="20" height="5" {...p}/><line x1="12" y1="22" x2="12" y2="7" {...p}/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" {...p}/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" {...p}/></>,
+    music:   <><path d="M9 18V5l12-2v13" {...p}/><circle cx="6" cy="18" r="3" {...p}/><circle cx="18" cy="16" r="3" {...p}/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{display:'block'}}>
+      {icons[name] || icons.outdoor}
+    </svg>
+  );
+}
+
+// ── kolory kategorii z TAG_META ────────────────────────────────────
+const CAT = {
+  outdoor: { color: C.grass,   icon: 'outdoor' },
+  sport:   { color: C.primary, icon: 'sport'   },
+  culture: { color: C.sky,     icon: 'culture' },
+  party:   { color: C.berry,   icon: 'party'   },
+  music:   { color: C.sunshine,icon: 'music'   },
+};
+
+// ── starPath helper ────────────────────────────────────────────────
+function starPath(cx, cy, outerR, innerR, pts) {
+  let d = '';
+  for (let i = 0; i < pts * 2; i++) {
+    const a = (Math.PI * i) / pts - Math.PI / 2;
+    const r = i % 2 ? innerR : outerR;
+    d += (i === 0 ? 'M' : 'L') + (cx + Math.cos(a) * r).toFixed(1) + ' ' + (cy + Math.sin(a) * r).toFixed(1) + ' ';
+  }
+  return d + 'Z';
+}
+
+// ── EvoPin — adaptacja EvoPin.jsx z tokenami aplikacji ─────────────
+function EvoPin({ category = 'outdoor', size = 72, interactions = 0, playEvolve = true, energetic = true }) {
+  const meta = CAT[category] || CAT.outdoor;
+  const tier = interactions >= 100 ? 2 : interactions >= 10 ? 1 : 0;
+  const prevTier = React.useRef(tier);
+  const [flash, setFlash] = React.useState(0);
+
+  React.useEffect(() => {
+    if (tier > prevTier.current && playEvolve) {
+      setFlash(tier);
+      const t = setTimeout(() => setFlash(0), 1300);
+      prevTier.current = tier;
+      return () => clearTimeout(t);
+    }
+    prevTier.current = tier;
+  }, [tier, playEvolve]);
+
+  const box   = size * 2.95;
+  const D     = size;
+  const sealS = size * 1.46;
+  // korona bliżej pina: zmniejszono mnożnik 1.02 → 0.7
+  const crownH = size * 0.52;
+  const crownGap = crownH * 0.7;
+
+  const coreAnim = flash
+    ? 'evoPunch 700ms cubic-bezier(.34,1.56,.64,1) forwards'
+    : energetic ? 'evoBob 3.4s ease-in-out infinite' : 'none';
+
+  const sealAnim = flash && tier >= 1
+    ? 'evoPop 480ms cubic-bezier(.34,1.56,.64,1) forwards'
+    : 'none';
+
+  const crownAnim = flash && flash === 2
+    ? 'evoCrowndrop 700ms 200ms forwards'
+    : 'none';
+
+  const badgeText = interactions >= 1000
+    ? (interactions / 1000).toFixed(1).replace('.0','') + 'k'
+    : String(interactions);
+
+  return (
+    <div style={{ position:'relative', width:box, height:box,
+                  display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <style>{`
+        @keyframes evoPunch {
+          0%{transform:scale(.62)} 42%{transform:scale(1.26)} 72%{transform:scale(.93)} 100%{transform:scale(1)}
+        }
+        @keyframes evoPop {
+          0%{transform:scale(0);opacity:0} 70%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1}
+        }
+        @keyframes evoCrowndrop {
+          0%{transform:translateY(-10px) rotate(-12deg);opacity:0}
+          60%{transform:translateY(3px) rotate(6deg)}
+          100%{transform:translateY(0) rotate(0);opacity:1}
+        }
+        @keyframes evoFlashring {
+          0%{transform:scale(.4);opacity:.7} 100%{transform:scale(2.6);opacity:0}
+        }
+        @keyframes evoFlashcore {
+          0%{opacity:0;transform:scale(.6)} 25%{opacity:.95} 100%{opacity:0;transform:scale(1.9)}
+        }
+        @keyframes evoBob {
+          0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)}
+        }
+      `}</style>
+
+      {/* Tier 1+ — biały scalloped seal */}
+      {tier >= 1 && (
+        <svg width={sealS} height={sealS} viewBox="0 0 100 100" style={{
+          position:'absolute',
+          filter:`drop-shadow(0 2px 0 ${C.ink}22)`,
+          animation: sealAnim,
+        }}>
+          <path d={starPath(50,50,48,41,16)}
+                fill="#fff" stroke={C.ink} strokeWidth="3" strokeLinejoin="round"/>
+        </svg>
+      )}
+
+      {/* Tier 2 — korona SVG bliżej pina */}
+      {tier === 2 && (
+        <div style={{
+          position:'absolute',
+          left:'50%',
+          top: box/2 - sealS/2 - crownGap,
+          transform:'translateX(-50%)',
+          zIndex:5,
+        }}>
+          <div style={{ animation: crownAnim, transformOrigin:'center bottom' }}>
+            <svg width={size*0.64} height={crownH} viewBox="0 0 40 32" style={{display:'block'}}>
+              <path d="M4 28 L4 12 L13 20 L20 6 L27 20 L36 12 L36 28 Z"
+                    fill={C.sunshine} stroke={C.ink} strokeWidth="3" strokeLinejoin="round"/>
+              <circle cx="20" cy="6" r="2.6" fill={C.berry} stroke={C.ink} strokeWidth="2"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* Core circle z ikoną */}
+      <div key={tier} style={{ position:'relative', animation:coreAnim, zIndex:3 }}>
+        <div style={{
+          width:D, height:D, borderRadius:'50%',
+          background: meta.color,
+          border: `${Math.max(3, size*0.058)}px solid ${C.ink}`,
+          boxShadow: `0 4px 0 ${C.ink}33`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          position:'relative',
+        }}>
+          {tier === 2 && (
+            <div style={{
+              position:'absolute', inset:size*0.1, borderRadius:'50%',
+              border:`2px solid ${C.ink}`, opacity:0.22,
+            }}/>
+          )}
+          <Icon name={meta.icon} size={D*0.5} color={C.ink}/>
+        </div>
+        {/* tail dot */}
+        <div style={{
+          position:'absolute', bottom:-size*0.16, left:'50%',
+          transform:'translateX(-50%)',
+          width:size*0.3, height:size*0.3, borderRadius:'50%',
+          background:meta.color, border:`2.5px solid ${C.ink}`,
+          boxShadow:`0 2px 0 ${C.ink}33`,
+        }}/>
+      </div>
+
+      {/* Count badge */}
+      {interactions > 0 && (
+        <div style={{
+          position:'absolute', left:'50%',
+          top: box/2 + D/2 + size*0.26,
+          transform:'translateX(-50%)',
+          display:'flex', alignItems:'center', gap:3,
+          padding:'2px 8px', borderRadius:999,
+          background:'#fff', border:`2px solid ${C.ink}`,
+          boxShadow:`0 2px 0 ${C.ink}33`,
+          fontSize:size*0.2, fontWeight:900, color:C.ink,
+          fontFamily:'system-ui,sans-serif',
+          zIndex:6, whiteSpace:'nowrap',
+        }}>
+          <svg width={size*0.2} height={size*0.2} viewBox="0 0 16 16" style={{display:'block'}}>
+            <path d="M3 3 H13 a1.4 1.4 0 0 1 1.4 1.4 V10 a1.4 1.4 0 0 1 -1.4 1.4 H7 L4 14 V11.4 H3 A1.4 1.4 0 0 1 1.6 10 V4.4 A1.4 1.4 0 0 1 3 3 Z"
+                  fill={meta.color} stroke={C.ink} strokeWidth="1.6" strokeLinejoin="round"/>
+          </svg>
+          {badgeText}
+        </div>
+      )}
+
+      {/* Flash overlay */}
+      {flash > 0 && (
+        <div style={{position:'absolute',inset:0,pointerEvents:'none',zIndex:8}}>
+          <div style={{
+            position:'absolute', left:'50%', top:'50%',
+            width:D*1.3, height:D*1.3,
+            marginLeft:-D*0.65, marginTop:-D*0.65,
+            borderRadius:'50%', background:'#fff',
+            animation:'evoFlashcore 600ms ease-out forwards',
+          }}/>
+          {[0,1].map(i => (
+            <div key={i} style={{
+              position:'absolute', left:'50%', top:'50%',
+              width:D, height:D, marginLeft:-D/2, marginTop:-D/2,
+              borderRadius:'50%',
+              border:`3px solid ${flash===2 ? C.sunshine : meta.color}`,
+              animation:`evoFlashring 800ms ${i*0.15}s ease-out forwards`,
+            }}/>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── App ─────────────────────────────────────────────────────────────
+function App() {
+  const [count, setCount] = React.useState(0);
+  const [seed, setSeed] = React.useState(0);
+  const goto = (n) => { setCount(n); setSeed(s => s+1); };
+
+  return (
+    <div>
+      <div className="stage">
+        <div className="pin-col">
+          <div className="tier-label">Tier 0 · 0–9</div>
+          <EvoPin key={'a0'+seed} category="outdoor" size={72} interactions={count} playEvolve={true}/>
+        </div>
+        <div className="pin-col">
+          <div className="tier-label">Tier 1 · 10–99</div>
+          <EvoPin key={'b1'+seed} category="sport" size={72} interactions={count} playEvolve={true}/>
+        </div>
+        <div className="pin-col">
+          <div className="tier-label">Tier 2 · 100+</div>
+          <EvoPin key={'c2'+seed} category="culture" size={72} interactions={count} playEvolve={true}/>
+        </div>
+      </div>
+
+      <div className="btns">
+        <button className="btn" onClick={() => goto(0)}>Reset (0)</button>
+        <button className="btn btn-sky" onClick={() => goto(10)}>▶ Ewolucja przy 10</button>
+        <button className="btn btn-orange" onClick={() => goto(100)}>▶ Ewolucja przy 100</button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

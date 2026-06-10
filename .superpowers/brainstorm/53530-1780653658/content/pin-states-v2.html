@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pin states</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 24px 48px;
+    background: #efe9df;
+    font-family: "Nunito", system-ui, sans-serif;
+    color: #2D2B2A;
+    -webkit-font-smoothing: antialiased;
+  }
+  h2 { font-size: 20px; font-weight: 900; margin: 0 0 4px; font-family: "Hanken Grotesk", system-ui; }
+  .sub { font-size: 13px; color: #8A8580; margin-bottom: 24px; font-weight: 600; }
+
+  .stage {
+    display: flex;
+    gap: 0;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 40px 32px 32px;
+    background: #FFF6EC;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    border: 2.5px solid #2D2B2A;
+    box-shadow: 0 6px 0 rgba(45,43,42,.12);
+  }
+
+  .pin-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+  }
+
+  .tier-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #8A8580;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 20px;
+  }
+
+  /* Counter pill */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    border: 2.5px solid #2D2B2A;
+    box-shadow: 0 2px 0 rgba(45,43,42,0.2);
+    margin-top: 6px;
+    font-family: "Nunito", system-ui;
+    line-height: 1.3;
+  }
+  .pill svg { flex-shrink: 0; }
+
+  .crown-spacer { height: 36px; }
+  .crown { font-size: 26px; line-height: 1; margin-bottom: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)); }
+  .no-pill { height: 30px; } /* spacer where pill would be */
+</style>
+</head>
+<body>
+
+<h2>Stany pinu — trzy tiery</h2>
+<p class="sub">Tier 0: brak ozdoby · Tier 1: gear ring + licznik · Tier 2: gear ring + korona + licznik</p>
+
+<div class="stage">
+
+  <!-- TIER 0 — outdoor (green) -->
+  <div class="pin-col">
+    <div class="tier-label">Tier 0 · 0–9</div>
+    <div class="crown-spacer"></div>
+    <svg width="60" height="74" viewBox="-8 -8 116 124" overflow="visible">
+      <!-- blob -->
+      <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z"
+            fill="#7DD87A" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      <!-- mountain icon -->
+      <path d="M23 68 L38 44 L46 56 L53 46 L77 68 Z"
+            fill="none" stroke="#2D2B2A" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- dot -->
+      <circle cx="50" cy="108" r="8" fill="#7DD87A" stroke="#2D2B2A" stroke-width="4"/>
+    </svg>
+    <div class="no-pill"></div>
+  </div>
+
+  <!-- TIER 1 — sport (orange) -->
+  <div class="pin-col">
+    <div class="tier-label">Tier 1 · 10–99</div>
+    <div class="crown-spacer"></div>
+    <svg width="72" height="80" viewBox="-14 -14 128 132" overflow="visible">
+      <!-- gear ring (sunburst) — 16 teeth -->
+      <g id="gear-orange">
+        <!-- outer sunburst polygon — alternating inner r=54 outer r=66 -->
+        <polygon points="
+          50,0  56.1,20.5  76.8,9.1  71.9,29.9  94.0,33.0  82.5,50.0
+          94.0,67.0  71.9,70.1  76.8,90.9  56.1,79.5  50,100
+          43.9,79.5  23.2,90.9  28.1,70.1  6.0,67.0  17.5,50.0
+          6.0,33.0  28.1,29.9  23.2,9.1  43.9,20.5"
+          fill="none" stroke="#2D2B2A" stroke-width="4.5" stroke-linejoin="round"
+          transform="scale(1) translate(0,0)"/>
+        <!-- inner fill ring (white gap between blob and gear) -->
+        <circle cx="50" cy="50" r="47" fill="#FFF6EC" stroke="none"/>
+      </g>
+      <!-- blob on top -->
+      <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z"
+            fill="#FF7A45" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      <!-- target/bullseye icon (sport) -->
+      <circle cx="50" cy="50" r="24" fill="none" stroke="#2D2B2A" stroke-width="3.5"/>
+      <circle cx="50" cy="50" r="14" fill="none" stroke="#2D2B2A" stroke-width="3.5"/>
+      <circle cx="50" cy="50" r="5" fill="#2D2B2A"/>
+      <!-- dot -->
+      <circle cx="50" cy="108" r="8" fill="#FF7A45" stroke="#2D2B2A" stroke-width="4"/>
+    </svg>
+    <div class="pill" style="background:#FF7A45; border-color:#2D2B2A;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      10
+    </div>
+  </div>
+
+  <!-- TIER 2 — culture (blue) -->
+  <div class="pin-col">
+    <div class="tier-label">Tier 2 · 100+</div>
+    <div class="crown">👑</div>
+    <svg width="72" height="80" viewBox="-14 -14 128 132" overflow="visible">
+      <!-- gear ring -->
+      <polygon points="
+        50,0  56.1,20.5  76.8,9.1  71.9,29.9  94.0,33.0  82.5,50.0
+        94.0,67.0  71.9,70.1  76.8,90.9  56.1,79.5  50,100
+        43.9,79.5  23.2,90.9  28.1,70.1  6.0,67.0  17.5,50.0
+        6.0,33.0  28.1,29.9  23.2,9.1  43.9,20.5"
+        fill="none" stroke="#2D2B2A" stroke-width="4.5" stroke-linejoin="round"/>
+      <circle cx="50" cy="50" r="47" fill="#FFF6EC" stroke="none"/>
+      <!-- blob -->
+      <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z"
+            fill="#4FC3F7" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      <!-- masks / culture icon -->
+      <circle cx="38" cy="42" r="10" fill="none" stroke="#2D2B2A" stroke-width="3.5"/>
+      <circle cx="62" cy="42" r="10" fill="none" stroke="#2D2B2A" stroke-width="3.5"/>
+      <path d="M32 55 Q38 62 44 55" fill="none" stroke="#2D2B2A" stroke-width="3" stroke-linecap="round"/>
+      <path d="M56 55 Q62 62 68 55" fill="none" stroke="#2D2B2A" stroke-width="3" stroke-linecap="round"/>
+      <!-- dot -->
+      <circle cx="50" cy="108" r="8" fill="#4FC3F7" stroke="#2D2B2A" stroke-width="4"/>
+    </svg>
+    <div class="pill" style="background:#4FC3F7; border-color:#2D2B2A;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      100
+    </div>
+  </div>
+
+</div>
+
+<!-- animation spec -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div style="background:#fff;border-radius:16px;padding:16px 18px;border:2.5px solid #2D2B2A;box-shadow:0 3px 0 rgba(45,43,42,.12);">
+    <div style="font-weight:900;font-size:14px;margin-bottom:10px;font-family:'Hanken Grotesk',system-ui">Animacja przy przejściu tier→tier+1</div>
+    <div style="font-size:12px;line-height:1.8;color:#5C564E;">
+      <div><b>evo-punch</b>: scale .62→1.26→.93→1.0 · 700ms</div>
+      <div><b>evo-flashcore</b>: biały rdzeń, .6→1.9, opacity .95→0 · 600ms</div>
+      <div><b>evo-flashring</b>: ×2 pierścienie, .4→2.6 · 800ms, stagger 150ms</div>
+      <div><b>confetti</b>: 6 blobów z grawitacją · ~750ms</div>
+      <div style="margin-top:6px"><b>easing</b>: cubic-bezier(.34,1.56,.64,1)</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:16px;padding:16px 18px;border:2.5px solid #2D2B2A;box-shadow:0 3px 0 rgba(45,43,42,.12);">
+    <div style="font-weight:900;font-size:14px;margin-bottom:10px;font-family:'Hanken Grotesk',system-ui">Live tracking (Supabase Realtime)</div>
+    <div style="font-size:12px;line-height:1.8;color:#5C564E;">
+      <div><b>event_messages</b> INSERT → +1 dla event_id</div>
+      <div><b>event_follows</b> INSERT → +1 dla event_id</div>
+      <div><b>event_follows</b> DELETE → −1 dla event_id</div>
+      <div style="margin-top:6px">Tier porównywany z prevTierRef per event.</div>
+      <div>Animacja odpala się w real-time dla wszystkich klientów.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

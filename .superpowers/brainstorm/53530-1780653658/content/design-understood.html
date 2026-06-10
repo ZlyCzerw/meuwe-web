@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projekt animacji — potwierdzone</title>
+<style>
+  body { margin: 0; padding: 32px 24px; background: #efe9df; font-family: "Nunito", system-ui, sans-serif; color: #2D2B2A; }
+  h2 { font-size: 22px; font-weight: 900; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #8A8580; margin-bottom: 28px; }
+  .states { display: flex; gap: 32px; justify-content: center; align-items: flex-end; padding: 32px 0 24px; background: #FFF6EC; border-radius: 20px; margin-bottom: 24px; }
+  .state { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .state-label { font-size: 11px; font-weight: 800; color: #8A8580; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  /* Pin shapes */
+  .pin-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+
+  /* Gear/spiky outline - CSS polygon rays */
+  .gear-ring {
+    position: absolute;
+    top: -10px; left: -10px;
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: transparent;
+    /* 16-pointed gear using repeating conic */
+    background: conic-gradient(
+      #2D2B2A 0deg, #2D2B2A 6deg, transparent 6deg, transparent 16.5deg,
+      #2D2B2A 16.5deg, #2D2B2A 22.5deg, transparent 22.5deg, transparent 33deg,
+      #2D2B2A 33deg, #2D2B2A 39deg, transparent 39deg, transparent 49.5deg,
+      #2D2B2A 49.5deg, #2D2B2A 55.5deg, transparent 55.5deg, transparent 66deg,
+      #2D2B2A 66deg, #2D2B2A 72deg, transparent 72deg, transparent 82.5deg,
+      #2D2B2A 82.5deg, #2D2B2A 88.5deg, transparent 88.5deg, transparent 99deg,
+      #2D2B2A 99deg, #2D2B2A 105deg, transparent 105deg, transparent 115.5deg,
+      #2D2B2A 115.5deg, #2D2B2A 121.5deg, transparent 121.5deg, transparent 132deg,
+      #2D2B2A 132deg, #2D2B2A 138deg, transparent 138deg, transparent 148.5deg,
+      #2D2B2A 148.5deg, #2D2B2A 154.5deg, transparent 154.5deg, transparent 165deg,
+      #2D2B2A 165deg, #2D2B2A 171deg, transparent 171deg, transparent 181.5deg,
+      #2D2B2A 181.5deg, #2D2B2A 187.5deg, transparent 187.5deg, transparent 198deg,
+      #2D2B2A 198deg, #2D2B2A 204deg, transparent 204deg, transparent 214.5deg,
+      #2D2B2A 214.5deg, #2D2B2A 220.5deg, transparent 220.5deg, transparent 231deg,
+      #2D2B2A 231deg, #2D2B2A 237deg, transparent 237deg, transparent 247.5deg,
+      #2D2B2A 247.5deg, #2D2B2A 253.5deg, transparent 253.5deg, transparent 264deg,
+      #2D2B2A 264deg, #2D2B2A 270deg, transparent 270deg, transparent 280.5deg,
+      #2D2B2A 280.5deg, #2D2B2A 286.5deg, transparent 286.5deg, transparent 297deg,
+      #2D2B2A 297deg, #2D2B2A 303deg, transparent 303deg, transparent 313.5deg,
+      #2D2B2A 313.5deg, #2D2B2A 319.5deg, transparent 319.5deg, transparent 330deg,
+      #2D2B2A 330deg, #2D2B2A 336deg, transparent 336deg, transparent 346.5deg,
+      #2D2B2A 346.5deg, #2D2B2A 352.5deg, transparent 352.5deg, transparent 360deg
+    );
+    mask: radial-gradient(circle, transparent 33px, black 33px, black 44px, transparent 44px);
+    -webkit-mask: radial-gradient(circle, transparent 33px, black 33px, black 44px, transparent 44px);
+    pointer-events: none;
+  }
+
+  .pin-blob {
+    width: 76px;
+    height: 76px;
+    border-radius: 50% 52% 48% 50% / 50% 48% 52% 50%;
+    border: 3px solid #2D2B2A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 0 rgba(45,43,42,0.15);
+    position: relative;
+    z-index: 1;
+  }
+  .pin-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 3px solid #2D2B2A;
+    margin-top: -2px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .crown {
+    font-size: 28px;
+    margin-bottom: -4px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  }
+
+  .counter-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    border: 2.5px solid #2D2B2A;
+    box-shadow: 0 2px 0 rgba(45,43,42,0.2);
+    margin-top: 8px;
+  }
+
+  .tier-badge {
+    font-size: 11px; font-weight: 800; padding: 2px 8px;
+    border-radius: 6px; margin-top: 12px;
+  }
+  .tier-0-badge { background: #E8E2D8; color: #8A8580; }
+  .tier-1-badge { background: #4FC3F710; color: #0288d1; border: 1.5px solid #4FC3F7; }
+  .tier-2-badge { background: #f59e0b20; color: #b45309; border: 1.5px solid #f59e0b; }
+
+  .spacer-crown { height: 36px; }
+
+  .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 0; }
+  .spec-card { background: #fff; border-radius: 16px; padding: 16px 18px; border: 2px solid #2D2B2A; box-shadow: 0 3px 0 rgba(45,43,42,.12); }
+  .spec-card h3 { font-size: 14px; font-weight: 900; margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; font-size: 12px; line-height: 1.6; }
+  .k { flex: 0 0 100px; color: #8A8580; font-weight: 700; }
+  .v { font-family: monospace; font-size: 11.5px; }
+
+  .anim-note { background: #fff; border-radius: 14px; padding: 14px 18px; font-size: 12px; line-height: 1.6; color: #5C564E; margin-top: 16px; border: 2px solid #2D2B2A; box-shadow: 0 3px 0 rgba(45,43,42,.12); }
+  .anim-note strong { color: #2D2B2A; }
+</style>
+</head>
+<body>
+
+<h2>Rozumiem projekt — oto moje odwzorowanie</h2>
+<p class="sub">Trzy stany znacznika na podstawie screenshotów z ewolucji.</p>
+
+<div class="states">
+
+  <!-- Tier 0 -->
+  <div class="state">
+    <div class="state-label">Tier 0 · 0–9</div>
+    <div class="pin-wrap">
+      <div class="spacer-crown"></div>
+      <div class="pin-blob" style="background: #4CAF50;">🏔️</div>
+      <div class="pin-dot" style="background: #4CAF50;"></div>
+    </div>
+    <div class="tier-badge tier-0-badge">brak ozdoby, brak licznika</div>
+  </div>
+
+  <!-- Tier 1 -->
+  <div class="state">
+    <div class="state-label">Tier 1 · 10–99</div>
+    <div class="pin-wrap">
+      <div class="spacer-crown"></div>
+      <div class="gear-ring"></div>
+      <div class="pin-blob" style="background: #FF7A45;">🎯</div>
+      <div class="pin-dot" style="background: #FF7A45;"></div>
+      <div class="counter-pill" style="background: #FF7A45;">💬 10</div>
+    </div>
+    <div class="tier-badge tier-1-badge">gear ring + licznik w kolorze kat.</div>
+  </div>
+
+  <!-- Tier 2 -->
+  <div class="state">
+    <div class="state-label">Tier 2 · 100+</div>
+    <div class="pin-wrap">
+      <div class="crown">👑</div>
+      <div class="gear-ring"></div>
+      <div class="pin-blob" style="background: #4FC3F7;">🎭</div>
+      <div class="pin-dot" style="background: #4FC3F7;"></div>
+      <div class="counter-pill" style="background: #4FC3F7;">💬 100</div>
+    </div>
+    <div class="tier-badge tier-2-badge">gear ring + korona + licznik</div>
+  </div>
+
+</div>
+
+<div class="specs">
+  <div class="spec-card">
+    <h3>Czas i easing animacji</h3>
+    <div class="row"><span class="k">Punch skali</span><span class="v">0.62 → 1.26 → 0.93 → 1.0 · 700ms</span></div>
+    <div class="row"><span class="k">Easing</span><span class="v">cubic-bezier(.34,1.56,.64,1)</span></div>
+    <div class="row"><span class="k">Biały rdzeń</span><span class="v">scale .6→1.9, opacity .95→0 · 600ms</span></div>
+    <div class="row"><span class="k">Pierścienie ×2</span><span class="v">scale .4→2.6, fade · 800ms, stagger 150ms</span></div>
+    <div class="row"><span class="k">Confetti</span><span class="v">6 blobów, grawitacja, ~750ms</span></div>
+  </div>
+  <div class="spec-card">
+    <h3>Logika progów</h3>
+    <div class="row"><span class="k">Tier</span><span class="v">n≥100 → 2 · n≥10 → 1 · else 0</span></div>
+    <div class="row"><span class="k">Trigger</span><span class="v">tier > prevTier</span></div>
+    <div class="row"><span class="k">Kolor pierśc.</span><span class="v">tier 2: sunshine · tier 1: kolor kat.</span></div>
+    <div class="row"><span class="k">reduced-motion</span><span class="v">animacje off, forma się przełącza</span></div>
+    <div class="row"><span class="k">Licznik</span><span class="v">pojawia się dopiero przy tier ≥ 1</span></div>
+  </div>
+</div>
+
+<div class="anim-note">
+  <strong>Live tracking:</strong> Nowe wiadomości w event_messages → lokalny increment interactionCount dla danego event_id → React porównuje tier z prevTier.current → odpala animację.
+  ConfettiBurst już istnieje w projekcie. Keyframes: <code>evo-punch</code>, <code>evo-flashcore</code>, <code>evo-flashring</code>.
+</div>
+
+</body>
+</html>

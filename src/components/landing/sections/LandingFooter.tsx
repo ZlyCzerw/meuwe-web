@@ -1,36 +1,56 @@
 import { useTranslation } from 'react-i18next'
-import { C, F } from '../../../lib/tokens'
-import { setLanguage } from '../../../lib/i18n'
-import type { Lang } from '../../../lib/types'
-
-const LANGS: Lang[] = ['pl', 'en', 'de', 'es']
+import { useNavigate } from 'react-router-dom'
+import { C } from '../../../lib/tokens'
+import '../landing.css'
 
 export function LandingFooter() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+
   return (
-    <footer style={{ background: C.ink, padding: '40px 24px' }}>
-      <div style={{
-        maxWidth: 960, margin: '0 auto',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontFamily: F.display, fontSize: 20, fontWeight: 900, color: C.cream }}>meuwe</span>
-          <span style={{ fontFamily: F.body, fontSize: 13, color: `${C.cream}99` }}>© 2026 meuwe</span>
+    <footer className="lp-footer">
+      <div className="lp-footer-top">
+        <div className="lp-footer-brand">
+          <div className="lp-footer-logo">
+            <span style={{ color: C.primary }}>me</span>
+            <span style={{ color: C.sky }}>u</span>
+            <span style={{ color: C.grass }}>we</span>
+          </div>
+          <div className="lp-footer-tagline">{t('landing.footer.tagline')}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <a href="/terms.html" style={{ fontFamily: F.body, fontSize: 13, color: `${C.cream}cc`, textDecoration: 'none' }}>
-            {t('landing.footer.terms')}
-          </a>
-          <span style={{ display: 'flex', gap: 4 }}>
-            {LANGS.map(l => (
-              <button key={l} onClick={() => setLanguage(l)} style={{
-                fontFamily: F.body, fontSize: 11, fontWeight: i18n.language === l ? 800 : 500,
-                color: i18n.language === l ? C.cream : `${C.cream}66`,
-                background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', padding: '2px 4px',
-              }}>{l}</button>
-            ))}
-          </span>
+
+        <div className="lp-footer-cols">
+          <div className="lp-footer-col">
+            <h4>{t('landing.footer.product')}</h4>
+            <ul>
+              <li><a onClick={() => document.getElementById('jak-dziala')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.howItWorks')}</a></li>
+              <li><a onClick={() => document.getElementById('wydarzenia')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.events')}</a></li>
+              <li><a onClick={() => document.getElementById('stworz')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.create')}</a></li>
+              <li><a onClick={() => document.getElementById('pobierz')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.download')}</a></li>
+            </ul>
+          </div>
+          <div className="lp-footer-col">
+            <h4>{t('landing.footer.company')}</h4>
+            <ul>
+              <li><a href="#">{t('landing.footer.about')}</a></li>
+              <li><a onClick={() => navigate('/blog')}>Blog</a></li>
+              <li><a href="#">{t('landing.footer.contact')}</a></li>
+            </ul>
+          </div>
+          <div className="lp-footer-col">
+            <h4>{t('landing.footer.legal')}</h4>
+            <ul>
+              <li><a href="/terms.html">{t('landing.footer.terms')}</a></li>
+              <li><a href="#">{t('landing.footer.privacy')}</a></li>
+              <li><a href="#">{t('landing.footer.cookies')}</a></li>
+            </ul>
+          </div>
         </div>
+      </div>
+
+      <div className="lp-footer-bottom">
+        <span>{t('landing.footer.copyright')}</span>
+        <span>{t('landing.footer.madeIn')}</span>
       </div>
     </footer>
   )
