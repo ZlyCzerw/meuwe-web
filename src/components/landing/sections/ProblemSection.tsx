@@ -3,11 +3,19 @@ import { C } from '../../../lib/tokens'
 import { PhoneFrame } from '../PhoneFrame'
 import '../landing.css'
 
+const MAP_SCREENSHOTS: Record<string, string> = {
+  pl: '/screenshots/map-pl.png',
+  en: '/screenshots/map-en.png',
+  de: '/screenshots/map-de.png',
+  es: '/screenshots/map-es.png',
+}
+
 export function ProblemSection() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language?.slice(0, 2) ?? 'en'
+  const screenshot = MAP_SCREENSHOTS[lang] ?? MAP_SCREENSHOTS['en']
   return (
     <section className="lp-section" id="jak-dziala" style={{ background: '#FFF0DF' }}>
-      <div className="lp-bignum">01</div>
       <div className="lp-deco" style={{ width: 420, height: 420, background: C.grass, top: 60, left: -100, opacity: 0.13 }} />
       <div className="lp-deco" style={{ width: 280, height: 280, background: C.sky, bottom: 0, right: 200, opacity: 0.14 }} />
 
@@ -32,7 +40,7 @@ export function ProblemSection() {
         </div>
 
         <div className="lp-phone-col lp-anim lp-slide-left lp-delay-2">
-          <PhoneFrame variant="map" />
+          <PhoneFrame variant="map" screenshot={screenshot} />
         </div>
       </div>
     </section>

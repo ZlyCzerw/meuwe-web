@@ -199,7 +199,7 @@ function CreateScreen() {
   )
 }
 
-export function PhoneFrame({ variant }: { variant: PhoneVariant }) {
+export function PhoneFrame({ variant, screenshot }: { variant: PhoneVariant; screenshot?: string }) {
   return (
     <div style={{
       width: 260, height: 524,
@@ -219,9 +219,12 @@ export function PhoneFrame({ variant }: { variant: PhoneVariant }) {
         borderRadius: '0 0 14px 14px',
         zIndex: 10,
       }} />
-      {variant === 'map'    && <MapScreen />}
-      {variant === 'event'  && <EventScreen />}
-      {variant === 'create' && <CreateScreen />}
+      {screenshot
+        ? <img src={screenshot} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }} />
+        : variant === 'map'    ? <MapScreen />
+        : variant === 'event'  ? <EventScreen />
+        : <CreateScreen />
+      }
     </div>
   )
 }

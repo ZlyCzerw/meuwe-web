@@ -29,6 +29,15 @@ export default function Blog() {
   const articleRefs = useRef<Record<string, HTMLElement | null>>({})
 
   useEffect(() => {
+    document.body.style.overflow = 'auto'
+    document.documentElement.style.overflow = 'auto'
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [])
+
+  useEffect(() => {
     ;(supabase as any)
       .from('meuwe_blog')
       .select('id,title,image,article,name,date,category,lang')

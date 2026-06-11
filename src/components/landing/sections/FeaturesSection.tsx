@@ -3,8 +3,17 @@ import { C } from '../../../lib/tokens'
 import { PhoneFrame } from '../PhoneFrame'
 import '../landing.css'
 
+const NEW_SCREENSHOTS: Record<string, string> = {
+  pl: '/screenshots/new-pl.png',
+  en: '/screenshots/new-en.png',
+  de: '/screenshots/new-de.png',
+  es: '/screenshots/new-es.png',
+}
+
 export function FeaturesSection() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language?.slice(0, 2) ?? 'en'
+  const screenshot = NEW_SCREENSHOTS[lang] ?? NEW_SCREENSHOTS['en']
   const steps = [
     t('landing.step1'),
     t('landing.step2'),
@@ -12,7 +21,6 @@ export function FeaturesSection() {
   ]
   return (
     <section className="lp-section" id="stworz" style={{ background: '#FFF0DF' }}>
-      <div className="lp-bignum">03</div>
       <div className="lp-deco" style={{ width: 400, height: 400, background: '#FFD54F', top: 0, right: 0, opacity: 0.18 }} />
       <div className="lp-deco" style={{ width: 280, height: 280, background: C.grass, bottom: 0, left: '30%', opacity: 0.13 }} />
 
@@ -45,7 +53,7 @@ export function FeaturesSection() {
         </div>
 
         <div className="lp-phone-col lp-anim lp-slide-left lp-delay-2">
-          <PhoneFrame variant="create" />
+          <PhoneFrame variant="create" screenshot={screenshot} />
         </div>
       </div>
     </section>

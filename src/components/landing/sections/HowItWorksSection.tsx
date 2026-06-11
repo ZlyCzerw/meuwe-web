@@ -3,11 +3,19 @@ import { C } from '../../../lib/tokens'
 import { PhoneFrame } from '../PhoneFrame'
 import '../landing.css'
 
+const EVENT_SCREENSHOTS: Record<string, string> = {
+  pl: '/screenshots/event-pl.png',
+  en: '/screenshots/event-en.png',
+  de: '/screenshots/event-de.png',
+  es: '/screenshots/event-es.png',
+}
+
 export function HowItWorksSection() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language?.slice(0, 2) ?? 'en'
+  const screenshot = EVENT_SCREENSHOTS[lang] ?? EVENT_SCREENSHOTS['en']
   return (
     <section className="lp-section" id="wydarzenia" style={{ background: '#FFF6EC' }}>
-      <div className="lp-bignum">02</div>
       <div className="lp-deco" style={{ width: 450, height: 450, background: C.primary, top: 100, right: -100, opacity: 0.11 }} />
       <div className="lp-deco" style={{ width: 250, height: 250, background: '#E91E63', bottom: 60, left: 100, opacity: 0.11 }} />
 
@@ -21,7 +29,7 @@ export function HowItWorksSection() {
         </div>
 
         <div className="lp-phone-col lp-anim lp-slide-right lp-delay-2">
-          <PhoneFrame variant="event" />
+          <PhoneFrame variant="event" screenshot={screenshot} />
         </div>
       </div>
     </section>

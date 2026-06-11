@@ -14,9 +14,25 @@
     nav { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
     nav a { font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 20px; background: #f5f5f5; color: #2D2B2A; }
     nav a:hover { background: #ffe0d4; }
+    .back-btn {
+      position: fixed; bottom: 24px; left: 24px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #FFF6EC; border: 2.5px solid #2D2B2A;
+      box-shadow: 3px 3px 0 #2D2B2A;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+      z-index: 100;
+    }
+    .back-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #2D2B2A; }
+    .back-btn:active { transform: translate(1px,1px); box-shadow: 2px 2px 0 #2D2B2A; }
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="history.length>1?history.back():window.location.href='/'" title="Wstecz">
+    <svg width="20" height="20" viewBox="0 0 14 14" fill="none">
+      <path d="M9 2L4 7l5 5" stroke="#2D2B2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
   <h1>meuwe</h1>
   <nav>
     <a href="#pl">🇵🇱 Polski</a>

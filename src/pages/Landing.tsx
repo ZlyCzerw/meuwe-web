@@ -2,9 +2,11 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { LandingNav } from '../components/landing/LandingNav'
 import { HeroSection } from '../components/landing/sections/HeroSection'
+import { ForWhomSection } from '../components/landing/sections/ForWhomSection'
 import { ProblemSection } from '../components/landing/sections/ProblemSection'
 import { HowItWorksSection } from '../components/landing/sections/HowItWorksSection'
 import { FeaturesSection } from '../components/landing/sections/FeaturesSection'
+import { PrivateSection } from '../components/landing/sections/PrivateSection'
 import { DownloadCTASection } from '../components/landing/sections/DownloadCTASection'
 import { LandingFooter } from '../components/landing/sections/LandingFooter'
 
@@ -22,6 +24,16 @@ export function Landing({ onSignIn }: Props) {
     const id = anchor.replace('#', '')
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 100)
   }, [location.state])
+
+  // Allow scrolling (global CSS sets overflow:hidden for the map app)
+  useEffect(() => {
+    document.body.style.overflow = 'auto'
+    document.documentElement.style.overflow = 'auto'
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [])
 
   // Scroll-triggered animations via IntersectionObserver
   useEffect(() => {
@@ -47,11 +59,13 @@ export function Landing({ onSignIn }: Props) {
 
   return (
     <div style={{ overflowX: 'hidden' }}>
-      <LandingNav />
+      <LandingNav onSignIn={onSignIn} />
       <HeroSection onSignIn={onSignIn} />
+      <ForWhomSection />
       <ProblemSection />
       <HowItWorksSection />
       <FeaturesSection />
+      <PrivateSection />
       <DownloadCTASection />
       <LandingFooter />
     </div>
