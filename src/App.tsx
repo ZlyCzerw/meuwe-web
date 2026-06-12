@@ -113,8 +113,9 @@ export default function App() {
     setTimeout(tryFly, 100)
   }, [screen, deepLinkEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On mount: refine language by geo and watch position
+  // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
+    if (screen !== 'map') return
     refineLangByGeo()
     if (!navigator.geolocation) return
     const watchId = navigator.geolocation.watchPosition(
@@ -127,7 +128,7 @@ export default function App() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
     )
     return () => navigator.geolocation.clearWatch(watchId)
-  }, [])
+  }, [screen])
 
   // Rejestruj service worker przy starcie
   useEffect(() => {
