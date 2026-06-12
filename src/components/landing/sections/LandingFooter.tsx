@@ -23,17 +23,17 @@ export function LandingFooter() {
           <div className="lp-footer-col">
             <h4>{t('landing.footer.product')}</h4>
             <ul>
-              <li><a onClick={() => document.getElementById('jak-dziala')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.howItWorks')}</a></li>
-              <li><a onClick={() => document.getElementById('wydarzenia')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.events')}</a></li>
-              <li><a onClick={() => document.getElementById('stworz')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.create')}</a></li>
-              <li><a onClick={() => document.getElementById('pobierz')?.scrollIntoView({ behavior: 'smooth' })}>{t('landing.nav.download')}</a></li>
+              <li><a href="/#jak-dziala" onClick={e => { e.preventDefault(); document.getElementById('jak-dziala')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.howItWorks')}</a></li>
+              <li><a href="/#wydarzenia" onClick={e => { e.preventDefault(); document.getElementById('wydarzenia')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.events')}</a></li>
+              <li><a href="/#stworz" onClick={e => { e.preventDefault(); document.getElementById('stworz')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.create')}</a></li>
+              <li><a href="/#pobierz" onClick={e => { e.preventDefault(); document.getElementById('pobierz')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.download')}</a></li>
             </ul>
           </div>
           <div className="lp-footer-col">
             <h4>{t('landing.footer.company')}</h4>
             <ul>
               <li><a href="#">{t('landing.footer.about')}</a></li>
-              <li><a onClick={() => navigate('/blog')}>Blog</a></li>
+              <li><a href="/blog" onClick={e => { e.preventDefault(); navigate('/blog') }}>Blog</a></li>
               <li><a href="#">{t('landing.footer.contact')}</a></li>
             </ul>
           </div>
