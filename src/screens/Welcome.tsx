@@ -134,7 +134,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'ski
           <span style={{ color: C.grass,   animation: 'breathe-sm 3.2s 1.2s ease-in-out infinite', display: 'inline-block', transformOrigin: 'center bottom' }}>we</span>
         </div>
         <div style={{
-          marginTop: 16, fontFamily: F.body, fontSize: 17, fontWeight: 600,
+          marginTop: 16, fontFamily: F.body, fontSize: 22, fontWeight: 600,
           color: C.ink, opacity: 0.7, textAlign: 'center', maxWidth: 280, lineHeight: 1.4,
           whiteSpace: 'pre-line',
         }}>

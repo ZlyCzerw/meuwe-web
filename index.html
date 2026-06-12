@@ -11,15 +11,97 @@
     <link rel="manifest" href="/manifest.json"/>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
     <link rel="apple-touch-icon" href="/favicon.svg"/>
-    <title>meuwe</title>
-    <meta name="description" content="meuwe — odkrywaj lokalne wydarzenia na mapie. Muzyka, sport, targi i pikniki w Twojej okolicy."/>
+    <title>meuwe — lokalne wydarzenia na mapie</title>
+    <meta name="description" content="meuwe — odkrywaj lokalne wydarzenia na mapie. Pikniki, koncerty, sport, targi i spotkania sąsiedzkie w Twojej okolicy. Bez algorytmu, bez reklam, bez konta."/>
+    <meta name="keywords" content="lokalne wydarzenia, mapa wydarzeń, co się dzieje w okolicy, eventy, piknik, koncert, sport, Teneryfa, hyperlocal"/>
+    <meta name="author" content="meuwe"/>
+
     <meta property="og:title" content="meuwe — lokalne wydarzenia na mapie"/>
-    <meta property="og:description" content="Odkrywaj co się dzieje w pobliżu. Bez algorytmu, bez reklam."/>
+    <meta property="og:description" content="Odkrywaj co się dzieje w pobliżu. Pikniki, koncerty, sport, targi. Bez algorytmu, bez reklam."/>
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="https://meuwe.eu"/>
     <meta property="og:image" content="https://meuwe.eu/og-image.png"/>
+    <meta property="og:site_name" content="meuwe"/>
+
     <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="meuwe — lokalne wydarzenia na mapie"/>
+    <meta name="twitter:description" content="Odkrywaj co się dzieje w pobliżu. Pikniki, koncerty, sport, targi. Bez algorytmu, bez reklam."/>
+    <meta name="twitter:image" content="https://meuwe.eu/og-image.png"/>
+
     <link rel="canonical" href="https://meuwe.eu"/>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://meuwe.eu/#organization",
+          "name": "meuwe",
+          "url": "https://meuwe.eu",
+          "description": "meuwe to hiperlokalana mapa wydarzeń. Odkrywaj co się dzieje w okolicy bez algorytmu i reklam.",
+          "email": "wiktor.marc@gmail.com"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://meuwe.eu/#website",
+          "url": "https://meuwe.eu",
+          "name": "meuwe",
+          "publisher": { "@id": "https://meuwe.eu/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://meuwe.eu/#product",
+          "name": "meuwe",
+          "applicationCategory": "SocialNetworkingApplication",
+          "operatingSystem": "Web, iOS, Android",
+          "description": "Hiperlokalana mapa wydarzeń — pikniki, koncerty, sport, targi i spotkania sąsiedzkie w Twojej okolicy. Bez algorytmu, bez reklam, bez wymogu konta.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+          "featureList": [
+            "Mapa wydarzeń na żywo w czasie rzeczywistym",
+            "Tworzenie eventu w 10 sekund",
+            "Prywatne wydarzenia z linkiem zaproszenia",
+            "Push notyfikacje dla obserwowanych eventów",
+            "Filtry kategorii: impreza, muzyka, sport, jedzenie, kultura i inne",
+            "Działa bez konta",
+            "4 języki: polski, angielski, niemiecki, hiszpański"
+          ],
+          "inLanguage": ["pl", "en", "de", "es"],
+          "provider": { "@id": "https://meuwe.eu/#organization" }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Czym jest meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "meuwe to mapa lokalnych wydarzeń w czasie rzeczywistym. Otwierasz aplikację i od razu widzisz co się dzieje w okolicy — pikniki, koncerty, sporty, targi, spotkania. Bez konta, bez algorytmu, bez reklam." }
+            },
+            {
+              "@type": "Question",
+              "name": "Czy meuwe jest bezpłatne?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Tak, meuwe jest całkowicie bezpłatne. Przeglądanie mapy nie wymaga nawet zakładania konta. Logowanie przez Google potrzebne jest tylko do dodawania własnych wydarzeń." }
+            },
+            {
+              "@type": "Question",
+              "name": "Jak dodać wydarzenie na meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Dotknij przycisku + na mapie, wpisz tytuł i gotowe — wydarzenie pojawia się na mapie natychmiast. Tytuł to jedyne wymagane pole. Opis, zdjęcia i czas są opcjonalne." }
+            },
+            {
+              "@type": "Question",
+              "name": "Czym są wydarzenia prywatne w meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Wydarzenie prywatne jest widoczne tylko dla osób, którym udostępnisz link. Nie pojawia się na publicznej mapie. Na mapie wyróżnia się jako biały pin z maską — tylko zaproszeni wiedzą że istnieje." }
+            },
+            {
+              "@type": "Question",
+              "name": "Na jakich urządzeniach działa meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "meuwe działa jako aplikacja webowa w przeglądarce na każdym urządzeniu. Aplikacja natywna na iOS i Android jest dostępna w App Store i Google Play." }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     <script src="/clarity.js"></script>
     <style>
       :root {

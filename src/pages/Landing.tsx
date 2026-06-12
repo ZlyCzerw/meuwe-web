@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { LandingNav } from '../components/landing/LandingNav'
 import { HeroSection } from '../components/landing/sections/HeroSection'
-import { ForWhomSection } from '../components/landing/sections/ForWhomSection'
 import { ProblemSection } from '../components/landing/sections/ProblemSection'
 import { HowItWorksSection } from '../components/landing/sections/HowItWorksSection'
 import { FeaturesSection } from '../components/landing/sections/FeaturesSection'
@@ -35,6 +34,11 @@ export function Landing({ onSignIn }: Props) {
     }
   }, [])
 
+  // Signal react-snap that the landing page is fully rendered
+  useEffect(() => {
+    requestAnimationFrame(() => window.dispatchEvent(new Event('snap-ready')))
+  }, [])
+
   // Scroll-triggered animations via IntersectionObserver
   useEffect(() => {
     // Hero elements animate immediately on mount
@@ -61,7 +65,6 @@ export function Landing({ onSignIn }: Props) {
     <div style={{ overflowX: 'hidden' }}>
       <LandingNav onSignIn={onSignIn} />
       <HeroSection onSignIn={onSignIn} />
-      <ForWhomSection />
       <ProblemSection />
       <HowItWorksSection />
       <FeaturesSection />

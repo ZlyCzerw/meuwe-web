@@ -6,12 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "postbuild": "react-snap",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck:scraper": "tsc -p tsconfig.scraper.json",
     "event-sync": "tsx scripts/event-sync/index.ts"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "renderAfterDocumentEvent": "snap-ready",
+    "puppeteerArgs": [
+      "--no-sandbox"
+    ],
+    "minifyHtml": false
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
@@ -40,6 +49,7 @@
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
+    "react-snap": "^1.23.0",
     "tsx": "^4.19.2",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

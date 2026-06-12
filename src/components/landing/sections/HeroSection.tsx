@@ -6,7 +6,7 @@ interface Props {
 
 export function HeroSection({ onSignIn }: Props) {
   return (
-    <section id="hero" style={{ height: '100dvh' }}>
+    <section id="hero" style={{ height: '85dvh' }}>
       <Welcome onSignIn={onSignIn} />
     </section>
   )

@@ -87,8 +87,10 @@ export function ForWhomSection() {
   const { t } = useTranslation()
   const trackRef = useRef<HTMLDivElement>(null)
   const [activeDot, setActiveDot] = useState(0)
-  // Ref keeps current index in sync for prev/next without stale closures
   const activeIndexRef = useRef(0)
+  // Blocks IO updates while a programmatic scroll is in flight
+  const scrollingRef = useRef(false)
+  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cases = t('landing.uc', { returnObjects: true }) as Array<{ title: string; desc: string }>
   const count = CARDS.length
@@ -98,9 +100,19 @@ export function ForWhomSection() {
     if (!track) return
     const card = track.children[index] as HTMLElement
     if (!card) return
+
+    if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current)
+    scrollingRef.current = true
+    scrollEndTimer.current = setTimeout(() => { scrollingRef.current = false }, 700)
+
     activeIndexRef.current = index
     setActiveDot(index)
-    track.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
+
+    // card.offsetLeft is relative to .lp-carousel-track-wrap (nearest positioned ancestor).
+    // Target scroll = card.offsetLeft - paddingLeft so the card aligns with the content edge.
+    // index 0 always scrolls to 0 so the left padding remains visible.
+    const paddingLeft = parseFloat(getComputedStyle(track).paddingLeft) || 0
+    track.scrollTo({ left: index === 0 ? 0 : card.offsetLeft - paddingLeft, behavior: 'smooth' })
   }, [])
 
   const prev = useCallback(() => scrollTo(Math.max(0, activeIndexRef.current - 1)), [scrollTo])
@@ -112,12 +124,12 @@ export function ForWhomSection() {
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(e => {
-          if (e.isIntersecting && e.intersectionRatio >= 0.6) {
-            const idx = Array.from(track.children).indexOf(e.target as HTMLElement)
-            if (idx >= 0) {
-              activeIndexRef.current = idx
-              setActiveDot(idx)
-            }
+          // Skip IO updates while a programmatic scroll is animating
+          if (!e.isIntersecting || e.intersectionRatio < 0.6 || scrollingRef.current) return
+          const idx = Array.from(track.children).indexOf(e.target as HTMLElement)
+          if (idx >= 0) {
+            activeIndexRef.current = idx
+            setActiveDot(idx)
           }
         })
       },
