@@ -148,17 +148,17 @@ function handleAnchor(anchor: string) {
   return (
     <>
       <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-        <a className="lp-nav-logo" onClick={() => handleAnchor('hero')}>
+        <a className="lp-nav-logo" href="/#hero" onClick={e => { e.preventDefault(); handleAnchor('hero') }}>
           <span style={{ color: C.primary }}>me</span>
           <span style={{ color: C.sky }}>u</span>
           <span style={{ color: C.grass }}>we</span>
         </a>
 
         <ul className="lp-nav-links">
-          <li><a onClick={() => handleAnchor('jak-dziala')}>{t('landing.nav.howItWorks')}</a></li>
-          <li><a onClick={() => handleAnchor('wydarzenia')}>{t('landing.nav.events')}</a></li>
-          <li><a onClick={() => handleAnchor('stworz')}>{t('landing.nav.create')}</a></li>
-          <li><a onClick={() => navigate('/blog')}>Blog</a></li>
+          <li><a href="/#jak-dziala" onClick={e => { e.preventDefault(); handleAnchor('jak-dziala') }}>{t('landing.nav.howItWorks')}</a></li>
+          <li><a href="/#wydarzenia" onClick={e => { e.preventDefault(); handleAnchor('wydarzenia') }}>{t('landing.nav.events')}</a></li>
+          <li><a href="/#stworz" onClick={e => { e.preventDefault(); handleAnchor('stworz') }}>{t('landing.nav.create')}</a></li>
+          <li><a href="/blog" onClick={e => { e.preventDefault(); navigate('/blog') }}>Blog</a></li>
         </ul>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
