@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F, ALL_CATEGORIES, TAG_META } from '../lib/tokens'
