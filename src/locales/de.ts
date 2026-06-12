@@ -197,6 +197,8 @@ const de: Resources = {
     ],
     downloadTitle: 'Mach mit bei meuwe',
     downloadBody: 'Lade die App herunter und entdecke, was in deiner Umgebung passiert.',
+    screenshotEventAlt: 'meuwe App Eventdetails-Bildschirm — Karte mit Pins und Eventinformationen',
+    screenshotCreateAlt: 'meuwe App Bildschirm zum Erstellen eines neuen Events',
   },
   blog: {
     title: 'Blog',

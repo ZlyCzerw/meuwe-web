@@ -29,7 +29,7 @@ export function HowItWorksSection() {
         </div>
 
         <div className="lp-phone-col lp-anim lp-slide-right lp-delay-2">
-          <PhoneFrame variant="event" screenshot={screenshot} />
+          <PhoneFrame variant="event" screenshot={screenshot} alt={t('landing.screenshotEventAlt')} />
         </div>
       </div>
     </section>

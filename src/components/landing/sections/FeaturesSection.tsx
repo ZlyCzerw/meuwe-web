@@ -53,7 +53,7 @@ export function FeaturesSection() {
         </div>
 
         <div className="lp-phone-col lp-anim lp-slide-left lp-delay-2">
-          <PhoneFrame variant="create" screenshot={screenshot} />
+          <PhoneFrame variant="create" screenshot={screenshot} alt={t('landing.screenshotCreateAlt')} />
         </div>
       </div>
     </section>

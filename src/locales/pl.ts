@@ -195,6 +195,8 @@ const pl = {
     ],
     downloadTitle: 'Dołącz do meuwe',
     downloadBody: 'Pobierz aplikację i zacznij odkrywać co się dzieje w Twojej okolicy.',
+    screenshotEventAlt: 'Ekran szczegółów wydarzenia w aplikacji meuwe — mapa z pinami i informacje o evencie',
+    screenshotCreateAlt: 'Ekran tworzenia nowego wydarzenia w aplikacji meuwe',
   },
   blog: {
     title: 'Blog',

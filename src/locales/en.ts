@@ -197,6 +197,8 @@ const en: Resources = {
     ],
     downloadTitle: 'Join meuwe',
     downloadBody: "Download the app and start discovering what's happening in your area.",
+    screenshotEventAlt: 'meuwe app event details screen — map with pins and event information',
+    screenshotCreateAlt: 'meuwe app create new event screen',
   },
   blog: {
     title: 'Blog',
