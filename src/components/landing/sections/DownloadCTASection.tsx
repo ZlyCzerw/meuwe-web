@@ -35,7 +35,7 @@ export function DownloadCTASection() {
         {t('landing.downloadBody')}
       </p>
       <div className="lp-stores lp-anim lp-slide-up lp-delay-2">
-        <a href="#" className="lp-store-btn">
+        <a className="lp-store-btn lp-disabled">
           <AppleIcon />
           <div>
             <span className="lp-store-label-top">{t('landing.footer.storePre')}</span>
