@@ -62,7 +62,7 @@ export function Landing({ onSignIn }: Props) {
   }, [])
 
   return (
-    <div style={{ overflowX: 'hidden' }}>
+    <main style={{ overflowX: 'hidden' }}>
       <LandingNav onSignIn={onSignIn} />
       <HeroSection onSignIn={onSignIn} />
       <ProblemSection />
@@ -71,6 +71,6 @@ export function Landing({ onSignIn }: Props) {
       <PrivateSection />
       <DownloadCTASection />
       <LandingFooter />
-    </div>
+    </main>
   )
 }
