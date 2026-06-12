@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1200px; height: 630px; overflow: hidden; }
+
+  .root {
+    width: 1200px; height: 630px;
+    background: linear-gradient(135deg, #FFF6EC 0%, #FFE8DC 60%, #FFDDD0 100%);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+    font-family: "Nunito", system-ui, sans-serif;
+  }
+
+  /* map grid */
+  .map-grid {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(rgba(45,43,42,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45,43,42,0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* warm left fade over grid */
+  .left-fade {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, #FFF6EC 28%, transparent 65%);
+    z-index: 1;
+  }
+
+  /* roads */
+  .road {
+    position: absolute;
+    background: rgba(255,255,255,0.75);
+    border-radius: 6px;
+  }
+
+  /* branding */
+  .brand {
+    position: relative; z-index: 10;
+    padding-left: 90px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  .logo {
+    font-family: "Hanken Grotesk", system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 168px;
+    line-height: 0.9;
+    letter-spacing: -8px;
+    display: flex; align-items: baseline;
+  }
+  .me { color: #FF7A45; }
+  .u  { color: #4FC3F7; }
+  .we { color: #7DD87A; }
+
+  .tagline {
+    font-size: 26px;
+    font-weight: 700;
+    color: #2D2B2A;
+    opacity: 0.65;
+    letter-spacing: -0.2px;
+    padding-left: 4px;
+  }
+
+
+  /* pin */
+  .pin {
+    position: absolute;
+    z-index: 5;
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@900&family=Nunito:wght@700;800&display=swap">
+</head>
+<body>
+<div class="root">
+  <div class="map-grid"></div>
+
+  <!-- roads -->
+  <div class="road" style="left:460px;top:155px;width:700px;height:18px;transform:rotate(-6deg);"></div>
+  <div class="road" style="left:550px;top:0;width:18px;height:630px;transform:rotate(4deg);"></div>
+  <div class="road" style="left:700px;top:310px;width:500px;height:14px;transform:rotate(9deg);"></div>
+  <div class="road" style="left:840px;top:0;width:14px;height:630px;transform:rotate(-2deg);"></div>
+  <div class="road" style="left:460px;top:420px;width:600px;height:14px;transform:rotate(-4deg);"></div>
+
+  <div class="left-fade"></div>
+
+  <!-- branding -->
+  <div class="brand">
+    <div class="logo">
+      <span class="me">me</span><span class="u">u</span><span class="we">we</span>
+    </div>
+    <div class="tagline">Local events on the map</div>
+  </div>
+
+  <!-- REAL PINS — blob shape + category glyph -->
+
+  <!-- music #C084FC blob0 -->
+  <div class="pin" style="left:620px;top:72px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z" fill="#C084FC" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#C084FC;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- sport #FF7A45 blob1 -->
+  <div class="pin" style="left:760px;top:190px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M52 6 C76 9 94 28 92 53 C90 79 71 94 47 92 C22 90 6 70 9 46 C12 22 30 4 52 6 Z" fill="#FF7A45" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#FF7A45;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- food #F9B45E blob2 -->
+  <div class="pin" style="left:920px;top:105px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M48 9 C72 6 91 26 93 50 C95 76 75 93 49 92 C24 91 5 71 8 46 C11 23 27 12 48 9 Z" fill="#F9B45E" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="2" x2="8" y2="22"/><path d="M5 2v6a3 3 0 0 0 6 0V2"/><line x1="18" y1="2" x2="18" y2="22"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#F9B45E;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- party #FF8FA3 blob0 -->
+  <div class="pin" style="left:1060px;top:260px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z" fill="#FF8FA3" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#FF8FA3;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- outdoor #7DD87A blob1 -->
+  <div class="pin" style="left:690px;top:390px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M52 6 C76 9 94 28 92 53 C90 79 71 94 47 92 C22 90 6 70 9 46 C12 22 30 4 52 6 Z" fill="#7DD87A" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20L9 6l5 8 3-5 5 11H2z"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#7DD87A;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- culture #4FC3F7 blob2 -->
+  <div class="pin" style="left:870px;top:460px;">
+    <div style="position:relative;width:54px;height:68px;">
+      <svg width="54" height="54" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 4px 0 rgba(45,43,42,0.18))">
+        <path d="M48 9 C72 6 91 26 93 50 C95 76 75 93 49 92 C24 91 5 71 8 46 C11 23 27 12 48 9 Z" fill="#4FC3F7" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:12px;left:0;width:54px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="9" r="4"/><path d="M7 12c0 2 1.5 3 4 4"/><path d="M4 8c.5 1 1.5 1.5 3 1.5"/><circle cx="17" cy="9" r="4"/><path d="M17 12c0 2-1.5 3-4 4"/><path d="M14 8c.5-1 1.5-1.5 3-1.5"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#4FC3F7;border:3px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+  <!-- tech #60A5FA blob0 smaller -->
+  <div class="pin" style="left:1050px;top:470px;">
+    <div style="position:relative;width:44px;height:56px;">
+      <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 rgba(45,43,42,0.15))">
+        <path d="M50 8 C71 8 92 22 92 47 C92 73 76 92 50 92 C25 92 8 75 8 50 C8 26 28 8 50 8 Z" fill="#60A5FA" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <div style="position:absolute;top:10px;left:0;width:44px;display:flex;align-items:center;justify-content:center;font-size:18px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:#60A5FA;border:2.5px solid #2D2B2A"></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
