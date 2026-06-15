@@ -286,6 +286,7 @@ export default function App() {
     await db.signOut()
     try { localStorage.removeItem('meuwe_last_pos') } catch {}
     setScreen('welcome')
+    window.history.replaceState({ layer: 'welcome' }, '')
   }
 
   function handleEdit(ev: EventWithMeta) {
@@ -300,6 +301,7 @@ export default function App() {
     setCreatePos({ lat: ev.lat, lng: ev.lng })
     setLocationPicked(true)
     setCreateOpen(true)
+    window.history.replaceState({ layer: 'create' }, '')
   }
 
   function handleSubmit(_data: unknown) {
@@ -394,7 +396,7 @@ export default function App() {
         <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
           <MyEventsScreen
             session={session}
-            onBack={() => { setScreen('map'); setMyEventSelected(null) }}
+            onBack={() => window.history.back()}
             onOpenEvent={ev => {
               setMyEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
@@ -409,7 +411,7 @@ export default function App() {
       {isMyEvents && myEventSelected && (
         <EventSheet
           event={myEventSelected}
-          onClose={() => setMyEventSelected(null)}
+          onClose={() => window.history.back()}
           session={session}
           profile={profile}
           userPos={userPos}
@@ -421,7 +423,7 @@ export default function App() {
       {isFollowedEvents && followedEventSelected && (
         <EventSheet
           event={followedEventSelected}
-          onClose={() => setFollowedEventSelected(null)}
+          onClose={() => window.history.back()}
           session={session}
           profile={profile}
           userPos={userPos}
@@ -433,7 +435,7 @@ export default function App() {
       {!isOverlay && selEvent && (
         <EventSheet
           event={selEvent}
-          onClose={() => setSelEvent(null)}
+          onClose={() => window.history.back()}
           session={session}
           profile={profile}
           userPos={userPos}
@@ -448,7 +450,7 @@ export default function App() {
         <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
           <FollowedEventsScreen
             session={session}
-            onBack={() => { setScreen('map'); setFollowedEventSelected(null) }}
+            onBack={() => window.history.back()}
             onOpenEvent={ev => {
               setFollowedEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
@@ -461,7 +463,7 @@ export default function App() {
 
       <CreateSheet
         open={createOpen && !isOverlay}
-        onClose={() => { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null) }}
+        onClose={() => window.history.back()}
         onSubmit={handleSubmit}
         defaultPos={createPos || userPos}
         locationPicked={locationPicked}
@@ -481,7 +483,7 @@ export default function App() {
       <Toast visible={!!toast} label={toast || ''} />
       <ProfilePanel
         open={profileOpen && !isOverlay}
-        onClose={() => setProfileOpen(false)}
+        onClose={() => window.history.back()}
         session={session}
         profile={profile}
         onSignOut={handleSignOut}
@@ -501,7 +503,7 @@ export default function App() {
       <ConfettiBurst visible={showConfetti} />
       {authModalOpen && (
         <div
-          onClick={() => setAuthModalOpen(false)}
+          onClick={() => window.history.back()}
           style={{
             position: 'fixed', inset: 0, zIndex: 300,
             background: 'rgba(45,43,42,0.35)',
@@ -551,7 +553,7 @@ export default function App() {
               {t('welcome.google')}
             </button>
             <button
-              onClick={() => setAuthModalOpen(false)}
+              onClick={() => window.history.back()}
               style={{ background: 'none', border: 'none', color: C.inkSoft, fontSize: 14, cursor: 'pointer', fontWeight: 700, fontFamily: F.body }}
             >
               {t('common.cancel')}
