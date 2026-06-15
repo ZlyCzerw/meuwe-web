@@ -61,10 +61,48 @@ export default function App() {
   const NAV_TTL = 30 * 60_000
   const navStateRef = useRef({ screen, myEventSelected, followedEventSelected })
   const navRestoredRef = useRef(false)
+  const navLayersRef = useRef({
+    authModalOpen,
+    selEvent,
+    myEventSelected,
+    followedEventSelected,
+    createOpen,
+    profileOpen,
+    screen,
+  })
 
   useEffect(() => {
     navStateRef.current = { screen, myEventSelected, followedEventSelected }
-  }, [screen, myEventSelected, followedEventSelected])
+    navLayersRef.current = {
+      authModalOpen,
+      selEvent,
+      myEventSelected,
+      followedEventSelected,
+      createOpen,
+      profileOpen,
+      screen,
+    }
+  }, [screen, myEventSelected, followedEventSelected, authModalOpen, selEvent, createOpen, profileOpen])
+
+  useEffect(() => {
+    function onPopState() {
+      const s = navLayersRef.current
+      // Zamknij najwyższą otwartą warstwę
+      if (s.authModalOpen) { setAuthModalOpen(false); return }
+      if (s.selEvent || s.myEventSelected || s.followedEventSelected) {
+        setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
+        return
+      }
+      if (s.createOpen) { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null); return }
+      if (s.profileOpen) { setProfileOpen(false); return }
+      if (s.screen === 'myEvents') { setScreen('map'); return }
+      if (s.screen === 'followedEvents') { setScreen('map'); return }
+      // Na mapie — pushujemy z powrotem żeby nie wyjść z apki
+      window.history.pushState({ layer: 'map' }, '')
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     function onVisibilityChange() {
@@ -235,6 +273,7 @@ export default function App() {
     }
     setInitialMapZoom(zoom)
     setScreen('map')
+    window.history.replaceState({ layer: 'map' }, '')
   }
 
   function showToast(msg: string) {
