@@ -291,7 +291,7 @@ function MapScreen({
       {/* Search bar */}
       {!pickingLocation && (
         <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 20 }}>
-          <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+          <SearchBar userPos={userPos} onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
         </div>
       )}
 
@@ -581,7 +581,7 @@ function MapScreen({
             </div>
             {/* Address search */}
             <div style={{ position: 'relative', zIndex: 50 }}>
-              <SearchBar onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+              <SearchBar userPos={userPos} onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
             </div>
             {/* Hint */}
             <div style={{ textAlign: 'center', fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
