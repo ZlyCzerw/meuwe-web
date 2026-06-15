@@ -61,7 +61,7 @@ function CreateSheet({
     () => new Date().toISOString().slice(0, 16)
   )
   const [endTime, setEndTime] = useState<string>(
-    () => new Date(Date.now() + 86400000).toISOString().slice(0, 16)
+    () => new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 16)
   )
   const [timeExpanded, setTimeExpanded] = useState(false)
   const [pickedAddress, setPickedAddress] = useState<string | null>(null)
@@ -80,7 +80,7 @@ function CreateSheet({
   // Auto-set end time to start + 24h whenever start changes — create mode only.
   useEffect(() => {
     if (editEvent) return
-    setEndTime(new Date(new Date(startTime).getTime() + 86_400_000).toISOString().slice(0, 16))
+    setEndTime(new Date(new Date(startTime).getTime() + 3 * 3_600_000).toISOString().slice(0, 16))
   }, [startTime, editEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prefill when entering edit mode. Keyed on editEvent.id and guarded so it runs
@@ -110,7 +110,7 @@ function CreateSheet({
         setTags([])
         setPhotos([null, null, null])
         setStartTime(new Date().toISOString().slice(0, 16))
-        setEndTime(new Date(Date.now() + 86_400_000).toISOString().slice(0, 16))
+        setEndTime(new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 16))
         setTimeExpanded(false)
         setErr('')
       }
@@ -308,13 +308,37 @@ function CreateSheet({
             fontSize: 18,
             fontWeight: 700,
             color: C.ink,
-            marginBottom: 20,
+            marginBottom: 14,
             display: 'block',
             border: 'none',
             outline: 'none',
             boxSizing: 'border-box',
           }}
         />
+
+        {/* Tags section — under title */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {QUICK_TAGS.filter(tag => !tags.includes(tag)).map(tag => (
+              <TagChip key={tag} category={tag} onClick={() => setTags([...tags, tag])} />
+            ))}
+            {tags.map(tag => (
+              <TagChip key={tag} category={tag} selected removable onRemove={() => setTags(tags.filter(x => x !== tag))} />
+            ))}
+            <button
+              onClick={() => setTagModalOpen(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '6px 12px', borderRadius: 999,
+                background: C.cream, color: C.inkSoft,
+                fontSize: 13, fontWeight: 800,
+                border: `2px solid ${C.inkSoft}44`,
+              }}
+            >
+              <span style={{ fontSize: 15 }}>＋</span> {t('tagPicker.addButton')}
+            </button>
+          </div>
+        </div>
 
         {/* Time section */}
         <button
@@ -333,7 +357,7 @@ function CreateSheet({
               }}>{t('create.timeLabel')}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
                 {timeExpanded ? t('create.timePick') : (
-                  <>{t('create.timeNow')} · <span style={{ color: C.primary }}>{t('create.timeIn24h')}</span></>
+                  <>{t('create.timeNow')} · <span style={{ color: C.primary }}>{t('create.timeIn3h')}</span></>
                 )}
               </div>
             </div>
@@ -527,39 +551,6 @@ function CreateSheet({
                 </div>
               </label>
             )}
-          </div>
-        </div>
-
-        {/* Tags section */}
-        <div style={{ marginBottom: 22 }}>
-          <div style={{
-            fontSize: 11, color: C.inkSoft, fontWeight: 800,
-            textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8,
-          }}>
-            {t('create.tags')}
-          </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {/* Quick picks */}
-            {QUICK_TAGS.filter(tag => !tags.includes(tag)).map(tag => (
-              <TagChip key={tag} category={tag} onClick={() => setTags([...tags, tag])} />
-            ))}
-            {/* Selected tags */}
-            {tags.map(tag => (
-              <TagChip key={tag} category={tag} selected removable onRemove={() => setTags(tags.filter(x => x !== tag))} />
-            ))}
-            {/* More button */}
-            <button
-              onClick={() => setTagModalOpen(true)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '6px 12px', borderRadius: 999,
-                background: C.cream, color: C.inkSoft,
-                fontSize: 13, fontWeight: 800,
-                border: `2px solid ${C.inkSoft}44`,
-              }}
-            >
-              <span style={{ fontSize: 15 }}>＋</span> {t('tagPicker.addButton')}
-            </button>
           </div>
         </div>
 
