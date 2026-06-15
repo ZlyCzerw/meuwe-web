@@ -135,6 +135,7 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'map' || !deepLinkEvent) return
     setSelEvent(deepLinkEvent)
+    window.history.pushState({ layer: 'event' }, '')
     setDeepLinkEvent(null)
     const ev = deepLinkEvent
     // Auto-follow private events for logged-in users who don't already follow them.
@@ -355,11 +356,26 @@ export default function App() {
         profile={profile}
         onMapClick={() => { if (!isOverlay) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
-        onOpenProfile={() => { if (!isOverlay) { setProfileOpen(true); setSelEvent(null); setCreateOpen(false) } }}
+        onOpenProfile={() => {
+          if (!isOverlay) {
+            setProfileOpen(true); setSelEvent(null); setCreateOpen(false)
+            window.history.pushState({ layer: 'profile' }, '')
+          }
+        }}
         unreadMenu={unread.hasAny}
-        onOpenCreate={() => { if (!isOverlay) { setSelEvent(null); setProfileOpen(false); setCreateOpen(true) } }}
-        onOpenEvent={ev => { if (!isOverlay) { setSelEvent(ev); setCreateOpen(false); setProfileOpen(false) } }}
-        onAuthNeeded={() => setAuthModalOpen(true)}
+        onOpenCreate={() => {
+          if (!isOverlay) {
+            setSelEvent(null); setProfileOpen(false); setCreateOpen(true)
+            window.history.pushState({ layer: 'create' }, '')
+          }
+        }}
+        onOpenEvent={ev => {
+          if (!isOverlay) {
+            setSelEvent(ev); setCreateOpen(false); setProfileOpen(false)
+            window.history.pushState({ layer: 'event' }, '')
+          }
+        }}
+        onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         initialZoom={initialMapZoom}
@@ -382,6 +398,7 @@ export default function App() {
             onOpenEvent={ev => {
               setMyEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
+              window.history.pushState({ layer: 'event' }, '')
             }}
             isUnread={unread.isUnread}
           />
@@ -397,7 +414,7 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
-          onAuthNeeded={() => setAuthModalOpen(true)}
+          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
           onEdit={handleEdit}
         />
       )}
@@ -409,7 +426,7 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(followedEventSelected.lat, followedEventSelected.lng)}
-          onAuthNeeded={() => setAuthModalOpen(true)}
+          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
           onEdit={handleEdit}
         />
       )}
@@ -421,7 +438,7 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
-          onAuthNeeded={() => setAuthModalOpen(true)}
+          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
           onEdit={handleEdit}
         />
       )}
@@ -435,6 +452,7 @@ export default function App() {
             onOpenEvent={ev => {
               setFollowedEventSelected({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
+              window.history.pushState({ layer: 'event' }, '')
             }}
             isUnread={unread.isUnread}
           />
@@ -469,8 +487,14 @@ export default function App() {
         onSignOut={handleSignOut}
         onSignIn={() => db.signInGoogle()}
         reloadProfile={reloadProfile}
-        onOpenMyEvents={() => { setProfileOpen(false); setScreen('myEvents') }}
-        onOpenFollowedEvents={() => { setProfileOpen(false); setScreen('followedEvents') }}
+        onOpenMyEvents={() => {
+          setProfileOpen(false); setScreen('myEvents')
+          window.history.pushState({ layer: 'myEvents' }, '')
+        }}
+        onOpenFollowedEvents={() => {
+          setProfileOpen(false); setScreen('followedEvents')
+          window.history.pushState({ layer: 'followedEvents' }, '')
+        }}
         myEventsUnread={unread.hasOwned}
         followedUnread={unread.hasFollowed}
       />
