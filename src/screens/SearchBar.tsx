@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { haversineKm } from '../lib/geo'
 import { C, INK } from '../lib/tokens'
 
 interface NominatimResult {
@@ -9,19 +10,63 @@ interface NominatimResult {
   lon: string
 }
 
-function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) => void }) {
+interface Props {
+  userPos: { lat: number; lng: number } | null
+  onSelect: (p: { lat: number; lng: number }) => void
+}
+
+function SearchBar({ userPos, onSelect }: Props) {
   const { t, i18n } = useTranslation()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<NominatimResult[]>([])
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
   const timerRef = useRef<number | undefined>(undefined)
+  const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  function buildUrl(q: string): string {
+    const params = new URLSearchParams({
+      q,
+      format: 'json',
+      limit: '8',
+      'accept-language': i18n.language,
+      dedupe: '1',
+    })
+    if (userPos) {
+      const delta = 1.5 // ~150km box
+      params.set('viewbox', [
+        userPos.lng - delta,
+        userPos.lat + delta,
+        userPos.lng + delta,
+        userPos.lat - delta,
+      ].join(','))
+      params.set('bounded', '0')
+    }
+    return `https://nominatim.openstreetmap.org/search?${params}`
+  }
+
+  function dedup(items: NominatimResult[]): NominatimResult[] {
+    const seen = new Set<string>()
+    return items.filter(item => {
+      const key = item.display_name.split(',')[0].trim().toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
+  function sortByDistance(items: NominatimResult[]): NominatimResult[] {
+    if (!userPos) return items
+    return [...items].sort((a, b) =>
+      haversineKm(userPos.lat, userPos.lng, parseFloat(a.lat), parseFloat(a.lon)) -
+      haversineKm(userPos.lat, userPos.lng, parseFloat(b.lat), parseFloat(b.lon))
+    )
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setQuery(val)
-
     clearTimeout(timerRef.current)
 
     if (val.trim().length < 2) {
@@ -32,18 +77,23 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
 
     setLoading(true)
     timerRef.current = window.setTimeout(async () => {
-      const q = val.trim()
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&accept-language=${i18n.language}`
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
       try {
-        const res = await fetch(url, { headers: { 'Accept-Language': i18n.language } })
+        const res = await fetch(buildUrl(val.trim()), {
+          headers: { 'Accept-Language': i18n.language },
+          signal: controller.signal,
+        })
         const data: NominatimResult[] = await res.json()
-        setResults(data)
-      } catch {
-        setResults([])
+        setResults(sortByDistance(dedup(data)).slice(0, 5))
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') setResults([])
       } finally {
         setLoading(false)
       }
-    }, 350)
+    }, 300)
   }
 
   function handleSelect(item: NominatimResult) {
@@ -54,11 +104,19 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
     inputRef.current?.blur()
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && results.length > 0) {
+      e.preventDefault()
+      handleSelect(results[0])
+    }
+  }
+
   function handleClear() {
     setQuery('')
     setResults([])
     setLoading(false)
     clearTimeout(timerRef.current)
+    abortRef.current?.abort()
     inputRef.current?.focus()
   }
 
@@ -66,7 +124,6 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Search bar */}
       <div style={{
         background: '#fff',
         borderRadius: 999,
@@ -77,7 +134,6 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
         alignItems: 'center',
         gap: 8,
       }}>
-        {/* Magnifier icon */}
         <svg width="16" height="16" viewBox="0 0 20 20" style={{ flexShrink: 0 }}>
           <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
           <path d="M13 13 L17 17" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
@@ -87,6 +143,7 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
           ref={inputRef}
           value={query}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
           placeholder={t('map.search')}
@@ -101,7 +158,6 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
           }}
         />
 
-        {/* Clear button */}
         {query.length > 0 && !loading && (
           <button
             onMouseDown={e => { e.preventDefault(); handleClear() }}
@@ -121,7 +177,6 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
           </button>
         )}
 
-        {/* Loading spinner */}
         {loading && (
           <div style={{
             flexShrink: 0,
@@ -135,7 +190,6 @@ function SearchBar({ onSelect }: { onSelect: (p: { lat: number; lng: number }) =
         )}
       </div>
 
-      {/* Results dropdown */}
       {showDropdown && (
         <div style={{
           position: 'absolute',
