@@ -74,7 +74,8 @@ function SearchBar({ userPos, onSelect }: Props) {
 
     setLoading(true)
     try {
-      const params = new URLSearchParams({ q: val, limit: '8', lang: i18n.language })
+      const lang = ['de', 'en', 'fr', 'it'].includes(i18n.language) ? i18n.language : 'en'
+      const params = new URLSearchParams({ q: val, limit: '8', lang })
       if (userPos) {
         params.set('lat', String(userPos.lat))
         params.set('lon', String(userPos.lng))
