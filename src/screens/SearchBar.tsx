@@ -3,11 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { haversineKm } from '../lib/geo'
 import { C, INK } from '../lib/tokens'
 
-interface NominatimResult {
-  place_id: number
-  display_name: string
-  lat: string
-  lon: string
+interface PhotonFeature {
+  geometry: { coordinates: [number, number] }
+  properties: {
+    osm_id: number
+    name: string
+    city?: string
+    state?: string
+    country?: string
+  }
+}
+
+interface SearchResult {
+  id: string
+  primary: string
+  secondary: string
+  lat: number
+  lng: number
 }
 
 interface Props {
@@ -15,91 +27,83 @@ interface Props {
   onSelect: (p: { lat: number; lng: number }) => void
 }
 
+function parsePhoton(features: PhotonFeature[], userPos: { lat: number; lng: number } | null): SearchResult[] {
+  const seen = new Set<string>()
+  const results: SearchResult[] = []
+
+  for (const f of features) {
+    const [lng, lat] = f.geometry.coordinates
+    const { name, city, state, country } = f.properties
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    const parts = [city, state, country].filter(Boolean)
+    results.push({
+      id: `${f.properties.osm_id}-${lat}-${lng}`,
+      primary: name,
+      secondary: parts.slice(0, 2).join(', '),
+      lat,
+      lng,
+    })
+  }
+
+  if (userPos) {
+    results.sort((a, b) =>
+      haversineKm(userPos.lat, userPos.lng, a.lat, a.lng) -
+      haversineKm(userPos.lat, userPos.lng, b.lat, b.lng)
+    )
+  }
+
+  return results.slice(0, 5)
+}
+
 function SearchBar({ userPos, onSelect }: Props) {
   const { t, i18n } = useTranslation()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<NominatimResult[]>([])
+  const [results, setResults] = useState<SearchResult[]>([])
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
-  const timerRef = useRef<number | undefined>(undefined)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  function buildUrl(q: string): string {
-    const params = new URLSearchParams({
-      q,
-      format: 'json',
-      limit: '8',
-      'accept-language': i18n.language,
-      dedupe: '1',
-    })
-    if (userPos) {
-      const delta = 1.5 // ~150km box
-      params.set('viewbox', [
-        userPos.lng - delta,
-        userPos.lat + delta,
-        userPos.lng + delta,
-        userPos.lat - delta,
-      ].join(','))
-      params.set('bounded', '0')
+  async function search(val: string) {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ q: val, limit: '8', lang: i18n.language })
+      if (userPos) {
+        params.set('lat', String(userPos.lat))
+        params.set('lon', String(userPos.lng))
+      }
+      const res = await fetch(`https://photon.komoot.io/api/?${params}`, { signal: controller.signal })
+      const data = await res.json()
+      setResults(parsePhoton(data.features ?? [], userPos))
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') setResults([])
+    } finally {
+      setLoading(false)
     }
-    return `https://nominatim.openstreetmap.org/search?${params}`
-  }
-
-  function dedup(items: NominatimResult[]): NominatimResult[] {
-    const seen = new Set<string>()
-    return items.filter(item => {
-      const key = item.display_name.split(',')[0].trim().toLowerCase()
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-  }
-
-  function sortByDistance(items: NominatimResult[]): NominatimResult[] {
-    if (!userPos) return items
-    return [...items].sort((a, b) =>
-      haversineKm(userPos.lat, userPos.lng, parseFloat(a.lat), parseFloat(a.lon)) -
-      haversineKm(userPos.lat, userPos.lng, parseFloat(b.lat), parseFloat(b.lon))
-    )
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setQuery(val)
-    clearTimeout(timerRef.current)
-
     if (val.trim().length < 2) {
+      abortRef.current?.abort()
       setResults([])
       setLoading(false)
       return
     }
-
-    setLoading(true)
-    timerRef.current = window.setTimeout(async () => {
-      abortRef.current?.abort()
-      const controller = new AbortController()
-      abortRef.current = controller
-
-      try {
-        const res = await fetch(buildUrl(val.trim()), {
-          headers: { 'Accept-Language': i18n.language },
-          signal: controller.signal,
-        })
-        const data: NominatimResult[] = await res.json()
-        setResults(sortByDistance(dedup(data)).slice(0, 5))
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') setResults([])
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
+    search(val.trim())
   }
 
-  function handleSelect(item: NominatimResult) {
-    const primary = item.display_name.split(',')[0]
-    onSelect({ lat: parseFloat(item.lat), lng: parseFloat(item.lon) })
-    setQuery(primary)
+  function handleSelect(item: SearchResult) {
+    onSelect({ lat: item.lat, lng: item.lng })
+    setQuery(item.primary)
     setResults([])
     inputRef.current?.blur()
   }
@@ -115,7 +119,6 @@ function SearchBar({ userPos, onSelect }: Props) {
     setQuery('')
     setResults([])
     setLoading(false)
-    clearTimeout(timerRef.current)
     abortRef.current?.abort()
     inputRef.current?.focus()
   }
@@ -205,15 +208,14 @@ function SearchBar({ userPos, onSelect }: Props) {
           maxHeight: 260,
           overflowY: 'auto',
           zIndex: 20,
+          opacity: loading ? 0.6 : 1,
+          transition: 'opacity 150ms ease',
         }}>
           {results.map((item, idx) => {
-            const parts = item.display_name.split(',')
-            const primary = parts[0]
-            const secondary = parts.slice(1, 3).join(',').trim()
             const isLast = idx === results.length - 1
             return (
               <div
-                key={item.place_id}
+                key={item.id}
                 onMouseDown={() => handleSelect(item)}
                 style={{
                   padding: '10px 14px',
@@ -231,9 +233,9 @@ function SearchBar({ userPos, onSelect }: Props) {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}>
-                  {primary}
+                  {item.primary}
                 </div>
-                {secondary && (
+                {item.secondary && (
                   <div style={{
                     fontSize: 12,
                     color: C.inkSoft,
@@ -242,7 +244,7 @@ function SearchBar({ userPos, onSelect }: Props) {
                     whiteSpace: 'nowrap',
                     marginTop: 2,
                   }}>
-                    {secondary}
+                    {item.secondary}
                   </div>
                 )}
               </div>
