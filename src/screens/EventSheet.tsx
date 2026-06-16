@@ -12,7 +12,6 @@ import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
 import { computeStatus } from '../lib/eventStatus'
-import { buildEventPath } from '../lib/slug'
 import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
@@ -21,8 +20,8 @@ const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' 
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
 
-async function handleShare(event: { id: string; title: string; place_name: string | null }, showToast: () => void) {
-  const url = `${window.location.origin}${buildEventPath(event)}`
+async function handleShare(event: { id: string; title: string }, showToast: () => void) {
+  const url = `${window.location.origin}/?event=${event.id}`
   if (navigator.share) {
     try {
       await navigator.share({ title: event.title, url })

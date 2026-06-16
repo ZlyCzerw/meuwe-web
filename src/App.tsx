@@ -6,7 +6,6 @@ import { db } from './lib/supabase'
 import { refineLangByGeo } from './lib/i18n'
 import { registerServiceWorker, refreshPushSubscription } from './lib/push'
 import type { EventWithMeta } from './lib/types'
-import { extractEventId } from './lib/slug'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
 import { isNativePlatform } from './lib/platform'
@@ -53,7 +52,6 @@ export default function App() {
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
   // Captured at render time, before the mount effect strips ?event= from the URL.
   const deepLinkIdRef = useRef<string | null>(
-    extractEventId(window.location.pathname) ??
     new URLSearchParams(window.location.search).get('event')
   )
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
@@ -127,9 +125,7 @@ export default function App() {
 
   // On mount: check ?event=<id> deep link
   useEffect(() => {
-    const eventId =
-      extractEventId(window.location.pathname) ??
-      new URLSearchParams(window.location.search).get('event')
+    const eventId = new URLSearchParams(window.location.search).get('event')
     if (!eventId) return
     window.history.replaceState({}, '', '/')
     db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
