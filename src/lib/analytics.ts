@@ -15,7 +15,7 @@ export const track = {
 
   editEvent: (id: string) => g('edit_event', { event_id: id }),
 
-  login: () => gtag('event', 'login', { method: 'Google' }),
+  login: () => g('login', { method: 'Google' }),
 
   share: (id: string) => g('share', { event_id: id }),
 
