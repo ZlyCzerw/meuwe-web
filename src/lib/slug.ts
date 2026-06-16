@@ -17,7 +17,7 @@ export function toSlug(text: string): string {
 }
 
 export function buildEventPath(event: { id: string; title: string; place_name: string | null }): string {
-  const titleSlug = toSlug(event.title)
+  const titleSlug = toSlug(event.title ?? '')
   const placeSlug = event.place_name ? toSlug(event.place_name) : ''
   const parts = [titleSlug, placeSlug].filter(Boolean)
   if (parts.length === 0) return `/e/${event.id}`
@@ -31,6 +31,5 @@ export function extractEventId(path: string): string | null {
   for (let i = parts.length - 1; i >= 0; i--) {
     if (UUID_RE.test(parts[i])) return parts[i]
   }
-  if (UUID_RE.test(segment)) return segment
   return null
 }
