@@ -10,6 +10,11 @@ import type { EventWithMeta } from '../lib/types'
 
 const QUICK_TAGS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
 
+function toLocalDT(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
     const r = await fetch(
@@ -58,10 +63,10 @@ function CreateSheet({
   const [photos, setPhotos] = useState<PhotoSlot[]>([null, null, null])
   const prefilledIdRef = useRef<string | null>(null)
   const [startTime, setStartTime] = useState<string>(
-    () => new Date().toISOString().slice(0, 16)
+    () => toLocalDT(new Date())
   )
   const [endTime, setEndTime] = useState<string>(
-    () => new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 16)
+    () => toLocalDT(new Date(Date.now() + 3 * 3600000))
   )
   const [timeExpanded, setTimeExpanded] = useState(false)
   const [pickedAddress, setPickedAddress] = useState<string | null>(null)
@@ -80,7 +85,7 @@ function CreateSheet({
   // Auto-set end time to start + 24h whenever start changes — create mode only.
   useEffect(() => {
     if (editEvent) return
-    setEndTime(new Date(new Date(startTime).getTime() + 3 * 3_600_000).toISOString().slice(0, 16))
+    setEndTime(toLocalDT(new Date(new Date(startTime).getTime() + 3 * 3_600_000)))
   }, [startTime, editEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prefill when entering edit mode. Keyed on editEvent.id and guarded so it runs
@@ -93,8 +98,8 @@ function CreateSheet({
       setTitle(editEvent.title)
       setDesc(editEvent.description ?? '')
       setTags(editEvent.tags ?? [])
-      setStartTime(new Date(editEvent.start_time).toISOString().slice(0, 16))
-      setEndTime(new Date(editEvent.end_time).toISOString().slice(0, 16))
+      setStartTime(toLocalDT(new Date(editEvent.start_time)))
+      setEndTime(toLocalDT(new Date(editEvent.end_time)))
       const slots: PhotoSlot[] = [null, null, null]
       ;(editEvent.photos ?? []).slice(0, 3).forEach((url, i) => { slots[i] = { kind: 'existing', url } })
       setPhotos(slots)
@@ -109,8 +114,8 @@ function CreateSheet({
         setDesc('')
         setTags([])
         setPhotos([null, null, null])
-        setStartTime(new Date().toISOString().slice(0, 16))
-        setEndTime(new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 16))
+        setStartTime(toLocalDT(new Date()))
+        setEndTime(toLocalDT(new Date(Date.now() + 3 * 3_600_000)))
         setTimeExpanded(false)
         setErr('')
       }
