@@ -18,6 +18,7 @@ import ConfettiBurst from './components/ConfettiBurst'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
+import { track } from './lib/analytics'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -151,6 +152,11 @@ export default function App() {
     }
     setTimeout(tryFly, 100)
   }, [screen, deepLinkEvent]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Analytics
+  useEffect(() => { if (selEvent) track.viewEvent(selEvent.id, selEvent.title) }, [selEvent])
+  useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
+  useEffect(() => { if (session) track.login() }, [session])
 
   // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
@@ -312,6 +318,7 @@ export default function App() {
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 900)
     showToast(t('create.added'))
+    track.createEvent('')
   }
 
   // Loading screen — faithful port of prototype lines 1077-1089
@@ -478,6 +485,7 @@ export default function App() {
           setSelEvent(updated)
           flyToFnRef.current?.(updated.lat, updated.lng)
           showToast(t('edit.updated'))
+          track.editEvent(updated.id)
         }}
       />
       <Toast visible={!!toast} label={toast || ''} />

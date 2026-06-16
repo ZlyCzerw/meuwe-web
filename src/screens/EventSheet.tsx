@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { track } from '../lib/analytics'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import DragHandle from '../components/DragHandle'
@@ -22,6 +23,7 @@ const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES',
 
 async function handleShare(event: { id: string; title: string }, showToast: () => void) {
   const url = `${window.location.origin}/?event=${event.id}`
+  track.share(event.id)
   if (navigator.share) {
     try {
       await navigator.share({ title: event.title, url })
@@ -74,6 +76,7 @@ function EventSheet({
       await db.unfollowEvent(event.id)
     } else {
       setIsFollowing(true)
+      track.followEvent(event.id)
       await db.followEvent(event.id)
     }
   }
