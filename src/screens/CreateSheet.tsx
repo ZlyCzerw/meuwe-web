@@ -317,7 +317,10 @@ function CreateSheet({
         />
 
         {/* Tags section — under title */}
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ background: C.cream, borderRadius: 20, padding: '14px 16px', marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: C.inkSoft, letterSpacing: '0.08em', marginBottom: 10 }}>
+            {t('create.tagsLabel').toUpperCase()}
+          </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {QUICK_TAGS.filter(tag => !tags.includes(tag)).map(tag => (
               <TagChip key={tag} category={tag} onClick={() => setTags([...tags, tag])} />

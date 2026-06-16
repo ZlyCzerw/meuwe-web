@@ -62,6 +62,7 @@ const en: Resources = {
     photoUploadError: 'Photo upload error',
     submitError: 'Failed to create event. Please try again.',
     timeError: 'End time must be after start time',
+    tagsLabel: 'Tags',
     timeLabel: 'Time',
     timeNow: 'Now',
     timeIn3h: 'in 3h',

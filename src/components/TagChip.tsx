@@ -35,6 +35,7 @@ export default function TagChip({
         color: selected ? '#fff' : C.ink,
         fontSize: 13,
         fontWeight: 700,
+        border: '2px solid transparent',
         transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
