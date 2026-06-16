@@ -254,7 +254,7 @@ function CreateSheet({
           onClick={onPickLocation}
           style={{
             display: 'flex', alignItems: 'center', gap: 12,
-            padding: 10, borderRadius: 20, background: C.cream, marginBottom: 18,
+            padding: '14px 16px', borderRadius: 20, background: C.cream, marginBottom: 18,
             width: '100%', textAlign: 'left', cursor: 'pointer',
             border: `2px solid transparent`,
             transition: 'border-color 180ms ease',
@@ -263,10 +263,10 @@ function CreateSheet({
           onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
         >
           <div style={{
-            width: 76, height: 76, borderRadius: 16, overflow: 'hidden',
+            width: 44, height: 44, borderRadius: 12, overflow: 'hidden',
             position: 'relative', flexShrink: 0, background: C.cream,
           }}>
-            <svg width="76" height="76" viewBox="0 0 76 76" style={{ position: 'absolute', inset: 0 }}>
+            <svg width="44" height="44" viewBox="0 0 76 76" style={{ position: 'absolute', inset: 0 }}>
               <rect width="76" height="76" fill="#FFF6EC"/>
               <rect x="-4" y="18" width="84" height="10" rx="5" fill="#B8E3F2"/>
               <ellipse cx="58" cy="56" rx="14" ry="11" fill="#C8E6BD"/>
@@ -275,8 +275,8 @@ function CreateSheet({
             <div style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 16, height: 16, borderRadius: '50%',
-              background: C.primary, border: `2.5px solid #2D2B2A`,
+              width: 11, height: 11, borderRadius: '50%',
+              background: C.primary, border: `2px solid #2D2B2A`,
               boxShadow: '0 2px 0 rgba(45,43,42,0.3)',
               animation: 'meuwe-breathe-sm 2.5s ease-in-out infinite',
             }}/>
