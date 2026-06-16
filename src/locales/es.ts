@@ -98,7 +98,7 @@ const es: Resources = {
     party: 'fiesta', outdoor: 'aire libre', family: 'familiar', culture: 'cultura', sport: 'deporte', food: 'comida',
     music: 'música', art: 'arte', film: 'cine', gaming: 'gaming', tech: 'tech', nature: 'naturaleza',
     travel: 'viajes', yoga: 'yoga', dance: 'baile', comedy: 'comedia', kids: 'niños', pets: 'mascotas',
-    volunteering: 'voluntariado', workshop: 'taller',
+    volunteering: 'voluntariado', workshop: 'taller', alert: 'alerta',
   },
   tagPicker: {
     customPlaceholder: 'Tag personalizado…',

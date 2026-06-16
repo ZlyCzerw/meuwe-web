@@ -103,7 +103,7 @@ const pl = {
     party: 'impreza', outdoor: 'piknik', family: 'rodzinne', culture: 'kultura', sport: 'sport', food: 'jedzenie',
     music: 'muzyka', art: 'sztuka', film: 'film', gaming: 'gaming', tech: 'tech', nature: 'przyroda',
     travel: 'podróże', yoga: 'yoga', dance: 'taniec', comedy: 'komedia', kids: 'dzieci', pets: 'zwierzęta',
-    volunteering: 'wolontariat', workshop: 'warsztaty',
+    volunteering: 'wolontariat', workshop: 'warsztaty', alert: 'alert',
   },
   webview: {
     title: 'Otwórz w Safari',

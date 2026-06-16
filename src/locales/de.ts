@@ -98,7 +98,7 @@ const de: Resources = {
     party: 'Party', outdoor: 'Outdoor', family: 'Familie', culture: 'Kultur', sport: 'Sport', food: 'Essen',
     music: 'Musik', art: 'Kunst', film: 'Film', gaming: 'Gaming', tech: 'Tech', nature: 'Natur',
     travel: 'Reisen', yoga: 'Yoga', dance: 'Tanzen', comedy: 'Comedy', kids: 'Kinder', pets: 'Haustiere',
-    volunteering: 'Ehrenamt', workshop: 'Workshop',
+    volunteering: 'Ehrenamt', workshop: 'Workshop', alert: 'Alarm',
   },
   tagPicker: {
     customPlaceholder: 'Eigener Tag…',
