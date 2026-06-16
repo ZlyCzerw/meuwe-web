@@ -159,7 +159,15 @@ function MapScreen({
       maxZoom: 19,
     }).addTo(map)
     map.on('click', () => onMapClickRef.current?.())
-    onRegisterFlyTo?.((lat, lng) => map.flyTo([lat, lng], 16, { duration: 0.7 }))
+    onRegisterFlyTo?.((lat, lng) => {
+      // Offset center downward so the pin appears in the visible area above the event sheet.
+      // The sheet covers ~50% of screen height; shift by 25% to center the pin in the upper half.
+      const zoom = 16
+      const offsetPx = window.innerHeight * 0.25
+      const target = map.project([lat, lng], zoom)
+      const shifted = target.add([0, offsetPx])
+      map.flyTo(map.unproject(shifted, zoom), zoom, { duration: 0.7 })
+    })
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
