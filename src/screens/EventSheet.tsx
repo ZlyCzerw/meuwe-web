@@ -454,114 +454,115 @@ function EventSheet({
                 </>
             </div>
 
-            {/* Chat region (full) — own scroll, independent of the card above */}
+            {/* Chat region (full) — scroll + input wrapped together for dynamic height split */}
             {isFull && (
               <div
-                ref={chatRef}
                 onClick={() => setChatFocused(true)}
-                style={{ flexShrink: 0, height: chatFocused ? '50%' : '30%', overflowY: 'auto', padding: '14px 20px 16px', borderTop: '1px solid #F1E9DA', transition: 'height 250ms ease' }}
+                style={{ flexShrink: 0, height: chatFocused ? '50%' : '30%', display: 'flex', flexDirection: 'column', borderTop: '1px solid #F1E9DA', transition: 'height 250ms ease' }}
               >
-                {/* Conversation header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.grass, animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite' }} />
-                  <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
-                  <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>· {t('event.messageCount', { count: messages.length })}</div>
-                </div>
-                <div style={{
-                  fontSize: 11, color: C.inkSoft, fontWeight: 700,
-                  textAlign: 'center', margin: '0 0 16px', letterSpacing: 0.5,
-                }}>{t('event.today')}</div>
-                {messages.map((m, i) => {
-                  const isMe = session && m.author_id === session.user.id
-                  return (
-                    <div
-                      key={m.id}
-                      style={{
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 10,
-                      }}
-                    >
-                      {!isMe && i % 3 === 0 && (
-                        <div style={{
-                          fontSize: 11, color: C.inkSoft, fontWeight: 700,
-                          marginBottom: 4, marginLeft: 44,
-                        }}>
-                          {m.author_name || '?'} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
-                        {!isMe && (
+                <div
+                  ref={chatRef}
+                  style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 8px' }}
+                >
+                  {/* Conversation header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.grass, animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite' }} />
+                    <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
+                    <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>· {t('event.messageCount', { count: messages.length })}</div>
+                  </div>
+                  <div style={{
+                    fontSize: 11, color: C.inkSoft, fontWeight: 700,
+                    textAlign: 'center', margin: '0 0 16px', letterSpacing: 0.5,
+                  }}>{t('event.today')}</div>
+                  {messages.map((m, i) => {
+                    const isMe = session && m.author_id === session.user.id
+                    return (
+                      <div
+                        key={m.id}
+                        style={{
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 10,
+                        }}
+                      >
+                        {!isMe && i % 3 === 0 && (
                           <div style={{
-                            width: 32, height: 32, borderRadius: '50%',
-                            background: m.author_color || C.sky, border: `2px solid ${INK}`, flexShrink: 0,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 900, color: INK,
+                            fontSize: 11, color: C.inkSoft, fontWeight: 700,
+                            marginBottom: 4, marginLeft: 44,
                           }}>
-                            {(m.author_name || '?')[0].toUpperCase()}
+                            {m.author_name || '?'} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
-                        <div style={{
-                          padding: '10px 14px',
-                          borderRadius: isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
-                          background: isMe ? C.primarySoft : '#fff', color: C.ink,
-                          fontSize: 14, fontWeight: 600, lineHeight: 1.4,
-                          boxShadow: isMe ? 'none' : '0 4px 16px rgba(45,43,42,0.08)',
-                          animation: isMe && i === messages.length - 1 ? 'bubble-up 280ms ease' : 'none',
-                        }}>{m.text}</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
+                          {!isMe && (
+                            <div style={{
+                              width: 32, height: 32, borderRadius: '50%',
+                              background: m.author_color || C.sky, border: `2px solid ${INK}`, flexShrink: 0,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 12, fontWeight: 900, color: INK,
+                            }}>
+                              {(m.author_name || '?')[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div style={{
+                            padding: '10px 14px',
+                            borderRadius: isMe ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
+                            background: isMe ? C.primarySoft : '#fff', color: C.ink,
+                            fontSize: 14, fontWeight: 600, lineHeight: 1.4,
+                            boxShadow: isMe ? 'none' : '0 4px 16px rgba(45,43,42,0.08)',
+                            animation: isMe && i === messages.length - 1 ? 'bubble-up 280ms ease' : 'none',
+                          }}>{m.text}</div>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {isFull && (
-              <div style={{
-                padding: '12px 16px 28px', background: 'rgba(255,255,255,0.96)',
-                borderTop: '1px solid #F1E9DA',
-              }}>
-                {sendErr && (
-                  <div style={{
-                    marginBottom: 8, padding: '6px 12px', borderRadius: 10,
-                    background: '#FFE8E8', color: '#c0392b', fontSize: 12, fontWeight: 700,
-                  }}>{sendErr}</div>
-                )}
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div style={{
-                  flex: 1, padding: '10px 18px', borderRadius: 999, background: C.cream,
-                  display: 'flex', alignItems: 'center',
-                }}>
-                  <input
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && send()}
-                    placeholder={session ? t('event.writeMessage') : t('event.loginToWrite')}
-                    disabled={!session}
-                    maxLength={500}
-                    style={{ flex: 1, fontSize: 14, fontWeight: 600 }}
-                  />
+                    )
+                  })}
                 </div>
-                <button
-                  onClick={send}
-                  disabled={!session || !input.trim()}
-                  style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    background: input.trim() && session ? C.primary : '#E8DFD0',
-                    border: `2px solid ${INK}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: input.trim() ? '0 4px 12px rgba(255,122,69,0.35)' : 'none',
-                    transition: 'all 200ms ease',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M3 10 L17 10 M11 5 L17 10 L11 15"
-                      stroke={input.trim() && session ? '#fff' : C.inkSoft}
-                      strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
+                <div style={{
+                  flexShrink: 0, padding: '8px 16px 28px', background: 'rgba(255,255,255,0.96)',
+                  borderTop: '1px solid #F1E9DA',
+                }}>
+                  {sendErr && (
+                    <div style={{
+                      marginBottom: 8, padding: '6px 12px', borderRadius: 10,
+                      background: '#FFE8E8', color: '#c0392b', fontSize: 12, fontWeight: 700,
+                    }}>{sendErr}</div>
+                  )}
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <div style={{
+                      flex: 1, padding: '10px 18px', borderRadius: 999, background: C.cream,
+                      display: 'flex', alignItems: 'center',
+                    }}>
+                      <input
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && send()}
+                        placeholder={session ? t('event.writeMessage') : t('event.loginToWrite')}
+                        disabled={!session}
+                        maxLength={500}
+                        style={{ flex: 1, fontSize: 14, fontWeight: 600 }}
+                      />
+                    </div>
+                    <button
+                      onClick={send}
+                      disabled={!session || !input.trim()}
+                      style={{
+                        width: 44, height: 44, borderRadius: '50%',
+                        background: input.trim() && session ? C.primary : '#E8DFD0',
+                        border: `2px solid ${INK}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: input.trim() ? '0 4px 12px rgba(255,122,69,0.35)' : 'none',
+                        transition: 'all 200ms ease',
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path
+                          d="M3 10 L17 10 M11 5 L17 10 L11 15"
+                          stroke={input.trim() && session ? '#fff' : C.inkSoft}
+                          strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
