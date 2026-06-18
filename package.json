@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck:scraper": "tsc -p tsconfig.scraper.json",
-    "event-sync": "tsx scripts/event-sync/index.ts"
+    "event-sync": "tsx scripts/event-sync/index.ts",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap sync android && npx cap open android"
   },
   "reactSnap": {
     "source": "dist",
@@ -22,6 +24,11 @@
     "minifyHtml": false
   },
   "dependencies": {
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/geolocation": "^6.1.1",
+    "@capacitor/splash-screen": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3",
     "@supabase/supabase-js": "^2.106.1",
     "cheerio": "^1.0.0",
     "i18next": "^26.2.0",
@@ -32,6 +39,8 @@
     "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
