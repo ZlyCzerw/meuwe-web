@@ -13,7 +13,6 @@ import { isCurrentlyLive } from '../lib/eventStatus'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
-import TagFilterSheet from '../components/TagFilterSheet'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 
@@ -81,8 +80,6 @@ function MapScreen({
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
   const [mapRadiusKm, setMapRadiusKm] = useState(15)
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [tagBarCanScrollLeft, setTagBarCanScrollLeft] = useState(false)
   const [tagBarCanScrollRight, setTagBarCanScrollRight] = useState(false)
   const tagBarRef = useRef<HTMLDivElement>(null)
@@ -106,19 +103,7 @@ function MapScreen({
 
   const eventsPos = mapCenter || userPos || lastKnownPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
-
-  // Tag frequency from all fetched events (independent of category filter)
-  const tagCounts = events.reduce((acc, e) => {
-    e.tags.forEach(tag => { acc[tag] = (acc[tag] ?? 0) + 1 })
-    return acc
-  }, {} as Record<string, number>)
-  const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(([t]) => t)
-  const topTags = sortedTags.slice(0, 5)
-  const hasMoreTags = sortedTags.length > 5
-
-  const visibleEvents = events
-    .filter(e => !categoryFilter || e.category === categoryFilter)
-    .filter(e => selectedTags.length === 0 || selectedTags.some(t => e.tags.includes(t)))
+  const visibleEvents = categoryFilter ? events.filter(e => e.category === categoryFilter) : events
 
   // Timeline drag — smooth dial/drum scroll, snap on release
   const MAX_TRANSLATE = 0
@@ -414,79 +399,6 @@ function MapScreen({
             </button>
           )}
         </div>
-      )}
-
-      {/* Tag filter bar — shown only when there are tags in the area */}
-      {!pickingLocation && sortedTags.length > 0 && (
-        <div style={{
-          position: 'absolute', top: 116, left: 0, right: 0, zIndex: 10,
-          display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px',
-          overflowX: 'auto', scrollbarWidth: 'none',
-        }}>
-          {topTags.map(tag => {
-            const active = selectedTags.includes(tag)
-            return (
-              <button
-                key={tag}
-                onClick={() => setSelectedTags(active ? selectedTags.filter(t => t !== tag) : [...selectedTags, tag])}
-                style={{
-                  flexShrink: 0, padding: '5px 12px', borderRadius: 999,
-                  background: active ? C.ink : 'rgba(255,255,255,0.92)',
-                  color: active ? '#fff' : C.ink,
-                  fontSize: 12, fontWeight: 800,
-                  border: `2px solid ${active ? C.ink : INK + '22'}`,
-                  boxShadow: active ? `0 2px 0 ${C.primary}` : '0 1px 4px rgba(45,43,42,0.10)',
-                  transition: 'all 150ms ease',
-                  whiteSpace: 'nowrap', cursor: 'pointer',
-                }}
-              >
-                {tag}
-              </button>
-            )
-          })}
-          {/* + button */}
-          {(hasMoreTags || selectedTags.some(t => !topTags.includes(t))) && (
-            <button
-              onClick={() => setTagSheetOpen(true)}
-              style={{
-                flexShrink: 0, padding: '5px 12px', borderRadius: 999,
-                background: selectedTags.some(t => !topTags.includes(t)) ? C.primary : 'rgba(255,255,255,0.92)',
-                color: selectedTags.some(t => !topTags.includes(t)) ? '#fff' : C.ink,
-                fontSize: 12, fontWeight: 800,
-                border: `2px solid ${selectedTags.some(t => !topTags.includes(t)) ? C.primary : INK + '22'}`,
-                boxShadow: '0 1px 4px rgba(45,43,42,0.10)',
-                whiteSpace: 'nowrap', cursor: 'pointer',
-              }}
-            >
-              +{sortedTags.length - 5}
-            </button>
-          )}
-          {/* Clear chip */}
-          {selectedTags.length > 0 && (
-            <button
-              onClick={() => setSelectedTags([])}
-              style={{
-                flexShrink: 0, padding: '5px 10px', borderRadius: 999,
-                background: 'rgba(255,255,255,0.92)', color: C.primary,
-                fontSize: 12, fontWeight: 800,
-                border: `2px solid ${C.primary}44`,
-                boxShadow: '0 1px 4px rgba(45,43,42,0.10)',
-                whiteSpace: 'nowrap', cursor: 'pointer',
-              }}
-            >×</button>
-          )}
-        </div>
-      )}
-
-      {/* Tag filter sheet */}
-      {tagSheetOpen && (
-        <TagFilterSheet
-          tags={sortedTags}
-          counts={tagCounts}
-          selected={selectedTags}
-          onChange={setSelectedTags}
-          onClose={() => setTagSheetOpen(false)}
-        />
       )}
 
       {/* Zoom controls — desktop only */}

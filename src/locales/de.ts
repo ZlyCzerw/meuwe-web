@@ -20,8 +20,6 @@ const de: Resources = {
     pickLocationHintAlt: 'oder Karte verschieben, um Standort zu wählen',
     confirmLocation: 'Ort bestätigen',
     allCategories: 'Alle',
-    filterByTag: 'Nach Tag filtern',
-    clearFilters: 'Löschen',
   },
   event: {
     organizer: 'Hinzugefügt von',
