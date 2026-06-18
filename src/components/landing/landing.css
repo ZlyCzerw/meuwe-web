@@ -9,13 +9,13 @@
   height: 66px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 56px;
-  background: rgba(255, 246, 236, 0.55);
+  background: rgba(255, 246, 236, 0.78);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 .lp-nav.scrolled {
-  background: rgba(255, 246, 236, 0.82);
+  background: rgba(255, 246, 236, 0.91);
   box-shadow: 0 1px 0 rgba(45,43,42,0.07);
 }
 .lp-nav-logo { text-decoration: none; cursor: pointer; }
