@@ -86,6 +86,7 @@ const en: Resources = {
     myEvents: 'My events',
     followedEvents: 'Following',
     signOut: 'Sign out',
+    backToLogin: 'Back to login',
     language: 'Language',
     notifications: 'Notifications',
     notificationsOn: 'Notifications enabled',

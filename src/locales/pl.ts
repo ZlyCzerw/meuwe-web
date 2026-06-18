@@ -84,6 +84,7 @@ const pl = {
     myEvents: 'Moje wydarzenia',
     followedEvents: 'Obserwowane',
     signOut: 'Wyloguj',
+    backToLogin: 'Powrót do logowania',
     language: 'Język',
     notifications: 'Powiadomienia',
     notificationsOn: 'Powiadomienia włączone',

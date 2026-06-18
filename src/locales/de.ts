@@ -86,6 +86,7 @@ const de: Resources = {
     myEvents: 'Meine Events',
     followedEvents: 'Verfolgt',
     signOut: 'Abmelden',
+    backToLogin: 'Zurück zur Anmeldung',
     language: 'Sprache',
     notifications: 'Benachrichtigungen',
     notificationsOn: 'Benachrichtigungen aktiv',
