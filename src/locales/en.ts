@@ -20,6 +20,8 @@ const en: Resources = {
     pickLocationHintAlt: 'or move the map to select a location',
     confirmLocation: 'Confirm location',
     allCategories: 'All',
+    filterByTag: 'Filter by tag',
+    clearFilters: 'Clear',
   },
   event: {
     organizer: 'Added by',

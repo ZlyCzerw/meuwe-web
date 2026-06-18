@@ -18,6 +18,8 @@ const pl = {
     pickLocationHintAlt: 'lub przesuń mapę, aby wybrać lokalizację',
     confirmLocation: 'Potwierdź miejsce',
     allCategories: 'Wszystkie',
+    filterByTag: 'Filtruj po tagu',
+    clearFilters: 'Wyczyść',
   },
   event: {
     organizer: 'Dodane przez',

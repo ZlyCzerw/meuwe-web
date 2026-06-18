@@ -20,6 +20,8 @@ const es: Resources = {
     pickLocationHintAlt: 'o mueve el mapa para elegir la ubicación',
     confirmLocation: 'Confirmar lugar',
     allCategories: 'Todos',
+    filterByTag: 'Filtrar por etiqueta',
+    clearFilters: 'Limpiar',
   },
   event: {
     organizer: 'Añadido por',
