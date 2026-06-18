@@ -57,6 +57,7 @@ function EventSheet({
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
+  const [chatFocused, setChatFocused] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [sendErr, setSendErr] = useState('')
@@ -141,6 +142,7 @@ function EventSheet({
   // Reset scroll + photo when event opens or snap returns to half
   useEffect(() => {
     if (listRef.current && !isFull) listRef.current.scrollTop = 0
+    if (!isFull) setChatFocused(false)
   }, [event?.id, isFull])
 
   // Reset photo index on new event
@@ -239,8 +241,9 @@ function EventSheet({
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div
               ref={listRef}
+              onClick={isFull ? () => setChatFocused(false) : undefined}
               style={isFull
-                ? { flexShrink: 0, maxHeight: '50%', overflowY: 'auto', padding: '4px 20px 12px' }
+                ? { flexShrink: 0, height: chatFocused ? '50%' : '70%', overflowY: 'auto', padding: '4px 20px 12px', transition: 'height 250ms ease' }
                 : { flex: 1, overflowY: 'auto', padding: '4px 20px 0' }}
             >
               {/* Card content — shown in both half and full */}
@@ -455,7 +458,8 @@ function EventSheet({
             {isFull && (
               <div
                 ref={chatRef}
-                style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 16px', borderTop: '1px solid #F1E9DA' }}
+                onClick={() => setChatFocused(true)}
+                style={{ flexShrink: 0, height: chatFocused ? '50%' : '30%', overflowY: 'auto', padding: '14px 20px 16px', borderTop: '1px solid #F1E9DA', transition: 'height 250ms ease' }}
               >
                 {/* Conversation header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
