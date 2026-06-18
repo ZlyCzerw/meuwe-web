@@ -498,7 +498,6 @@ export default function App() {
         session={session}
         profile={profile}
         onSignOut={handleSignOut}
-        onSignIn={() => db.signInGoogle()}
         reloadProfile={reloadProfile}
         onOpenMyEvents={() => {
           setProfileOpen(false); setScreen('myEvents')
