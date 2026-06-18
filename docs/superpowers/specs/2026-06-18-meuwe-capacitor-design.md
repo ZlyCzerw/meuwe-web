@@ -70,13 +70,29 @@ poza `isNativePlatform()`.
 
 ### 2. Auth natywny — `src/lib/nativeAuth.ts`
 
+**Ekran welcome/login już istnieje i jest gotowy do reużycia.** W `App.tsx`
+(`screen === 'welcome'`) jest już rozgałęzienie: na natywce renderuje się
+**tylko** `src/screens/Welcome.tsx` (logo + tagline + przycisk Google + „przeglądaj
+jako gość"), a pełny landing (`pages/Landing.tsx` z sekcjami Hero/Features/itd.)
+renderuje się **wyłącznie na webie**. Nie budujemy nowego ekranu — dozbrajamy istniejący.
+
 - `signInGoogleNative(): Promise<void>` — `FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true })`
   → `credential.idToken` → `supabase.auth.signInWithIdToken({ provider: 'google', token })`.
 - `signInAppleNative(): Promise<void>` — generuje `nonce`, `signInWithApple({ skipNativeAuth: true, nonce })`
   → `idToken` + `nonce` → `signInWithIdToken({ provider: 'apple', token, nonce })`. (Faza iOS.)
-- `db.signInGoogle()` (w `supabase.ts`) i ekran logowania rozgałęziają się po `isNativePlatform()`.
-- UI logowania: na iOS przycisk **Sign in with Apple + Google**; na Android **Google**.
-  (Apple Sign-In wymagany przez App Store Guideline 4.8, bo oferujemy Google.)
+- **`db.signInGoogle()`** (w `supabase.ts`) rozgałęzia się po `isNativePlatform()` —
+  na natywce woła `signInGoogleNative()`. Dzięki temu istniejący przycisk Google
+  w `Welcome.tsx` (`onSignIn('google')`) działa bez zmian w komponencie.
+- **Apple (faza iOS):** do `Welcome.tsx` dochodzi przycisk **Sign in with Apple**,
+  widoczny tylko na iOS (np. `isNativePlatform() && isIOS()`). Wymaga rozszerzenia
+  sygnatury `onSignIn` o tryb `'apple'` lub osobnego callbacku. Apple Sign-In jest
+  wymagany przez App Store Guideline 4.8, bo oferujemy Google.
+- **Fix guard in-app-browser:** `Welcome.tsx` ma `isInAppBrowser()`, który na iOS
+  zwraca `true`, gdy UA nie zawiera „safari" — natywny WKWebView Capacitora może go
+  błędnie odpalić i ukryć logowanie. Owinąć w `!isNativePlatform()`.
+- **Link do regulaminu:** `Welcome.tsx` linkuje `/terms.html` z `target="_blank"`.
+  Zweryfikować zachowanie w WebView; w razie potrzeby otwierać przez `@capacitor/browser`.
+- **„Przeglądaj jako gość"** (`onSignIn('skip')`) zostaje na natywce bez zmian.
 - Storage sesji: Supabase domyślnie `localStorage`; na natywce rozważyć adapter na
   `@capacitor/preferences` dla trwałości — **decyzja w planie** (jeśli `localStorage`
   WebView jest stabilny, zostaje domyślny, by nie ryzykować regresji weba).
@@ -168,7 +184,8 @@ Event/wiadomość -> trigger -> edge function -> lista adresatów
   login Apple+Google (iOS), otrzymanie pusha i deep-link, prompt lokalizacji,
   splash/ikona/status bar, back button (Android).
 - **Regresja web:** istniejące testy + szybki smoke weba (login + push) — natywne
-  gałęzie nie mogą ruszyć ścieżki webowej.
+  gałęzie nie mogą ruszyć ścieżki webowej. W szczególności web nadal pokazuje pełny
+  `Landing.tsx`, a nie `Welcome.tsx` (rozgałęzienie `isNativePlatform()` w `App.tsx`).
 
 ## Poza zakresem (YAGNI)
 
