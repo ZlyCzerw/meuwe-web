@@ -16,7 +16,6 @@ function ProfilePanel({
   session,
   profile,
   onSignOut,
-  onSignIn,
   reloadProfile,
   onOpenMyEvents,
   onOpenFollowedEvents,
@@ -28,7 +27,6 @@ function ProfilePanel({
   session: Session | null
   profile: Profile | null
   onSignOut: () => void
-  onSignIn: () => void
   reloadProfile: () => void
   onOpenMyEvents: () => void
   onOpenFollowedEvents: () => void
