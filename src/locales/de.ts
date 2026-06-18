@@ -114,7 +114,7 @@ const de: Resources = {
     copied: 'Kopiert!',
     hint: 'Füge den Link in die Safari-Adressleiste ein',
   },
-  auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen' },
+  auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen', chatPrompt: 'Nur angemeldete Nutzer können Nachrichten schreiben' },
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
   follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },

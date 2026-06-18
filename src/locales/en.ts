@@ -114,7 +114,7 @@ const en: Resources = {
     copied: 'Copied!',
     hint: 'Paste the link in the Safari address bar',
   },
-  auth: { createEventPrompt: 'Only logged-in users can add events' },
+  auth: { createEventPrompt: 'Only logged-in users can add events', chatPrompt: 'Only logged-in users can write messages' },
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
   follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'follows this', followThis: 'follow this', othersFollowOne: 'and {{count}} other follows', othersFollowMany: 'and {{count}} others follow' },

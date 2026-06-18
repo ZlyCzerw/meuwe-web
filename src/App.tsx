@@ -47,7 +47,7 @@ export default function App() {
   const [locationPicked, setLocationPicked] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
   const [editingEvent, setEditingEvent] = useState<EventWithMeta | null>(null)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModal, setAuthModal] = useState<'event' | 'chat' | null>(null)
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
@@ -63,7 +63,7 @@ export default function App() {
   const navStateRef = useRef({ screen, myEventSelected, followedEventSelected })
   const navRestoredRef = useRef(false)
   const navLayersRef = useRef({
-    authModalOpen,
+    authModal,
     selEvent,
     myEventSelected,
     followedEventSelected,
@@ -75,7 +75,7 @@ export default function App() {
   useEffect(() => {
     navStateRef.current = { screen, myEventSelected, followedEventSelected }
     navLayersRef.current = {
-      authModalOpen,
+      authModal,
       selEvent,
       myEventSelected,
       followedEventSelected,
@@ -83,13 +83,13 @@ export default function App() {
       profileOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModalOpen, selEvent, createOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, selEvent, createOpen, profileOpen])
 
   useEffect(() => {
     function onPopState() {
       const s = navLayersRef.current
       // Zamknij najwyższą otwartą warstwę
-      if (s.authModalOpen) { setAuthModalOpen(false); return }
+      if (s.authModal) { setAuthModal(null); return }
       if (s.selEvent || s.myEventSelected || s.followedEventSelected) {
         setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
         return
@@ -384,7 +384,7 @@ export default function App() {
             window.history.pushState({ layer: 'event' }, '')
           }
         }}
-        onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
+        onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         initialZoom={initialMapZoom}
@@ -423,7 +423,8 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(myEventSelected.lat, myEventSelected.lng)}
-          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
+          onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
+          onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
         />
       )}
@@ -435,7 +436,8 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(followedEventSelected.lat, followedEventSelected.lng)}
-          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
+          onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
+          onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
         />
       )}
@@ -447,7 +449,8 @@ export default function App() {
           profile={profile}
           userPos={userPos}
           onLocate={() => flyToFnRef.current?.(selEvent.lat, selEvent.lng)}
-          onAuthNeeded={() => { setAuthModalOpen(true); window.history.pushState({ layer: 'auth' }, '') }}
+          onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
+          onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
         />
       )}
@@ -509,7 +512,7 @@ export default function App() {
         followedUnread={unread.hasFollowed}
       />
       <ConfettiBurst visible={showConfetti} />
-      {authModalOpen && (
+      {authModal && (
         <div
           onClick={() => window.history.back()}
           style={{
@@ -536,11 +539,11 @@ export default function App() {
               <span style={{ color: C.grass }}>we</span>
             </div>
             <p style={{ margin: 0, fontFamily: F.body, fontWeight: 600, fontSize: 16, color: C.ink, lineHeight: 1.5, maxWidth: 260 }}>
-              {t('auth.createEventPrompt')}
+              {authModal === 'chat' ? t('auth.chatPrompt') : t('auth.createEventPrompt')}
             </p>
             <button
               onClick={() => {
-                setAuthModalOpen(false)
+                setAuthModal(null)
                 db.trackClick('signin_google')
                 if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
                 db.signInGoogle()
