@@ -433,7 +433,7 @@ function EventSheet({
 
                   {/* Chat teaser (half only) — tap to expand to full */}
                   {!isFull && (
-                    <button onClick={() => { if (!session) { onClose(); onChatAuthNeeded?.(); window.history.pushState({ layer: 'auth' }, '') } else { setSnap('full') } }} style={{ width: '100%', padding: '14px 16px', borderRadius: 20, background: C.cream, border: `2px solid ${INK}22`, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80 }}>
+                    <button onClick={() => { if (!session) { onChatAuthNeeded?.(); window.history.pushState({ layer: 'auth' }, '') } else { setSnap('full') } }} style={{ width: '100%', padding: '14px 16px', borderRadius: 20, background: C.cream, border: `2px solid ${INK}22`, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', marginBottom: 80 }}>
                       {messages.length > 0 && (
                         <div style={{ display: 'flex', marginRight: -4 }}>
                           {[...new Map(messages.map(m => [m.author_id, m.author_color])).values()].slice(0, 3).map((color, i) => (
