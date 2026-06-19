@@ -1,4 +1,6 @@
 import type { Lang } from './types'
+import { isNativePlatform } from './platform'
+import { Geolocation } from '@capacitor/geolocation'
 
 export function haversineKm(lat1:number,lng1:number,lat2:number,lng2:number):number {
   const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180
@@ -17,7 +19,15 @@ export function countryToLang(code:string):Lang {
   return 'en'
 }
 
-export function getCurrentPosition():Promise<{lat:number;lng:number}|null> {
+export async function getCurrentPosition():Promise<{lat:number;lng:number}|null> {
+  if (isNativePlatform()) {
+    try {
+      const perm = await Geolocation.requestPermissions()
+      if (perm.location === 'denied') return null
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude }
+    } catch { return null }
+  }
   return new Promise(resolve=>{
     if(!navigator.geolocation) return resolve(null)
     navigator.geolocation.getCurrentPosition(
