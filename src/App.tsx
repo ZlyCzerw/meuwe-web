@@ -171,11 +171,12 @@ export default function App() {
     }
 
     if (isNativePlatform()) {
-      let watchId: string | null = null
-      Geolocation.watchPosition({ enableHighAccuracy: false, timeout: 8000 }, (p) => {
-        if (p) onPos(p.coords.latitude, p.coords.longitude)
-      }).then(id => { watchId = id })
-      return () => { if (watchId) Geolocation.clearWatch({ id: watchId }) }
+      const watchPromise = Geolocation.watchPosition(
+        { enableHighAccuracy: false, timeout: 8000 },
+        (p) => { if (p) onPos(p.coords.latitude, p.coords.longitude) },
+      )
+      watchPromise.catch(() => {})
+      return () => { watchPromise.then(id => Geolocation.clearWatch({ id })).catch(() => {}) }
     }
 
     if (!navigator.geolocation) return
