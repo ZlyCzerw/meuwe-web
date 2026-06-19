@@ -511,12 +511,14 @@ import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 
 Add near the top of the file (after imports):
 ```ts
-async function saveFcmToken(userId: string, token: string): Promise<void> {
-  const { error } = await supabase.from('push_devices').upsert(
-    { user_id: userId, fcm_token: token, platform: isAndroid() ? 'android' : 'ios', updated_at: new Date().toISOString() },
-    { onConflict: 'fcm_token' },
-  )
-  if (error) console.error('[push] saveFcmToken failed:', error)
+async function saveFcmToken(_userId: string, token: string): Promise<void> {
+  // Use the SECURITY DEFINER RPC (not a direct upsert) so a token previously
+  // owned by another account on this device is reassigned to the current user.
+  const { error } = await supabase.rpc('register_push_device', {
+    p_fcm_token: token,
+    p_platform: isAndroid() ? 'android' : 'ios',
+  })
+  if (error) console.error('[push] register_push_device failed:', error)
 }
 
 export async function registerNativePush(userId: string): Promise<PushStatus> {
