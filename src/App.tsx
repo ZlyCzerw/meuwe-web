@@ -9,6 +9,7 @@ import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
 import { isNativePlatform } from './lib/platform'
+import { Geolocation } from '@capacitor/geolocation'
 import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
@@ -162,15 +163,26 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'map') return
     refineLangByGeo()
+
+    const onPos = (lat: number, lng: number) => {
+      const pos = { lat, lng }
+      try { localStorage.setItem('meuwe_last_pos', JSON.stringify(pos)) } catch {}
+      setUserPos(pos)
+    }
+
+    if (isNativePlatform()) {
+      let watchId: string | null = null
+      Geolocation.watchPosition({ enableHighAccuracy: false, timeout: 8000 }, (p) => {
+        if (p) onPos(p.coords.latitude, p.coords.longitude)
+      }).then(id => { watchId = id })
+      return () => { if (watchId) Geolocation.clearWatch({ id: watchId }) }
+    }
+
     if (!navigator.geolocation) return
     const watchId = navigator.geolocation.watchPosition(
-      p => {
-        const pos = { lat: p.coords.latitude, lng: p.coords.longitude }
-        try { localStorage.setItem('meuwe_last_pos', JSON.stringify(pos)) } catch {}
-        setUserPos(pos)
-      },
+      p => onPos(p.coords.latitude, p.coords.longitude),
       () => {},
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 },
     )
     return () => navigator.geolocation.clearWatch(watchId)
   }, [screen])
