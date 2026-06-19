@@ -5,8 +5,10 @@ import BlobFace from '../components/BlobFace'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
 import { db } from '../lib/supabase'
+import { isNativePlatform } from '../lib/platform'
 
 function isInAppBrowser(): boolean {
+  if (isNativePlatform()) return false
   const ua = navigator.userAgent
   // Android apps use Chrome Custom Tabs → Google accepts them → no block
   if (!/iphone|ipad|ipod/i.test(ua)) return false
