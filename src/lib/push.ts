@@ -1,8 +1,46 @@
 import { supabase } from './supabase'
+import { isNativePlatform, isAndroid } from './platform'
+import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 
 // Klucz publiczny VAPID — ustaw w .env jako VITE_VAPID_PUBLIC_KEY
 // Generujesz: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
+
+// ── Stan powiadomień ─────────────────────────────────────────────────────────
+
+export type PushStatus =
+  | 'unsupported'   // przeglądarka nie obsługuje Web Push
+  | 'denied'        // user zablokował
+  | 'subscribed'    // aktywna subskrypcja
+  | 'unsubscribed'  // obsługuje, ale nie zapisany
+
+// ── Native FCM helpers ────────────────────────────────────────────────────────
+
+async function saveFcmToken(token: string): Promise<void> {
+  // SECURITY DEFINER RPC (not a direct upsert) so a token previously owned by
+  // another account on this device is reassigned to the current user.
+  const { error } = await supabase.rpc('register_push_device', {
+    p_fcm_token: token,
+    p_platform: isAndroid() ? 'android' : 'ios',
+  })
+  if (error) console.error('[push] register_push_device failed:', error)
+}
+
+export async function registerNativePush(_userId: string): Promise<PushStatus> {
+  const perm = await FirebaseMessaging.requestPermissions()
+  if (perm.receive !== 'granted') return 'denied'
+
+  const { token } = await FirebaseMessaging.getToken()
+  if (!token) return 'unsubscribed'
+  await saveFcmToken(token)
+
+  // Token rotation
+  await FirebaseMessaging.removeAllListeners()
+  await FirebaseMessaging.addListener('tokenReceived', ({ token: t }) => {
+    if (t) saveFcmToken(t)
+  })
+  return 'subscribed'
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -16,6 +54,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 // ── Rejestracja Service Workera ───────────────────────────────────────────────
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (isNativePlatform()) return null
   if (!('serviceWorker' in navigator)) return null
   try {
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
@@ -26,15 +65,13 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 }
 
-// ── Stan powiadomień ─────────────────────────────────────────────────────────
-
-export type PushStatus =
-  | 'unsupported'   // przeglądarka nie obsługuje Web Push
-  | 'denied'        // user zablokował
-  | 'subscribed'    // aktywna subskrypcja
-  | 'unsubscribed'  // obsługuje, ale nie zapisany
+// ── Status powiadomień ────────────────────────────────────────────────────────
 
 export async function getPushStatus(): Promise<PushStatus> {
+  if (isNativePlatform()) {
+    const perm = await FirebaseMessaging.checkPermissions()
+    return perm.receive === 'granted' ? 'subscribed' : perm.receive === 'denied' ? 'denied' : 'unsubscribed'
+  }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return 'unsupported'
   }
@@ -53,6 +90,8 @@ export async function getPushStatus(): Promise<PushStatus> {
 // ── Subskrypcja ───────────────────────────────────────────────────────────────
 
 export async function subscribePush(userId: string): Promise<PushStatus> {
+  if (isNativePlatform()) return registerNativePush(userId)
+
   if (!VAPID_PUBLIC_KEY) {
     console.error('[push] VITE_VAPID_PUBLIC_KEY not set')
     return 'unsupported'
@@ -103,6 +142,13 @@ export async function subscribePush(userId: string): Promise<PushStatus> {
 // ── Anulowanie subskrypcji ────────────────────────────────────────────────────
 
 export async function unsubscribePush(): Promise<void> {
+  if (isNativePlatform()) {
+    const { token } = await FirebaseMessaging.getToken().catch(() => ({ token: null as string | null }))
+    if (token) await supabase.from('push_devices').delete().eq('fcm_token', token)
+    await FirebaseMessaging.deleteToken().catch(() => {})
+    return
+  }
+
   const reg = await navigator.serviceWorker.getRegistration()
   if (!reg) return
 
