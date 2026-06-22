@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
+import { sendFcmToMany } from '../_shared/fcm.ts'
 import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -88,6 +89,28 @@ Deno.serve(async (req) => {
       VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT,
       admin
     )
+  }
+
+  // FCM fan-out — native devices
+  const { data: devices } = await admin
+    .from('push_devices')
+    .select('fcm_token, user_id')
+    .in('user_id', enabledRecipients)
+  if (devices && devices.length > 0) {
+    const fcmGroups = new Map<Lang, string[]>()
+    for (const d of devices as { fcm_token: string; user_id: string }[]) {
+      const lang = langByUser.get(d.user_id) ?? 'en'
+      const arr = fcmGroups.get(lang) ?? []
+      arr.push(d.fcm_token)
+      fcmGroups.set(lang, arr)
+    }
+    for (const [lang, tokens] of fcmGroups) {
+      await sendFcmToMany(
+        tokens,
+        { title: eventTitle, body: NOTIF_TEXT.update.body![lang], type: 'update', eventId },
+        admin,
+      )
+    }
   }
 
   return new Response(JSON.stringify({ sent: subs.length }), { status: 200 })
