@@ -244,6 +244,16 @@ Add to the `plugins` block:
 ```
 (`skipNativeAuth` is passed per-call as `true`; this global stays default. Apple added in iOS plan.)
 
+- [ ] **Step 2b: Add the Google provider native dependency**
+
+`@capacitor-firebase/authentication` needs `play-services-auth` for the Google provider
+(`com.google.android.gms.auth.api.signin.GoogleSignIn`); without it the app crashes at
+`Bridge.<init>` on launch with `ClassNotFoundException`. In `android/app/build.gradle`,
+inside the `dependencies { }` block, add:
+```
+    implementation "com.google.android.gms:play-services-auth:21.2.0"
+```
+
 - [ ] **Step 3: Add Google Services Gradle plugin**
 
 In `android/build.gradle` under `dependencies` of `buildscript`:
