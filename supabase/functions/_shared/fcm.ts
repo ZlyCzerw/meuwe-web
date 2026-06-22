@@ -24,6 +24,21 @@ export function buildFcmMessage(token: string, p: FcmPayload): FcmMessage {
 interface ServiceAccount { client_email: string; private_key: string; project_id: string }
 
 let cachedToken: { value: string; exp: number } | null = null
+let cachedSa: ServiceAccount | null = null
+
+/** Parse the service account from env once. Returns null if unset or malformed. */
+function loadServiceAccount(): ServiceAccount | null {
+  if (cachedSa) return cachedSa
+  const raw = Deno.env.get('FCM_SERVICE_ACCOUNT_JSON')
+  if (!raw) { console.error('[fcm] FCM_SERVICE_ACCOUNT_JSON not set'); return null }
+  try {
+    cachedSa = JSON.parse(raw) as ServiceAccount
+    return cachedSa
+  } catch (e) {
+    console.error('[fcm] FCM_SERVICE_ACCOUNT_JSON is not valid JSON:', e)
+    return null
+  }
+}
 
 async function getAccessToken(sa: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
@@ -47,7 +62,7 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
       assertion,
     }),
   })
-  if (!res.ok) throw new Error(`FCM token exchange failed: ${res.status}`)
+  if (!res.ok) throw new Error(`FCM token exchange failed: ${res.status} ${(await res.text()).slice(0, 200)}`)
   const json = await res.json()
   cachedToken = { value: json.access_token, exp: now + (json.expires_in ?? 3600) }
   return cachedToken.value
@@ -62,9 +77,8 @@ export async function sendFcmToMany(
   payload: FcmPayload,
   admin: { from: (t: string) => any },
 ): Promise<number> {
-  const raw = Deno.env.get('FCM_SERVICE_ACCOUNT_JSON')
-  if (!raw) { console.error('[fcm] FCM_SERVICE_ACCOUNT_JSON not set'); return 0 }
-  const sa: ServiceAccount = JSON.parse(raw)
+  const sa = loadServiceAccount()
+  if (!sa) return 0
   const accessToken = await getAccessToken(sa)
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`
 
