@@ -26,6 +26,14 @@ async function saveFcmToken(token: string): Promise<void> {
   if (error) console.error('[push] register_push_device failed:', error)
 }
 
+export async function registerNativePushTapHandler(navigateToEvent: (eventId: string) => void): Promise<void> {
+  if (!isNativePlatform()) return
+  await FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+    const data = (event.notification?.data ?? {}) as Record<string, string>
+    if (data.eventId) navigateToEvent(data.eventId)
+  })
+}
+
 export async function registerNativePush(_userId: string): Promise<PushStatus> {
   const perm = await FirebaseMessaging.requestPermissions()
   if (perm.receive !== 'granted') return 'denied'

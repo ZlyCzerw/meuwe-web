@@ -4,7 +4,7 @@ import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
 import { refineLangByGeo } from './lib/i18n'
-import { registerServiceWorker, refreshPushSubscription } from './lib/push'
+import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler } from './lib/push'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
@@ -202,6 +202,13 @@ export default function App() {
           refreshPushSubscription(session.user.id)
         }
       })
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Register native FCM tap handler — opens event when user taps a notification
+  useEffect(() => {
+    registerNativePushTapHandler((eventId) => {
+      db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
