@@ -1,6 +1,7 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm } from './geo'
+import { isNativePlatform } from './platform'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -16,7 +17,13 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 })
 
 export const db = {
-  signInGoogle() { return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } }) },
+  signInGoogle() {
+    if (isNativePlatform()) {
+      // native: dynamic import keeps the Firebase plugin out of the web bundle
+      return import('./nativeAuth').then(m => m.signInGoogleNative())
+    }
+    return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } })
+  },
   signOut() { return supabase.auth.signOut() },
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
   async getSession() { const {data}=await supabase.auth.getSession(); return data.session },
