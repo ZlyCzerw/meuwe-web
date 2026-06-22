@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "214987247849",
+    "project_id": "meuwe-e2d12",
+    "storage_bucket": "meuwe-e2d12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214987247849:android:137ca0262b398595d82078",
+        "android_client_info": {
+          "package_name": "eu.meuwe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "214987247849-lsau6p5iha44mi250sn70ga416u5ts30.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "eu.meuwe",
+            "certificate_hash": "520588cf503c62101c47888e0f63f22a14aef784"
+          }
+        },
+        {
+          "client_id": "214987247849-nou9d2858v8hj63dfdobvevbnc5fdjj2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbKfeAqjyJLGo3TUCp_0Wfc7RdinrB-Ow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "214987247849-nou9d2858v8hj63dfdobvevbnc5fdjj2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
