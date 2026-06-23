@@ -298,7 +298,8 @@ function MapScreen({
       {!pickingLocation && (
         <div style={{
           position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10,
-          display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 8, padding: '0 16px',
         }}>
           {/* All — clears every filter */}
           <button
