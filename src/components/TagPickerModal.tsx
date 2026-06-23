@@ -8,18 +8,21 @@ export default function TagPickerModal({
   selected,
   onChange,
   onClose,
+  anchor = 'bottom',
 }: {
   selected: string[]
   onChange: (tags: string[]) => void
   onClose: () => void
+  anchor?: 'top' | 'bottom'
 }) {
   const { t } = useTranslation()
+  const top = anchor === 'top'
   const [custom, setCustom] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
 
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => { if (!top) inputRef.current?.focus() }, [top])
   useEffect(() => { db.getTags().then(setSuggestions) }, [])
 
   function toggle(tag: string) {
@@ -48,18 +51,25 @@ export default function TagPickerModal({
 
       {/* Sheet */}
       <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 201,
-        background: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        boxShadow: '0 -8px 32px rgba(45,43,42,0.14)',
+        position: 'fixed', left: 0, right: 0, zIndex: 201,
+        background: '#fff',
         maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-        animation: 'slideUp 260ms cubic-bezier(0.32,1.4,0.4,1)',
+        ...(top
+          ? { top: 0, borderBottomLeftRadius: 32, borderBottomRightRadius: 32,
+              boxShadow: '0 8px 32px rgba(45,43,42,0.14)',
+              animation: 'slideDown 260ms cubic-bezier(0.32,1.4,0.4,1)' }
+          : { bottom: 0, borderTopLeftRadius: 32, borderTopRightRadius: 32,
+              boxShadow: '0 -8px 32px rgba(45,43,42,0.14)',
+              animation: 'slideUp 260ms cubic-bezier(0.32,1.4,0.4,1)' }),
       }}>
-        {/* Handle */}
-        <div style={{
-          width: 40, height: 4, borderRadius: 999,
-          background: '#DDD5C8', margin: '12px auto 4px',
-          flexShrink: 0,
-        }} />
+        {/* Handle — only for the bottom sheet (a top sheet's grab edge is its bottom) */}
+        {!top && (
+          <div style={{
+            width: 40, height: 4, borderRadius: 999,
+            background: '#DDD5C8', margin: '12px auto 4px',
+            flexShrink: 0,
+          }} />
+        )}
 
         {/* Header */}
         <div style={{
