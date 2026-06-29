@@ -7,6 +7,8 @@ import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { resolvePhotoUrls, type PhotoSlot } from '../lib/photoSlots'
 import type { EventWithMeta } from '../lib/types'
+import { isNativePlatform } from '../lib/platform'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
 const QUICK_TAGS = ['party', 'outdoor', 'sport', 'food', 'music', 'art']
 
@@ -61,6 +63,30 @@ function CreateSheet({
   const [err, setErr] = useState('')
   const [tagModalOpen, setTagModalOpen] = useState(false)
   const [photos, setPhotos] = useState<PhotoSlot[]>([null, null, null])
+
+  async function takePhotoNative() {
+    try {
+      const result = await Camera.getPhoto({
+        source: CameraSource.Camera,
+        resultType: CameraResultType.DataUrl,
+        quality: 85,
+        allowEditing: false,
+      })
+      if (!result.dataUrl) return
+      const res = await fetch(result.dataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' })
+      if (file.size > 6 * 1024 * 1024) { setErr(t('create.photoSizeError')); return }
+      setErr('')
+      const preview = URL.createObjectURL(file)
+      setPhotos(prev => {
+        const next = [...prev]
+        const emptyIdx = next.findIndex(s => s === null)
+        if (emptyIdx !== -1) next[emptyIdx] = { kind: 'new', file, preview }
+        return next
+      })
+    } catch { /* user cancelled */ }
+  }
   const prefilledIdRef = useRef<string | null>(null)
   const [startTime, setStartTime] = useState<string>(
     () => toLocalDT(new Date())
@@ -526,27 +552,31 @@ function CreateSheet({
 
             {/* Camera button — hidden when all 3 slots filled */}
             {photos.filter(p => p !== null).length < 3 && (
-              <label style={{ cursor: 'pointer', display: 'block', flexShrink: 0 }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  style={{ display: 'none' }}
-                  onChange={e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    if (file.size > 6 * 1024 * 1024) { setErr(t('create.photoSizeError')); e.target.value = ''; return }
-                    setErr('')
-                    const preview = URL.createObjectURL(file)
-                    setPhotos(prev => {
-                      const next = [...prev]
-                      const emptyIdx = next.findIndex(s => s === null)
-                      if (emptyIdx !== -1) next[emptyIdx] = { kind: 'new', file, preview }
-                      return next
-                    })
-                    e.target.value = ''
-                  }}
-                />
+              <label style={{ cursor: 'pointer', display: 'block', flexShrink: 0 }}
+                onClick={isNativePlatform() ? (e) => { e.preventDefault(); takePhotoNative() } : undefined}
+              >
+                {!isNativePlatform() && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 6 * 1024 * 1024) { setErr(t('create.photoSizeError')); e.target.value = ''; return }
+                      setErr('')
+                      const preview = URL.createObjectURL(file)
+                      setPhotos(prev => {
+                        const next = [...prev]
+                        const emptyIdx = next.findIndex(s => s === null)
+                        if (emptyIdx !== -1) next[emptyIdx] = { kind: 'new', file, preview }
+                        return next
+                      })
+                      e.target.value = ''
+                    }}
+                  />
+                )}
                 <div style={{
                   width: 48, height: 48,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
