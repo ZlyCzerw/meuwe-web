@@ -41,7 +41,7 @@ export function LandingFooter() {
             <h4>{t('landing.footer.legal')}</h4>
             <ul>
               <li><a href="/terms.html">{t('landing.footer.terms')}</a></li>
-              <li><a href="#">{t('landing.footer.privacy')}</a></li>
+              <li><a href="/privacy.html">{t('landing.footer.privacy')}</a></li>
               <li><a href="#">{t('landing.footer.cookies')}</a></li>
             </ul>
           </div>
