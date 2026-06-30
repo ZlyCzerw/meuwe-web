@@ -16,7 +16,6 @@ export function LandingFooter() {
             <span style={{ color: C.sky }}>u</span>
             <span style={{ color: C.grass }}>we</span>
           </div>
-          <div className="lp-footer-tagline">{t('landing.footer.tagline')}</div>
         </div>
 
         <div className="lp-footer-cols">
@@ -34,7 +33,7 @@ export function LandingFooter() {
             <ul>
               <li><a href="#">{t('landing.footer.about')}</a></li>
               <li><a href="/blog" onClick={e => { e.preventDefault(); navigate('/blog') }}>Blog</a></li>
-              <li><a href="#">{t('landing.footer.contact')}</a></li>
+              <li><a href="mailto:meuweteam@gmail.com">{t('landing.footer.contact')}</a></li>
             </ul>
           </div>
           <div className="lp-footer-col">

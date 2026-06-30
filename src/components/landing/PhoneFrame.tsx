@@ -201,22 +201,22 @@ function CreateScreen() {
 
 export function PhoneFrame({ variant, screenshot, alt }: { variant: PhoneVariant; screenshot?: string; alt?: string }) {
   return (
-    <div style={{
-      width: 260, height: 524,
-      borderRadius: 36,
+    <div className="lp-phone-frame" style={{
+      width: 325, height: 655,
+      borderRadius: 45,
       border: '3px solid #2D2B2A',
-      boxShadow: '8px 8px 0 #2D2B2A',
+      boxShadow: '10px 10px 0 #2D2B2A',
       overflow: 'hidden',
       position: 'relative',
       flexShrink: 0,
       background: '#fff',
     }}>
       {/* Notch */}
-      <div style={{
+      <div className="lp-phone-notch" style={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-        width: 72, height: 22,
+        width: 90, height: 28,
         background: '#2D2B2A',
-        borderRadius: '0 0 14px 14px',
+        borderRadius: '0 0 18px 18px',
         zIndex: 10,
       }} />
       {screenshot

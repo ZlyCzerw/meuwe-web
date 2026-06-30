@@ -19,7 +19,7 @@ export function HowItWorksSection() {
       <div className="lp-deco" style={{ width: 450, height: 450, background: C.primary, top: 100, right: -100, opacity: 0.11 }} />
       <div className="lp-deco" style={{ width: 250, height: 250, background: '#E91E63', bottom: 60, left: 100, opacity: 0.11 }} />
 
-      <div className="lp-section-inner">
+      <div className="lp-section-inner lp-section-inner--tight">
         <div className="lp-text-col">
           <span className="lp-eyebrow lp-anim lp-slide-left lp-delay-1">{t('landing.f2Eyebrow')}</span>
           <h2 className="lp-h2 lp-anim lp-slide-left lp-delay-2" style={{ whiteSpace: 'pre-line' }}>
