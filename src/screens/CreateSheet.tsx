@@ -17,6 +17,9 @@ function toLocalDT(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+const MS_3H = 3 * 3_600_000
+const MS_48H = 48 * 3_600_000
+
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
     const r = await fetch(
@@ -108,11 +111,36 @@ function CreateSheet({
     })
   }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
 
-  // Auto-set end time to start + 24h whenever start changes — create mode only.
-  useEffect(() => {
-    if (editEvent) return
-    setEndTime(toLocalDT(new Date(new Date(startTime).getTime() + 3 * 3_600_000)))
-  }, [startTime, editEvent]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Finalize the start field (create mode, on blur): empty → now; then keep the
+  // user's end but clamp it into [start, start+48h] (over → 48h ceiling, at/under
+  // start → +3h default). Preserves the end otherwise.
+  function commitStart(raw: string) {
+    const startMs = raw ? new Date(raw).getTime() : Date.now()
+    setStartTime(toLocalDT(new Date(startMs)))
+    if (endTime) {
+      const endMs = new Date(endTime).getTime()
+      if (endMs > startMs + MS_48H) setEndTime(toLocalDT(new Date(startMs + MS_48H)))
+      else if (endMs <= startMs) setEndTime(toLocalDT(new Date(startMs + MS_3H)))
+    }
+  }
+
+  // Finalize the end field (create mode, on blur): empty → start+3h; else clamp
+  // into (start, start+48h]. Base is the start, or now while start is cleared.
+  function commitEnd(raw: string) {
+    const base = startTime ? new Date(startTime).getTime() : Date.now()
+    let endMs = raw ? new Date(raw).getTime() : base + MS_3H
+    if (endMs > base + MS_48H) endMs = base + MS_48H
+    if (endMs <= base) endMs = base + MS_3H
+    setEndTime(toLocalDT(new Date(endMs)))
+  }
+
+  // Picker bounds (create mode only — edit mode keeps events that already started).
+  const isCreate = !editEvent
+  const nowLocal = toLocalDT(new Date())
+  const startMinLocal = isCreate ? nowLocal : undefined
+  const endBaseMs = startTime ? new Date(startTime).getTime() : Date.now()
+  const endMinLocal = isCreate ? (startTime || nowLocal) : startTime
+  const endMaxLocal = isCreate ? toLocalDT(new Date(endBaseMs + MS_48H)) : undefined
 
   // Prefill when entering edit mode. Keyed on editEvent.id and guarded so it runs
   // once per event — it must NOT re-run after the location-picker round-trip (the
@@ -152,13 +180,21 @@ function CreateSheet({
     if (!title.trim() || submitting) return
     setSubmitting(true)
     setErr('')
-    const start = new Date(startTime)
-    const end = new Date(endTime)
-    if (end <= start) {
+    // Normalize times. Create mode: fill blanks (start→now, end→start+3h) and
+    // clamp the end into the [start, start+48h] window. Edit mode keeps its values.
+    const startMs = startTime ? new Date(startTime).getTime() : Date.now()
+    let endMs = endTime ? new Date(endTime).getTime() : startMs + MS_3H
+    if (!editEvent) {
+      if (endMs > startMs + MS_48H) endMs = startMs + MS_48H
+      if (endMs <= startMs) endMs = startMs + MS_3H
+    }
+    if (endMs <= startMs) {
       setErr(t('create.timeError'))
       setSubmitting(false)
       return
     }
+    const startISO = new Date(startMs).toISOString()
+    const endISO = new Date(endMs).toISOString()
     // Upload new photos, keep existing URLs, preserve slot order.
     let photoUrls: string[]
     try {
@@ -178,8 +214,8 @@ function CreateSheet({
         lng: pos.lng,
         category: tags[0] || 'party',
         tags,
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
+        start_time: startISO,
+        end_time: endISO,
         photos: photoUrls,
       })
       setSubmitting(false)
@@ -199,8 +235,8 @@ function CreateSheet({
       lng: pos.lng,
       tags,
       category: tags[0] || 'party',
-      start_time: new Date(startTime).toISOString(),
-      end_time: new Date(endTime).toISOString(),
+      start_time: startISO,
+      end_time: endISO,
       photos: photoUrls,
       is_private: isPrivate,
     })
@@ -408,7 +444,9 @@ function CreateSheet({
                 <input
                   type="datetime-local"
                   value={startTime}
+                  min={startMinLocal}
                   onChange={e => setStartTime(e.target.value)}
+                  onBlur={() => { if (isCreate) commitStart(startTime) }}
                   style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>
@@ -417,8 +455,10 @@ function CreateSheet({
                 <input
                   type="datetime-local"
                   value={endTime}
-                  min={startTime}
+                  min={endMinLocal}
+                  max={endMaxLocal}
                   onChange={e => setEndTime(e.target.value)}
+                  onBlur={() => { if (isCreate) commitEnd(endTime) }}
                   style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>
