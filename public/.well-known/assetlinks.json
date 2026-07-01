@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "eu.meuwe",
+      "sha256_cert_fingerprints": [
+        "48:1C:46:02:76:DB:8A:A6:57:2E:4E:D5:27:E9:CE:DF:5E:95:B9:57:AF:AE:95:F1:FB:B8:34:B8:51:F3:07:48"
+      ]
+    }
+  }
+]

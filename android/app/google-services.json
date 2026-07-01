@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "214987247849-0nviqgufn7apv6qpikc49h7b4if2k1d3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "eu.meuwe",
+            "certificate_hash": "dfa501e971972194514b1896c8d4c6726ef8fe57"
+          }
+        },
+        {
+          "client_id": "214987247849-ivs91nh0d3d6jeub7gnq3m1hij4sn0hq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "eu.meuwe",
+            "certificate_hash": "c5b3288f1bdd6303258a58d9d34a1228e78a5fea"
+          }
+        },
+        {
+          "client_id": "214987247849-l6t5s54jg362p8j0n7i21du36u1v9tk4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "eu.meuwe",
+            "certificate_hash": "eb37bc78ed50c3f686ebf47dcc48911f72b756d4"
+          }
+        },
+        {
           "client_id": "214987247849-lsau6p5iha44mi250sn70ga416u5ts30.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
