@@ -38,6 +38,41 @@ export async function getCurrentPosition():Promise<{lat:number;lng:number}|null>
   })
 }
 
+// Production web origin — used only by native builds, whose runtime origin is
+// capacitor://localhost. Web builds call the same-origin relative path.
+const WEB_ORIGIN = 'https://meuwe.eu'
+
+export type IpGeo = { lat: number; lng: number; country: string }
+
+// Parse the /api/geo response. Returns null unless finite lat/lng are present.
+export function parseIpGeo(data: unknown): IpGeo | null {
+  if (!data || typeof data !== 'object') return null
+  const d = data as Record<string, unknown>
+  const lat = typeof d.lat === 'number' ? d.lat : Number(d.lat)
+  const lng = typeof d.lng === 'number' ? d.lng : Number(d.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  const country = typeof d.country === 'string' ? d.country.toUpperCase() : ''
+  return { lat, lng, country }
+}
+
+// Coarse IP-based location from our Cloudflare Pages Function. Non-blocking,
+// short timeout, null on any failure. Web uses the same-origin path; native uses
+// the absolute production URL (its own origin is capacitor://localhost).
+export async function getIpLocation(): Promise<IpGeo | null> {
+  const url = (isNativePlatform() ? WEB_ORIGIN : '') + '/api/geo'
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 2500)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    if (!res.ok) return null
+    return parseIpGeo(await res.json())
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function reverseGeocodeCountry(lat:number,lng:number):Promise<string|null> {
   try {
     const url=`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=3`
