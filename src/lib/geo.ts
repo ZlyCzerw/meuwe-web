@@ -24,7 +24,7 @@ export async function getCurrentPosition():Promise<{lat:number;lng:number}|null>
     try {
       const perm = await Geolocation.requestPermissions()
       if (perm.location === 'denied') return null
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 })
       return { lat: pos.coords.latitude, lng: pos.coords.longitude }
     } catch { return null }
   }
@@ -33,7 +33,7 @@ export async function getCurrentPosition():Promise<{lat:number;lng:number}|null>
     navigator.geolocation.getCurrentPosition(
       p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
       ()=>resolve(null),
-      { enableHighAccuracy:false, timeout:8000, maximumAge:30000 }
+      { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }
     )
   })
 }

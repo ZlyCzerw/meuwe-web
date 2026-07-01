@@ -172,7 +172,7 @@ export default function App() {
 
     if (isNativePlatform()) {
       const watchPromise = Geolocation.watchPosition(
-        { enableHighAccuracy: false, timeout: 8000 },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 },
         (p) => { if (p) onPos(p.coords.latitude, p.coords.longitude) },
       )
       watchPromise.catch(() => {})
@@ -183,7 +183,7 @@ export default function App() {
     const watchId = navigator.geolocation.watchPosition(
       p => onPos(p.coords.latitude, p.coords.longitude),
       () => {},
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     )
     return () => navigator.geolocation.clearWatch(watchId)
   }, [screen])
