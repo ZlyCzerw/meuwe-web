@@ -111,36 +111,51 @@ function CreateSheet({
     })
   }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
 
-  // Finalize the start field (create mode, on blur): empty → now; then keep the
-  // user's end but clamp it into [start, start+48h] (over → 48h ceiling, at/under
-  // start → +3h default). Preserves the end otherwise.
-  function commitStart(raw: string) {
-    const startMs = raw ? new Date(raw).getTime() : Date.now()
-    setStartTime(toLocalDT(new Date(startMs)))
-    if (endTime) {
-      const endMs = new Date(endTime).getTime()
-      if (endMs > startMs + MS_48H) setEndTime(toLocalDT(new Date(startMs + MS_48H)))
-      else if (endMs <= startMs) setEndTime(toLocalDT(new Date(startMs + MS_3H)))
-    }
+  // Normalize start/end to satisfy every rule (create + edit). Single source of
+  // truth, shared by the blur handlers and submit:
+  // - start never in the past: floored at now (create / upcoming) or at the event's
+  //   original start (edit, already started) — can move forward, never backward;
+  // - end must be after now AND after start (no event lives entirely in the past);
+  // - duration capped at 48h; cleared fields fall back to sensible defaults.
+  function normalizeTimes(startRaw: string, endRaw: string): { startMs: number; endMs: number } {
+    const now = Date.now()
+    const origStart = editEvent ? new Date(editEvent.start_time).getTime() : now
+    const startFloor = editEvent ? Math.min(now, origStart) : now
+
+    let startMs = startRaw ? new Date(startRaw).getTime() : (editEvent ? origStart : now)
+    if (!Number.isFinite(startMs) || startMs < startFloor) startMs = startFloor
+
+    const endLo = Math.max(startMs, now)       // after start and after now
+    const endHi = startMs + MS_48H             // ≤ 48h duration
+    const endDefault = Math.min(endHi, endLo + MS_3H)
+    let endMs = endRaw ? new Date(endRaw).getTime() : endDefault
+    if (!Number.isFinite(endMs) || endMs < endLo || endMs <= startMs) endMs = endDefault
+    if (endMs > endHi) endMs = endHi
+    return { startMs, endMs }
   }
 
-  // Finalize the end field (create mode, on blur): empty → start+3h; else clamp
-  // into (start, start+48h]. Base is the start, or now while start is cleared.
+  // On blur, commit the normalized pair back to both inputs (idempotent when the
+  // values are already valid, so a valid user-chosen end is preserved).
+  function commitStart(raw: string) {
+    const { startMs, endMs } = normalizeTimes(raw, endTime)
+    setStartTime(toLocalDT(new Date(startMs)))
+    setEndTime(toLocalDT(new Date(endMs)))
+  }
   function commitEnd(raw: string) {
-    const base = startTime ? new Date(startTime).getTime() : Date.now()
-    let endMs = raw ? new Date(raw).getTime() : base + MS_3H
-    if (endMs > base + MS_48H) endMs = base + MS_48H
-    if (endMs <= base) endMs = base + MS_3H
+    const { startMs, endMs } = normalizeTimes(startTime, raw)
+    setStartTime(toLocalDT(new Date(startMs)))
     setEndTime(toLocalDT(new Date(endMs)))
   }
 
-  // Picker bounds (create mode only — edit mode keeps events that already started).
-  const isCreate = !editEvent
-  const nowLocal = toLocalDT(new Date())
-  const startMinLocal = isCreate ? nowLocal : undefined
-  const endBaseMs = startTime ? new Date(startTime).getTime() : Date.now()
-  const endMinLocal = isCreate ? (startTime || nowLocal) : startTime
-  const endMaxLocal = isCreate ? toLocalDT(new Date(endBaseMs + MS_48H)) : undefined
+  // Picker bounds (create + edit). Start floored so it can't move into the past;
+  // end must be after now and start, and within 48h of start.
+  const nowMs = Date.now()
+  const origStartMs = editEvent ? new Date(editEvent.start_time).getTime() : nowMs
+  const startFloorMs = editEvent ? Math.min(nowMs, origStartMs) : nowMs
+  const startMinLocal = toLocalDT(new Date(startFloorMs))
+  const startBaseMs = startTime ? Math.max(new Date(startTime).getTime(), startFloorMs) : startFloorMs
+  const endMinLocal = toLocalDT(new Date(Math.max(startBaseMs, nowMs)))
+  const endMaxLocal = toLocalDT(new Date(startBaseMs + MS_48H))
 
   // Prefill when entering edit mode. Keyed on editEvent.id and guarded so it runs
   // once per event — it must NOT re-run after the location-picker round-trip (the
@@ -180,16 +195,12 @@ function CreateSheet({
     if (!title.trim() || submitting) return
     setSubmitting(true)
     setErr('')
-    // Normalize times. Create mode: fill blanks (start→now, end→start+3h) and
-    // clamp the end into the [start, start+48h] window. Edit mode keeps its values.
-    const startMs = startTime ? new Date(startTime).getTime() : Date.now()
-    let endMs = endTime ? new Date(endTime).getTime() : startMs + MS_3H
-    if (!editEvent) {
-      if (endMs > startMs + MS_48H) endMs = startMs + MS_48H
-      if (endMs <= startMs) endMs = startMs + MS_3H
-    }
-    if (endMs <= startMs) {
-      setErr(t('create.timeError'))
+    // Normalize times (start not in the past, end after now, ≤48h duration).
+    const { startMs, endMs } = normalizeTimes(startTime, endTime)
+    if (endMs <= Date.now()) {
+      // Impossible to satisfy (e.g. an event that started >48h ago): the end can't
+      // be both after now and within 48h of start. Ask the user to move start up.
+      setErr(t('create.pastError'))
       setSubmitting(false)
       return
     }
@@ -446,7 +457,7 @@ function CreateSheet({
                   value={startTime}
                   min={startMinLocal}
                   onChange={e => setStartTime(e.target.value)}
-                  onBlur={() => { if (isCreate) commitStart(startTime) }}
+                  onBlur={() => commitStart(startTime)}
                   style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>
@@ -458,7 +469,7 @@ function CreateSheet({
                   min={endMinLocal}
                   max={endMaxLocal}
                   onChange={e => setEndTime(e.target.value)}
-                  onBlur={() => { if (isCreate) commitEnd(endTime) }}
+                  onBlur={() => commitEnd(endTime)}
                   style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>

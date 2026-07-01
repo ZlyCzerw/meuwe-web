@@ -62,6 +62,7 @@ const de: Resources = {
     photoUploadError: 'Fehler beim Hochladen des Fotos',
     submitError: 'Ereignis konnte nicht erstellt werden. Bitte erneut versuchen.',
     timeError: 'Endzeit muss nach der Startzeit liegen',
+    pastError: 'Ein Event kann nicht in der Vergangenheit enden — verschiebe den Start nach vorne',
     tagsLabel: 'Tags',
     timeLabel: 'Zeit',
     timeNow: 'Jetzt',

@@ -60,6 +60,7 @@ const pl = {
     photoUploadError: 'Błąd przesyłania zdjęcia',
     submitError: 'Nie udało się utworzyć wydarzenia. Spróbuj ponownie.',
     timeError: 'Czas zakończenia musi być po czasie rozpoczęcia',
+    pastError: 'Wydarzenie nie może kończyć się w przeszłości — przesuń początek do przodu',
     tagsLabel: 'Tagi',
     timeLabel: 'Czas',
     timeNow: 'Teraz',

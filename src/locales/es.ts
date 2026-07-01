@@ -62,6 +62,7 @@ const es: Resources = {
     photoUploadError: 'Error al subir la foto',
     submitError: 'No se pudo crear el evento. Inténtalo de nuevo.',
     timeError: 'La hora de fin debe ser posterior a la de inicio',
+    pastError: 'Un evento no puede terminar en el pasado — adelanta el inicio',
     tagsLabel: 'Etiquetas',
     timeLabel: 'Hora',
     timeNow: 'Ahora',
