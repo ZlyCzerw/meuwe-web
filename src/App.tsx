@@ -20,6 +20,7 @@ import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
+import { getIpLocation } from './lib/geo'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -36,6 +37,7 @@ export default function App() {
     } catch {}
     return null
   })
+  const [ipPos, setIpPos] = useState<{ lat: number; lng: number } | null>(null)
   const [selEvent, setSelEvent] = useState<EventWithMeta | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -210,6 +212,21 @@ export default function App() {
     registerNativePushTapHandler((eventId) => {
       db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
     })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // First launch only (no cached position): fetch a coarse IP-based center so the
+  // map doesn't fall back to Warsaw while GPS warms up. Non-blocking; GPS overrides.
+  // The result is cached to meuwe_last_pos so later launches start warm.
+  useEffect(() => {
+    if (lastKnownPos) return
+    let cancelled = false
+    getIpLocation().then(res => {
+      if (cancelled || !res) return
+      const pos = { lat: res.lat, lng: res.lng }
+      setIpPos(pos)
+      try { localStorage.setItem('meuwe_last_pos', JSON.stringify(pos)) } catch {}
+    })
+    return () => { cancelled = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Aktualizuj lokalizację w profilu co 5 minut gdy zalogowany
@@ -407,6 +424,7 @@ export default function App() {
         onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
+        ipPos={ipPos}
         initialZoom={initialMapZoom}
         eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation && !isOverlay}

@@ -16,6 +16,7 @@ import SearchBar from './SearchBar'
 import TagPickerModal from '../components/TagPickerModal'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
+const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
 
 const DAYS_COUNT = 15         // yesterday + today + 13 future days (2 weeks forward)
 const TODAY_IDX  = 1          // index 1 = today
@@ -39,6 +40,7 @@ function MapScreen({
   onAuthNeeded,
   userPos,
   lastKnownPos,
+  ipPos,
   initialZoom = 15,
   pickingLocation,
   onLocationPicked,
@@ -55,6 +57,7 @@ function MapScreen({
   onAuthNeeded: () => void
   userPos: { lat: number; lng: number } | null
   lastKnownPos?: { lat: number; lng: number } | null
+  ipPos?: { lat: number; lng: number } | null
   initialZoom?: number
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
@@ -94,7 +97,7 @@ function MapScreen({
     setSelectedFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
   }
 
-  const eventsPos = mapCenter || userPos || lastKnownPos || WARSAW
+  const eventsPos = mapCenter || userPos || lastKnownPos || ipPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
   const visibleEvents = selectedFilters.length
@@ -149,7 +152,7 @@ function MapScreen({
     if (leafRef.current || !mapRef.current) return
     const initialPos = userPosRef.current
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([(initialPos || lastKnownPos || WARSAW).lat, (initialPos || lastKnownPos || WARSAW).lng], initialZoom)
+      .setView([(initialPos || lastKnownPos || ipPos || WARSAW).lat, (initialPos || lastKnownPos || ipPos || WARSAW).lng], initialZoom)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
@@ -218,6 +221,15 @@ function MapScreen({
     }
   }, [userPos])
 
+  // IP-based coarse center: apply once, before any GPS fix, without claiming a
+  // "real" center — so the first GPS fix still auto-centers (see centeredRef).
+  useEffect(() => {
+    const map = leafRef.current
+    if (!ipPos || !map) return
+    if (centeredRef.current || userPosRef.current) return
+    map.setView([ipPos.lat, ipPos.lng], IP_ZOOM, { animate: true })
+  }, [ipPos]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Pins — update on events change
   useEffect(() => {
     const map = leafRef.current
@@ -242,7 +254,7 @@ function MapScreen({
   }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function doRecenter() {
-    const p = userPos || lastKnownPos || WARSAW
+    const p = userPos || lastKnownPos || ipPos || WARSAW
     leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })
     setRecenter(false)
   }
@@ -562,7 +574,7 @@ function MapScreen({
             {/* Title row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
-                onClick={() => onLocationPicked?.(userPos || lastKnownPos || WARSAW)}
+                onClick={() => onLocationPicked?.(userPos || lastKnownPos || ipPos || WARSAW)}
                 style={{
                   width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
                   background: '#fff', border: `2px solid ${INK}22`,
