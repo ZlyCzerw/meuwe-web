@@ -1,5 +1,6 @@
 import type { RegionConfig } from '../types.ts'
 import { RZESZOW_VENUES } from './rzeszow-venues.ts'
+import { EbiletSource } from '../sources/ebilet.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -24,5 +25,8 @@ export const RZESZOW: RegionConfig = {
   },
   venues: RZESZOW_VENUES,
   precision: 'strict',
-  sources: [], // filled as sources land (ebilet, estrada, mgoktyczyn)
+  sources: [
+    // eBilet city landing pages (rzeszow, lancut, jasionka) → internal JSON API.
+    new EbiletSource(),
+  ],
 }
