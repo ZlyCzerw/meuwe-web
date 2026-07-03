@@ -29,4 +29,15 @@ describe('eRzeszow parseDetail', () => {
     expect(parsed.description).toContain('Toast Urodzinowy dla Tomasza Stańko')
     expect(parsed.imageUrl).toBe('https://erzeszow.pl/static/img/k01/estrada/min/3-lipca.png')
   })
+
+  it('does not treat ticketing instructions as a venue', () => {
+    const parsed = parseDetail(`
+      <div id="akapitBody">
+        <p><strong>10 lipca 2026 | godz. 18:00</strong><br>
+        <strong>Bilety w cenie 30 zł dostępne online lub w kasie biletowej.</strong></p>
+      </div>
+    `)
+    expect(parsed.startHour).toBe('18:00')
+    expect(parsed.venueName).toBe('')
+  })
 })

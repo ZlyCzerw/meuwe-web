@@ -38,6 +38,12 @@ function parseDate(text: string): string | null {
   return `${year}-${pad(month)}-${pad(day)}`
 }
 
+function isLikelyVenue(text: string): boolean {
+  const lower = text.toLowerCase()
+  if (/^(bilety|zasady|wstęp|wstep|udział|udzial|bezpłatnie|bezplatnie)/.test(lower)) return false
+  return /ul\.|ulica|skwer|sala|filharmon|galeria|park|rynek|zamek|bulwar|hala|stadion|plac|ogr[oó]d|amfiteatr|kino|teatr|dworek/i.test(text)
+}
+
 export function parseListing(html: string): ErzeszowListItem[] {
   const $ = cheerio.load(html)
   const items: ErzeszowListItem[] = []
@@ -68,7 +74,10 @@ export function parseDetail(html: string): ErzeszowDetail {
   let startHour = extractHour(description)
   const detailHtml = body.html() ?? ''
   const strongAfterDate = detailHtml.match(/<strong>\s*\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4}\s*\|\s*godz\.\s*\d{1,2}:\d{2}\s*<\/strong>\s*<br\s*\/?>\s*<strong>(.*?)<\/strong>/i)
-  if (strongAfterDate) venueName = cleanText(cheerio.load(strongAfterDate[1]).text())
+  if (strongAfterDate) {
+    const candidate = cleanText(cheerio.load(strongAfterDate[1]).text())
+    if (isLikelyVenue(candidate)) venueName = candidate
+  }
 
   if (!venueName) {
     body.find('p').each((_, p) => {
@@ -81,7 +90,9 @@ export function parseDetail(html: string): ErzeszowDetail {
         .map(line => cleanText(cheerio.load(line).text()))
         .filter(Boolean)
       const dateLine = lines.findIndex(line => extractHour(line) !== null)
-      if (dateLine >= 0 && lines[dateLine + 1]) venueName = lines[dateLine + 1]
+      if (dateLine >= 0 && lines[dateLine + 1] && isLikelyVenue(lines[dateLine + 1])) {
+        venueName = lines[dateLine + 1]
+      }
     })
   }
 
