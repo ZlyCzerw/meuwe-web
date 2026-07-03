@@ -5,7 +5,7 @@
  * Each entry is a flat `<p>`: "DD/MM/YYYY <Title> – <Municipality>" (the dash is
  * an en-dash, &#8211;). Dates are concrete (not relative), and the municipality
  * after the dash doubles as the geocoding city — it matches the keys in
- * mapper.ts MUNICIPALITY_COORDS (Arona, Güímar, Los Realejos, …).
+ * regions/tenerife.ts cityCoords (Arona, Güímar, Los Realejos, …).
  *
  * The page is published per year; bump the URL each season.
  */

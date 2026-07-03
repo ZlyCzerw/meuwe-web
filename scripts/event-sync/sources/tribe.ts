@@ -42,7 +42,7 @@ export async function fetchWithRetry(url: string, init: RequestInit): Promise<Re
 // `city` is the municipality, used as a geocoding fallback — many municipal
 // events carry no structured venue (the place sits in the description), so
 // without this they'd land at the island centre. Keep `city` matching a key in
-// mapper.ts MUNICIPALITY_COORDS.
+// regions/tenerife.ts cityCoords.
 export interface TribeSite { id: string; url: string; city: string }
 
 export const TRIBE_SITES: TribeSite[] = [

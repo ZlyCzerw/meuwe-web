@@ -2,17 +2,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SOURCES } from './sources/index.ts';
-import { geocode, TENERIFE_CENTER } from './geocoder.ts';
+import { REGIONS } from './regions/index.ts';
+import { geocode } from './geocoder.ts';
 import { mapCategory } from './mapper.ts';
 import { generateSql } from './sql.ts';
 import { normalizeEvent } from './normalize.ts';
-import { localCanaryToUtc } from './timezone.ts';
-import type { MeuweEvent, RawEvent } from './types.ts';
+import { localToUtc } from './timezone.ts';
+import type { MeuweEvent, RawEvent, RegionConfig } from './types.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SEEDS_DIR = path.resolve(__dirname, '..', '..', 'supabase', 'seeds');
 const LOOKAHEAD_DAYS = 21;
+
+function resolveRegion(): RegionConfig {
+  const arg = process.argv.find(a => a.startsWith('--region='));
+  const id = arg?.split('=')[1];
+  if (!id || !REGIONS[id]) {
+    console.error(`Usage: npm run event-sync -- --region=<${Object.keys(REGIONS).join('|')}>`);
+    process.exit(1);
+  }
+  return REGIONS[id];
+}
 
 function addHours(d: Date, h: number): Date {
   return new Date(d.getTime() + h * 3_600_000);
@@ -20,22 +30,23 @@ function addHours(d: Date, h: number): Date {
 
 async function toMeuweEvent(
   raw: RawEvent,
+  region: RegionConfig,
 ): Promise<{ event: MeuweEvent; usedFallbackCoords: boolean }> {
   const startHour = raw.startHour ?? '19:00';
-  const startUtc = localCanaryToUtc(raw.date, startHour);
+  const startUtc = localToUtc(raw.date, startHour, region.timezone);
 
   let endUtc: Date;
   if (raw.endHour) {
-    endUtc = localCanaryToUtc(raw.date, raw.endHour);
+    endUtc = localToUtc(raw.date, raw.endHour, region.timezone);
     // Handle midnight crossover (e.g. start 23:00, end 01:00)
     if (endUtc <= startUtc) endUtc = addHours(endUtc, 24);
   } else {
     endUtc = addHours(startUtc, 2);
   }
 
-  const coords = await geocode(raw.venueName, raw.city, raw.country);
+  const coords = await geocode(raw.venueName, raw.city, region);
   const usedFallbackCoords =
-    coords.lat === TENERIFE_CENTER.lat && coords.lng === TENERIFE_CENTER.lng;
+    coords.lat === region.center.lat && coords.lng === region.center.lng;
   const { category, tags } = mapCategory(raw.categories);
   const placeName = [raw.venueName, raw.city].filter(Boolean).join(', ');
 
@@ -58,6 +69,7 @@ async function toMeuweEvent(
 }
 
 async function main() {
+  const region   = resolveRegion();
   const now      = new Date();
   const dateFrom = new Date(now);
   const dateTo   = new Date(now);
@@ -67,14 +79,14 @@ async function main() {
   const dateFromStr = dateFrom.toISOString().slice(0, 10);
   const dateToStr   = dateTo.toISOString().slice(0, 10);
 
-  console.log(`\nevent-sync — ${runDate}`);
+  console.log(`\nevent-sync — ${runDate} — region: ${region.id}`);
   console.log(`Range: ${dateFromStr} → ${dateToStr}`);
-  console.log(`Sources: ${SOURCES.map(s => s.name).join(', ')}\n`);
+  console.log(`Sources: ${region.sources.map(s => s.name).join(', ')}\n`);
 
   // 1. Run every source, collect raw events
   const allRaw: RawEvent[] = [];
 
-  for (const source of SOURCES) {
+  for (const source of region.sources) {
     console.log(`\n▶ ${source.name}`);
     try {
       const raw = await source.scrape({ dateFrom, dateTo });
@@ -115,8 +127,8 @@ async function main() {
 
     // Count soft fallbacks only for events we actually keep.
     warnings.forEach(bump);
-    const { event, usedFallbackCoords } = await toMeuweEvent(normalized);
-    if (usedFallbackCoords) bump('island-center-coords');
+    const { event, usedFallbackCoords } = await toMeuweEvent(normalized, region);
+    if (usedFallbackCoords) bump('region-center-coords');
     meuweEvents.push(event);
   }
 
@@ -135,7 +147,7 @@ async function main() {
     generatedAt: runDate,
   });
 
-  const filename = `events_${runDate.replace(/-/g, '')}.sql`;
+  const filename = `events_${region.id}_${runDate.replace(/-/g, '')}.sql`;
   const filepath = path.join(SEEDS_DIR, filename);
   fs.writeFileSync(filepath, sql, 'utf8');
 

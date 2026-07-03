@@ -23,6 +23,8 @@ export interface RawEvent {
   venueName: string;
   /** City or municipality */
   city: string;
+  /** Street address if the source provides one, e.g. 'Chopina 30' */
+  address?: string;
   /** ISO country code, e.g. 'ES'. Used as hint for geocoding. */
   country: string;
   /** Raw category strings from the source (will be mapped to meuwe categories) */
@@ -48,6 +50,44 @@ export interface Source {
 export interface Coords {
   lat: number;
   lng: number;
+}
+
+// ─── Region configuration ─────────────────────────────────────────────────────
+
+export interface Bbox {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
+
+/** A hand-verified venue with normalized name aliases for registry matching. */
+export interface VenueEntry {
+  /** Canonical display name */
+  name: string;
+  /** Normalized aliases (lowercase, no diacritics — see geocoder normalizeName) */
+  aliases: string[];
+  city: string;
+  lat: number;
+  lng: number;
+}
+
+export interface RegionConfig {
+  id: string;
+  /** IANA timezone, e.g. 'Europe/Warsaw' */
+  timezone: string;
+  /** ISO country code, e.g. 'PL' */
+  country: string;
+  /** Every strict-mode geocode result must fall inside this box */
+  bbox: Bbox;
+  /** Last-resort coords (lenient mode only) */
+  center: Coords;
+  /** Municipality fallback coords, keyed by lowercase city name */
+  cityCoords: Record<string, Coords>;
+  venues: VenueEntry[];
+  sources: Source[];
+  /** 'strict': venue or drop. 'lenient': v1 fallback chain. */
+  precision: 'strict' | 'lenient';
 }
 
 export interface MeuweEvent {
