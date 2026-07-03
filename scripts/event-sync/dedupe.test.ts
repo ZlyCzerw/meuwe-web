@@ -46,6 +46,33 @@ describe('dedupe', () => {
     expect(dedupe([a, b]).kept).toHaveLength(2)
   })
 
+  it('does NOT merge consecutive-day occurrences (multi-day exhibition)', () => {
+    // Exactly 24h apart — same venue, same title, next calendar day.
+    const a = ev({ externalId: 'estrada:2112:2026-07-09' })
+    const b = ev({
+      externalId: 'estrada:2112:2026-07-10',
+      startTime: new Date('2026-07-11T17:00:00Z'),
+      endTime: new Date('2026-07-11T19:00:00Z'),
+    })
+    const c = ev({
+      externalId: 'estrada:2112:2026-07-11',
+      startTime: new Date('2026-07-12T17:00:00Z'),
+      endTime: new Date('2026-07-12T19:00:00Z'),
+    })
+    expect(dedupe([a, b, c]).kept).toHaveLength(3)
+  })
+
+  it('merges same title same day at different hours (cross-source hour mismatch)', () => {
+    const a = ev({ externalId: 'ebilet:1', photos: ['x.jpg'] })
+    const b = ev({
+      externalId: 'estrada:9:2026-07-10',
+      startTime: new Date('2026-07-10T15:00:00Z'), // source without exact hour
+      endTime: new Date('2026-07-10T17:00:00Z'),
+    })
+    const { kept } = dedupe([a, b])
+    expect(kept).toHaveLength(1)
+  })
+
   it('does NOT merge same title same day at distant venues (> 300 m)', () => {
     const a = ev({ externalId: 'a:1' })
     const b = ev({ externalId: 'b:1', lat: 50.0295, lng: 22.0012 }) // Podpromie, ~1.6 km away

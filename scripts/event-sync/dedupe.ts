@@ -8,7 +8,6 @@ export interface DedupeResult {
 }
 
 const MAX_DIST_M = 300
-const MAX_TIME_DIFF_MS = 24 * 3_600_000
 
 export function haversineMeters(a: Coords, b: Coords): number {
   const R = 6_371_000
@@ -27,18 +26,22 @@ function richness(e: MeuweEvent): number {
 
 /**
  * Cross-source dedup: two events are duplicates when the normalized titles
- * match, starts are within 24 h, and venues within 300 m. Losers become
- * external-id aliases of the kept event so they never re-insert.
+ * match, they start on the same calendar day, and venues are within 300 m.
+ * Same-day only — consecutive-day occurrences (multi-day exhibitions, runs
+ * of shows) are distinct events. Losers become external-id aliases of the
+ * kept event so they never re-insert.
  */
 export function dedupe(events: MeuweEvent[]): DedupeResult {
   const sorted = [...events].sort((a, b) => richness(b) - richness(a))
   const kept: MeuweEvent[] = []
   const aliases: AliasPair[] = []
 
+  const day = (d: Date) => d.toISOString().slice(0, 10)
+
   for (const ev of sorted) {
     const dup = kept.find(k =>
       normalizeName(k.title) === normalizeName(ev.title) &&
-      Math.abs(k.startTime.getTime() - ev.startTime.getTime()) <= MAX_TIME_DIFF_MS &&
+      day(k.startTime) === day(ev.startTime) &&
       haversineMeters(k, ev) < MAX_DIST_M,
     )
     if (dup) {
