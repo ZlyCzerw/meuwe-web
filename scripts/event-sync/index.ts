@@ -7,6 +7,7 @@ import { Geocoder } from './geocoder.ts';
 import { mapCategory } from './mapper.ts';
 import { generateSql } from './sql.ts';
 import { normalizeEvent } from './normalize.ts';
+import { dedupe } from './dedupe.ts';
 import { localToUtc } from './timezone.ts';
 import type { MeuweEvent, RawEvent, RegionConfig } from './types.ts';
 
@@ -155,8 +156,13 @@ async function main() {
     for (const line of noVenueMatch) console.log(`  - ${line}`);
   }
 
-  // 3. Generate SQL file
-  const sql = generateSql(meuweEvents, [], {
+  // 3. Cross-source dedup, then generate SQL file
+  const { kept, aliases } = dedupe(meuweEvents);
+  if (aliases.length) {
+    console.log(`Dedup:     ${aliases.length} cross-source duplicate(s) merged`);
+  }
+
+  const sql = generateSql(kept, aliases, {
     dateFrom: dateFromStr,
     dateTo:   dateToStr,
     generatedAt: runDate,
@@ -167,7 +173,7 @@ async function main() {
   fs.writeFileSync(filepath, sql, 'utf8');
 
   console.log(`\n✅ Written to supabase/seeds/${filename}`);
-  console.log(`   ${meuweEvents.length} events — paste into Supabase Dashboard → SQL Editor → Run\n`);
+  console.log(`   ${kept.length} events — paste into Supabase Dashboard → SQL Editor → Run\n`);
 }
 
 main().catch(err => {
