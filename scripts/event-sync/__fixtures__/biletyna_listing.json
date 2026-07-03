@@ -1,0 +1,234 @@
+{
+ "@context": "https://schema.org",
+ "@type": "ItemList",
+ "itemListElement": [
+  {
+   "@type": "ListItem",
+   "item": {
+    "@type": "MusicEvent",
+    "name": "ABBA i INNI Symfonicznie II",
+    "description": "🎤 Przeżyj muzyczną podróż do złotej ery lat 70. i 80.! 🎶 Największe hity ABBY, Bee Gees, Queen, Eltona Johna i wielu innych w wykonaniu orkiestry, wokalistów i tancerzy. ✨ Elegancja, energia i niezapomniane emocje! 🎟️💃. Wydarzenie odbędzie się w Filharmonia Podkarpacka, Rzeszów już 09.07.2026 o godz. 19:00",
+    "image": "https://biletyna.pl/file/get/id/309761",
+    "performer": {
+     "@type": "PerformingGroup",
+     "name": "ABBA i INNI Symfonicznie II"
+    },
+    "url": "https://biletyna.pl/koncert/ABBA-i-INNI-Symfonicznie?eid=652825#opis",
+    "location": {
+     "@type": "Place",
+     "name": "Filharmonia Podkarpacka",
+     "url": "https://biletyna.pl/Rzeszow/Filharmonia-Podkarpacka",
+     "sameAs": "/Rzeszow/Filharmonia-Podkarpacka",
+     "telephone": "(17)  862 84 08",
+     "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rzeszów",
+      "postalCode": "35-959",
+      "streetAddress": "ul. Chopina 30",
+      "addressRegion": "podkarpackie",
+      "addressCountry": "PL"
+     },
+     "latitude": 50.0360299,
+     "longitude": 22.0085794
+    },
+    "startDate": "2026-07-09T19:00:00+02:00",
+    "endDate": "2026-07-09T20:30:00+02:00",
+    "duration": "PT1H30M",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "remainingAttendeeCapacity": 36,
+    "eventAttendanceMode": "OfflineEventAttendanceMode",
+    "offers": {
+     "@type": "AggregateOffer",
+     "category": "tickets",
+     "availability": "https://schema.org/InStock",
+     "priceCurrency": "PLN",
+     "lowPrice": 179.18,
+     "validFrom": "2026-03-24T10:28:27+01:00",
+     "url": "https://biletyna.pl/koncert/ABBA-i-INNI-Symfonicznie?eid=652825#opis",
+     "seller": {
+      "@type": "Organization",
+      "name": "biletyna.pl",
+      "url": "https://biletyna.pl"
+     }
+    },
+    "organizer": {
+     "@type": "Organization",
+     "name": "biletyna.pl",
+     "url": "https://biletyna.pl"
+    }
+   },
+   "position": 1
+  },
+  {
+   "@type": "ListItem",
+   "item": {
+    "@type": "MusicEvent",
+    "name": "MĘSKIE BRZMIENIA",
+    "description": "🎤🔥 Odkryj siłę głosu i emocji! Chór MĘSKIE BRZMIENIA wprowadzi nową energię do polskich i światowych hitów – od rocka i ballad po muzykę filmową. 30 artystów, wyjątkowe aranżacje i niezapomniane show! 🎶✨ Bilety już dostępne – nie przegap! 🎟️. Wydarzenie odbędzie się w Filharmonia Podkarpacka, Rzeszów już 19.07.2026 o godz. 16:00",
+    "image": "https://biletyna.pl/file/get/id/203812",
+    "performer": {
+     "@type": "PerformingGroup",
+     "name": "MĘSKIE BRZMIENIA"
+    },
+    "url": "https://biletyna.pl/koncert/MESKIE-BRZMIENIA?eid=662202#opis",
+    "location": {
+     "@type": "Place",
+     "name": "Filharmonia Podkarpacka",
+     "url": "https://biletyna.pl/Rzeszow/Filharmonia-Podkarpacka",
+     "sameAs": "/Rzeszow/Filharmonia-Podkarpacka",
+     "telephone": "(17)  862 84 08",
+     "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rzeszów",
+      "postalCode": "35-959",
+      "streetAddress": "ul. Chopina 30",
+      "addressRegion": "podkarpackie",
+      "addressCountry": "PL"
+     },
+     "latitude": 50.0360299,
+     "longitude": 22.0085794
+    },
+    "startDate": "2026-07-19T16:00:00+02:00",
+    "endDate": "2026-07-19T17:45:00+02:00",
+    "duration": "PT1H45M",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "remainingAttendeeCapacity": 8,
+    "eventAttendanceMode": "OfflineEventAttendanceMode",
+    "offers": {
+     "@type": "AggregateOffer",
+     "category": "tickets",
+     "availability": "https://schema.org/InStock",
+     "priceCurrency": "PLN",
+     "lowPrice": 158.1,
+     "validFrom": "2026-04-28T08:33:55+02:00",
+     "url": "https://biletyna.pl/koncert/MESKIE-BRZMIENIA?eid=662202#opis",
+     "seller": {
+      "@type": "Organization",
+      "name": "biletyna.pl",
+      "url": "https://biletyna.pl"
+     }
+    },
+    "organizer": {
+     "@type": "Organization",
+     "name": "biletyna.pl",
+     "url": "https://biletyna.pl"
+    }
+   },
+   "position": 2
+  },
+  {
+   "@type": "ListItem",
+   "item": {
+    "@type": "MusicEvent",
+    "name": "MĘSKIE BRZMIENIA",
+    "description": "🎤🔥 Odkryj siłę głosu i emocji! Chór MĘSKIE BRZMIENIA wprowadzi nową energię do polskich i światowych hitów – od rocka i ballad po muzykę filmową. 30 artystów, wyjątkowe aranżacje i niezapomniane show! 🎶✨ Bilety już dostępne – nie przegap! 🎟️. Wydarzenie odbędzie się w Filharmonia Podkarpacka, Rzeszów już 19.07.2026 o godz. 19:00",
+    "image": "https://biletyna.pl/file/get/id/203812",
+    "performer": {
+     "@type": "PerformingGroup",
+     "name": "MĘSKIE BRZMIENIA"
+    },
+    "url": "https://biletyna.pl/koncert/MESKIE-BRZMIENIA?eid=662207#opis",
+    "location": {
+     "@type": "Place",
+     "name": "Filharmonia Podkarpacka",
+     "url": "https://biletyna.pl/Rzeszow/Filharmonia-Podkarpacka",
+     "sameAs": "/Rzeszow/Filharmonia-Podkarpacka",
+     "telephone": "(17)  862 84 08",
+     "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rzeszów",
+      "postalCode": "35-959",
+      "streetAddress": "ul. Chopina 30",
+      "addressRegion": "podkarpackie",
+      "addressCountry": "PL"
+     },
+     "latitude": 50.0360299,
+     "longitude": 22.0085794
+    },
+    "startDate": "2026-07-19T19:00:00+02:00",
+    "endDate": "2026-07-19T20:45:00+02:00",
+    "duration": "PT1H45M",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "remainingAttendeeCapacity": 114,
+    "eventAttendanceMode": "OfflineEventAttendanceMode",
+    "offers": {
+     "@type": "AggregateOffer",
+     "category": "tickets",
+     "availability": "https://schema.org/InStock",
+     "priceCurrency": "PLN",
+     "lowPrice": 158.1,
+     "validFrom": "2026-04-28T08:33:55+02:00",
+     "url": "https://biletyna.pl/koncert/MESKIE-BRZMIENIA?eid=662207#opis",
+     "seller": {
+      "@type": "Organization",
+      "name": "biletyna.pl",
+      "url": "https://biletyna.pl"
+     }
+    },
+    "organizer": {
+     "@type": "Organization",
+     "name": "biletyna.pl",
+     "url": "https://biletyna.pl"
+    }
+   },
+   "position": 3
+  },
+  {
+   "@type": "ListItem",
+   "item": {
+    "@type": "MusicEvent",
+    "name": "Skończyły się żarty. Mann i Bukartyk",
+    "description": "Wojciech Mann i Piotr Bukartyk na jednej scenie! 🎤 \"Skończyły się żarty\" to błyskotliwe połączenie koncertu, satyry i radiowego humoru w formule… sit-downu. Przyjdź posłuchać, pośmiać się i zanurzyć w inteligentnej rozrywce na żywo! 🎶😄. Wydarzenie odbędzie się w Filharmonia Podkarpacka, Rzeszów już 15.09.2026 o godz. 19:00",
+    "image": "https://biletyna.pl/file/get/id/374419",
+    "performer": {
+     "@type": "PerformingGroup",
+     "name": "Skończyły się żarty. Mann i Bukartyk"
+    },
+    "url": "https://biletyna.pl/koncert/Skonczyly-sie-zarty-Mann-i-Bukartyk?eid=683132#opis",
+    "location": {
+     "@type": "Place",
+     "name": "Filharmonia Podkarpacka",
+     "url": "https://biletyna.pl/Rzeszow/Filharmonia-Podkarpacka",
+     "sameAs": "/Rzeszow/Filharmonia-Podkarpacka",
+     "telephone": "(17)  862 84 08",
+     "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rzeszów",
+      "postalCode": "35-959",
+      "streetAddress": "ul. Chopina 30",
+      "addressRegion": "podkarpackie",
+      "addressCountry": "PL"
+     },
+     "latitude": 50.0360299,
+     "longitude": 22.0085794
+    },
+    "startDate": "2026-09-15T19:00:00+02:00",
+    "endDate": "2026-09-15T20:30:00+02:00",
+    "duration": "PT1H30M",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "remainingAttendeeCapacity": 43,
+    "eventAttendanceMode": "OfflineEventAttendanceMode",
+    "offers": {
+     "@type": "AggregateOffer",
+     "category": "tickets",
+     "availability": "https://schema.org/InStock",
+     "priceCurrency": "PLN",
+     "lowPrice": 210.8,
+     "validFrom": "2026-07-03T15:03:19+02:00",
+     "url": "https://biletyna.pl/koncert/Skonczyly-sie-zarty-Mann-i-Bukartyk?eid=683132#opis",
+     "seller": {
+      "@type": "Organization",
+      "name": "biletyna.pl",
+      "url": "https://biletyna.pl"
+     }
+    },
+    "organizer": {
+     "@type": "Organization",
+     "name": "biletyna.pl",
+     "url": "https://biletyna.pl"
+    }
+   },
+   "position": 4
+  }
+ ]
+}
