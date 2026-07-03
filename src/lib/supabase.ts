@@ -28,7 +28,10 @@ export const db = {
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
   async getSession() { const {data}=await supabase.auth.getSession(); return data.session },
   async getProfile(uid:string):Promise<Profile|null> {
-    const {data}=await supabase.from('profiles').select('*').eq('id',uid).single(); return data as Profile|null
+    // Explicit columns (not '*'): anon/authenticated lack SELECT on the location
+    // columns (last_lat/last_lng/last_seen_at), so 'select=*' 403s. getProfile
+    // never needs location — it's write-only from the client.
+    const {data}=await supabase.from('profiles').select('id,display_name,avatar_color,radius_km,interests,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
   },
   async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p) },
   async updateProfileLocation(uid:string, lat:number, lng:number) {
