@@ -95,4 +95,9 @@ describe('tribeToRawEvent', () => {
     expect(r.city).toBe('Candelaria');   // → geocodes to the right town, not island centre
     expect(r.venueName).toBe('');
   });
+
+  it('defaults country to ES but honours an override (e.g. PL for Rzeszów)', () => {
+    expect(tribeToRawEvent(SAMPLE, 'rdk')!.country).toBe('ES');
+    expect(tribeToRawEvent(SAMPLE, 'rdk', 'Rzeszów', 'PL')!.country).toBe('PL');
+  });
 });

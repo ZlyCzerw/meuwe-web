@@ -3,6 +3,7 @@ import { RZESZOW_VENUES } from './rzeszow-venues.ts'
 import { EbiletSource } from '../sources/ebilet.ts'
 import { EstradaSource } from '../sources/estrada.ts'
 import { MgokTyczynSource } from '../sources/mgoktyczyn.ts'
+import { TribeEventsSource } from '../sources/tribe.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -34,5 +35,10 @@ export const RZESZOW: RegionConfig = {
     new EstradaSource(),
     // MGOK Tyczyn — WP RSS, event dates parsed from post titles.
     new MgokTyczynSource(),
+    // Rzeszowski Dom Kultury — open Tribe REST API (same adapter as Tenerife).
+    // Events carry a venue name + city but no geo → geocoder resolves them.
+    new TribeEventsSource([
+      { id: 'rdk', url: 'https://rdk.rzeszow.pl', city: 'Rzeszów', country: 'PL' },
+    ]),
   ],
 }

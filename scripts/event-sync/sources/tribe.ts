@@ -43,7 +43,7 @@ export async function fetchWithRetry(url: string, init: RequestInit): Promise<Re
 // events carry no structured venue (the place sits in the description), so
 // without this they'd land at the island centre. Keep `city` matching a key in
 // regions/tenerife.ts cityCoords.
-export interface TribeSite { id: string; url: string; city: string }
+export interface TribeSite { id: string; url: string; city: string; country?: string }
 
 export const TRIBE_SITES: TribeSite[] = [
   { id: 'elsauzal',           url: 'https://elsauzal.es',                  city: 'El Sauzal' },
@@ -113,7 +113,7 @@ export function stripHtml(s: string): string {
  * @param siteId       namespaces the externalId
  * @param fallbackCity municipality to use when the event has no structured venue/city
  */
-export function tribeToRawEvent(ev: TribeApiEvent, siteId: string, fallbackCity = ''): RawEvent | null {
+export function tribeToRawEvent(ev: TribeApiEvent, siteId: string, fallbackCity = '', country = 'ES'): RawEvent | null {
   const start = (ev.start_date ?? '').trim();
   if (!start || start.length < 10) return null;
 
@@ -138,7 +138,7 @@ export function tribeToRawEvent(ev: TribeApiEvent, siteId: string, fallbackCity 
     endHour,
     venueName,
     city,
-    country:     'ES',
+    country,
     categories,
     sourceUrl:   ev.url,
     imageUrl,
@@ -200,7 +200,7 @@ export class TribeEventsSource implements Source {
       const body = await res.json() as TribeResponse;
       const apiEvents = body.events ?? [];
       for (const ev of apiEvents) {
-        const raw = tribeToRawEvent(ev, site.id, site.city);
+        const raw = tribeToRawEvent(ev, site.id, site.city, site.country ?? 'ES');
         if (raw) events.push(raw);
       }
 
