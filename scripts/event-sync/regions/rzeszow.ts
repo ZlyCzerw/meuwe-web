@@ -7,6 +7,7 @@ import { TribeEventsSource } from '../sources/tribe.ts'
 import { BiletynaSource } from '../sources/biletyna.ts'
 import { ResinetSource } from '../sources/resinet.ts'
 import { ErzeszowSource } from '../sources/erzeszow.ts'
+import { H69Source } from '../sources/sports-rzeszow.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -51,5 +52,7 @@ export const RZESZOW: RegionConfig = {
     new ResinetSource(),
     // Official city calendar — listing + detail pages for venue/time.
     new ErzeszowSource(),
+    // H69 — speedway schedule, home matches only.
+    new H69Source(),
   ],
 }
