@@ -1,12 +1,12 @@
 /**
- * Timezone helpers for the Atlantic/Canary zone.
- * Winter (WET) = UTC+0, summer DST (WEST) = UTC+1.
+ * Timezone helpers. Works for any IANA zone whose offset is a whole number
+ * of hours (Atlantic/Canary: UTC+0/+1, Europe/Warsaw: UTC+1/+2).
  */
 
-/** Offset in whole hours of Atlantic/Canary from UTC for the given instant. */
-export function canaryOffsetHours(date: Date): number {
+/** Offset in whole hours of `timeZone` from UTC for the given instant. */
+export function tzOffsetHours(date: Date, timeZone: string): number {
   const part = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Atlantic/Canary',
+    timeZone,
     timeZoneName: 'shortOffset',
   })
     .formatToParts(date)
@@ -17,12 +17,20 @@ export function canaryOffsetHours(date: Date): number {
 }
 
 /**
- * Convert a local Canary date+time ('YYYY-MM-DD', 'HH:MM') to a UTC Date,
- * accounting for the correct DST offset on that calendar day.
+ * Convert a local date+time ('YYYY-MM-DD', 'HH:MM') in `timeZone` to a UTC
+ * Date, accounting for the correct DST offset on that calendar day.
  */
-export function localCanaryToUtc(date: string, hour: string): Date {
+export function localToUtc(date: string, hour: string, timeZone: string): Date {
   const [y, mo, d] = date.split('-').map(Number)
   const [h, min] = hour.split(':').map(Number)
-  const offset = canaryOffsetHours(new Date(Date.UTC(y, mo - 1, d, 12)))
+  const offset = tzOffsetHours(new Date(Date.UTC(y, mo - 1, d, 12)), timeZone)
   return new Date(Date.UTC(y, mo - 1, d, h - offset, min))
+}
+
+export function canaryOffsetHours(date: Date): number {
+  return tzOffsetHours(date, 'Atlantic/Canary')
+}
+
+export function localCanaryToUtc(date: string, hour: string): Date {
+  return localToUtc(date, hour, 'Atlantic/Canary')
 }
