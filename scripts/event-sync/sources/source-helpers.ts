@@ -24,7 +24,7 @@ export function absoluteUrl(base: string, href: string | undefined | null): stri
 }
 
 export function extractHour(text: string): string | null {
-  const m = text.match(/\b(?:godz\.?\s*)?(\d{1,2}):(\d{2})\b/i)
+  const m = text.match(/\b(?:godz\.?\s*)?(\d{1,2}):(\d{2})(?!\d)/i)
   if (!m) return null
   const hour = Number(m[1])
   if (hour < 0 || hour > 23) return null

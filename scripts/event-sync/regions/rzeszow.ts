@@ -5,6 +5,8 @@ import { EstradaSource } from '../sources/estrada.ts'
 import { MgokTyczynSource } from '../sources/mgoktyczyn.ts'
 import { TribeEventsSource } from '../sources/tribe.ts'
 import { BiletynaSource } from '../sources/biletyna.ts'
+import { ResinetSource } from '../sources/resinet.ts'
+import { ErzeszowSource } from '../sources/erzeszow.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -45,5 +47,9 @@ export const RZESZOW: RegionConfig = {
     ]),
     // biletyna.pl — ticketing, JSON-LD ItemList with venue+street+city.
     new BiletynaSource(),
+    // RESinet — server-rendered kalendarium with venue in listing cards.
+    new ResinetSource(),
+    // Official city calendar — listing + detail pages for venue/time.
+    new ErzeszowSource(),
   ],
 }
