@@ -3,6 +3,18 @@
 // Municipality fallback coordinates live in regions/<region>.ts (cityCoords).
 
 const CATEGORY_RULES: Array<{ match: RegExp; category: string; tags: string[] }> = [
+  // ── Polish (checked first — PL sources rarely provide category strings,
+  //    so the event title participates in matching, see mapCategory) ──
+  { match: /koncert|muzyk|piosenk|zespół|zespol|symfoni|filharmoni|orkiestr|disco polo|hip[- ]?hop|festiwal muzyczny/i, category: 'music', tags: ['music'] },
+  { match: /spektakl|teatral|kabaret|stand[- ]?up|operetk|balet/i, category: 'culture', tags: ['art'] },
+  { match: /wystaw|wernisaż|wernisaz|galeri|malarstw|rzeźb|rzezb/i, category: 'art', tags: ['art'] },
+  { match: /dzieci|rodzin|bajk|przedszkol|maluch/i, category: 'family', tags: ['family'] },
+  { match: /\bbieg\b|maraton|rajd|turniej|mecz|żużel|zuzel|speedway|siatkówk|siatkowk|koszykówk|koszykowk|piłk|pilk/i, category: 'outdoor', tags: ['outdoor', 'sport'] },
+  { match: /jarmark|festyn|piknik|dożynki|dozynki|odpust/i, category: 'culture', tags: ['culture'] },
+  { match: /degustac|kulinarn|food ?truck|gastro/i, category: 'food', tags: ['food'] },
+  { match: /\bkino\b|\bfilm\b|seans/i, category: 'culture', tags: ['art'] },
+  { match: /warsztat|wykład|wyklad|spotkanie autorskie|książk|ksiazk/i, category: 'art', tags: ['art'] },
+  // ── Spanish/English (v1 rules, unchanged) ──
   { match: /fiesta|popular|romería|romeria|baile de magos/i, category: 'culture',  tags: ['culture', 'dance'] },
   { match: /jazz|clásic|clasic|concierto|concert|música|musica|popular|parranda|folclore|gospel|coral/i, category: 'music', tags: ['music'] },
   { match: /gastronom|comida|food|restaur|degustac|mercado/i, category: 'food',    tags: ['food'] },
@@ -15,8 +27,8 @@ const CATEGORY_RULES: Array<{ match: RegExp; category: string; tags: string[] }>
   { match: /historia|etnograf|cultura|culture/i,             category: 'culture', tags: ['culture'] },
 ];
 
-export function mapCategory(rawCategories: string[]): { category: string; tags: string[] } {
-  const combined = rawCategories.join(' ');
+export function mapCategory(rawCategories: string[], title = ''): { category: string; tags: string[] } {
+  const combined = [...rawCategories, title].join(' ');
   for (const rule of CATEGORY_RULES) {
     if (rule.match.test(combined)) {
       return { category: rule.category, tags: rule.tags };

@@ -49,7 +49,7 @@ async function toMeuweEvent(
   const { coords, method } = await geocoder.geocode(raw.venueName, raw.city, raw.address);
   if (!coords) return { event: null, method: 'none' };
 
-  const { category, tags } = mapCategory(raw.categories);
+  const { category, tags } = mapCategory(raw.categories, raw.title);
   const placeName = [raw.venueName, raw.city].filter(Boolean).join(', ');
 
   return {
