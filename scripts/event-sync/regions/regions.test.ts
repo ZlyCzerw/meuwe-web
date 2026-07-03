@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { REGIONS } from './index.ts'
+import { TribeEventsSource } from '../sources/tribe.ts'
 
 describe('REGIONS registry', () => {
   it('exposes the tenerife region with v1 behavior flags', () => {
@@ -35,5 +36,9 @@ describe('rzeszow region', () => {
     for (const v of REGIONS.rzeszow.venues)
       for (const a of v.aliases)
         expect(a, `${v.name}: "${a}"`).toMatch(/^[a-z0-9 ]+$/)
+  })
+  it('includes configured Tribe sources for RDK, Koncerty w Rzeszowie and Pod Palma', () => {
+    const tribe = REGIONS.rzeszow.sources.find((s): s is TribeEventsSource => s instanceof TribeEventsSource)
+    expect(tribe?.siteIds()).toEqual(['rdk', 'koncertywrzeszowie', 'podpalma'])
   })
 })

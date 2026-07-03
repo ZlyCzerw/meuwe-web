@@ -40,6 +40,8 @@ export const RZESZOW: RegionConfig = {
     // Events carry a venue name + city but no geo → geocoder resolves them.
     new TribeEventsSource([
       { id: 'rdk', url: 'https://rdk.rzeszow.pl', city: 'Rzeszów', country: 'PL' },
+      { id: 'koncertywrzeszowie', url: 'https://koncertywrzeszowie.pl', city: 'Rzeszów', country: 'PL' },
+      { id: 'podpalma', url: 'https://www.podpalma.pl', city: 'Rzeszów', country: 'PL' },
     ]),
     // biletyna.pl — ticketing, JSON-LD ItemList with venue+street+city.
     new BiletynaSource(),
