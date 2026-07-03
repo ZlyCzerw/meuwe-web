@@ -5,7 +5,9 @@
  */
 import type { RegionConfig } from '../types.ts'
 import { TENERIFE } from './tenerife.ts'
+import { RZESZOW } from './rzeszow.ts'
 
 export const REGIONS: Record<string, RegionConfig> = {
   tenerife: TENERIFE,
+  rzeszow: RZESZOW,
 }
