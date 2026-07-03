@@ -34,3 +34,4 @@ android/captures/
 *.keystore
 !android/app/debug.keystore
 android/keystore.properties
+scripts/event-sync/.geocache.json

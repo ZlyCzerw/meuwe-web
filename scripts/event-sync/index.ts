@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { REGIONS } from './regions/index.ts';
-import { geocode } from './geocoder.ts';
+import { Geocoder } from './geocoder.ts';
 import { mapCategory } from './mapper.ts';
 import { generateSql } from './sql.ts';
 import { normalizeEvent } from './normalize.ts';
@@ -31,7 +31,8 @@ function addHours(d: Date, h: number): Date {
 async function toMeuweEvent(
   raw: RawEvent,
   region: RegionConfig,
-): Promise<{ event: MeuweEvent; usedFallbackCoords: boolean }> {
+  geocoder: Geocoder,
+): Promise<{ event: MeuweEvent; method: string } | { event: null; method: 'none' }> {
   const startHour = raw.startHour ?? '19:00';
   const startUtc = localToUtc(raw.date, startHour, region.timezone);
 
@@ -44,9 +45,9 @@ async function toMeuweEvent(
     endUtc = addHours(startUtc, 2);
   }
 
-  const coords = await geocode(raw.venueName, raw.city, region);
-  const usedFallbackCoords =
-    coords.lat === region.center.lat && coords.lng === region.center.lng;
+  const { coords, method } = await geocoder.geocode(raw.venueName, raw.city, raw.address);
+  if (!coords) return { event: null, method: 'none' };
+
   const { category, tags } = mapCategory(raw.categories);
   const placeName = [raw.venueName, raw.city].filter(Boolean).join(', ');
 
@@ -64,12 +65,13 @@ async function toMeuweEvent(
       tags,
       photos: raw.imageUrl ? [raw.imageUrl] : [],
     },
-    usedFallbackCoords,
+    method,
   };
 }
 
 async function main() {
   const region   = resolveRegion();
+  const geocoder = new Geocoder(region, path.join(__dirname, '.geocache.json'));
   const now      = new Date();
   const dateFrom = new Date(now);
   const dateTo   = new Date(now);
@@ -116,6 +118,8 @@ async function main() {
     fallbackCounts[key] = (fallbackCounts[key] ?? 0) + 1;
   };
 
+  const noVenueMatch: string[] = [];
+
   for (const raw of allRaw) {
     const { event: normalized, warnings } = normalizeEvent(raw);
 
@@ -127,10 +131,17 @@ async function main() {
 
     // Count soft fallbacks only for events we actually keep.
     warnings.forEach(bump);
-    const { event, usedFallbackCoords } = await toMeuweEvent(normalized, region);
-    if (usedFallbackCoords) bump('region-center-coords');
-    meuweEvents.push(event);
+    const result = await toMeuweEvent(normalized, region, geocoder);
+    if (!result.event) {
+      dropped++;
+      noVenueMatch.push(`"${normalized.venueName}", ${normalized.city} [${normalized.externalId}]`);
+      continue;
+    }
+    bump(`geo:${result.method}`);
+    meuweEvents.push(result.event);
   }
+
+  geocoder.save();
 
   console.log('\n── Run summary ──');
   console.log(`Collected: ${allRaw.length}`);
@@ -138,6 +149,10 @@ async function main() {
   const wc = Object.entries(fallbackCounts);
   if (wc.length) {
     console.log('Fallbacks: ' + wc.map(([k, v]) => `${v}× ${k}`).join(', '));
+  }
+  if (noVenueMatch.length) {
+    console.log(`\n⚠ no-venue-match (${noVenueMatch.length}) — add to regions/rzeszow-venues.ts to recover:`);
+    for (const line of noVenueMatch) console.log(`  - ${line}`);
   }
 
   // 3. Generate SQL file
