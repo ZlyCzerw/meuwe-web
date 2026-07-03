@@ -4,6 +4,7 @@ import { EbiletSource } from '../sources/ebilet.ts'
 import { EstradaSource } from '../sources/estrada.ts'
 import { MgokTyczynSource } from '../sources/mgoktyczyn.ts'
 import { TribeEventsSource } from '../sources/tribe.ts'
+import { BiletynaSource } from '../sources/biletyna.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -40,5 +41,7 @@ export const RZESZOW: RegionConfig = {
     new TribeEventsSource([
       { id: 'rdk', url: 'https://rdk.rzeszow.pl', city: 'Rzeszów', country: 'PL' },
     ]),
+    // biletyna.pl — ticketing, JSON-LD ItemList with venue+street+city.
+    new BiletynaSource(),
   ],
 }

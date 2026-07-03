@@ -3,6 +3,13 @@
 // Municipality fallback coordinates live in regions/<region>.ts (cityCoords).
 
 const CATEGORY_RULES: Array<{ match: RegExp; category: string; tags: string[] }> = [
+  // ── schema.org Event subtypes (from JSON-LD sources; checked first, exact) ──
+  { match: /\bMusicEvent\b/,       category: 'music',   tags: ['music'] },
+  { match: /\b(?:Theater|Comedy|Dance|Screening|Literary)Event\b/, category: 'culture', tags: ['art'] },
+  { match: /\b(?:Exhibition|VisualArts)Event\b/, category: 'art', tags: ['art'] },
+  { match: /\bSportsEvent\b/,      category: 'outdoor', tags: ['outdoor', 'sport'] },
+  { match: /\bChildrensEvent\b/,   category: 'family',  tags: ['family'] },
+  { match: /\bFoodEvent\b/,        category: 'food',    tags: ['food'] },
   // ── Polish (checked first — PL sources rarely provide category strings,
   //    so the event title participates in matching, see mapCategory) ──
   { match: /koncert|muzyk|piosenk|zespół|zespol|symfoni|filharmoni|orkiestr|disco polo|hip[- ]?hop|festiwal muzyczny/i, category: 'music', tags: ['music'] },

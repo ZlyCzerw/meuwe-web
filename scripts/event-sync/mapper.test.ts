@@ -26,3 +26,17 @@ describe('mapCategory (Polish)', () => {
     expect(mapCategory([], 'Zebranie mieszkańców').category).toBe('culture')
   })
 })
+
+describe('mapCategory (schema.org Event subtypes)', () => {
+  it.each([
+    ['MusicEvent', 'music'],
+    ['TheaterEvent', 'culture'],
+    ['ComedyEvent', 'culture'],
+    ['SportsEvent', 'outdoor'],
+    ['ChildrensEvent', 'family'],
+    ['ExhibitionEvent', 'art'],
+    ['FoodEvent', 'food'],
+  ])('%s → %s', (schemaType, expected) => {
+    expect(mapCategory([schemaType]).category).toBe(expected)
+  })
+})
