@@ -2,6 +2,7 @@ import type { RegionConfig } from '../types.ts'
 import { RZESZOW_VENUES } from './rzeszow-venues.ts'
 import { EbiletSource } from '../sources/ebilet.ts'
 import { EstradaSource } from '../sources/estrada.ts'
+import { MgokTyczynSource } from '../sources/mgoktyczyn.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -31,5 +32,7 @@ export const RZESZOW: RegionConfig = {
     new EbiletSource(),
     // Estrada Rzeszowska — city culture agency calendar (listing + detail pages).
     new EstradaSource(),
+    // MGOK Tyczyn — WP RSS, event dates parsed from post titles.
+    new MgokTyczynSource(),
   ],
 }
