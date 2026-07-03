@@ -1,6 +1,7 @@
 import type { RegionConfig } from '../types.ts'
 import { RZESZOW_VENUES } from './rzeszow-venues.ts'
 import { EbiletSource } from '../sources/ebilet.ts'
+import { EstradaSource } from '../sources/estrada.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -28,5 +29,7 @@ export const RZESZOW: RegionConfig = {
   sources: [
     // eBilet city landing pages (rzeszow, lancut, jasionka) → internal JSON API.
     new EbiletSource(),
+    // Estrada Rzeszowska — city culture agency calendar (listing + detail pages).
+    new EstradaSource(),
   ],
 }
