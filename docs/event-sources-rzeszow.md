@@ -50,6 +50,42 @@
 | Zamek Łańcut | https://www.zamek-lancut.pl/ | ⚠️ | Homepage live (350 KB); `/wydarzenia-i-programy` returned 315 B (blocked or wrong path). Important for Łańcut — find the right agenda URL. |
 | boguchwala.pl / lancut.pl | city portals | ⚠️ | Live, many region mentions; news-style posts, date extraction from content needed. |
 
+## Second research pass (2026-07-03) — local news & event portals
+
+Aggregators and local media verified live in a second sweep. **RDK Rzeszów is
+the top new pick** — it has the same open Tribe REST API pattern we already use
+for Tenerife, so it drops in as a config entry.
+
+| # | Source | URL | Status | Struct. | Notes |
+|---|---|---|---|---|---|
+| 1 | **Rzeszowski Dom Kultury** ⭐ | https://rdk.rzeszow.pl/kalendarz/ | ✅ **BUILD NEXT** | Tribe REST + JSON-LD | `/wp-json/tribe/events/v1/events` open, **18 events** with title+start_date+venue+city; JSON-LD carries venue name & locality. City cultural centre incl. filie (Przybyszówka, Słocina, Załęże, Baranówka…). Best coverage-to-effort. |
+| 2 | Fakty Rzeszów | https://faktyrzeszow.pl/wydarzenie/ | ✅ | JSON-LD `ItemList`→`Event` | Event objects (name, startDate ISO) in the listing; **venue not in listing** → follow detail page. Local news + event calendar. |
+| 3 | RESinet (serwis rozrywkowy) | https://www.resinet.pl/rozrywka/kalendarium | ✅ | HTML | 900 KB kalendarium; no Event JSON-LD (only breadcrumb) — parse HTML rows. Rzeszów entertainment listings. |
+| 4 | Visit Rzeszów (oficjalny turystyczny) | https://www.visitrzeszow.pl/pl/wydarzenia | ✅ | HTML | 73 KB events page; official tourism agenda, structure unverified. |
+| 5 | erzeszow.pl — Kalendarz imprez | https://erzeszow.pl/41-miasto-rzeszow/6241-kalendarz-imprez.html | ✅ | HTML | Official city hall event calendar (the live one; the old `/wydarzenia` guess 404s). |
+| 6 | Rzeszów News | https://rzeszow-news.pl/ | ✅ | WP + JSON-LD | Largest local news portal (~30M visits/yr); events embedded in articles + culture section. Try `/feed`. |
+| 7 | Rzeszów112 | https://www.rzeszow112.pl/ | ✅ | HTML + JSON-LD | Local news + "przewodnik po wydarzeniach". |
+| 8 | Super Nowości 24 | https://supernowosci24.pl/ | ✅ | WP + JSON-LD | Whole Podkarpacie (Rzeszów, Przemyśl, Mielec, Dębica…); WP `/feed` likely. Filter to region cities. |
+| 9 | Rzeszów24.info | https://rzeszow24.info/ | ✅ | SPA state + JSON-LD | Client-hydrated; has embedded state JSON — find the XHR/API. |
+| 10 | Rzeszów-Info | https://www.rzeszow-info.pl/ | ✅ | HTML | News portal, events section; structure unverified. |
+| 11 | biletyna.pl (Rzeszów) | https://biletyna.pl/Rzeszow | ✅ | JSON-LD | Ticketing; per-city listing, big venues (G2A, Filharmonia). Overlaps eBilet — dedupe handles it. |
+| 12 | kicket.com (Rzeszów) | https://kicket.com/rzeszow | ✅ | JSON-LD | Ticketing platform, per-city page. |
+| 13 | Adria Art | https://adria-art.pl/miasta/1213/rzeszow | ✅ | JSON-LD | Ticketing — theatre/concerts/kabaret per city. |
+| 14 | Atrakcje.pl (Rzeszów) | https://rzeszow.atrakcje.pl/wydarzenia | ✅ | HTML | Regional events + attractions listing. |
+| 15 | Łańcut News | https://lancutnews.pl/kalendarz-wydarzen-w-domu-kultury/ | ✅ | WP | Łańcut local news + culture-house calendar. WP `/feed` likely. **Fills part of the Łańcut/Boguchwała gap.** |
+| 16 | MDK Łańcut | https://mdk-lancut.pl/wydarzenia/ | ✅ | HTML | Events page live (Tribe REST is **off** → 404); parse HTML. Łańcut culture house. |
+| 17 | Nasze Miasto Rzeszów | https://rzeszow.naszemiasto.pl/kalendarz-imprez | ⛔ | — | `403` bot-block (Polska Press). Needs real browser headers / their API. |
+| 18 | Kiwiportal (Rzeszów) | https://www.kiwiportal.pl/wydarzenia/m/rzeszow | ⛔ | — | Connection refused to generic fetch — retry with browser headers/headless. Nationwide event aggregator w/ city filter. |
+
+**Recommended integration order (this pass):**
+`rdk` (Tribe REST — do first) → `faktyrzeszow` (JSON-LD ItemList + detail) →
+`lancutnews` + `mdk-lancut` (close the Łańcut gap) → `biletyna`/`kicket`/`adria-art`
+(ticketing, high overlap → rely on dedup) → `resinet`/`atrakcje`/`visitrzeszow`
+(HTML aggregators) → news portals (`rzeszow-news`, `rzeszow112`, `supernowosci24`)
+via `/feed` for events-in-articles. Boguchwała still thin — `lancutnews`-style
+local portal for Boguchwała not yet found; `boguchwala.pl` portal remains the
+fallback.
+
 ## Tier 3 — blocked / low value for now
 
 | Source | URL | Status | Notes |
