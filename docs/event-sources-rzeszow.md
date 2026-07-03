@@ -58,8 +58,9 @@ for Tenerife, so it drops in as a config entry.
 
 | # | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|---|
-| 1 | **Rzeszowski Dom Kultury** ⭐ | https://rdk.rzeszow.pl/kalendarz/ | ✅ **BUILD NEXT** | Tribe REST + JSON-LD | `/wp-json/tribe/events/v1/events` open, **18 events** with title+start_date+venue+city; JSON-LD carries venue name & locality. City cultural centre incl. filie (Przybyszówka, Słocina, Załęże, Baranówka…). Best coverage-to-effort. |
-| 2 | Fakty Rzeszów | https://faktyrzeszow.pl/wydarzenie/ | ✅ | JSON-LD `ItemList`→`Event` | Event objects (name, startDate ISO) in the listing; **venue not in listing** → follow detail page. Local news + event calendar. |
+| 1 | **Rzeszowski Dom Kultury** ⭐ | https://rdk.rzeszow.pl/kalendarz/ | ✅ **INTEGRATED** | Tribe REST | `sources/tribe.ts` (`rdk` site, `country: 'PL'`); `/wp-json/tribe/events/v1/events` open, events with title+start_date+venue+city (no geo → geocoder resolves). Filie (Słocina, Załęże) + outdoor venues added to the venue registry. "Wybrane filie RDK" (multi-branch events) have no single location → strict-dropped by design. |
+| 2 | biletyna.pl ⭐ | https://biletyna.pl/Rzeszow | ✅ **INTEGRATED** | JSON-LD | `sources/biletyna.ts` via shared `sources/jsonld.ts`; per-city `ItemList` of schema.org `*Event` with **venue name + street + city** (venue-level precise). Rzeszów + Łańcut pages. High overlap with eBilet → cross-source dedup handles it. |
+| — | Fakty Rzeszów | https://faktyrzeszow.pl/wydarzenie/ | ⚠️ tier 2 | JSON-LD `ItemList`→`Event` | Listing has only ~3 events, **no venue** (needs detail fetch); those events fully overlap biletyna/eBilet. Low yield — deferred. |
 | 3 | RESinet (serwis rozrywkowy) | https://www.resinet.pl/rozrywka/kalendarium | ✅ | HTML | 900 KB kalendarium; no Event JSON-LD (only breadcrumb) — parse HTML rows. Rzeszów entertainment listings. |
 | 4 | Visit Rzeszów (oficjalny turystyczny) | https://www.visitrzeszow.pl/pl/wydarzenia | ✅ | HTML | 73 KB events page; official tourism agenda, structure unverified. |
 | 5 | erzeszow.pl — Kalendarz imprez | https://erzeszow.pl/41-miasto-rzeszow/6241-kalendarz-imprez.html | ✅ | HTML | Official city hall event calendar (the live one; the old `/wydarzenia` guess 404s). |
@@ -69,8 +70,8 @@ for Tenerife, so it drops in as a config entry.
 | 9 | Rzeszów24.info | https://rzeszow24.info/ | ✅ | SPA state + JSON-LD | Client-hydrated; has embedded state JSON — find the XHR/API. |
 | 10 | Rzeszów-Info | https://www.rzeszow-info.pl/ | ✅ | HTML | News portal, events section; structure unverified. |
 | 11 | biletyna.pl (Rzeszów) | https://biletyna.pl/Rzeszow | ✅ | JSON-LD | Ticketing; per-city listing, big venues (G2A, Filharmonia). Overlaps eBilet — dedupe handles it. |
-| 12 | kicket.com (Rzeszów) | https://kicket.com/rzeszow | ✅ | JSON-LD | Ticketing platform, per-city page. |
-| 13 | Adria Art | https://adria-art.pl/miasta/1213/rzeszow | ✅ | JSON-LD | Ticketing — theatre/concerts/kabaret per city. |
+| 12 | kicket.com (Rzeszów) | https://kicket.com/rzeszow | ⚠️ tier 2 | HTML (no Event LD) | Re-checked: JSON-LD is only `WebSite`, and detail pages carry **no** Event LD → needs HTML listing+detail scrape (brittle, like Estrada). ~36 `/event/view/id/N` links. High overlap with biletyna/eBilet → deferred. |
+| 13 | Adria Art | https://adria-art.pl/miasta/1213/rzeszow | ⚠️ tier 2 | HTML (no Event LD) | Re-checked: JSON-LD is only `Organization`; events are in HTML cards (~74 `/koncert//spektakl/` links). HTML scrape needed; overlaps ticketing → deferred. |
 | 14 | Atrakcje.pl (Rzeszów) | https://rzeszow.atrakcje.pl/wydarzenia | ✅ | HTML | Regional events + attractions listing. |
 | 15 | Łańcut News | https://lancutnews.pl/kalendarz-wydarzen-w-domu-kultury/ | ✅ | WP | Łańcut local news + culture-house calendar. WP `/feed` likely. **Fills part of the Łańcut/Boguchwała gap.** |
 | 16 | MDK Łańcut | https://mdk-lancut.pl/wydarzenia/ | ✅ | HTML | Events page live (Tribe REST is **off** → 404); parse HTML. Łańcut culture house. |
@@ -97,15 +98,17 @@ fallback.
 | erzeszow.pl | https://erzeszow.pl/wydarzenia | ⛔ | 404 on guessed paths; the portal moved — the live calendar is on `rzeszow.pl` (tier 2). |
 | kultura.rzeszow.pl | — | ⛔ | DNS dead. |
 
-## Coverage map (launch)
+## Coverage map (integrated sources)
+
+Six sources live: `ebilet`, `estrada`, `mgoktyczyn`, `tribe (rdk)`, `biletyna`.
 
 | Town | Covered by |
 |---|---|
-| Rzeszów | ebilet (rzeszow) + estrada |
-| Łańcut | ebilet (lancut) |
+| Rzeszów | ebilet + estrada + rdk (Tribe) + biletyna |
+| Łańcut | ebilet (lancut) + biletyna (lancut) |
 | Jasionka | ebilet (jasionka — G2A Arena events) |
 | Tyczyn | mgoktyczyn RSS |
-| Boguchwała | ⚠️ gap — no viable source yet (tier 2: boguchwala.pl portal); ebilet has no city page |
+| Boguchwała | ⚠️ gap — no viable source yet (tier 2: boguchwala.pl portal); ebilet/biletyna have no city page |
 
 ## Technical notes
 
