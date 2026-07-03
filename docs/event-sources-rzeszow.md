@@ -71,28 +71,123 @@ for Tenerife, so it drops in as a config entry.
 | 10 | Rzeszów-Info | https://www.rzeszow-info.pl/ | ✅ | HTML | News portal, events section; structure unverified. |
 | 11 | biletyna.pl (Rzeszów) | https://biletyna.pl/Rzeszow | ✅ | JSON-LD | Ticketing; per-city listing, big venues (G2A, Filharmonia). Overlaps eBilet — dedupe handles it. |
 | 12 | kicket.com (Rzeszów) | https://kicket.com/rzeszow | ⚠️ tier 2 | HTML (no Event LD) | Re-checked: JSON-LD is only `WebSite`, and detail pages carry **no** Event LD → needs HTML listing+detail scrape (brittle, like Estrada). ~36 `/event/view/id/N` links. High overlap with biletyna/eBilet → deferred. |
-| 13 | Adria Art | https://adria-art.pl/miasta/1213/rzeszow | ⚠️ tier 2 | HTML (no Event LD) | Re-checked: JSON-LD is only `Organization`; events are in HTML cards (~74 `/koncert//spektakl/` links). HTML scrape needed; overlaps ticketing → deferred. |
+| 13 | Adria Art | https://adria-art.pl/miasta/1213/rzeszow | ⚠️ tier 2 | HTML/SPA + JSON-LD shell | Live third-pass fetch is large and event-rich, but the JSON-LD is not yet verified as per-event payload. Needs parser/API discovery; high overlap with eBilet/Biletyna/KupBilecik. |
 | 14 | Atrakcje.pl (Rzeszów) | https://rzeszow.atrakcje.pl/wydarzenia | ✅ | HTML | Regional events + attractions listing. |
 | 15 | Łańcut News | https://lancutnews.pl/kalendarz-wydarzen-w-domu-kultury/ | ✅ | WP | Łańcut local news + culture-house calendar. WP `/feed` likely. **Fills part of the Łańcut/Boguchwała gap.** |
 | 16 | MDK Łańcut | https://mdk-lancut.pl/wydarzenia/ | ✅ | HTML | Events page live (Tribe REST is **off** → 404); parse HTML. Łańcut culture house. |
 | 17 | Nasze Miasto Rzeszów | https://rzeszow.naszemiasto.pl/kalendarz-imprez | ⛔ | — | `403` bot-block (Polska Press). Needs real browser headers / their API. |
 | 18 | Kiwiportal (Rzeszów) | https://www.kiwiportal.pl/wydarzenia/m/rzeszow | ⛔ | — | Connection refused to generic fetch — retry with browser headers/headless. Nationwide event aggregator w/ city filter. |
 
-**Recommended integration order (this pass):**
-`rdk` (Tribe REST — do first) → `faktyrzeszow` (JSON-LD ItemList + detail) →
-`lancutnews` + `mdk-lancut` (close the Łańcut gap) → `biletyna`/`kicket`/`adria-art`
-(ticketing, high overlap → rely on dedup) → `resinet`/`atrakcje`/`visitrzeszow`
-(HTML aggregators) → news portals (`rzeszow-news`, `rzeszow112`, `supernowosci24`)
-via `/feed` for events-in-articles. Boguchwała still thin — `lancutnews`-style
-local portal for Boguchwała not yet found; `boguchwala.pl` portal remains the
-fallback.
+## Third research pass (2026-07-03) - clubs, venues, aggregators, sport and family portals
+
+Live probes used a Chrome browser User-Agent and `Accept-Language: pl`. The
+statuses below are an implementation triage, not a guarantee that every site has
+events in the current 21-day scrape window.
+
+**Club/venue rule for future adapters:** if an official club/bar/disco page is
+the source and an event has no separate venue field, assign the event to that
+club's verified address from `regions/rzeszow-venues.ts` instead of dropping it
+for missing venue. These sources usually publish events happening on-site.
+
+Status glossary for this pass:
+
+- **INTEGRATED** - already active in `regions/rzeszow.ts`.
+- **DUPLICATE** - same source family as an integrated or already catalogued URL.
+- **READY** - likely direct adapter candidate.
+- **HTML** - viable but needs a custom parser.
+- **API-DISCOVERY** - live but needs endpoint/SPA/browser research.
+- **SOCIAL-ONLY** - Facebook/Instagram only; keep for venue discovery, not first-wave scraping.
+- **BLOCKED/LOW-VALUE** - blocked, failing, too sparse, or not a good event input.
+
+### Clubs and nightlife
+
+| Source | Canonical URL | Status | Struct. | Notes | Priority |
+|---|---|---|---|---|---|
+| Grand Club | https://grandclub.pl/rezerwacje/ | ⚠️ API-DISCOVERY | fetch failed | Homepage/reservations family. Generic fetch failed in this pass; retry with browser/headless before judging. If viable, default venue to Grand Club. | Low |
+| Klub Pod Palmą | https://www.podpalma.pl/wydarzenia/ | ✅ INTEGRATED | Tribe REST + WP | Active through `TribeEventsSource` as `podpalma`; live run returned `0` events for the 2026-07-03 → 2026-07-24 window. | Done |
+| Underground Pub | https://undergroundpub.pl/ | ⚠️ HTML | WP/RSS markers | Live WP site with event words/feed markers, but no confirmed event endpoint. Likely custom HTML/RSS investigation. Default venue to Underground Pub. | Medium |
+| ALOHA Food, Bowling & Club | https://aloha-club.pl/ | ⚠️ HTML | WP + JSON-LD | Live venue site; JSON-LD likely organization/local-business, not yet verified as events. Use as on-site event source only if dated posts/cards exist. | Medium |
+| Sofa Club & Restaurant | https://www.clubsofa.pl/ | ⛔ BLOCKED/LOW-VALUE | fetch failed | Generic fetch failed. Retry with browser if nightlife coverage becomes a priority. | Low |
+| LUKR Club | https://www.lukr.club/ | ⚠️ HTML | WP/RSS markers | Live venue site with event words, but no confirmed event feed. Likely on-site events only; venue default is safe once address is registered. | Medium |
+| Aqua Club & Lounge | https://www.facebook.com/AquaClubLounge/ | ⚠️ SOCIAL-ONLY | Facebook | No official scrapeable site in the submitted list. Track for venue registry/social monitoring only. | Backlog |
+| Rubin Club | https://www.facebook.com/rubinclubrzeszow/ | ⚠️ SOCIAL-ONLY | Facebook | Social-only. Do not scrape behind login. | Backlog |
+| Candela Club | https://www.instagram.com/candela.rzeszow/ | ⚠️ SOCIAL-ONLY | Instagram | Social-only. Do not scrape behind login. | Backlog |
+| Pewex Pub | https://www.instagram.com/pewex_pub/ | ⚠️ SOCIAL-ONLY | Instagram | Social-only. Do not scrape behind login. | Backlog |
+| Czarny Kot | https://czarnykot.eatbu.com/?lang=pl | ⚠️ HTML | Eatbu + JSON-LD | Eatbu page live; `www.czarnykot.rze.pl` failed. Likely local-business JSON-LD and static content, not event feed. Use only if dated events appear. | Low |
+| Jameson Pub | https://jamesonpub.eatbu.com/?lang=pl | ⚠️ LOW-VALUE | Eatbu + JSON-LD | Live local-business page; no confirmed event listing. | Low |
+| Bue Bue Klubokawiarnia | https://buebuerzeszow.eatbu.com/?lang=pl | ⚠️ LOW-VALUE | Eatbu + JSON-LD | Website is preferable to Facebook, but appears more venue/profile than event source. | Low |
+| Cybermachina Rzeszów | https://www.facebook.com/p/Cybermachina-Rzesz%C3%B3w-100063660819248/ | ⚠️ SOCIAL-ONLY | Facebook/Instagram | Submitted Facebook and Instagram profiles collapse to one source family. Keep for venue discovery only. | Backlog |
+| Chilli Klub Rzeszów | https://www.facebook.com/chilliklubrzeszow/ | ⚠️ SOCIAL-ONLY | Facebook | Social-only. Do not scrape behind login. | Backlog |
+| Jazz Club Gramofon | https://jazz.rzeszow.pl/ | ⚠️ HTML | WP/RSS markers | Live WP site with event words/feed markers. Good music venue candidate; needs RSS/post parser and venue default. | Medium |
+| Runway Music Club | https://goout.net/pl/runway-music-club/vzuofe/ | ⚠️ API-DISCOVERY | GoOut JSON-LD/SPA | GoOut place page is live and event-word rich; Going page is tiny shell. First verify current venue activity, then prefer GoOut/API discovery. | Low |
+| Strefa 57 | https://strefa57.com/ | ⚠️ HTML | WP + JSON-LD | Live, large event-rich venue site. No Tribe endpoint found; likely custom WP/event parser. Default venue to Strefa 57 when blank. | Medium |
+
+### Culture, sport, shopping and aggregators
+
+| Source | Canonical URL | Status | Struct. | Notes | Priority |
+|---|---|---|---|---|---|
+| Miasto Rzeszów / erzeszow.pl | https://erzeszow.pl/41-miasto-rzeszow/6241-kalendarz-imprez.html | ✅ INTEGRATED | HTML listing + detail | Active custom source. Listing gives date/title; details provide hour and venue when parseable. Live run collected `10` events. | Done |
+| Visit Rzeszów | https://www.visitrzeszow.pl/pl/wydarzenia | ⚠️ HTML | HTML | Redirects from `/wydarzenia`; live official tourism events page. Already catalogued. | Medium |
+| Estrada Rzeszowska | https://estrada.rzeszow.pl/ | ✅ INTEGRATED | HTML listing + detail | `/wydarzenia/` is duplicate of the implemented Estrada source family. | Done |
+| Rzeszowskie Piwnice | https://rzeszowskiepiwnice.pl/wydarzenia/ | ⚠️ DUPLICATE/HTML | Estrada-branded HTML | Live page title is Estrada Rzeszowska; likely overlaps Estrada/Piwnice events. Consider only if it exposes Piwnice-only events not present in Estrada. | Low |
+| Rzeszowski Dom Kultury | https://rdk.rzeszow.pl/kalendarz/ | ✅ INTEGRATED | Tribe REST | Already active through `TribeEventsSource` configured for `rdk`. | Done |
+| WDK Rzeszów | https://wdk.kulturapodkarpacka.pl/ | ⚠️ HTML | HTML | Live WDK page; previous `wdk.podkarpackie.pl` URL should be replaced by this canonical domain. Needs agenda structure parser. | Medium |
+| Podkarpacki Informator Kulturalny | https://kulturapodkarpacka.pl/ | ⚠️ HTML | HTML | Live large cultural portal. Potentially high regional coverage, but may include events outside bbox; needs city/venue filtering. | Medium |
+| Filharmonia Podkarpacka | https://filharmonia.rzeszow.pl/ | ⚠️ API-DISCOVERY | WP + JSON-LD | Live; previous note about WooCommerce/repertuar still applies. Big concerts overlap eBilet, but official source could improve descriptions. | Low |
+| Teatr Maska | https://www.teatrmaska.pl/repertuar/ | ⚠️ HTML | HTML | Live repertuar page. Good family/theatre source if dates/venue are parseable. | Medium |
+| Teatr im. Wandy Siemaszkowej | https://teatr-rzeszow.pl/kalendarium/ | ⚠️ HTML/API-DISCOVERY | WP + JSON-LD | Live repertuar page; no confirmed Tribe endpoint. Needs parser/API discovery. | Medium |
+| Kino Zorza | https://www.kinozorza.pl/wydarzenia | ⚠️ LOW-VALUE | HTML | Live events page. Mostly cinema/showtimes; include only special film events, not daily screenings. | Low |
+| ROSiR Rzeszów | https://rosir.pl/wydarzenia/ | ⚠️ HTML | WP + JSON-LD | Live sports/recreation events. Good candidate for family/outdoor if parser can filter true events. | Medium |
+| Asseco Resovia | https://www.assecoresovia.pl/ | ⚠️ API-DISCOVERY | WP + JSON-LD | Live team site. Needs match schedule endpoint; sports events map to Hala Podpromie. | Low |
+| Stal Rzeszów - football | https://stalrzeszow.pl/terminarz-spotkan/ | ⚠️ HTML | WP + JSON-LD | Live schedule page. Good if home matches can be separated from away fixtures. | Medium |
+| H69 / Stal Rzeszów speedway | https://www.h69.pl/terminarz | ✅ INTEGRATED | HTML table | Active custom source. Emits home matches only and assigns `Stadion Stal Rzeszów`. Live run collected `1` event in window. | Done |
+| Millenium Hall | https://www.milleniumhall.pl/aktualnosci.html | ⚠️ HTML | HTML + JSON-LD | Live news/events page. Use only dated event-like posts; avoid promos. | Low |
+| Galeria Rzeszów | https://galeria-rzeszow.pl/aktualnosci/ | ⚠️ HTML | WP/RSS markers | Live news page. Use only family/event posts; avoid shopping promos. | Low |
+| RESinet kalendarium | https://www.resinet.pl/rozrywka/kalendarium | ✅ INTEGRATED | HTML cards | Active custom source. Live run collected `73` raw events; venue registry needs follow-up for several local places. | Done |
+| RESinet places | https://www.resinet.pl/rozrywka/miejsca-instytucje | ⚠️ DIRECTORY | HTML/JSON-LD markers | Venue directory, not event source. Useful for venue registry enrichment, not event ingestion. | Backlog |
+| toRzeszow.pl | https://torzeszow.pl/wydarzenia/ | ⚠️ HTML/API-DISCOVERY | WP + Tribe markers | Live event-rich page; Tribe REST route returned 404, so parse HTML or discover site-specific endpoint. | Medium |
+| Koncerty w Rzeszowie | https://koncertywrzeszowie.pl/ | ✅ INTEGRATED | Tribe REST | Active through `TribeEventsSource` as `koncertywrzeszowie`. Live run collected `2` events. | Done |
+| eBilet Rzeszów | https://www.ebilet.pl/miasto/rzeszow | ✅ INTEGRATED | internal JSON API | Already active through `EbiletSource`. | Done |
+| Biletyna Rzeszów | https://biletyna.pl/Rzeszow | ✅ INTEGRATED | JSON-LD | Already active through `BiletynaSource`. | Done |
+| KupBilecik Rzeszów | https://www.kupbilecik.pl/miasta/14/Rzesz%C3%B3w/ | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | New city URL is live and event-rich; older guessed `/imprezy/Rzeszów/` path was low-value. Needs JSON-LD/API inspection and dedupe against eBilet/Biletyna. | Medium |
+| Biletomat Rzeszów | https://biletomat.pl/rzeszow | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Live ticketing page. Likely high overlap; parse only if structured event data is clean. | Medium |
+| PanBilet Rzeszów | https://www.panbilet.pl/wydarzenia/miasto/Rzesz%C3%B3w/ | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Live ticketing page. Verify JSON-LD/event API before adapter. | Medium |
+| Biletor Rzeszów | https://biletor.pl/bilety/rzeszow | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Live ticketing page with 2026 title. Verify per-event structured payload. | Medium |
+| Adria Art Rzeszów | https://adria-art.pl/miasta/1213/rzeszow | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Already catalogued; live event-rich city page. High overlap with ticketing platforms. | Low |
+| GoOut Rzeszów | https://goout.net/pl/rzeszow/wydarzenia/lezukdmkk/ | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Live event-rich page. Good for club/indie coverage if API can be found; dedupe required. | Medium |
+| Going Rzeszów | https://goingapp.pl/wydarzenia/rzeszow | ⛔ BLOCKED/LOW-VALUE | SPA shell | Generic fetch returns tiny shell. Needs browser/internal API; defer. | Low |
+| Co Jest Grane Rzeszów | https://cojestgrane.pl/polska/podkarpackie/rzeszow | ⚠️ HTML | HTML | Live multi-page city listing. Needs HTML parser and venue extraction. | Medium |
+| Czas Dzieci Rzeszów | https://czasdzieci.pl/rzeszow/wydarzenia/ | ⚠️ HTML | HTML | Live family-events listing. Good `family` candidate if venue/date fields are stable. | Medium |
+| MapaPrzygód Rzeszów | https://mapaprzygod.pl/wydarzenia/miasto/rzeszow | ⚠️ API-DISCOVERY | HTML + JSON-LD markers | Live family-events page; verify event JSON-LD shape. | Medium |
+| Atrakcje.pl Rzeszów | https://rzeszow.atrakcje.pl/ | ⚠️ HTML | HTML | Already catalogued. Live regional events/attractions page; needs parser and event filtering. | Medium |
+| Radio Rzeszów - kalendarz | https://radio.rzeszow.pl/kalendarz-wydarzen/ | ⚠️ HTML | WP + JSON-LD | Live patronage calendar. Regional scope, so bbox/city filtering needed. | Medium |
+| FNT Rzeszów | https://fnt-rzeszow.pl/wydarzenia | ⚠️ HTML | HTML | Live event-rich page. Needs parser; likely useful for culture/club listings. | Medium |
+| Nasze Miasto Rzeszów | https://rzeszow.naszemiasto.pl/kalendarz-imprez | ⛔ BLOCKED | 403 | Still bot-blocked (`Just a moment...`). Needs browser/API research. | Low |
+| Krajownik | https://krajownik.pl/ | ⚠️ API-DISCOVERY | HTML + JSON-LD markers | Nationwide search/events site; needs city query/API discovery before it is useful. | Low |
+| Facebook - Imprezy Rzeszów | https://www.facebook.com/groups/102072139974671/ | ⚠️ SOCIAL-ONLY | Facebook group | Social-only group. Do not scrape behind login. | Backlog |
+| Europejski Stadion Kultury | https://stadionkultury.pl/ | ⚠️ HTML | HTML | Live festival site. Seasonal high-value source; parser only useful near festival dates. | Low/seasonal |
+
+**Implemented in this pass (2026-07-03):**
+
+- Added Tribe sites: `koncertywrzeszowie`, `podpalma`.
+- Added custom sources: `resinet`, `erzeszow`, `h69`.
+- Live run: `126` raw events collected, `94` kept after geocoding, `86` written after dedupe.
+
+**Recommended integration order (next pass):**
+
+1. Venue registry recovery from the latest `no-venue-match` list: `Wybrane filie RDK`, `Place zabaw na Osiedlu Baranówka`, `Skwer obok kamienicy przy ul. Króla Kazimierza 25`, `Aqua Club & Lounge`, `Aloha`, `Kino za Rogiem Café`, `Galeria Nierzeczywista RSF`.
+2. `visitrzeszow` only after finding the POST/API endpoint; the fetched HTML returned "Nie znaleziono wyników" without submitted filters.
+3. `teatrmaska`, `teatr-rzeszow`, `czasdzieci` or `mapaprzygod` - fill family/theatre gap, but only when fixture pages contain dated events.
+4. Sports schedules: `stalrzeszow` football next; keep the H69 home/away filtering pattern.
+5. Nightlife official sites (`underground`, `strefa57`, `lukr`, `aloha`) only when dated event cards are visible in fixture HTML; social-only club sources remain discovery/backlog.
+6. Ticketing/API discovery (`KupBilecik`, `Biletomat`, `PanBilet`, `Biletor`, `GoOut`) - add after dedupe pressure is acceptable.
 
 ## Tier 3 — blocked / low value for now
 
 | Source | URL | Status | Notes |
 |---|---|---|---|
 | Bilety24 | https://www.bilety24.pl/szukaj?miasto=Rzeszów | ⛔ | Search GET params ignored — returns only nationwide "Popularne" (promoted) blocks. City filter is JS/POST; find the real search endpoint. |
-| KupBilecik | https://www.kupbilecik.pl/imprezy/Rzeszów/ | ⛔ | 1.25 MB response with **zero** "Rzesz" occurrences — consent/geo wall or JS-rendered listing. |
+| KupBilecik old guessed path | https://www.kupbilecik.pl/imprezy/Rzeszów/ | ⛔ | Old guessed path was low-value. The canonical city URL `https://www.kupbilecik.pl/miasta/14/Rzesz%C3%B3w/` is live and tracked in the third-pass table. |
 | Going. | https://goingapp.pl/ | ⛔ | SPA, 3.4 KB shell — needs their internal API. |
 | kultura.boguchwala.pl | http://kultura.boguchwala.pl/ | ⛔ | Ancient frame-based CMS (`1-start.html`) — no parseable listing. Boguchwała coverage gap: watch `boguchwala.pl` portal (tier 2). |
 | erzeszow.pl | https://erzeszow.pl/wydarzenia | ⛔ | 404 on guessed paths; the portal moved — the live calendar is on `rzeszow.pl` (tier 2). |
@@ -100,7 +195,7 @@ fallback.
 
 ## Coverage map (integrated sources)
 
-Six sources live: `ebilet`, `estrada`, `mgoktyczyn`, `tribe (rdk)`, `biletyna`.
+Eight source objects / ten configured source instances live: `ebilet`, `estrada`, `mgoktyczyn`, `tribe (rdk, koncertywrzeszowie, podpalma)`, `biletyna`, `resinet`, `erzeszow`, `h69`.
 
 | Town | Covered by |
 |---|---|
