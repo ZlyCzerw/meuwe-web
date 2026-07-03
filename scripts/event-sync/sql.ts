@@ -2,6 +2,11 @@ import type { MeuweEvent } from './types.ts';
 
 const MEUWE_TEAM_UUID = process.env.MEUWE_TEAM_UUID ?? 'b864b6bf-4282-4644-ab8f-b17b661b7841';
 
+export interface AliasPair {
+  alias: string;
+  canonical: string;
+}
+
 function esc(s: string): string {
   return s.replace(/'/g, "''");
 }
@@ -19,6 +24,7 @@ function pgTextArray(arr: string[]): string {
 
 export function generateSql(
   events: MeuweEvent[],
+  aliases: AliasPair[],
   meta: { dateFrom: string; dateTo: string; generatedAt: string }
 ): string {
   const lines: string[] = [
@@ -26,7 +32,7 @@ export function generateSql(
     `-- Scraped range: ${meta.dateFrom} → ${meta.dateTo}`,
     `-- Run manually in Supabase Dashboard → SQL Editor`,
     `-- Idempotent: ON CONFLICT (external_id) DO NOTHING skips duplicates`,
-    `-- Requires migration 20260530_add_external_id.sql`,
+    `-- Requires migrations 20260530_add_external_id.sql + 20260703_event_external_id_aliases.sql`,
     '',
     `DO $$`,
     `DECLARE`,
@@ -39,8 +45,9 @@ export function generateSql(
     lines.push(`-- ${esc(ev.title)} [${ev.externalId}]`);
     lines.push(
       `INSERT INTO public.events (id, title, description, lat, lng, place_name, ` +
-      `category, start_time, end_time, creator_id, status, external_id, photos) VALUES (`
+      `category, start_time, end_time, creator_id, status, external_id, photos)`
     );
+    lines.push(`SELECT`);
     lines.push(`  gen_random_uuid(),`);
     lines.push(`  '${esc(ev.title)}',`);
     lines.push(`  '${esc(ev.description)}',`);
@@ -50,7 +57,8 @@ export function generateSql(
     lines.push(`  '${pgTs(ev.startTime)}',`);
     lines.push(`  '${pgTs(ev.endTime)}',`);
     lines.push(`  team_id, 'upcoming', '${esc(ev.externalId)}', ${pgTextArray(ev.photos)}`);
-    lines.push(`) ON CONFLICT (external_id) DO NOTHING;`);
+    lines.push(`WHERE NOT EXISTS (SELECT 1 FROM public.event_external_id_aliases a WHERE a.alias_external_id = '${esc(ev.externalId)}')`);
+    lines.push(`ON CONFLICT (external_id) DO NOTHING;`);
 
     if (ev.tags.length) {
       lines.push(`INSERT INTO public.event_tags (event_id, tag)`);
@@ -59,6 +67,16 @@ export function generateSql(
       lines.push(`ON CONFLICT DO NOTHING;`);
     }
 
+    lines.push('');
+  }
+
+  if (aliases.length) {
+    lines.push(`-- Cross-source duplicate aliases (losers → kept event)`);
+    lines.push(`INSERT INTO public.event_external_id_aliases (alias_external_id, canonical_external_id) VALUES`);
+    lines.push(aliases
+      .map(a => `  ('${esc(a.alias)}', '${esc(a.canonical)}')`)
+      .join(',\n'));
+    lines.push(`ON CONFLICT (alias_external_id) DO NOTHING;`);
     lines.push('');
   }
 

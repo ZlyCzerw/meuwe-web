@@ -156,7 +156,7 @@ async function main() {
   }
 
   // 3. Generate SQL file
-  const sql = generateSql(meuweEvents, {
+  const sql = generateSql(meuweEvents, [], {
     dateFrom: dateFromStr,
     dateTo:   dateToStr,
     generatedAt: runDate,
