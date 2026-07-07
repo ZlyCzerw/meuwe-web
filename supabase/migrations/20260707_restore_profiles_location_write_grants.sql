@@ -1,0 +1,21 @@
+-- Regression fix for 20260702_profiles_hide_location.sql.
+--
+-- That migration hid the location columns (last_lat/last_lng/last_seen_at) from
+-- OTHER users' reads by replacing the table-level SELECT grant with a column-level
+-- SELECT grant that omits those three columns. The intent was read-only hiding:
+-- its own comment states "Writes are unaffected". In practice the grant state that
+-- ended up applied on PROD lost INSERT/UPDATE on profiles for the `authenticated`
+-- role, so a user writing their OWN location via updateProfileLocation
+-- (POST /rest/v1/profiles upsert) hit `42501 insufficient_privilege`.
+--
+-- Fix: explicitly restore INSERT/UPDATE for `authenticated`. This is the Supabase
+-- default write posture; row-level security still confines writes to the owner's
+-- own row via the existing policies:
+--   profiles_insert: WITH CHECK (auth.uid() = id)
+--   profiles_update: USING (auth.uid() = id) WITH CHECK (auth.uid() = id)
+-- SELECT stays column-restricted (location remains hidden from other users' reads),
+-- so this does NOT re-expose location — it only lets the owner write it again.
+--
+-- Idempotent — GRANT is safe to run multiple times.
+
+GRANT INSERT, UPDATE ON public.profiles TO authenticated;
