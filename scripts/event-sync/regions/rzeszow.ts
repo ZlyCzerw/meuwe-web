@@ -11,6 +11,7 @@ import { H69Source } from '../sources/sports-rzeszow.ts'
 import { RosirSource } from '../sources/rosir.ts'
 import { TorzeszowSource } from '../sources/torzeszow.ts'
 import { FntRzeszowSource } from '../sources/fnt-rzeszow.ts'
+import { CoJestGraneRzeszowSource } from '../sources/cojestgrane.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -63,5 +64,7 @@ export const RZESZOW: RegionConfig = {
     new TorzeszowSource(),
     // FNT Rzeszów — grouped cards with modal details.
     new FntRzeszowSource(),
+    // Co Jest Grane — schema.org city listing with venue addresses and ticket hours.
+    new CoJestGraneRzeszowSource(),
   ],
 }
