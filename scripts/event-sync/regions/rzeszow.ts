@@ -13,6 +13,7 @@ import { TorzeszowSource } from '../sources/torzeszow.ts'
 import { FntRzeszowSource } from '../sources/fnt-rzeszow.ts'
 import { CoJestGraneRzeszowSource } from '../sources/cojestgrane.ts'
 import { WdkRzeszowSource } from '../sources/wdk-rzeszow.ts'
+import { KulturaPodkarpackaSource } from '../sources/kulturapodkarpacka.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -69,5 +70,7 @@ export const RZESZOW: RegionConfig = {
     new CoJestGraneRzeszowSource(),
     // WDK Rzeszów — homepage event-announcement block.
     new WdkRzeszowSource(),
+    // Podkarpacki Informator Kulturalny — regional cards filtered to known Rzeszów venues.
+    new KulturaPodkarpackaSource(),
   ],
 }
