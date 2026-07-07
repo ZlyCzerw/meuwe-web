@@ -12,6 +12,7 @@ import { RosirSource } from '../sources/rosir.ts'
 import { TorzeszowSource } from '../sources/torzeszow.ts'
 import { FntRzeszowSource } from '../sources/fnt-rzeszow.ts'
 import { CoJestGraneRzeszowSource } from '../sources/cojestgrane.ts'
+import { WdkRzeszowSource } from '../sources/wdk-rzeszow.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -66,5 +67,7 @@ export const RZESZOW: RegionConfig = {
     new FntRzeszowSource(),
     // Co Jest Grane — schema.org city listing with venue addresses and ticket hours.
     new CoJestGraneRzeszowSource(),
+    // WDK Rzeszów — homepage event-announcement block.
+    new WdkRzeszowSource(),
   ],
 }
