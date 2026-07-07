@@ -33,17 +33,26 @@ export const db = {
     // never needs location — it's write-only from the client.
     const {data}=await supabase.from('profiles').select('id,display_name,avatar_color,radius_km,interests,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
   },
-  async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p) },
+  // NOTE: the trailing `.select('id')` on these upserts is load-bearing.
+  // profiles has a column-level SELECT grant that omits the location columns
+  // (last_lat/last_lng/last_seen_at) to hide them from other users' reads
+  // (migration 20260702_profiles_hide_location). A bare `.upsert()` makes PostgREST
+  // return the FULL row representation (RETURNING *), which needs SELECT on every
+  // column — including the ungranted location ones — and fails with
+  // 42501 "permission denied for table profiles". Selecting only `id` (which IS
+  // granted) narrows the RETURNING to a readable column, so the write succeeds
+  // while location stays hidden. Do not remove the `.select('id')`.
+  async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p).select('id') },
   async updateProfileLocation(uid:string, lat:number, lng:number) {
     return supabase.from('profiles').upsert({
       id: uid,
       last_lat: lat,
       last_lng: lng,
       last_seen_at: new Date().toISOString(),
-    })
+    }).select('id')
   },
   async updateProfileLanguage(uid: string, language: string) {
-    return supabase.from('profiles').upsert({ id: uid, language })
+    return supabase.from('profiles').upsert({ id: uid, language }).select('id')
   },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
