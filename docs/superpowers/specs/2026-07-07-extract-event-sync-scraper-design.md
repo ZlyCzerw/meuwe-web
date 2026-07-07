@@ -27,19 +27,19 @@ Wydzielić scraper wydarzeń (`scripts/event-sync/`) z repozytorium aplikacji `m
 ## Stan docelowy (architektura)
 
 **`meuwe-event-sync` (nowe repo):**
-- Layout w roocie: `index.ts`, `extract.ts`, `normalize.ts`, `geocoder.ts`, `dedupe.ts`, `mapper.ts`, `sql.ts` (+ testy), `sources/`, `regions/`, `__fixtures__/`.
-- `package.json`: runtime dep **`cheerio`**; devDeps **`tsx`, `vitest`, `typescript`, `@types/node`**. Skrypty: `test` (vitest), `typecheck` (tsc), `sync` (`tsx index.ts`).
-- `tsconfig.json`: przeniesiony `tsconfig.scraper.json` (już samodzielny), `include` dostosowany do nowego layoutu.
+- Layout: kod scrapera w **`src/`** (`index.ts` jako CLI entry, `extract/normalize/geocoder/dedupe/mapper/sql.ts` + testy, `sources/`, `regions/`, `__fixtures__/`). **Root zostaje wolny na config i przyszły interfejs graficzny** (`ui/` obok `src/`) — patrz sekcja „Przyszły interfejs graficzny". Wybór `src/` (zamiast płaskiego roota) właśnie po to, żeby nie reorganizować repo, gdy dojdzie GUI.
+- `package.json`: runtime dep **`cheerio`**; devDeps **`tsx`, `vitest`, `typescript`, `@types/node`**. Skrypty: `test` (vitest), `typecheck` (tsc), `sync` (`tsx src/index.ts`).
+- `tsconfig.json`: przeniesiony `tsconfig.scraper.json` (już samodzielny), `include: ["src/**/*.ts"]`.
 - `vitest.config.ts`: środowisko **`node`** (scraper nie potrzebuje jsdom).
 - `.github/workflows/sync.yml`: cron co 3 dni + dispatch; kroki jak dziś, ale **commit SQL do lokalnego `seeds/`** tego repo. Sekret `MEUWE_TEAM_UUID`.
-- Output SQL: lokalny katalog `seeds/` (dostosować `SEEDS_DIR` w `index.ts`, dziś `path.resolve(__dirname,'..','..','supabase','seeds')`).
+- Output SQL: katalog `seeds/` w roocie (dostosować `SEEDS_DIR` w `src/index.ts`, dziś `path.resolve(__dirname,'..','..','supabase','seeds')` → `path.resolve(__dirname,'..','seeds')`).
 - `README.md`: jak uruchomić (`--region=`), **kontrakt danych** (kolumny tabeli `events`, na które celuje `sql.ts`) i instrukcja: skopiuj wygenerowany SQL do Supabase Dashboard.
 - `.env.example`: `MEUWE_TEAM_UUID`.
 
 **`meuwe-web` (po sprzątaniu):**
 - Usunięte: `scripts/event-sync/**`, `tsconfig.scraper.json`, skrypty `event-sync` i `typecheck:scraper`, deps **`cheerio`** i **`tsx`** (po weryfikacji, że `src/` ich nie używa), workflow `.github/workflows/lagenda-sync.yml`.
 - **Bez zmian:** `vitest.config.ts` (testy scrapera znikają wraz z katalogiem; exclude `fcm.test.ts` zostaje), deps `jsdom` i `@supabase/supabase-js` (używane przez aplikację).
-- Historyczne `supabase/seeds/*.sql` (już wygenerowane) — **zostają jako ślad** (poza zakresem; usuwamy tylko na wyraźne życzenie).
+- **Usunięte historyczne seedy:** wygenerowane `supabase/seeds/events_*.sql` / `lagenda_*.sql` (output scrapera) — **usuwamy** (user zatwierdził). Jeśli w `supabase/seeds/` są też ręczne/niescrapowane seedy potrzebne aplikacji, zostają — plan rozróżni je przed usunięciem.
 
 ## Przepływ danych (bez zmian merytorycznych)
 
@@ -48,10 +48,10 @@ cron/manual (Actions w repo scrapera) → scrape źródeł → normalize/geocode
 ## Jak przeprowadzić (kolejność)
 
 **Krok A — nowe repo `meuwe-event-sync`:**
-1. Utworzyć repo; skopiować pliki scrapera do roota (bez `scripts/event-sync/` prefixu).
+1. Utworzyć repo; skopiować pliki scrapera do **`src/`** (bez `scripts/event-sync/` prefixu).
 2. Zredagować token Mapbox w dwóch fixtures na `pk.REDACTED` (parser nie używa tokenu — testy muszą dalej przechodzić).
-3. Dodać `package.json` (deps jw.), `tsconfig.json`, `vitest.config.ts` (env node), `README.md`, `.env.example`, `.gitignore`.
-4. Dostosować `SEEDS_DIR` w `index.ts` na lokalny `seeds/`.
+3. Dodać `package.json` (deps jw.), `tsconfig.json` (`include: src/**`), `vitest.config.ts` (env node), `README.md`, `.env.example`, `.gitignore`.
+4. Dostosować `SEEDS_DIR` w `src/index.ts` na `../seeds`.
 5. Przenieść workflow → commit SQL do lokalnego `seeds/`.
 6. **Weryfikacja standalone:** `npm ci && npm test` (~40 testów zielone), `npm run typecheck`, `npm run sync -- --region=rzeszow` generuje SQL.
 7. Pierwszy commit; ustawić sekret `MEUWE_TEAM_UUID` w nowym repo.
@@ -71,9 +71,13 @@ cron/manual (Actions w repo scrapera) → scrape źródeł → normalize/geocode
 - **Koordynacja dwóch repo** przy zmianach kontraktu — akceptowalny koszt izolacji.
 - **Ukryte sprzężenie kodu:** zweryfikowane, że brak (żaden kierunek). Krok B potwierdza to zielonym buildem/testami.
 
+## Przyszły interfejs graficzny (poza zakresem tego wydzielenia)
+
+User planuje zbudować **interfejs graficzny** dla scrapera. To **osobny, przyszły projekt** (własny spec/plan), nie część tego wydzielenia. Wpływa jednak na dziś jedną decyzję: **layout `src/`** (zamiast płaskiego roota), żeby GUI mogło dojść jako `ui/` obok `src/` bez reorganizacji. Naturalne kierunki na później (nie projektujemy ich tu): dashboard do uruchamiania/monitorowania scrapów, przegląd wygenerowanych eventów przed wysłaniem, zarządzanie źródłami/regionami/venue — a docelowo GUI mogłoby zastąpić ręczne wklejanie SQL własnym krokiem review+push. Ten spec jedynie **nie zamyka drogi** do GUI.
+
 ## Poza zakresem
 
+- **Interfejs graficzny scrapera** — osobny przyszły projekt (patrz wyżej); tu tylko przygotowujemy pod niego layout.
 - Zmiana logiki scrapowania, dodawanie źródeł.
 - Bezpośredni zapis do bazy (service-role) — świadomie odrzucone (gate przeglądu).
 - Przenoszenie historii Gita (`filter-repo`) — wybrano świeży start.
-- Usuwanie historycznych seedów z `meuwe-web` — zostają, chyba że user zdecyduje inaczej.
