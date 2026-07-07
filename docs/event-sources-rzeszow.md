@@ -141,7 +141,7 @@ Status glossary for this pass:
 | Kino Zorza | https://www.kinozorza.pl/wydarzenia | ⛔ BLOCKED/LOW-VALUE | HTML | Live events page, but most inventory looks like cinema/showtime content rather than map-worthy events. Include only if a dedicated special-events subset appears. | Low |
 | ROSiR Rzeszów | https://rosir.pl/wydarzenia/ | ⚠️ HTML | WP + JSON-LD | Live sports/recreation events. Good candidate for family/outdoor if parser can filter true events. | Medium |
 | Asseco Resovia | https://www.assecoresovia.pl/ | ⚠️ API-DISCOVERY | WP + JSON-LD | Live team site. Needs match schedule endpoint; sports events map to Hala Podpromie. | Low |
-| Stal Rzeszów - football | https://stalrzeszow.pl/terminarz-spotkan/ | ⚠️ HTML | WP + JSON-LD | Live schedule page. Good if home matches can be separated from away fixtures. | Medium |
+| Stal Rzeszów - football | https://stalrzeszow.pl/terminarz-spotkan/ | ⚠️ API-DISCOVERY | WP/SportsPress | Static fixture contains the page shell and an empty SportPress `sp-event-list`; no deterministic home/away event rows are present in HTML. Needs a SportsPress endpoint or browser-rendered data before activation. | Medium |
 | H69 / Stal Rzeszów speedway | https://www.h69.pl/terminarz | ✅ INTEGRATED | HTML table | Active custom source. Emits home matches only and assigns `Stadion Stal Rzeszów`. Live run collected `1` event in window. | Done |
 | Millenium Hall | https://www.milleniumhall.pl/aktualnosci.html | ⛔ BLOCKED/LOW-VALUE | HTML + JSON-LD | News/promotions mix is likely to swamp true events. Revisit only if a dedicated dated events surface appears. | Low |
 | Galeria Rzeszów | https://galeria-rzeszow.pl/aktualnosci/ | ⛔ BLOCKED/LOW-VALUE | WP/RSS markers | Current signal is still shopping/news heavy. Revisit only if repeated dated family/event posts justify a parser. | Low |
@@ -180,7 +180,7 @@ Status glossary for this pass:
 1. Venue registry recovery from the latest `no-venue-match` list: `Wybrane filie RDK`, `Place zabaw na Osiedlu Baranówka`, `Skwer obok kamienicy przy ul. Króla Kazimierza 25`, `Aqua Club & Lounge`, `Aloha`, `Kino za Rogiem Café`, `Galeria Nierzeczywista RSF`.
 2. `visitrzeszow` only after finding the POST/API endpoint; the fetched HTML returned "Nie znaleziono wyników" without submitted filters.
 3. `teatrmaska`, `teatr-rzeszow`, `czasdzieci` or `mapaprzygod` - fill family/theatre gap, but only when fixture pages contain dated events.
-4. Sports schedules: `stalrzeszow` football next; keep the H69 home/away filtering pattern.
+4. Sports schedules: `stalrzeszow` football needs SportsPress endpoint/browser-rendered data before activation; keep the H69 home/away filtering pattern for any future parser.
 5. Nightlife official sites (`underground`, `strefa57`, `lukr`, `aloha`) only when dated event cards are visible in fixture HTML; social-only club sources remain discovery/backlog.
 6. Ticketing/API discovery (`KupBilecik`, `Biletomat`, `PanBilet`, `Biletor`, `GoOut`) - add after dedupe pressure is acceptable.
 
