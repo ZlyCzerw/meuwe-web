@@ -5,6 +5,15 @@ import { EstradaSource } from '../sources/estrada.ts'
 import { MgokTyczynSource } from '../sources/mgoktyczyn.ts'
 import { TribeEventsSource } from '../sources/tribe.ts'
 import { BiletynaSource } from '../sources/biletyna.ts'
+import { ResinetSource } from '../sources/resinet.ts'
+import { ErzeszowSource } from '../sources/erzeszow.ts'
+import { H69Source } from '../sources/sports-rzeszow.ts'
+import { RosirSource } from '../sources/rosir.ts'
+import { TorzeszowSource } from '../sources/torzeszow.ts'
+import { FntRzeszowSource } from '../sources/fnt-rzeszow.ts'
+import { CoJestGraneRzeszowSource } from '../sources/cojestgrane.ts'
+import { WdkRzeszowSource } from '../sources/wdk-rzeszow.ts'
+import { KulturaPodkarpackaSource } from '../sources/kulturapodkarpacka.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -40,8 +49,28 @@ export const RZESZOW: RegionConfig = {
     // Events carry a venue name + city but no geo → geocoder resolves them.
     new TribeEventsSource([
       { id: 'rdk', url: 'https://rdk.rzeszow.pl', city: 'Rzeszów', country: 'PL' },
+      { id: 'koncertywrzeszowie', url: 'https://koncertywrzeszowie.pl', city: 'Rzeszów', country: 'PL' },
+      { id: 'podpalma', url: 'https://www.podpalma.pl', city: 'Rzeszów', country: 'PL' },
     ]),
     // biletyna.pl — ticketing, JSON-LD ItemList with venue+street+city.
     new BiletynaSource(),
+    // RESinet — server-rendered kalendarium with venue in listing cards.
+    new ResinetSource(),
+    // Official city calendar — listing + detail pages for venue/time.
+    new ErzeszowSource(),
+    // H69 — speedway schedule, home matches only.
+    new H69Source(),
+    // ROSiR — sports/recreation event cards with date ranges and venue classes.
+    new RosirSource(),
+    // toRzeszow.pl — local event cards from the Custom Event Plugin.
+    new TorzeszowSource(),
+    // FNT Rzeszów — grouped cards with modal details.
+    new FntRzeszowSource(),
+    // Co Jest Grane — schema.org city listing with venue addresses and ticket hours.
+    new CoJestGraneRzeszowSource(),
+    // WDK Rzeszów — homepage event-announcement block.
+    new WdkRzeszowSource(),
+    // Podkarpacki Informator Kulturalny — regional cards filtered to known Rzeszów venues.
+    new KulturaPodkarpackaSource(),
   ],
 }

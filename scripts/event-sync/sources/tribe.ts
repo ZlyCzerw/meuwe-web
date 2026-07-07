@@ -157,6 +157,10 @@ export class TribeEventsSource implements Source {
     this.sites = sites;
   }
 
+  siteIds(): string[] {
+    return this.sites.map(s => s.id);
+  }
+
   async scrape(options: ScrapeOptions): Promise<RawEvent[]> {
     const from = options.dateFrom.toISOString().slice(0, 10);
     const to   = options.dateTo.toISOString().slice(0, 10);

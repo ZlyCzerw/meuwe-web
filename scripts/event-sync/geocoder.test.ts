@@ -31,6 +31,19 @@ describe('matchVenue', () => {
   it('returns null for unknown venues', () => {
     expect(matchVenue('Klub Nieznany', rzeszow)).toBeNull()
   })
+  it('does not match the out-of-region Underground Pub candidate alias', () => {
+    expect(matchVenue('Underground Pub', rzeszow)).toBeNull()
+  })
+  it('matches Rzeszow venues recovered from live no-venue-match output', () => {
+    expect(matchVenue('Aloha - Food, Bowling & Club', rzeszow)?.name).toBe('ALOHA Food, Bowling & Club')
+    expect(matchVenue('Place zabaw na Osiedlu Baranówka', rzeszow)?.name).toBe('Place zabaw na Osiedlu Baranówka')
+    expect(matchVenue('Galeria Nierzeczywista RSF, ul. J. Matejki 10, Rzeszów', rzeszow)?.name).toBe('Galeria Nierzeczywista RSF')
+    expect(matchVenue('SALA KONCERTOWA FILHARMONII PODKARPACKIEJ', rzeszow)?.name).toBe('Filharmonia Podkarpacka')
+    expect(matchVenue('Zespół Szkół Gospodarczych w Rzeszowie', rzeszow)?.name).toBe('Zespół Szkół Gospodarczych')
+  })
+  it('matches the aggregate RDK branches venue without broad filial aliases', () => {
+    expect(matchVenue('Wybrane filie RDK', rzeszow)?.name).toBe('Wybrane filie RDK')
+  })
 })
 
 describe('inBbox', () => {
