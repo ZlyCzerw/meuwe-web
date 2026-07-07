@@ -58,7 +58,7 @@ for Tenerife, so it drops in as a config entry.
 
 | # | Source | URL | Status | Struct. | Notes |
 |---|---|---|---|---|---|
-| 1 | **Rzeszowski Dom Kultury** ⭐ | https://rdk.rzeszow.pl/kalendarz/ | ✅ **INTEGRATED** | Tribe REST | `sources/tribe.ts` (`rdk` site, `country: 'PL'`); `/wp-json/tribe/events/v1/events` open, events with title+start_date+venue+city (no geo → geocoder resolves). Filie (Słocina, Załęże) + outdoor venues added to the venue registry. "Wybrane filie RDK" (multi-branch events) have no single location → strict-dropped by design. |
+| 1 | **Rzeszowski Dom Kultury** ⭐ | https://rdk.rzeszow.pl/kalendarz/ | ✅ **INTEGRATED** | Tribe REST | `sources/tribe.ts` (`rdk` site, `country: 'PL'`); `/wp-json/tribe/events/v1/events` open, events with title+start_date+venue+city (no geo → geocoder resolves). Filie (Słocina, Załęże), outdoor venues, and the aggregate "Wybrane filie RDK" venue are in the registry; the aggregate maps to the RDK Staromieście/main address at Staromiejska 43a. |
 | 2 | biletyna.pl ⭐ | https://biletyna.pl/Rzeszow | ✅ **INTEGRATED** | JSON-LD | `sources/biletyna.ts` via shared `sources/jsonld.ts`; per-city `ItemList` of schema.org `*Event` with **venue name + street + city** (venue-level precise). Rzeszów + Łańcut pages. High overlap with eBilet → cross-source dedup handles it. |
 | — | Fakty Rzeszów | https://faktyrzeszow.pl/wydarzenie/ | ⚠️ tier 2 | JSON-LD `ItemList`→`Event` | Listing has only ~3 events, **no venue** (needs detail fetch); those events fully overlap biletyna/eBilet. Low yield — deferred. |
 | 3 | RESinet (serwis rozrywkowy) | https://www.resinet.pl/rozrywka/kalendarium | ✅ | HTML | 900 KB kalendarium; no Event JSON-LD (only breadcrumb) — parse HTML rows. Rzeszów entertainment listings. |

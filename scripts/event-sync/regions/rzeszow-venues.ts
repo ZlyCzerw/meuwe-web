@@ -93,6 +93,8 @@ export const RZESZOW_VENUES: VenueEntry[] = [
     aliases: ['filia slocina'] },
   { name: 'RDK filia Załęże', city: 'Rzeszów', lat: 50.05394, lng: 22.04047,
     aliases: ['filia zaleze'] },
+  { name: 'Wybrane filie RDK', city: 'Rzeszów', lat: 50.05881, lng: 21.99999,
+    aliases: ['wybrane filie rdk'] },
   { name: 'Rzeszowskie Bulwary', city: 'Rzeszów', lat: 50.01937, lng: 21.99599,
     aliases: ['rzeszowskie bulwary', 'bulwary'] },
   { name: 'Place zabaw na Osiedlu Baranówka', city: 'Rzeszów', lat: 50.05587, lng: 21.97857,

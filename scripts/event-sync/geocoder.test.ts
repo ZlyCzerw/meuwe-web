@@ -41,6 +41,9 @@ describe('matchVenue', () => {
     expect(matchVenue('SALA KONCERTOWA FILHARMONII PODKARPACKIEJ', rzeszow)?.name).toBe('Filharmonia Podkarpacka')
     expect(matchVenue('Zespół Szkół Gospodarczych w Rzeszowie', rzeszow)?.name).toBe('Zespół Szkół Gospodarczych')
   })
+  it('matches the aggregate RDK branches venue without broad filial aliases', () => {
+    expect(matchVenue('Wybrane filie RDK', rzeszow)?.name).toBe('Wybrane filie RDK')
+  })
 })
 
 describe('inBbox', () => {
