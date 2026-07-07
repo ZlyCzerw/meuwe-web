@@ -15,6 +15,8 @@ import type { VenueEntry } from '../types.ts'
 export const RZESZOW_VENUES: VenueEntry[] = [
   { name: 'Hala Podpromie (RSCW)', city: 'Rzeszów', lat: 50.02932, lng: 22.00121,
     aliases: ['podpromie', 'regionalne centrum widowiskowo sportowe'] },
+  { name: 'Baseny otwarte ROSIR', city: 'Rzeszów', lat: 50.03913, lng: 21.99323,
+    aliases: ['baseny otwarte rosir', 'baseny otwarte', 'rosir ul ks jalowego'] },
   { name: 'Millenium Hall', city: 'Rzeszów', lat: 50.02734, lng: 22.01338,
     aliases: ['millenium hall', 'millennium hall'] },
   { name: 'G2A Arena (CWK Jasionka)', city: 'Jasionka', lat: 50.10400, lng: 22.03300,

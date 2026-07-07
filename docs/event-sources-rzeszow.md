@@ -129,17 +129,17 @@ Status glossary for this pass:
 | Source | Canonical URL | Status | Struct. | Notes | Priority |
 |---|---|---|---|---|---|
 | Miasto Rzeszów / erzeszow.pl | https://erzeszow.pl/41-miasto-rzeszow/6241-kalendarz-imprez.html | ✅ INTEGRATED | HTML listing + detail | Active custom source. Listing gives date/title; details provide hour and venue when parseable. Live run collected `10` events. | Done |
-| Visit Rzeszów | https://www.visitrzeszow.pl/pl/wydarzenia | ⚠️ HTML | HTML | Redirects from `/wydarzenia`; official tourism events page remains live, but current fixture still needs custom extraction/filtering. | Medium |
+| Visit Rzeszów | https://www.visitrzeszow.pl/pl/wydarzenia | ⚠️ API-DISCOVERY | HTML form/POST | Redirects from `/wydarzenia`; official tourism events page remains live, but the 2026-07-07 fixture returns `Nie znaleziono wyników` without submitted filters. Needs POST/API discovery before activation. | Medium |
 | Estrada Rzeszowska | https://estrada.rzeszow.pl/ | ✅ INTEGRATED | HTML listing + detail | `/wydarzenia/` is duplicate of the implemented Estrada source family. | Done |
 | Rzeszowskie Piwnice | https://rzeszowskiepiwnice.pl/wydarzenia/ | ⛔ BLOCKED/LOW-VALUE | Estrada-branded HTML | Current page family appears to overlap the integrated Estrada source. Keep out of the first wave unless it exposes Piwnice-only events not already emitted by Estrada. | Low |
 | Rzeszowski Dom Kultury | https://rdk.rzeszow.pl/kalendarz/ | ✅ INTEGRATED | Tribe REST | Already active through `TribeEventsSource` configured for `rdk`. | Done |
 | WDK Rzeszów | https://wdk.kulturapodkarpacka.pl/ | ⚠️ READY | HTML | 2026-07-06 fixture contains dated `Kalendarz` links and `Zapowiedzi`/`topic__date` blocks on the canonical domain. Filter out news/photo relacje and keep dated event announcements. | Medium |
 | Podkarpacki Informator Kulturalny | https://kulturapodkarpacka.pl/ | ⚠️ READY | HTML | 2026-07-06 fixture contains dated `event-box` cards and Rzeszów venue labels, including WDK/BWA/Filharmonia entries. Good regional source once bbox/city filtering is enforced. | Medium |
 | Filharmonia Podkarpacka | https://filharmonia.rzeszow.pl/ | ⚠️ API-DISCOVERY | WP + JSON-LD | Live; previous note about WooCommerce/repertuar still applies. Big concerts overlap eBilet, but official source could improve descriptions. | Low |
-| Teatr Maska | https://www.teatrmaska.pl/repertuar/ | ⚠️ HTML | HTML | Live repertuar page. Good family/theatre source if dates/venue are parseable. | Medium |
-| Teatr im. Wandy Siemaszkowej | https://teatr-rzeszow.pl/kalendarium/ | ⚠️ HTML | WP + JSON-LD | Live repertuar page; no confirmed Tribe endpoint, but the current direction is still a custom HTML parser rather than API work first. | Medium |
+| Teatr Maska | https://www.teatrmaska.pl/repertuar/ | ⚠️ EMPTY-CURRENTLY | HTML calendar shell | 2026-07-07 fixture renders the July 2026 calendar shell and `Brak wydarzeń w wybranym terminie.` No parser until a populated month or calendar AJAX endpoint is identified. | Medium |
+| Teatr im. Wandy Siemaszkowej | https://teatr-rzeszow.pl/kalendarium/ | ⚠️ API-DISCOVERY | WP/Elementor + stale cache | 2026-07-07 fixture is LiteSpeed-cached and exposes stale 2024 repertuar snippets in metadata/content. Needs a current endpoint or browser/API path before activation. | Medium |
 | Kino Zorza | https://www.kinozorza.pl/wydarzenia | ⛔ BLOCKED/LOW-VALUE | HTML | Live events page, but most inventory looks like cinema/showtime content rather than map-worthy events. Include only if a dedicated special-events subset appears. | Low |
-| ROSiR Rzeszów | https://rosir.pl/wydarzenia/ | ⚠️ HTML | WP + JSON-LD | Live sports/recreation events. Good candidate for family/outdoor if parser can filter true events. | Medium |
+| ROSiR Rzeszów | https://rosir.pl/wydarzenia/ | ✅ INTEGRATED | HTML Kadence cards | Active custom source. Parses dated sports/recreation cards, de-dupes repeated sections, and assigns known ROSiR venues from category classes. | Done |
 | Asseco Resovia | https://www.assecoresovia.pl/ | ⚠️ API-DISCOVERY | WP + JSON-LD | Live team site. Needs match schedule endpoint; sports events map to Hala Podpromie. | Low |
 | Stal Rzeszów - football | https://stalrzeszow.pl/terminarz-spotkan/ | ⚠️ API-DISCOVERY | WP/SportsPress | Static fixture contains the page shell and an empty SportPress `sp-event-list`; no deterministic home/away event rows are present in HTML. Needs a SportsPress endpoint or browser-rendered data before activation. | Medium |
 | H69 / Stal Rzeszów speedway | https://www.h69.pl/terminarz | ✅ INTEGRATED | HTML table | Active custom source. Emits home matches only and assigns `Stadion Stal Rzeszów`. Live run collected `1` event in window. | Done |
@@ -159,7 +159,7 @@ Status glossary for this pass:
 | GoOut Rzeszów | https://goout.net/pl/rzeszow/wydarzenia/lezukdmkk/ | ⚠️ API-DISCOVERY | HTML/SPA + JSON-LD markers | Live event-rich page. Good for club/indie coverage if API can be found; dedupe required. | Medium |
 | Going Rzeszów | https://goingapp.pl/wydarzenia/rzeszow | ⛔ BLOCKED/LOW-VALUE | SPA shell | Generic fetch returns tiny shell. Needs browser/internal API; defer. | Low |
 | Co Jest Grane Rzeszów | https://cojestgrane.pl/polska/podkarpackie/rzeszow | ⚠️ READY | HTML + schema.org Event | 2026-07-06 fixture contains itemized events with `startDate`, venue name, street address, city, and ticket links. Multi-page pagination still needs handling, but the markup is directly parseable. | Medium |
-| Czas Dzieci Rzeszów | https://czasdzieci.pl/rzeszow/wydarzenia/ | ⚠️ HTML | HTML | Live family-events listing. Good `family` candidate if venue/date fields are stable. | Medium |
+| Czas Dzieci Rzeszów | https://czasdzieci.pl/rzeszow/wydarzenia/ | ⚠️ EMPTY-CURRENTLY | HTML day listing | 2026-07-07 fixture for `2026-07-03` has an empty `<ul class="artList">` and only a next-day URL. Needs date iteration with populated days before parser work. | Medium |
 | MapaPrzygód Rzeszów | https://mapaprzygod.pl/wydarzenia/miasto/rzeszow | ⚠️ EMPTY-CURRENTLY | HTML 404 | 2026-07-06 fixture for the canonical city URL is a branded `404` page, not an event listing. Keep dormant until the city events path returns real content again. | Medium |
 | Atrakcje.pl Rzeszów | https://rzeszow.atrakcje.pl/ | ⚠️ HTML | HTML | Already catalogued. Live regional events/attractions page; still needs parser work and event filtering. | Medium |
 | Radio Rzeszów - kalendarz | https://radio.rzeszow.pl/kalendarz-wydarzen/ | ⚠️ HTML | WP article/patronage page | Canonical page resolves to a patronage article shell rather than a clean structured feed. Keep only if the visible page content yields repeatable dated entries worth parsing. | Medium |
@@ -175,11 +175,17 @@ Status glossary for this pass:
 - Added custom sources: `resinet`, `erzeszow`, `h69`.
 - Live run: `126` raw events collected, `94` kept after geocoding, `86` written after dedupe.
 
+**Implemented in group-2 follow-up (2026-07-07):**
+
+- Added custom source: `rosir`.
+- Added venue registry entry for `Baseny otwarte ROSIR`.
+- Deferred `visitrzeszow`, `teatrmaska`, `teatr-rzeszow`, `czasdzieci`, and `stalrzeszow` until their fixtures expose current event rows or API endpoints.
+
 **Recommended integration order (next pass):**
 
 1. Venue registry recovery from the latest `no-venue-match` list: `Wybrane filie RDK`, `Place zabaw na Osiedlu Baranówka`, `Skwer obok kamienicy przy ul. Króla Kazimierza 25`, `Aqua Club & Lounge`, `Aloha`, `Kino za Rogiem Café`, `Galeria Nierzeczywista RSF`.
 2. `visitrzeszow` only after finding the POST/API endpoint; the fetched HTML returned "Nie znaleziono wyników" without submitted filters.
-3. `teatrmaska`, `teatr-rzeszow`, `czasdzieci` or `mapaprzygod` - fill family/theatre gap, but only when fixture pages contain dated events.
+3. `teatrmaska`, `teatr-rzeszow`, `czasdzieci` or `mapaprzygod` - fill family/theatre gap, but only when fixture pages contain dated events or a stable calendar/listing endpoint.
 4. Sports schedules: `stalrzeszow` football needs SportsPress endpoint/browser-rendered data before activation; keep the H69 home/away filtering pattern for any future parser.
 5. Nightlife official sites (`underground`, `strefa57`, `lukr`, `aloha`) only when dated event cards are visible in fixture HTML; social-only club sources remain discovery/backlog.
 6. Ticketing/API discovery (`KupBilecik`, `Biletomat`, `PanBilet`, `Biletor`, `GoOut`) - add after dedupe pressure is acceptable.

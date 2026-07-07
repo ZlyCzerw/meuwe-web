@@ -8,6 +8,7 @@ import { BiletynaSource } from '../sources/biletyna.ts'
 import { ResinetSource } from '../sources/resinet.ts'
 import { ErzeszowSource } from '../sources/erzeszow.ts'
 import { H69Source } from '../sources/sports-rzeszow.ts'
+import { RosirSource } from '../sources/rosir.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -54,5 +55,7 @@ export const RZESZOW: RegionConfig = {
     new ErzeszowSource(),
     // H69 — speedway schedule, home matches only.
     new H69Source(),
+    // ROSiR — sports/recreation event cards with date ranges and venue classes.
+    new RosirSource(),
   ],
 }
