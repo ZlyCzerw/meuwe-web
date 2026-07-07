@@ -31,6 +31,9 @@ describe('matchVenue', () => {
   it('returns null for unknown venues', () => {
     expect(matchVenue('Klub Nieznany', rzeszow)).toBeNull()
   })
+  it('does not match the out-of-region Underground Pub candidate alias', () => {
+    expect(matchVenue('Underground Pub', rzeszow)).toBeNull()
+  })
 })
 
 describe('inBbox', () => {

@@ -7,7 +7,7 @@ import type { VenueEntry } from '../types.ts'
  * wins, so keep more specific entries above generic ones (e.g. 'skwer
  * kultury' before 'rynek').
  *
- * Coordinates verified against Nominatim/OSM 2026-07-03 via
+ * Coordinates verified against Nominatim/OSM 2026-07-03 and 2026-07-07 via
  * scripts/event-sync/verify-venues.ts, except G2A Arena (absent from OSM —
  * placed manually at the CWK site by Rzeszów-Jasionka airport).
  * Grow this list from the "no-venue-match" block in each run summary.
@@ -31,6 +31,22 @@ export const RZESZOW_VENUES: VenueEntry[] = [
     aliases: ['wojewodzki dom kultury', 'wdk rzeszow'] },
   { name: 'Rzeszowskie Piwnice / Skwer Kultury', city: 'Rzeszów', lat: 50.03749, lng: 22.00496,
     aliases: ['rzeszowskie piwnice', 'skwer kultury'] },
+  { name: 'Klub Pod Palmą', city: 'Rzeszów', lat: 50.01653, lng: 22.00481,
+    aliases: ['klub pod palma', 'pod palma'] },
+  { name: 'Grand Club', city: 'Rzeszów', lat: 50.03745, lng: 22.00274,
+    aliases: ['grand club'] },
+  { name: 'LUKR club', city: 'Rzeszów', lat: 50.02796, lng: 22.01393,
+    aliases: ['lukr club', 'lukr'] },
+  { name: 'Underground', city: 'Rzeszów', lat: 50.03795, lng: 22.00331,
+    aliases: ['underground rzeszow'] },
+  { name: 'Cybermachina', city: 'Rzeszów', lat: 50.03814, lng: 22.00382,
+    aliases: ['cybermachina', 'cybermachina rzeszow'] },
+  { name: 'The Jameson Pub', city: 'Rzeszów', lat: 50.03824, lng: 21.99950,
+    aliases: ['the jameson pub', 'jameson pub', 'jameson'] },
+  { name: 'Bue Bue', city: 'Rzeszów', lat: 50.03715, lng: 22.00484,
+    aliases: ['bue bue'] },
+  { name: 'Lord Jack', city: 'Rzeszów', lat: 50.03719, lng: 22.00434,
+    aliases: ['lord jack'] },
   { name: 'Rynek w Rzeszowie', city: 'Rzeszów', lat: 50.03749, lng: 22.00496,
     aliases: ['rynek'] },
   { name: 'Zamek Lubomirskich w Rzeszowie', city: 'Rzeszów', lat: 50.03247, lng: 22.00063,
