@@ -106,7 +106,7 @@ Status glossary for this pass:
 |---|---|---|---|---|---|
 | Grand Club | https://grandclub.pl/rezerwacje/ | ⚠️ VENUE-ONLY | HTML/reservations | Canonical page is a reservations surface, but it exposes a dedicated `/wydarzenia/` link in navigation. Keep for venue registry; only promote once the events page is fixture-backed. | Low |
 | Klub Pod Palmą | https://www.podpalma.pl/wydarzenia/ | ✅ INTEGRATED | Tribe REST + WP | Active through `TribeEventsSource` as `podpalma`; live run returned `0` events for the 2026-07-03 → 2026-07-24 window. | Done |
-| Underground Pub | https://undergroundpub.pl/ | ⚠️ HTML | WP/RSS markers | Live WP site with event words/feed markers, but no confirmed event endpoint. Likely custom HTML/RSS investigation. Default venue to Underground Pub. | Medium |
+| Underground Pub | https://undergroundpub.pl/ | ❌ OUT-OF-REGION | WP/HTML | Domain from the candidate list resolves to Underground Pub in Tychy (`PL. Korfantego 1`, map coords `50.1092483,18.9753013`), not Rzeszów. Do not activate for Rzeszów; local Rzeszów venue should be handled only if a separate local source/feed is found. | Low |
 | ALOHA Food, Bowling & Club | https://aloha-club.pl/ | ⚠️ VENUE-ONLY | WP + JSON-LD | Homepage fixture is a venue/reservations surface with promotions and booking links, not dated event cards. Keep as a venue source unless a dedicated events page/feed is found. | Medium |
 | Sofa Club & Restaurant | https://www.clubsofa.pl/ | ⛔ BLOCKED/LOW-VALUE | TLS/cert failure | `curl` failed with `SSL certificate problem: unable to get local issuer certificate` on 2026-07-06, so there is no trustworthy fixture from the canonical URL yet. | Low |
 | LUKR Club | https://www.lukr.club/ | ⚠️ VENUE-ONLY | HTML/navigation | Homepage fixture exposes `rezerwacja/wydarzenia.html` in navigation, but the canonical home page itself is a club/restaurant shell without dated event blocks. Keep for venue resolution until the events page is fixture-backed. | Medium |
@@ -122,7 +122,7 @@ Status glossary for this pass:
 | Chilli Klub Rzeszów | https://www.facebook.com/chilliklubrzeszow/ | ⚠️ SOCIAL-ONLY | Facebook | Social-only. Do not scrape behind login. | Backlog |
 | Jazz Club Gramofon | https://jazz.rzeszow.pl/ | ⛔ BLOCKED/LOW-VALUE | WP/RSS | Current fixture is generic SEO/blog content, not a club event feed. Do not activate without a separate event page/feed. | Low |
 | Runway Music Club | https://goout.net/pl/runway-music-club/vzuofe/ | ⚠️ API-DISCOVERY | GoOut JSON-LD/SPA | GoOut place page is live and event-word rich; Going page is tiny shell. First verify current venue activity, then prefer GoOut/API discovery. | Low |
-| Strefa 57 | https://strefa57.com/ | ⚠️ HTML | WP + JSON-LD | Live, large event-rich venue site. No Tribe endpoint found; likely custom WP/event parser. Default venue to Strefa 57 when blank. | Medium |
+| Strefa 57 | https://strefa57.com/ | ❌ OUT-OF-REGION | WP + JSON-LD | Live, large event-rich venue site, but public profiles/search identify it as Strefa 57 in Przytkowice/Kalwaria Zebrzydowska area, not Rzeszów. Do not activate in the Rzeszów region unless a local Rzeszów-specific venue/source is confirmed. | Low |
 
 ### Culture, sport, shopping and aggregators
 
