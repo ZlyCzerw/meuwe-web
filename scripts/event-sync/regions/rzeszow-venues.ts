@@ -29,6 +29,8 @@ export const RZESZOW_VENUES: VenueEntry[] = [
     aliases: ['teatr maska'] },
   { name: 'Kino Zorza', city: 'Rzeszów', lat: 50.03493, lng: 22.00055,
     aliases: ['kino zorza'] },
+  { name: 'Kino za Rogiem Café', city: 'Rzeszów', lat: 50.04179, lng: 22.00628,
+    aliases: ['kino za rogiem cafe', 'pietro za rogiem'] },
   { name: 'Wojewódzki Dom Kultury w Rzeszowie', city: 'Rzeszów', lat: 50.03938, lng: 22.00376,
     aliases: ['wojewodzki dom kultury', 'wdk rzeszow'] },
   { name: 'Rzeszowskie Piwnice / Skwer Kultury', city: 'Rzeszów', lat: 50.03749, lng: 22.00496,

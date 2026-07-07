@@ -10,6 +10,7 @@ import { ErzeszowSource } from '../sources/erzeszow.ts'
 import { H69Source } from '../sources/sports-rzeszow.ts'
 import { RosirSource } from '../sources/rosir.ts'
 import { TorzeszowSource } from '../sources/torzeszow.ts'
+import { FntRzeszowSource } from '../sources/fnt-rzeszow.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -60,5 +61,7 @@ export const RZESZOW: RegionConfig = {
     new RosirSource(),
     // toRzeszow.pl — local event cards from the Custom Event Plugin.
     new TorzeszowSource(),
+    // FNT Rzeszów — grouped cards with modal details.
+    new FntRzeszowSource(),
   ],
 }

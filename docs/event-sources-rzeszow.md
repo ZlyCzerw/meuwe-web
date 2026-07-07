@@ -163,7 +163,7 @@ Status glossary for this pass:
 | MapaPrzygód Rzeszów | https://mapaprzygod.pl/wydarzenia/miasto/rzeszow | ⚠️ EMPTY-CURRENTLY | HTML 404 | 2026-07-06 fixture for the canonical city URL is a branded `404` page, not an event listing. Keep dormant until the city events path returns real content again. | Medium |
 | Atrakcje.pl Rzeszów | https://rzeszow.atrakcje.pl/ | ⚠️ HTML | HTML | Already catalogued. Live regional events/attractions page; still needs parser work and event filtering. | Medium |
 | Radio Rzeszów - kalendarz | https://radio.rzeszow.pl/kalendarz-wydarzen/ | ⚠️ HTML | WP article/patronage page | Canonical page resolves to a patronage article shell rather than a clean structured feed. Keep only if the visible page content yields repeatable dated entries worth parsing. | Medium |
-| FNT Rzeszów | https://fnt-rzeszow.pl/wydarzenia | ⚠️ READY | HTML | 2026-07-06 fixture contains dated cards/modals with event dates, descriptions, and ticket links. Good parser candidate despite overlap with ticketing platforms. | Medium |
+| FNT Rzeszów | https://fnt-rzeszow.pl/wydarzenia | ✅ INTEGRATED | HTML cards + modals | Active custom source. Parses grouped cards and Bootstrap modals for date/time, venue, description, ticket-linked source context, and cover image. High ticketing overlap, so dedupe remains important. | Done |
 | Nasze Miasto Rzeszów | https://rzeszow.naszemiasto.pl/kalendarz-imprez | ⛔ BLOCKED/LOW-VALUE | 403 | Still bot-blocked (`Just a moment...`). Needs browser/API research. | Low |
 | Krajownik | https://krajownik.pl/ | ⚠️ API-DISCOVERY | HTML + JSON-LD markers | Nationwide search/events site; needs city query/API discovery before it is useful. | Low |
 | Facebook - Imprezy Rzeszów | https://www.facebook.com/groups/102072139974671/ | ⚠️ SOCIAL-ONLY | Facebook group | Social-only group. Do not scrape behind login. | Backlog |
@@ -177,8 +177,8 @@ Status glossary for this pass:
 
 **Implemented in group-2 follow-up (2026-07-07):**
 
-- Added custom sources: `rosir`, `torzeszow`.
-- Added venue registry entries for `Baseny otwarte ROSIR`, `Plac Ofiar Getta`, and `Park Jedności Polonii z Macierzą`.
+- Added custom sources: `rosir`, `torzeszow`, `fnt-rzeszow`.
+- Added venue registry entries for `Baseny otwarte ROSIR`, `Plac Ofiar Getta`, `Park Jedności Polonii z Macierzą`, and `Kino za Rogiem Café`.
 - Deferred `visitrzeszow`, `teatrmaska`, `teatr-rzeszow`, `czasdzieci`, and `stalrzeszow` until their fixtures expose current event rows or API endpoints.
 
 **Recommended integration order (next pass):**
