@@ -147,7 +147,7 @@ Status glossary for this pass:
 | Galeria Rzeszów | https://galeria-rzeszow.pl/aktualnosci/ | ⛔ BLOCKED/LOW-VALUE | WP/RSS markers | Current signal is still shopping/news heavy. Revisit only if repeated dated family/event posts justify a parser. | Low |
 | RESinet kalendarium | https://www.resinet.pl/rozrywka/kalendarium | ✅ INTEGRATED | HTML cards | Active custom source. Live run collected `73` raw events; venue registry needs follow-up for several local places. | Done |
 | RESinet places | https://www.resinet.pl/rozrywka/miejsca-instytucje | ⚠️ VENUE-ONLY | HTML/JSON-LD markers | Venue directory, not an event source. Useful for venue registry enrichment and resolver support only. | Backlog |
-| toRzeszow.pl | https://torzeszow.pl/wydarzenia/ | ⚠️ READY | WP event listing HTML | 2026-07-06 fixture contains dated `cep-event__date` cards, categories, and detail links on the canonical page. Tribe REST still 404s, but the HTML listing is strong enough for a direct parser. | Medium |
+| toRzeszow.pl | https://torzeszow.pl/wydarzenia/ | ✅ INTEGRATED | WP event listing HTML | Active custom source. Parses server-rendered `.cep-event` cards with date/time, venue, category, excerpt, image, and repeated event slugs keyed by date. | Done |
 | Koncerty w Rzeszowie | https://koncertywrzeszowie.pl/ | ✅ INTEGRATED | Tribe REST | Active through `TribeEventsSource` as `koncertywrzeszowie`. Live run collected `2` events. | Done |
 | eBilet Rzeszów | https://www.ebilet.pl/miasto/rzeszow | ✅ INTEGRATED | internal JSON API | Already active through `EbiletSource`. | Done |
 | Biletyna Rzeszów | https://biletyna.pl/Rzeszow | ✅ INTEGRATED | JSON-LD | Already active through `BiletynaSource`. | Done |
@@ -177,8 +177,8 @@ Status glossary for this pass:
 
 **Implemented in group-2 follow-up (2026-07-07):**
 
-- Added custom source: `rosir`.
-- Added venue registry entry for `Baseny otwarte ROSIR`.
+- Added custom sources: `rosir`, `torzeszow`.
+- Added venue registry entries for `Baseny otwarte ROSIR`, `Plac Ofiar Getta`, and `Park Jedności Polonii z Macierzą`.
 - Deferred `visitrzeszow`, `teatrmaska`, `teatr-rzeszow`, `czasdzieci`, and `stalrzeszow` until their fixtures expose current event rows or API endpoints.
 
 **Recommended integration order (next pass):**

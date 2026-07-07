@@ -9,6 +9,7 @@ import { ResinetSource } from '../sources/resinet.ts'
 import { ErzeszowSource } from '../sources/erzeszow.ts'
 import { H69Source } from '../sources/sports-rzeszow.ts'
 import { RosirSource } from '../sources/rosir.ts'
+import { TorzeszowSource } from '../sources/torzeszow.ts'
 
 export const RZESZOW: RegionConfig = {
   id: 'rzeszow',
@@ -57,5 +58,7 @@ export const RZESZOW: RegionConfig = {
     new H69Source(),
     // ROSiR — sports/recreation event cards with date ranges and venue classes.
     new RosirSource(),
+    // toRzeszow.pl — local event cards from the Custom Event Plugin.
+    new TorzeszowSource(),
   ],
 }
