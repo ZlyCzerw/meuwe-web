@@ -3,8 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
-import { C, INK, F, TAG_META } from '../lib/tokens'
-import type { Category } from '../lib/tokens'
+import { C, INK, F } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm } from '../lib/geo'
@@ -14,6 +13,7 @@ import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
 import TagPickerModal from '../components/TagPickerModal'
+import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -89,9 +89,6 @@ function MapScreen({
   const pendingRecenterCheckRef = useRef(false)
 
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
-
-  // Popular categories shown directly on the bar; the rest live behind the "+" modal.
-  const POPULAR_FILTERS: Category[] = ['party', 'music', 'culture']
 
   function toggleFilter(f: string) {
     setSelectedFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
@@ -306,88 +303,14 @@ function MapScreen({
         </div>
       )}
 
-      {/* Category filter bar — fixed popular set + "+" opens the full picker (no horizontal scroll) */}
+      {/* Category filter bar — adapts the number of chips to the screen width */}
       {!pickingLocation && (
-        <div style={{
-          position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 8, padding: '0 16px',
-        }}>
-          {/* All — clears every filter */}
-          <button
-            onClick={() => setSelectedFilters([])}
-            style={{
-              flexShrink: 0, padding: '6px 14px', borderRadius: 999,
-              background: selectedFilters.length === 0 ? C.ink : '#fff',
-              color: selectedFilters.length === 0 ? '#fff' : C.inkSoft,
-              fontSize: 12, fontWeight: 800,
-              border: `2px solid ${selectedFilters.length === 0 ? C.ink : INK + '22'}`,
-              boxShadow: selectedFilters.length === 0 ? `0 2px 0 ${INK}` : 'none',
-              transition: 'all 180ms ease', whiteSpace: 'nowrap',
-            }}
-          >{t('map.allCategories')}</button>
-
-          {POPULAR_FILTERS.map(cat => {
-            const meta = TAG_META[cat]
-            const active = selectedFilters.includes(cat)
-            return (
-              <button
-                key={cat}
-                onClick={() => toggleFilter(cat)}
-                style={{
-                  flexShrink: 0,
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '6px 12px', borderRadius: 999,
-                  background: active ? meta.color : '#fff',
-                  color: active ? '#fff' : C.ink,
-                  fontSize: 12, fontWeight: 800,
-                  border: `2px solid ${active ? C.ink : INK + '22'}`,
-                  boxShadow: active ? `0 2px 0 ${C.ink}` : 'none',
-                  transition: 'all 180ms ease', whiteSpace: 'nowrap',
-                }}
-              >
-                {/* SAFETY: meta.glyph is a static SVG from tokens.ts — not user input */}
-                <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
-                {t('tags.' + cat)}
-              </button>
-            )
-          })}
-
-          {/* "+" — opens the full filter modal (all categories + custom tags) */}
-          {(() => {
-            const hiddenCount = selectedFilters.filter(f => !POPULAR_FILTERS.includes(f as Category)).length
-            const on = hiddenCount > 0
-            return (
-              <button
-                onClick={() => setFilterModalOpen(true)}
-                aria-label="More filters"
-                style={{
-                  flexShrink: 0, position: 'relative',
-                  width: 34, height: 34, borderRadius: '50%',
-                  background: on ? C.ink : '#fff',
-                  color: on ? '#fff' : C.ink,
-                  border: `2px solid ${on ? C.ink : INK + '22'}`,
-                  boxShadow: on ? `0 2px 0 ${INK}` : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, fontWeight: 700, lineHeight: 1,
-                  transition: 'all 180ms ease',
-                }}
-              >
-                +
-                {on && (
-                  <span style={{
-                    position: 'absolute', top: -4, right: -4,
-                    minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999,
-                    background: C.primary, color: '#fff',
-                    fontSize: 10, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '1.5px solid #fff',
-                  }}>{hiddenCount}</span>
-                )}
-              </button>
-            )
-          })()}
-        </div>
+        <AdaptiveFilterBar
+          selectedFilters={selectedFilters}
+          onToggle={toggleFilter}
+          onClear={() => setSelectedFilters([])}
+          onOpenPicker={() => setFilterModalOpen(true)}
+        />
       )}
 
       {/* Full filter picker — drops from the top, anchored at the "+" */}
