@@ -99,10 +99,10 @@ export default function AdaptiveFilterBar({ selectedFilters, onToggle, onClear, 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: GAP, padding: '0 16px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: GAP, minWidth: 0 }}>
-          <button onClick={onClear} style={allStyle(selectedFilters.length === 0)}>{t('map.allCategories')}</button>
-          {visible.map(cat => renderChip(cat))}
-        </div>
+        {/* All + chips + "+" are all direct flex children so justify-content:
+            space-between spreads them evenly across the full width at any count. */}
+        <button onClick={onClear} style={allStyle(selectedFilters.length === 0)}>{t('map.allCategories')}</button>
+        {visible.map(cat => renderChip(cat))}
         <button onClick={onOpenPicker} aria-label="More filters" style={plusStyle(plusActive)}>
           +
           {plusActive && (
