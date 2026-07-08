@@ -43,13 +43,15 @@ export const db = {
   // granted) narrows the RETURNING to a readable column, so the write succeeds
   // while location stays hidden. Do not remove the `.select('id')`.
   async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p).select('id') },
-  async updateProfileLocation(uid:string, lat:number, lng:number) {
-    return supabase.from('profiles').upsert({
-      id: uid,
-      last_lat: lat,
-      last_lng: lng,
-      last_seen_at: new Date().toISOString(),
-    }).select('id')
+  // Unlike the other profiles writes, location touches the SELECT-hidden columns
+  // (last_lat/last_lng/last_seen_at), so even `.select('id')` can't save a direct
+  // upsert — writing columns the caller can't SELECT trips 42501 at the merge/
+  // on-conflict step. Location writes therefore go through a SECURITY DEFINER RPC
+  // that runs as owner (bypasses column grants + RLS) and returns void, keeping the
+  // columns hidden. See migration 20260708_update_my_location_rpc.sql.
+  // `_uid` is unused — the RPC derives the user from auth.uid().
+  async updateProfileLocation(_uid:string, lat:number, lng:number) {
+    return supabase.rpc('update_my_location', { p_lat: lat, p_lng: lng })
   },
   async updateProfileLanguage(uid: string, language: string) {
     return supabase.from('profiles').upsert({ id: uid, language }).select('id')
