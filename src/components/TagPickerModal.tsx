@@ -150,7 +150,7 @@ export default function TagPickerModal({
                 placeholder={t('tagPicker.customPlaceholder')}
                 style={{
                   flex: 1, padding: '10px 16px', borderRadius: 999,
-                  background: C.cream, fontSize: 14, fontWeight: 600,
+                  background: C.cream, fontSize: 16, fontWeight: 600,
                   border: `2px solid transparent`,
                   outline: 'none',
                 }}

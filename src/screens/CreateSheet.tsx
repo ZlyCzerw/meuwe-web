@@ -674,7 +674,7 @@ function CreateSheet({
             padding: '12px 16px',
             borderRadius: 20,
             background: C.cream,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 600,
             resize: 'none',
             lineHeight: 1.5,
