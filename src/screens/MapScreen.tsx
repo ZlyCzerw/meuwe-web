@@ -259,7 +259,11 @@ function MapScreen({
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Leaflet map */}
-      <div ref={mapRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+      {/* position: fixed → the map fills the whole viewport edge-to-edge, breaking out of
+          the body's safe-area padding, so it reaches under the notch and home indicator.
+          The UI controls stay position:absolute within the padded area (env()=0 on web/
+          Android, so this is a no-op there). */}
+      <div ref={mapRef} style={{ position: 'fixed', inset: 0, zIndex: 0 }} />
 
       {/* Loading overlay */}
       {loading && (

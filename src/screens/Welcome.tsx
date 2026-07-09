@@ -21,6 +21,11 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
   const { t } = useTranslation()
   const blobs = useBlobPhysics(6)
   const [copied, setCopied] = useState(false)
+  // On native the WebView is full-screen and body has safe-area padding, which would
+  // leave cream bands above/below this screen. Break the gradient out to fill the whole
+  // viewport (position:fixed) so it reaches under the notch and home indicator. On web
+  // this component is a hero section inside the scrollable landing, so keep it in flow.
+  const native = isNativePlatform()
 
   if (isInAppBrowser()) {
     const url = window.location.href
@@ -95,7 +100,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
 
   return (
     <div style={{
-      width: '100%', height: '100%', position: 'relative',
+      ...(native ? { position: 'fixed', inset: 0 } : { width: '100%', height: '100%', position: 'relative' }),
       background: `linear-gradient(180deg,${C.cream} 0%,#FFF1E0 40%,#FFE8DC 75%,#FFE0E8 100%)`,
       overflow: 'hidden', display: 'flex', flexDirection: 'column',
     }}>
@@ -145,7 +150,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
       </div>
 
       {/* Buttons */}
-      <div style={{ padding: '0 24px 52px', position: 'relative', zIndex: 1 }}>
+      <div style={{ padding: '0 24px calc(52px + env(safe-area-inset-bottom))', position: 'relative', zIndex: 1 }}>
         <button
           onClick={() => { db.trackClick('signin_google'); onSignIn('google') }}
           style={{
