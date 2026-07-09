@@ -449,7 +449,7 @@ function CreateSheet({
             }}>⌄</div>
           </div>
           {timeExpanded && (
-            <div style={{ marginTop: 14, display: 'flex', gap: 10 }} onClick={e => e.stopPropagation()}>
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }} onClick={e => e.stopPropagation()}>
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
                 <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeFrom')}</div>
                 <input
