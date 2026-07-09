@@ -12,11 +12,12 @@ export default function AnimatedSplash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
+    // Order: empty orange → confetti bursts → the smiley pops in.
     const timers = [
-      setTimeout(() => setConfetti(true), 340),   // fire as the blob pops
-      setTimeout(() => setConfetti(false), 340 + 850),
-      setTimeout(() => setLeaving(true), 1550),    // start fade-out
-      setTimeout(onDone, 1950),                    // reveal the app
+      setTimeout(() => setConfetti(true), 180),        // confetti first, on empty orange
+      setTimeout(() => setConfetti(false), 180 + 850),
+      setTimeout(() => setLeaving(true), 1780),         // start fade-out
+      setTimeout(onDone, 2180),                         // reveal the app
     ]
     return () => timers.forEach(clearTimeout)
   }, [onDone])
@@ -31,10 +32,12 @@ export default function AnimatedSplash({ onDone }: { onDone: () => void }) {
       opacity: leaving ? 0 : 1,
       transition: 'opacity 400ms ease',
     }}>
-      <div style={{ animation: 'splashBlobPop 900ms ease-out both', transformOrigin: 'center' }}>
+      {/* animationDelay + `both` keeps the blob at scale(0) (nothing on screen) until the
+          confetti has burst, then it pops in growing with a bounce. */}
+      <div style={{ animation: 'splashBlobPop 900ms ease-out 520ms both', transformOrigin: 'center' }}>
         <OrganicBlob size={size} color={C.grass} idx={0} face={<BlobFace size={size * 0.5} />} />
       </div>
-      <ConfettiBurst visible={confetti} />
+      <ConfettiBurst visible={confetti} scale={2} />
       <style>{`
         @keyframes splashBlobPop {
           0%   { transform: scale(0)    translateY(0); }
