@@ -27,7 +27,8 @@ export default function AnimatedSplash({ onDone }: { onDone: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: C.primary,
+      // Same gradient as the Welcome screen, so the splash flows straight into it.
+      background: `linear-gradient(180deg,${C.cream} 0%,#FFF1E0 40%,#FFE8DC 75%,#FFE0E8 100%)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       opacity: leaving ? 0 : 1,
       transition: 'opacity 400ms ease',
