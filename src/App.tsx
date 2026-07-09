@@ -16,6 +16,7 @@ import CreateSheet from './screens/CreateSheet'
 import Toast from './components/Toast'
 import ProfilePanel from './screens/ProfilePanel'
 import ConfettiBurst from './components/ConfettiBurst'
+import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
@@ -43,6 +44,8 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
+  // Animated launch splash — native only (web has the landing page). Shows once per cold start.
+  const [showSplash, setShowSplash] = useState(isNativePlatform())
   const [myEventSelected, setMyEventSelected] = useState<EventWithMeta | null>(null)
   const [followedEventSelected, setFollowedEventSelected] = useState<EventWithMeta | null>(null)
   const [pickingLocation, setPickingLocation] = useState(false)
@@ -357,6 +360,9 @@ export default function App() {
     showToast(t('create.added'))
     track.createEvent('')
   }
+
+  // Animated launch splash covers the boot (session resolves behind it), then reveals the app.
+  if (showSplash) return <AnimatedSplash onDone={() => setShowSplash(false)} />
 
   // Loading screen — faithful port of prototype lines 1077-1089
   if (screen === 'loading') return (
