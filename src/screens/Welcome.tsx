@@ -187,7 +187,11 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
             const full = t('welcome.terms')
             const word = t('welcome.termsLink')
             const [before, after] = full.split(word)
-            return <>{before}<a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: C.inkSoft, textDecoration: 'underline' }}>{word}</a>{after}</>
+            // On native, "/terms.html" resolves to capacitor://localhost/... which the
+            // system browser can't open (target=_blank → "Failed to open URL" Code=115).
+            // Point at the absolute hosted page so Capacitor opens it in the system browser.
+            const termsHref = native ? 'https://meuwe.eu/terms.html' : '/terms.html'
+            return <>{before}<a href={termsHref} target="_blank" rel="noopener noreferrer" style={{ color: C.inkSoft, textDecoration: 'underline' }}>{word}</a>{after}</>
           })()}
         </div>
         <button
