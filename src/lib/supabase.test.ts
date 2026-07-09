@@ -1,5 +1,16 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { db, supabase } from './supabase'
+
+// Override platform detection so we can exercise db.signInApple's platform branch.
+// Other tests don't depend on platform, so the default (web) is safe for them.
+vi.mock('./platform', async (orig) => {
+  const actual = await orig<typeof import('./platform')>()
+  return {
+    ...actual,
+    isNativePlatform: () => (globalThis as any).__native ?? false,
+    isIOS: () => (globalThis as any).__ios ?? false,
+  }
+})
 
 describe('getMyEvents mapping', () => {
   it('accumulates message counts from countMap correctly', () => {
@@ -63,5 +74,16 @@ describe('is_private default', () => {
     vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({ data: { session: null }, error: null } as any)
     const result = await db.createEvent({ title: 'Secret', lat: 0, lng: 0, is_private: true })
     expect(result).toEqual({ data: null, error: { message: 'not authenticated' } })
+  })
+})
+
+describe('db.signInApple', () => {
+  afterEach(() => { (globalThis as any).__native = false; (globalThis as any).__ios = false })
+
+  it('web/Android uses signInWithOAuth apple redirect', async () => {
+    const spy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({ data: {}, error: null } as any)
+    ;(globalThis as any).__ios = false
+    await db.signInApple()
+    expect(spy).toHaveBeenCalledWith({ provider: 'apple', options: { redirectTo: location.origin } })
   })
 })

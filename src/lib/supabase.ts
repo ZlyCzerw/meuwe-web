@@ -1,7 +1,7 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm } from './geo'
-import { isNativePlatform } from './platform'
+import { isNativePlatform, isIOS } from './platform'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -23,6 +23,14 @@ export const db = {
       return import('./nativeAuth').then(m => m.signInGoogleNative())
     }
     return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } })
+  },
+  signInApple() {
+    if (isIOS()) {
+      // iOS: native Apple sign-in; dynamic import keeps Firebase out of the web bundle
+      return import('./nativeAuth').then(m => m.signInAppleNative())
+    }
+    // web + Android: Supabase OAuth redirect
+    return supabase.auth.signInWithOAuth({ provider:'apple', options:{ redirectTo: location.origin } })
   },
   signOut() { return supabase.auth.signOut() },
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
@@ -279,7 +287,7 @@ export const db = {
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'event_messages',filter:`event_id=eq.${eid}`},(p:any)=>cb(p.new))
       .subscribe()
   },
-  trackClick(action: 'browse_guest' | 'signin_google') {
+  trackClick(action: 'browse_guest' | 'signin_google' | 'signin_apple') {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})
   },
