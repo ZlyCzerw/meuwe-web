@@ -10,7 +10,7 @@ import { DownloadCTASection } from '../components/landing/sections/DownloadCTASe
 import { LandingFooter } from '../components/landing/sections/LandingFooter'
 
 interface Props {
-  onSignIn: (mode: 'google' | 'skip') => void
+  onSignIn: (mode: 'google' | 'apple' | 'skip') => void
 }
 
 export function Landing({ onSignIn }: Props) {

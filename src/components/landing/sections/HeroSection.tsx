@@ -4,7 +4,7 @@ import Welcome from '../../../screens/Welcome'
 import { C, INK } from '../../../lib/tokens'
 
 interface Props {
-  onSignIn: (mode: 'google' | 'skip') => void
+  onSignIn: (mode: 'google' | 'apple' | 'skip') => void
 }
 
 const srOnly: React.CSSProperties = {

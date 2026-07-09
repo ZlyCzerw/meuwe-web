@@ -381,9 +381,10 @@ export default function App() {
   )
 
   if (screen === 'welcome') {
-    const signIn = (mode: 'google' | 'skip') => {
+    const signIn = (mode: 'google' | 'apple' | 'skip') => {
       if (mode === 'skip') { goToMap(); return }
       if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
+      if (mode === 'apple') { db.signInApple(); return }
       db.signInGoogle()
     }
     if (isNativePlatform()) return <Welcome onSignIn={signIn} />

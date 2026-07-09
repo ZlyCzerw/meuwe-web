@@ -116,7 +116,7 @@ function scrollToId(id: string) {
 }
 
 interface NavProps {
-  onSignIn?: (mode: 'google' | 'skip') => void
+  onSignIn?: (mode: 'google' | 'apple' | 'skip') => void
 }
 
 export function LandingNav({ onSignIn }: NavProps) {

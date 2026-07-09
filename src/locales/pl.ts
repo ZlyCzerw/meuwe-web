@@ -4,6 +4,7 @@ const pl = {
   welcome: {
     tagline: 'Odkrywaj wydarzenia\nwokół Ciebie',
     google: 'Zaloguj się przez Google',
+    apple: 'Zaloguj się przez Apple',
     terms: 'Logując się akceptujesz regulamin',
     termsLink: 'regulamin',
     skip: 'Przeglądaj bez logowania →',
