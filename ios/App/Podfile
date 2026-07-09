@@ -23,6 +23,14 @@ end
 target 'App' do
   capacitor_pods
   # Add your Pods here
+  # Enable the Google subspec of @capacitor-firebase/authentication (adds GoogleSignIn +
+  # the RGCFA_INCLUDE_GOOGLE flag). Declared here (not in def capacitor_pods) so it
+  # survives `npx cap sync`, which regenerates the capacitor_pods block. See setup-google.md.
+  pod 'CapacitorFirebaseAuthentication/Google', :path => '../../node_modules/@capacitor-firebase/authentication'
+  # GoogleSignIn 7.1.0 (pinned by the Google subspec) needs GTMSessionFetcher/Core ~> 3.x,
+  # but the latest Firebase 11.15 wants 4.5.0 → conflict. Pin GTMSessionFetcher to 3.x so
+  # CocoaPods resolves Firebase down to a compatible 11.x that both can share.
+  pod 'GTMSessionFetcher/Core', '~> 3.4'
 end
 
 post_install do |installer|
