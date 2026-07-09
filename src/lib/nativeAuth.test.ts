@@ -29,6 +29,18 @@ describe('signInGoogleNative', () => {
     expect(signInWithIdToken).toHaveBeenCalledWith({ provider: 'google', token: 'GTOKEN' })
   })
 
+  it('passes the nonce when the Google credential includes one (iOS)', async () => {
+    // On iOS GoogleSignIn puts a hashed nonce in the id_token; Supabase rejects the token
+    // ("Passed nonce and nonce in id_token should either both exist or not") unless the raw
+    // nonce is forwarded. On Android the credential has no nonce, so it stays omitted.
+    signInWithGoogle.mockResolvedValue({ credential: { idToken: 'GTOKEN', nonce: 'NONCE1' } })
+    signInWithIdToken.mockResolvedValue({ data: {}, error: null })
+
+    await signInGoogleNative()
+
+    expect(signInWithIdToken).toHaveBeenCalledWith({ provider: 'google', token: 'GTOKEN', nonce: 'NONCE1' })
+  })
+
   it('throws when no idToken is returned', async () => {
     signInWithGoogle.mockResolvedValue({ credential: { idToken: null } })
     await expect(signInGoogleNative()).rejects.toThrow(/idToken/)
