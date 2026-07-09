@@ -6,6 +6,7 @@ import './lib/i18n'
 import App from './App'
 import Blog from './pages/Blog'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { SplashScreen } from '@capacitor/splash-screen'
 
 const rootEl = document.getElementById('root')!
 
@@ -27,3 +28,9 @@ if (rootEl.innerHTML.trim().length > 0) {
 } else {
   createRoot(rootEl).render(app)
 }
+
+// Hide the native splash only after the first frames have painted, so the branded
+// splash covers the WebView boot instead of a black flash. No-op on web.
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  SplashScreen.hide().catch(() => {})
+}))
