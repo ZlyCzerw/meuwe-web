@@ -153,7 +153,8 @@ function SearchBar({ userPos, onSelect }: Props) {
           placeholder={t('map.search')}
           style={{
             flex: 1,
-            fontSize: 14,
+            // >=16px prevents iOS from auto-zooming the page when the field is focused.
+            fontSize: 16,
             fontWeight: 600,
             color: C.ink,
             border: 'none',

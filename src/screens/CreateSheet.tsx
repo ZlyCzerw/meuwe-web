@@ -458,7 +458,7 @@ function CreateSheet({
                   min={startMinLocal}
                   onChange={e => setStartTime(e.target.value)}
                   onBlur={() => commitStart(startTime)}
-                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                  style={{ fontSize: 16, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
@@ -470,7 +470,7 @@ function CreateSheet({
                   max={endMaxLocal}
                   onChange={e => setEndTime(e.target.value)}
                   onBlur={() => commitEnd(endTime)}
-                  style={{ fontSize: 13, fontWeight: 700, color: C.ink, width: '100%' }}
+                  style={{ fontSize: 16, fontWeight: 700, color: C.ink, width: '100%' }}
                 />
               </div>
             </div>
