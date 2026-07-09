@@ -106,7 +106,9 @@ function ProfilePanel({
       <div
         onClick={onClose}
         style={{
-          position: 'absolute',
+          // fixed (not absolute) so the dim + panel cover the full viewport, including the
+          // notch / home-indicator strips where the full-bleed map would otherwise show through.
+          position: 'fixed',
           inset: 0,
           zIndex: 30,
           background: 'rgba(45,43,42,0.4)',
@@ -119,7 +121,7 @@ function ProfilePanel({
       {/* Sliding panel */}
       <div
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: 0,
           bottom: 0,
           left: 0,
@@ -156,7 +158,7 @@ function ProfilePanel({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '52px 24px 32px',
+            padding: 'calc(52px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom))',
             position: 'relative',
           }}
         >
