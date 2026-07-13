@@ -42,6 +42,7 @@ function MapScreen({
   lastKnownPos,
   ipPos,
   initialZoom = 15,
+  initialCenter,
   pickingLocation,
   onLocationPicked,
   eventsRefreshKey,
@@ -59,6 +60,7 @@ function MapScreen({
   lastKnownPos?: { lat: number; lng: number } | null
   ipPos?: { lat: number; lng: number } | null
   initialZoom?: number
+  initialCenter?: { lat: number; lng: number } | null
   pickingLocation?: boolean
   onLocationPicked?: (pos: { lat: number; lng: number }) => void
   eventsRefreshKey?: number
@@ -94,7 +96,7 @@ function MapScreen({
     setSelectedFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
   }
 
-  const eventsPos = mapCenter || userPos || lastKnownPos || ipPos || WARSAW
+  const eventsPos = mapCenter || initialCenter || userPos || lastKnownPos || ipPos || WARSAW
   const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
   const visibleEvents = selectedFilters.length
@@ -147,7 +149,7 @@ function MapScreen({
   // Leaflet init — runs once
   useEffect(() => {
     if (leafRef.current || !mapRef.current) return
-    const initialPos = userPosRef.current
+    const initialPos = initialCenter || userPosRef.current
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
       .setView([(initialPos || lastKnownPos || ipPos || WARSAW).lat, (initialPos || lastKnownPos || ipPos || WARSAW).lng], initialZoom)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {

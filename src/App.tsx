@@ -61,6 +61,16 @@ export default function App() {
   const deepLinkIdRef = useRef<string | null>(
     new URLSearchParams(window.location.search).get('event')
   )
+  // Deep link / QR to a specific map spot: ?lat=..&lng=..[&zoom=..] opens the map centred
+  // there — as a guest when there's no session, or as the logged-in user when there is one.
+  const urlSpotRef = useRef<{ lat: number; lng: number; zoom?: number } | null>((() => {
+    const p = new URLSearchParams(window.location.search)
+    const lat = parseFloat(p.get('lat') ?? '')
+    const lng = parseFloat(p.get('lng') ?? '')
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+    const z = parseInt(p.get('zoom') ?? '', 10)
+    return { lat, lng, zoom: Number.isFinite(z) ? z : undefined }
+  })())
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
   const unread = useUnreadEvents(session, openEventId)
 
@@ -257,6 +267,10 @@ export default function App() {
   useEffect(() => {
     if (!ready || screen !== 'loading') return
     if (deepLinkIdRef.current) { setScreen('map'); return }
+    if (urlSpotRef.current) {
+      if (urlSpotRef.current.zoom != null) setInitialMapZoom(urlSpotRef.current.zoom)
+      setScreen('map'); return
+    }
     if (session) {
       try {
         const raw = localStorage.getItem(NAV_KEY)
@@ -433,6 +447,7 @@ export default function App() {
         lastKnownPos={lastKnownPos}
         ipPos={ipPos}
         initialZoom={initialMapZoom}
+        initialCenter={urlSpotRef.current}
         eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation && !isOverlay}
         onLocationPicked={pos => {
