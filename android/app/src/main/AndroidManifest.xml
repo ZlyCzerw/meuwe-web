@@ -19,6 +19,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links: verified https://meuwe.eu links open the app directly (smart link
+                 layer 2). Verification uses /.well-known/assetlinks.json on meuwe.eu. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="meuwe.eu" />
+            </intent-filter>
         </activity>
 
         <provider

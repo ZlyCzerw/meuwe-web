@@ -48,6 +48,7 @@ function MapScreen({
   eventsRefreshKey,
   onMapClick,
   onRegisterFlyTo,
+  onRegisterFlyToSpot,
 }: {
   session: Session | null
   profile: Profile | null
@@ -66,6 +67,7 @@ function MapScreen({
   eventsRefreshKey?: number
   onMapClick?: () => void
   onRegisterFlyTo?: (fn: (lat: number, lng: number) => void) => void
+  onRegisterFlyToSpot?: (fn: (lat: number, lng: number, zoom: number) => void) => void
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -165,6 +167,10 @@ function MapScreen({
       const target = map.project([lat, lng], zoom)
       const shifted = target.add([0, offsetPx])
       map.flyTo(map.unproject(shifted, zoom), zoom, { duration: 0.7 })
+    })
+    // Smart-link spot: center exactly on the point at the requested zoom, no sheet offset.
+    onRegisterFlyToSpot?.((lat, lng, zoom) => {
+      map.flyTo([lat, lng], Math.min(zoom, 19), { duration: 0.7 })
     })
     map.on('moveend', () => {
       const up = userPosRef.current

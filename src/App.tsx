@@ -10,6 +10,7 @@ import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
 import { isNativePlatform } from './lib/platform'
 import { Geolocation } from '@capacitor/geolocation'
+import { App as CapApp } from '@capacitor/app'
 import MapScreen from './screens/MapScreen'
 import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
@@ -71,6 +72,12 @@ export default function App() {
     const z = parseInt(p.get('zoom') ?? '', 10)
     return { lat, lng, zoom: Number.isFinite(z) ? z : undefined }
   })())
+  // Map spot to center on. Seeded from the boot-time URL (web) and later updated by native
+  // Universal-Link / App-Link opens (appUrlOpen), which arrive after the WebView has booted.
+  const [urlSpot, setUrlSpot] = useState<{ lat: number; lng: number } | null>(urlSpotRef.current)
+  // Fly-to that honors an explicit zoom and applies no event-sheet offset (smart-link spots
+  // have no sheet). Registered by MapScreen; used for warm opens when the map already exists.
+  const flySpotRef = useRef<((lat: number, lng: number, zoom: number) => void) | null>(null)
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
   const unread = useUnreadEvents(session, openEventId)
 
@@ -226,6 +233,44 @@ export default function App() {
       db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Smart-link "layer 2": when a Universal Link (iOS) / App Link (Android) opens the app,
+  // Capacitor delivers the tapped https URL via appUrlOpen *after* boot — window.location
+  // never sees it. Parse it here and route the same way the web boot path does.
+  useEffect(() => {
+    if (!isNativePlatform()) return
+    let remove: (() => void) | undefined
+    CapApp.addListener('appUrlOpen', ({ url }) => {
+      let parsed: URL
+      try { parsed = new URL(url) } catch { return }
+      const p = parsed.searchParams
+      const eventId = p.get('event')
+      if (eventId) {
+        setScreen('map') // the deepLinkEvent effect opens it once the map is ready
+        db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
+        return
+      }
+      const lat = parseFloat(p.get('lat') ?? '')
+      const lng = parseFloat(p.get('lng') ?? '')
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+      const z = parseInt(p.get('zoom') ?? '', 10)
+      goToSpot(lat, lng, Number.isFinite(z) ? z : undefined)
+    }).then(handle => { remove = () => handle.remove() })
+    return () => { remove?.() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Center the map on a spot. Sets it as MapScreen's initial view (cold open) and also flies
+  // there imperatively (warm open, map already mounted). Retries the fly until the map exists.
+  function goToSpot(lat: number, lng: number, zoom?: number) {
+    if (zoom != null) setInitialMapZoom(zoom)
+    setUrlSpot({ lat, lng })
+    setScreen('map')
+    const tryFly = () => {
+      if (flySpotRef.current) flySpotRef.current(lat, lng, zoom ?? 16)
+      else setTimeout(tryFly, 150)
+    }
+    setTimeout(tryFly, 120)
+  }
 
   // First launch only (no cached position): fetch a coarse IP-based center so the
   // map doesn't fall back to Warsaw while GPS warms up. Non-blocking; GPS overrides.
@@ -423,6 +468,7 @@ export default function App() {
         profile={profile}
         onMapClick={() => { if (!isOverlay) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
+        onRegisterFlyToSpot={fn => { flySpotRef.current = fn }}
         onOpenProfile={() => {
           if (!isOverlay) {
             setProfileOpen(true); setSelEvent(null); setCreateOpen(false)
@@ -447,7 +493,7 @@ export default function App() {
         lastKnownPos={lastKnownPos}
         ipPos={ipPos}
         initialZoom={initialMapZoom}
-        initialCenter={urlSpotRef.current}
+        initialCenter={urlSpot}
         eventsRefreshKey={eventsRefreshKey}
         pickingLocation={pickingLocation && !isOverlay}
         onLocationPicked={pos => {

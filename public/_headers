@@ -1,3 +1,9 @@
+# Apple requires the Universal Links association file as JSON. It has no file
+# extension, so set the type explicitly (X-Content-Type-Options: nosniff below
+# would otherwise let the wrong sniffed type block validation).
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-CBnKxi6UlXDjMQmGDh4Uv+e0yan4FWokU4T8ZobZtlk=' https://www.clarity.ms https://scripts.clarity.ms https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' https: data: blob: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://photon.komoot.io https://www.clarity.ms https://www.google-analytics.com https://region1.google-analytics.com; worker-src 'self' blob:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY

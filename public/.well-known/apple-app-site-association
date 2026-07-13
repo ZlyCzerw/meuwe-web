@@ -1,0 +1,22 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "43N9P5F3KV.eu.meuwe",
+        "components": [
+          {
+            "/": "/",
+            "?": { "lat": "?*" },
+            "comment": "smart-link to a map spot"
+          },
+          {
+            "/": "/",
+            "?": { "event": "?*" },
+            "comment": "event deep link"
+          }
+        ]
+      }
+    ]
+  }
+}
