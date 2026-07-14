@@ -1,5 +1,6 @@
 import { BLOBS, TAG_META, type Category } from '../lib/tokens'
 import { isCurrentlyLive } from '../lib/eventStatus'
+import { formatClusterCount } from '../lib/eventClusters'
 
 export function pinHTML(category: string, idx: number, _dbStatus?: string, startTime?: string, endTime?: string, scale = 1): string {
   const meta = TAG_META[category as Category] || TAG_META.party
@@ -62,5 +63,28 @@ export function privateHTML(isLive = false): string {
       </div>
     </div>
     <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:white;border:2.5px solid #2D2B2A"></div>
+  </div>`
+}
+
+// Representative pin for a same-zone cluster (size >= 2): the normal pin plus a
+// comic circle badge (white, ink outline, no tail) in the upper-right carrying
+// the event count. Same 44x56 icon box as pinHTML.
+export function clusterHTML(
+  category: string,
+  idx: number,
+  dbStatus: string | undefined,
+  startTime: string,
+  endTime: string,
+  count: number,
+): string {
+  const label = formatClusterCount(count)
+  const fontSize = label.length > 1 ? 11 : 14
+  const badge = `<div style="position:absolute;top:-8px;right:-8px;width:28px;height:28px;pointer-events:none">
+    <svg width="28" height="28" viewBox="0 0 100 100" style="filter:drop-shadow(0 2px 0 #2D2B2A22)"><circle cx="50" cy="50" r="46.5" fill="#fff" stroke="#2D2B2A" stroke-width="7"/></svg>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk','Nunito',sans-serif;font-size:${fontSize}px;font-weight:900;color:#2D2B2A">${label}</div>
+  </div>`
+  return `<div style="position:relative;width:44px;height:56px">
+    ${pinHTML(category, idx, dbStatus, startTime, endTime, 1)}
+    ${badge}
   </div>`
 }
