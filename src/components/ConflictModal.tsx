@@ -1,5 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { C, INK, F } from '../lib/tokens'
+import { C, INK, F, BLOBS } from '../lib/tokens'
+
+// Cluster of three distinct meuwe blob pins (different shapes + colours) used as
+// the modal's illustration — same blob recipe as the map markers (mapIcons.ts).
+const CLUSTER = [
+  { path: BLOBS[0], color: C.berry, size: 38, rot: -12, dy: 4 },
+  { path: BLOBS[1], color: C.sky, size: 48, rot: 3, dy: 0 },
+  { path: BLOBS[2], color: C.grass, size: 38, rot: 13, dy: 4 },
+]
 
 // Meuwe-styled alert: dimmed backdrop + centred card. Shown when a pin's 3x3 m
 // exclusivity zone overlaps an existing public pin during an overlapping window.
@@ -22,7 +30,23 @@ export default function ConflictModal({ onClose }: { onClose: () => void }) {
           animation: 'bubble-up 260ms cubic-bezier(0.32,1.4,0.4,1)', textAlign: 'center',
         }}
       >
-        <div style={{ fontSize: 44, marginBottom: 8 }}>📍</div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 4, marginBottom: 10, height: 52 }}>
+          {CLUSTER.map((b, i) => (
+            <svg
+              key={i}
+              width={b.size}
+              height={b.size}
+              viewBox="-3 -3 106 106"
+              style={{
+                overflow: 'visible',
+                transform: `translateY(${b.dy}px) rotate(${b.rot}deg)`,
+                filter: 'drop-shadow(0 3px 0 #2D2B2A22)',
+              }}
+            >
+              <path d={b.path} fill={b.color} stroke={INK} strokeWidth={5} strokeLinejoin="round" />
+            </svg>
+          ))}
+        </div>
         <div style={{ fontFamily: F.display, fontSize: 22, fontWeight: 900, color: C.ink, marginBottom: 10 }}>
           {t('conflict.title')}
         </div>
