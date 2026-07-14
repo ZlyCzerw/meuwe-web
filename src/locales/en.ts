@@ -7,6 +7,9 @@ const en: Resources = {
     body: 'An event already exists at this place and time - adjust the time or move the location.',
     ok: 'Close',
   },
+  picker: {
+    title: 'Choose an event',
+  },
   notifications: { unread: 'New messages' },
   welcome: {
     tagline: 'Discover events\naround you',

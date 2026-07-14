@@ -5,6 +5,9 @@ const pl = {
     body: 'Wydarzenie w tym miejscu i czasie już istnieje, popraw czas wydarzenia lub zmień miejsce',
     ok: 'Zamknij',
   },
+  picker: {
+    title: 'Wybierz wydarzenie',
+  },
   notifications: { unread: 'Nowe wiadomości' },
   welcome: {
     tagline: 'Odkrywaj wydarzenia\nwokół Ciebie',

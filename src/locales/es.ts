@@ -7,6 +7,9 @@ const es: Resources = {
     body: 'Ya existe un evento en este lugar y horario: ajusta la hora o cambia la ubicación.',
     ok: 'Cerrar',
   },
+  picker: {
+    title: 'Elige un evento',
+  },
   notifications: { unread: 'Mensajes nuevos' },
   welcome: {
     tagline: 'Descubre eventos\na tu alrededor',
