@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
+import ConflictModal from '../components/ConflictModal'
 import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { resolvePhotoUrls, type PhotoSlot } from '../lib/photoSlots'
@@ -64,6 +65,7 @@ function CreateSheet({
   const [desc, setDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState('')
+  const [conflictOpen, setConflictOpen] = useState(false)
   const [tagModalOpen, setTagModalOpen] = useState(false)
   const [photos, setPhotos] = useState<PhotoSlot[]>([null, null, null])
 
@@ -206,6 +208,20 @@ function CreateSheet({
     }
     const startISO = new Date(startMs).toISOString()
     const endISO = new Date(endMs).toISOString()
+    const pos = defaultPos || { lat: 52.2297, lng: 21.0122 }
+
+    // Zone pre-check (skip for private pins — they are exempt from exclusivity).
+    // The DB trigger is the real guard; this just avoids uploading photos for a
+    // create/edit that will be rejected, and surfaces the modal early.
+    const isPrivateNow = editEvent ? editEvent.is_private : isPrivate
+    if (!isPrivateNow) {
+      const conflict = await db.eventZoneConflict({
+        lat: pos.lat, lng: pos.lng, start: startISO, end: endISO,
+        excludeId: editEvent ? editEvent.id : null,
+      })
+      if (conflict) { setConflictOpen(true); setSubmitting(false); return }
+    }
+
     // Upload new photos, keep existing URLs, preserve slot order.
     let photoUrls: string[]
     try {
@@ -215,7 +231,6 @@ function CreateSheet({
       setSubmitting(false)
       return
     }
-    const pos = defaultPos || { lat: 52.2297, lng: 21.0122 }
 
     if (editEvent) {
       const { data, error } = await db.updateEvent(editEvent.id, {
@@ -230,7 +245,11 @@ function CreateSheet({
         photos: photoUrls,
       })
       setSubmitting(false)
-      if (error || !data) { setErr(t('create.submitError')); return }
+      if (error || !data) {
+        if ((error as { code?: string } | null)?.code === 'MW001') setConflictOpen(true)
+        else setErr(t('create.submitError'))
+        return
+      }
       // `data.event_tags` reflects the OLD tags — updateEvent re-selects the row
       // before it deletes+reinserts tags. Use the submitted `tags` state instead.
       const e = data as any
@@ -253,7 +272,8 @@ function CreateSheet({
     })
     setSubmitting(false)
     if (error) {
-      setErr(t('create.submitError'))
+      if ((error as { code?: string }).code === 'MW001') setConflictOpen(true)
+      else setErr(t('create.submitError'))
       return
     }
     setTitle('')
@@ -285,6 +305,7 @@ function CreateSheet({
       }}
     >
       <DragHandle />
+      {conflictOpen && <ConflictModal onClose={() => setConflictOpen(false)} />}
 
       {/* Header */}
       <div
