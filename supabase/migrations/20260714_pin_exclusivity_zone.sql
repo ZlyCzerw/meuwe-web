@@ -12,7 +12,7 @@ create or replace function _event_zone_conflict(
   p_end   timestamptz,
   p_exclude_id uuid
 ) returns uuid
-language sql stable as $$
+language sql stable set search_path = public as $$
   select e.id
   from events e
   where e.is_private = false
@@ -29,7 +29,7 @@ $$;
 -- Trigger: the atomic guard. Skips private rows and skips writes that do not
 -- touch any zone-relevant column (so status/title/photo edits never trip it).
 create or replace function events_zone_guard() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 begin
   if NEW.is_private then
     return NEW;
@@ -66,4 +66,4 @@ $$;
 
 grant execute on function event_zone_conflict(
   double precision, double precision, timestamptz, timestamptz, uuid
-) to anon, authenticated;
+) to authenticated;
