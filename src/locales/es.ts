@@ -2,6 +2,11 @@ import type { Resources } from './pl'
 
 const es: Resources = {
   common: { loading: 'Cargando…', cancel: 'Cancelar', close: 'Cerrar' },
+  conflict: {
+    title: 'Lugar ocupado',
+    body: 'Ya existe un evento en este lugar y horario: ajusta la hora o cambia la ubicación.',
+    ok: 'Cerrar',
+  },
   notifications: { unread: 'Mensajes nuevos' },
   welcome: {
     tagline: 'Descubre eventos\na tu alrededor',
