@@ -66,10 +66,21 @@ The pins `useEffect` changes from a 1:1 `visibleEvents` loop to:
      rep.end_time, count)` marker; click -> open the picker modal with the
      cluster's events.
 
-`clusterHTML` renders the same pin body as `pinHTML` plus a white rounded badge
-in the pin's upper-right: ink border (`#2D2B2A`), drop shadow, text
-`formatClusterCount(count)` (`> 9` -> `>9`, else the number). Badge shown only
-for size >= 2 (which is the only path that calls `clusterHTML`).
+`clusterHTML` renders the same pin body as `pinHTML` plus a **comic circle
+badge** in the pin's upper-right. Style matches the rest of meuwe (white fill,
+comic ink outline `#2D2B2A`, subtle drop shadow) - a simple round badge, NOT a
+cloud and with NO tail. The count sits centred inside in the display font (bold
+ink), text `formatClusterCount(count)` (`> 9` -> `>9`, else the number).
+Rendered as an absolutely-positioned overlay (top-right, may slightly overflow
+the 44x56 icon box - divIcons aren't clipped). Badge shown only for size >= 2
+(the only path that calls `clusterHTML`).
+
+Concrete badge: a 28x28 SVG `<circle>` in viewBox `0 0 100 100`, `r=46.5`,
+`fill:#fff stroke:#2D2B2A stroke-width:7`, `filter:drop-shadow(0 2px 0
+#2D2B2A22)`, positioned `top:-8px right:-8px`. The number is a centred flex
+`<div>` layered over it in `F.display`, weight 900, colour `#2D2B2A`, font-size
+14 for a single char and 11 for the two-char `>9`. `formatClusterCount` is
+imported from `eventClusters.ts`.
 
 ## Event Picker Modal (`EventPickerModal.tsx`)
 
