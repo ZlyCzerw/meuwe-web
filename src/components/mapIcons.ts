@@ -33,6 +33,16 @@ export function meHTML(): string {
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
       <div style="width:42px;height:42px;border-radius:50%;border:2px solid #FF7A45;animation:halo 2.8s 1.4s ease-out infinite;opacity:0"></div>
     </div>
+    <!-- Direction indicator: orbiting chevron, ink stroke matching the marker outline.
+         Hidden until a compass heading is applied (see MapScreen). transform-origin
+         is the marker centre so rotate() makes the chevron orbit the "me" dot. -->
+    <div class="me-heading" style="position:absolute;inset:0;opacity:0;transform-origin:36px 36px;transition:transform .15s linear,opacity .25s ease">
+      <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible">
+        <g transform="translate(36,12)" style="filter:drop-shadow(0 1.5px 0 #2D2B2A22)">
+          <path d="M-7 6 L0 -5 L7 6" fill="none" stroke="#2D2B2A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:breathe-sm 3s ease-in-out infinite">
       <div style="width:26px;height:26px;border-radius:52% 48% 50% 50%/50% 52% 48% 50%;background:#FF7A45;border:3px solid #2D2B2A;box-shadow:0 3px 0 #2D2B2A33"></div>
     </div>
