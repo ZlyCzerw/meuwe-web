@@ -111,6 +111,20 @@ export const db = {
     const {data}=supabase.storage.from('event-photos').getPublicUrl(path)
     return data.publicUrl
   },
+  // Fast pre-check mirroring the DB trigger; returns true if a public pin's
+  // 3x3 m zone overlaps this candidate during an overlapping time window.
+  // Fails OPEN (returns false) on error — the BEFORE-INSERT trigger (MW001) is
+  // the real guard, so a transient RPC failure must not block a valid create.
+  async eventZoneConflict(p: {
+    lat: number; lng: number; start: string; end: string; excludeId?: string | null
+  }): Promise<boolean> {
+    const { data, error } = await supabase.rpc('event_zone_conflict', {
+      p_lat: p.lat, p_lng: p.lng, p_start: p.start, p_end: p.end,
+      p_exclude_id: p.excludeId ?? null,
+    })
+    if (error) { console.error('[eventZoneConflict]', error); return false }
+    return data === true
+  },
   async createEvent(ev: {
     title: string; description?: string; lat: number; lng: number;
     placeName?: string; category?: string; tags?: string[];

@@ -7,13 +7,16 @@ import { C, INK, F } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm } from '../lib/geo'
-import { pinHTML, meHTML, privateHTML } from '../components/mapIcons'
+import { pinHTML, meHTML, privateHTML, clusterHTML } from '../components/mapIcons'
 import { isCurrentlyLive } from '../lib/eventStatus'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
 import TagPickerModal from '../components/TagPickerModal'
 import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
+import EventPickerModal from '../components/EventPickerModal'
+import { clusterPublicEvents } from '../lib/eventClusters'
+import { useDeviceHeading } from '../hooks/useDeviceHeading'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -71,6 +74,7 @@ function MapScreen({
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
+  const heading = useDeviceHeading(true)
 
   const mapRef = useRef<HTMLDivElement>(null)
   const leafRef = useRef<L.Map | null>(null)
@@ -89,6 +93,7 @@ function MapScreen({
   const [mapRadiusKm, setMapRadiusKm] = useState(15)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
   const [filterModalOpen, setFilterModalOpen] = useState(false)
+  const [pickerEvents, setPickerEvents] = useState<EventWithMeta[] | null>(null)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingRecenterCheckRef = useRef(false)
 
@@ -226,6 +231,17 @@ function MapScreen({
     }
   }, [userPos])
 
+  // Direction indicator — rotate the me-marker's orbiting chevron to the compass
+  // heading. Updates the DOM node directly (cheap, fires often); userPos in deps
+  // re-applies after the marker is (re)created. Hidden when no heading available.
+  useEffect(() => {
+    const ind = meRef.current?.getElement()?.querySelector('.me-heading') as HTMLElement | null
+    if (!ind) return
+    if (heading == null) { ind.style.opacity = '0'; return }
+    ind.style.transform = `rotate(${heading}deg)`
+    ind.style.opacity = '1'
+  }, [heading, userPos])
+
   // IP-based coarse center: apply once, before any GPS fix, without claiming a
   // "real" center — so the first GPS fix still auto-centers (see centeredRef).
   useEffect(() => {
@@ -235,26 +251,41 @@ function MapScreen({
     map.setView([ipPos.lat, ipPos.lng], IP_ZOOM, { animate: true })
   }, [ipPos]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Pins — update on events change
+  // Pins — update on events change. Private events render individually; public
+  // events are grouped by 3x3 m zone: singletons open the half-sheet directly,
+  // clusters (>= 2) show a count badge and open the event picker.
   useEffect(() => {
     const map = leafRef.current
     if (!map) return
     Object.values(pinsRef.current).forEach(m => m.remove())
     pinsRef.current = {}
-    visibleEvents.forEach((ev, i) => {
-      const interactions = ev.interactionCount ?? 0
-      const scale = 1 + Math.min(interactions, 100) / 100 * 0.5
+
+    // Private events — one marker each, unchanged behaviour.
+    visibleEvents.filter(e => e.is_private).forEach(ev => {
       const icon = L.divIcon({
-        html: ev.is_private
-          ? privateHTML(isCurrentlyLive(ev))
-          : pinHTML(ev.category, i, ev.status, ev.start_time, ev.end_time, scale),
-        className: 'meuwe-icon',
-        iconSize: [44, 56],
-        iconAnchor: [22, 56],
+        html: privateHTML(isCurrentlyLive(ev)),
+        className: 'meuwe-icon', iconSize: [44, 56], iconAnchor: [22, 56],
       })
-      const m = L.marker([ev.lat, ev.lng], { icon, zIndexOffset: interactions }).addTo(map)
+      const m = L.marker([ev.lat, ev.lng], { icon }).addTo(map)
       m.on('click', () => onOpenEvent(ev))
       pinsRef.current[ev.id] = m
+    })
+
+    // Public events — grouped by zone (clusterPublicEvents ignores private).
+    clusterPublicEvents(visibleEvents).forEach((group, ci) => {
+      const rep = group[0]
+      const interactions = rep.interactionCount ?? 0
+      const scale = 1 + Math.min(interactions, 100) / 100 * 0.5
+      const html = group.length >= 2
+        ? clusterHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, group.length)
+        : pinHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, scale)
+      const icon = L.divIcon({ html, className: 'meuwe-icon', iconSize: [44, 56], iconAnchor: [22, 56] })
+      const m = L.marker([rep.lat, rep.lng], { icon, zIndexOffset: interactions }).addTo(map)
+      m.on('click', () => {
+        if (group.length >= 2) setPickerEvents(group)
+        else onOpenEvent(rep)
+      })
+      pinsRef.current[rep.id] = m
     })
   }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -576,6 +607,15 @@ function MapScreen({
             </button>
           </div>
         </>
+      )}
+
+      {/* Event picker — same-zone cluster */}
+      {pickerEvents && (
+        <EventPickerModal
+          events={pickerEvents}
+          onSelect={ev => { setPickerEvents(null); onOpenEvent(ev) }}
+          onClose={() => setPickerEvents(null)}
+        />
       )}
 
       {/* Empty state */}
