@@ -55,6 +55,8 @@
 	<string>Take a photo to add to your event.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose a photo to add to your event.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>meuwe uses the compass to show which way you are facing on the map.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
