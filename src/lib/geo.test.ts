@@ -16,6 +16,7 @@ describe('countryToLang', () => {
   it('pl lowercase → pl', () => expect(countryToLang('pl')).toBe('pl'))
   it('ES → es', () => expect(countryToLang('ES')).toBe('es'))
   it('MX → es', () => expect(countryToLang('MX')).toBe('es'))
+  it('SI → sl', () => expect(countryToLang('SI')).toBe('sl'))
   it('US → en', () => expect(countryToLang('US')).toBe('en'))
   it('unknown → en', () => expect(countryToLang('ZZ')).toBe('en'))
 })

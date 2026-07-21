@@ -21,11 +21,11 @@ function toLocalDT(d: Date): string {
 const MS_3H = 3 * 3_600_000
 const MS_48H = 48 * 3_600_000
 
-async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+async function reverseGeocode(lat: number, lng: number, lang: string): Promise<string | null> {
   try {
     const r = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-      { headers: { 'Accept-Language': 'pl' } }
+      { headers: { 'Accept-Language': lang } }
     )
     const d = await r.json()
     const a = d.address || {}
@@ -59,7 +59,7 @@ function CreateSheet({
   editEvent?: EventWithMeta | null
   onUpdated?: (updated: EventWithMeta) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [desc, setDesc] = useState('')
@@ -107,11 +107,11 @@ function CreateSheet({
   useEffect(() => {
     if (!locationPicked || !defaultPos) { setPickedAddress(null); return }
     setAddressLoading(true)
-    reverseGeocode(defaultPos.lat, defaultPos.lng).then(addr => {
+    reverseGeocode(defaultPos.lat, defaultPos.lng, i18n.language).then(addr => {
       setPickedAddress(addr)
       setAddressLoading(false)
     })
-  }, [locationPicked, defaultPos?.lat, defaultPos?.lng])
+  }, [locationPicked, defaultPos?.lat, defaultPos?.lng, i18n.language])
 
   // Normalize start/end to satisfy every rule (create + edit). Single source of
   // truth, shared by the blur handlers and submit:

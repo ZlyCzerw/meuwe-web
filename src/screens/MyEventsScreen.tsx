@@ -12,7 +12,7 @@ import { muteEvent, unmuteEvent, getEventMutes } from '../lib/push'
 import type { EventWithMsgCount } from '../lib/types'
 import NotificationDot from '../components/NotificationDot'
 
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 export default function MyEventsScreen({
   session,

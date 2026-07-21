@@ -5,17 +5,19 @@ import pl from '../locales/pl'
 import en from '../locales/en'
 import es from '../locales/es'
 import de from '../locales/de'
+import sl from '../locales/sl'
 import { getCurrentPosition, reverseGeocodeCountry, countryToLang } from './geo'
 
 const STORAGE_KEY = 'meuwe_lang'
 
 export function detectInitialLang(navLang = navigator.language):Lang {
   const saved = localStorage.getItem(STORAGE_KEY) as Lang | null
-  if (saved==='pl'||saved==='en'||saved==='es'||saved==='de') return saved
+  if (saved==='pl'||saved==='en'||saved==='es'||saved==='de'||saved==='sl') return saved
   const base = (navLang||'en').slice(0,2).toLowerCase()
   if (base==='pl') return 'pl'
   if (base==='es') return 'es'
   if (base==='de') return 'de'
+  if (base==='sl') return 'sl'
   return 'en'
 }
 
@@ -29,7 +31,7 @@ export function setLanguage(lang:Lang, manual=true) {
 }
 
 i18n.use(initReactI18next).init({
-  resources: { pl:{translation:pl}, en:{translation:en}, es:{translation:es}, de:{translation:de} },
+  resources: { pl:{translation:pl}, en:{translation:en}, es:{translation:es}, de:{translation:de}, sl:{translation:sl} },
   lng: detectInitialLang(),
   fallbackLng: 'en',
   interpolation: { escapeValue: false },

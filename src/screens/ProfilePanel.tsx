@@ -393,7 +393,7 @@ function ProfilePanel({
               {t('profile.language')}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              {(['pl', 'en', 'de', 'es'] as Lang[]).map(code => {
+              {(['pl', 'en', 'de', 'es', 'sl'] as Lang[]).map(code => {
                 const active = currentLang === code
                 return (
                   <button

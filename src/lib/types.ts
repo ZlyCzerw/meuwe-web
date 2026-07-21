@@ -1,6 +1,6 @@
 import type { Category } from './tokens'
 
-export type Lang = 'pl' | 'en' | 'es' | 'de'
+export type Lang = 'pl' | 'en' | 'es' | 'de' | 'sl'
 export type EventStatus = 'live' | 'upcoming' | 'extended' | 'ended'
 
 export interface Profile {

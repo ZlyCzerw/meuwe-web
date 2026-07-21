@@ -32,6 +32,11 @@ function Flag({ code }: { code: Lang }) {
           <rect y={H / 3} width={W} height={H / 3} fill="#F1BF00" />
           <rect y={H * 2 / 3} width={W} height={H / 3} fill="#AA151B" />
         </>}
+        {code === 'sl' && <>
+          <rect width={W} height={H / 3} fill="#fff" />
+          <rect y={H / 3} width={W} height={H / 3} fill="#0000A0" />
+          <rect y={H * 2 / 3} width={W} height={H / 3} fill="#DC143C" />
+        </>}
         {code === 'en' && <>
           <rect width={W} height={H} fill="#012169" />
           <line x1="0" y1="0" x2={W} y2={H} stroke="#fff" strokeWidth="5" />
@@ -54,6 +59,7 @@ const LANGS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'English' },
   { code: 'es', label: 'Español' },
   { code: 'de', label: 'Deutsch' },
+  { code: 'sl', label: 'Slovenščina' },
 ]
 
 function GoogleIcon() {
