@@ -138,7 +138,7 @@ const sl: Resources = {
       title: 'Kako deluje?',
       s1: { title: 'Odpri zemljevid', desc: 'Bližnje oznake pokažejo, kaj se dogaja - brez računa, brez algoritma' },
       s2: { title: 'Najdi nekaj zase', desc: 'Glasba, šport, pikniki, sejmi - filtriraj po kategoriji ali brskaj po vsem' },
-      s3: { title: 'Pridruži se ali spremljaj', desc: 'Prijavi se z Google, da dodaš svoj dogodek ali spremljaš druge' },
+      s3: { title: 'Pridruži se ali spremljaj', desc: 'Prijavi se, da dodaš svoj dogodek ali spremljaš druge' },
     },
     features: {
       title: 'Vse, kar potrebuješ',

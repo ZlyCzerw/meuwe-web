@@ -50,10 +50,11 @@
     <h3>2. Jakie dane zbieramy i w jakim celu</h3>
     <table>
       <tr><th>Dane</th><th>Cel</th><th>Podstawa prawna</th></tr>
-      <tr><td>Adres e-mail, imię, zdjęcie profilowe (z konta Google)</td><td>Identyfikacja użytkownika, wyświetlanie profilu</td><td>Umowa (art. 6 ust. 1 lit. b RODO)</td></tr>
+      <tr><td>Adres e-mail, imię, zdjęcie profilowe (z konta Google lub Apple, jeśli udostępnione)</td><td>Identyfikacja użytkownika, wyświetlanie profilu</td><td>Umowa (art. 6 ust. 1 lit. b RODO)</td></tr>
       <tr><td>Lokalizacja (ostatnia znana pozycja GPS)</td><td>Wyświetlanie wydarzeń w pobliżu, filtrowanie powiadomień push</td><td>Zgoda (art. 6 ust. 1 lit. a RODO)</td></tr>
       <tr><td>Treści tworzone przez użytkownika (opisy wydarzeń, wiadomości na czacie, zdjęcia)</td><td>Świadczenie funkcji serwisu</td><td>Umowa (art. 6 ust. 1 lit. b RODO)</td></tr>
       <tr><td>Token FCM / subskrypcja Web Push</td><td>Dostarczanie powiadomień push</td><td>Zgoda (art. 6 ust. 1 lit. a RODO)</td></tr>
+      <tr><td>Dane użycia (np. otwarcia ekranów, interakcje z wydarzeniami)</td><td>Analityka działania funkcji i poprawa Serwisu</td><td>Uzasadniony interes (art. 6 ust. 1 lit. f RODO)</td></tr>
       <tr><td>Logi techniczne (adresy IP, znaczniki czasu)</td><td>Bezpieczeństwo, diagnostyka błędów</td><td>Uzasadniony interes (art. 6 ust. 1 lit. f RODO)</td></tr>
     </table>
     <p>Aparat urządzenia jest używany wyłącznie w momencie, gdy samodzielnie inicjujesz dodanie zdjęcia do wydarzenia. Zdjęcia nie są przetwarzane w żaden inny sposób ani nie są analizowane automatycznie.</p>
@@ -62,7 +63,8 @@
     <p>Twoje dane mogą być przetwarzane przez następujących podwykonawców:</p>
     <ul>
       <li><strong>Supabase Inc.</strong> — baza danych i przechowywanie plików (serwery w UE).</li>
-      <li><strong>Google LLC / Firebase</strong> — uwierzytelnianie (Google Sign-In) oraz powiadomienia push (Firebase Cloud Messaging). Google może przetwarzać dane poza EOG, stosując standardowe klauzule umowne.</li>
+      <li><strong>Google LLC / Firebase / Google Analytics</strong> — uwierzytelnianie (Google Sign-In), powiadomienia push (Firebase Cloud Messaging) oraz analityka działania Serwisu. Google może przetwarzać dane poza EOG, stosując standardowe klauzule umowne.</li>
+      <li><strong>Apple Inc.</strong> — uwierzytelnianie (Sign in with Apple), jeśli wybierzesz tę metodę logowania.</li>
       <li><strong>Cloudflare Inc.</strong> — hosting i CDN. Cloudflare może przetwarzać dane poza EOG na podstawie decyzji o adekwatności lub standardowych klauzul umownych.</li>
     </ul>
     <p>Dane nie są sprzedawane ani udostępniane podmiotom trzecim w celach marketingowych.</p>
@@ -88,10 +90,10 @@
     <p>Aby skorzystać z powyższych praw, wyślij wiadomość z zarejestrowanego adresu e-mail na <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a>. Żądanie zostanie zrealizowane w ciągu 30 dni. Masz również prawo wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (uodo.gov.pl).</p>
 
     <h3 id="delete">6. Usunięcie konta</h3>
-    <p>Aby usunąć konto i wszystkie powiązane dane, wyślij wiadomość e-mail na adres <a href="mailto:meuweteam@gmail.com">meuweteam@gmail.com</a> z tytułem <strong>„Usunięcie konta"</strong> i adresem e-mail powiązanym z Twoim kontem Google. Konto zostanie usunięte w ciągu 30 dni.</p>
+    <p>Aby usunąć konto i wszystkie powiązane dane, wyślij wiadomość e-mail na adres <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a> z tytułem <strong>„Usunięcie konta"</strong> i adresem e-mail powiązanym z Twoim kontem. Konto zostanie usunięte w ciągu 30 dni.</p>
 
     <h3>7. Pliki cookie i lokalne przechowywanie danych</h3>
-    <p>Serwis nie używa plików cookie śledzących ani reklamowych. W pamięci lokalnej urządzenia (localStorage) przechowywana jest wyłącznie ostatnia znana lokalizacja użytkownika w celu przyspieszenia ładowania mapy.</p>
+    <p>Serwis nie używa plików cookie reklamowych. Może korzystać z technologii analitycznych do mierzenia działania funkcji. W pamięci lokalnej urządzenia (localStorage) przechowywana jest ostatnia znana lokalizacja użytkownika w celu przyspieszenia ładowania mapy.</p>
 
     <h3>7. Zmiany polityki prywatności</h3>
     <p>O istotnych zmianach niniejszej polityki użytkownicy zostaną poinformowani za pośrednictwem Serwisu z co najmniej 14-dniowym wyprzedzeniem.</p>
@@ -108,10 +110,11 @@
     <h3>2. Data We Collect and Why</h3>
     <table>
       <tr><th>Data</th><th>Purpose</th><th>Legal basis</th></tr>
-      <tr><td>E-mail address, name, profile photo (from Google account)</td><td>User identification and profile display</td><td>Contract (Art. 6(1)(b) GDPR)</td></tr>
+      <tr><td>E-mail address, name, profile photo (from your Google or Apple account, if provided)</td><td>User identification and profile display</td><td>Contract (Art. 6(1)(b) GDPR)</td></tr>
       <tr><td>Location (last known GPS position)</td><td>Displaying nearby events, filtering push notifications</td><td>Consent (Art. 6(1)(a) GDPR)</td></tr>
       <tr><td>User-generated content (event descriptions, chat messages, photos)</td><td>Providing the Service's features</td><td>Contract (Art. 6(1)(b) GDPR)</td></tr>
       <tr><td>FCM token / Web Push subscription</td><td>Delivering push notifications</td><td>Consent (Art. 6(1)(a) GDPR)</td></tr>
+      <tr><td>Usage data (for example screen views and event interactions)</td><td>Feature analytics and Service improvement</td><td>Legitimate interest (Art. 6(1)(f) GDPR)</td></tr>
       <tr><td>Technical logs (IP addresses, timestamps)</td><td>Security and error diagnostics</td><td>Legitimate interest (Art. 6(1)(f) GDPR)</td></tr>
     </table>
     <p>Your device camera is accessed only when you explicitly initiate adding a photo to an event. Photos are not processed in any other way and are not analysed automatically.</p>
@@ -120,7 +123,8 @@
     <p>Your data may be processed by the following sub-processors:</p>
     <ul>
       <li><strong>Supabase Inc.</strong> — database and file storage (EU servers).</li>
-      <li><strong>Google LLC / Firebase</strong> — authentication (Google Sign-In) and push notifications (Firebase Cloud Messaging). Google may process data outside the EEA under standard contractual clauses.</li>
+      <li><strong>Google LLC / Firebase / Google Analytics</strong> — authentication (Google Sign-In), push notifications (Firebase Cloud Messaging), and Service analytics. Google may process data outside the EEA under standard contractual clauses.</li>
+      <li><strong>Apple Inc.</strong> — authentication (Sign in with Apple), if you choose this sign-in method.</li>
       <li><strong>Cloudflare Inc.</strong> — hosting and CDN. Cloudflare may process data outside the EEA under adequacy decisions or standard contractual clauses.</li>
     </ul>
     <p>Your data is never sold or shared with third parties for marketing purposes.</p>
@@ -146,10 +150,10 @@
     <p>To exercise any of the above rights, send an e-mail from your registered address to <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a>. Requests are fulfilled within 30 days. You also have the right to lodge a complaint with your local data protection authority.</p>
 
     <h3 id="delete-en">6. Account Deletion</h3>
-    <p>To delete your account and all associated data, send an e-mail to <a href="mailto:meuweteam@gmail.com">meuweteam@gmail.com</a> with the subject <strong>"Account Deletion"</strong> and the e-mail address linked to your Google account. Your account will be deleted within 30 days.</p>
+    <p>To delete your account and all associated data, send an e-mail to <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a> with the subject <strong>"Account Deletion"</strong> and the e-mail address linked to your account. Your account will be deleted within 30 days.</p>
 
     <h3>7. Cookies and Local Storage</h3>
-    <p>The Service does not use tracking or advertising cookies. Only your last known location is stored in the device's localStorage to speed up map loading.</p>
+    <p>The Service does not use advertising cookies. It may use analytics technologies to measure feature performance. Your last known location is stored in the device's localStorage to speed up map loading.</p>
 
     <h3>7. Changes to This Policy</h3>
     <p>For material changes to this policy, users will be notified via the Service at least 14 days in advance.</p>
@@ -166,10 +170,11 @@
     <h3>2. Erhobene Daten und Zwecke</h3>
     <table>
       <tr><th>Daten</th><th>Zweck</th><th>Rechtsgrundlage</th></tr>
-      <tr><td>E-Mail-Adresse, Name, Profilfoto (aus Google-Konto)</td><td>Nutzeridentifikation und Profilanzeige</td><td>Vertrag (Art. 6 Abs. 1 lit. b DSGVO)</td></tr>
+      <tr><td>E-Mail-Adresse, Name, Profilfoto (aus deinem Google- oder Apple-Konto, sofern bereitgestellt)</td><td>Nutzeridentifikation und Profilanzeige</td><td>Vertrag (Art. 6 Abs. 1 lit. b DSGVO)</td></tr>
       <tr><td>Standort (zuletzt bekannte GPS-Position)</td><td>Anzeige nahegelegener Veranstaltungen, Filterung von Push-Benachrichtigungen</td><td>Einwilligung (Art. 6 Abs. 1 lit. a DSGVO)</td></tr>
       <tr><td>Nutzergenerierte Inhalte (Veranstaltungsbeschreibungen, Chat-Nachrichten, Fotos)</td><td>Bereitstellung der Dienstfunktionen</td><td>Vertrag (Art. 6 Abs. 1 lit. b DSGVO)</td></tr>
       <tr><td>FCM-Token / Web-Push-Abonnement</td><td>Zustellung von Push-Benachrichtigungen</td><td>Einwilligung (Art. 6 Abs. 1 lit. a DSGVO)</td></tr>
+      <tr><td>Nutzungsdaten (z. B. Bildschirmaufrufe und Interaktionen mit Events)</td><td>Funktionsanalyse und Verbesserung des Dienstes</td><td>Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)</td></tr>
       <tr><td>Technische Protokolle (IP-Adressen, Zeitstempel)</td><td>Sicherheit und Fehlerdiagnose</td><td>Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)</td></tr>
     </table>
     <p>Die Kamera des Geräts wird nur verwendet, wenn du selbst das Hinzufügen eines Fotos zu einem Ereignis initiierst. Fotos werden nicht anderweitig verarbeitet oder automatisch analysiert.</p>
@@ -177,7 +182,8 @@
     <h3>3. Empfänger der Daten</h3>
     <ul>
       <li><strong>Supabase Inc.</strong> — Datenbank und Dateispeicherung (Server in der EU).</li>
-      <li><strong>Google LLC / Firebase</strong> — Authentifizierung (Google Sign-In) und Push-Benachrichtigungen (Firebase Cloud Messaging). Google kann Daten außerhalb des EWR auf Grundlage von Standardvertragsklauseln verarbeiten.</li>
+      <li><strong>Google LLC / Firebase / Google Analytics</strong> — Authentifizierung (Google Sign-In), Push-Benachrichtigungen (Firebase Cloud Messaging) und Analyse des Dienstes. Google kann Daten außerhalb des EWR auf Grundlage von Standardvertragsklauseln verarbeiten.</li>
+      <li><strong>Apple Inc.</strong> — Authentifizierung (Sign in with Apple), wenn du diese Anmeldemethode auswählst.</li>
       <li><strong>Cloudflare Inc.</strong> — Hosting und CDN. Cloudflare kann Daten außerhalb des EWR auf Grundlage von Angemessenheitsbeschlüssen oder Standardvertragsklauseln verarbeiten.</li>
     </ul>
     <p>Deine Daten werden weder verkauft noch zu Marketingzwecken an Dritte weitergegeben.</p>
@@ -202,10 +208,10 @@
     <p>Sende dazu eine E-Mail von deiner registrierten Adresse an <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a>. Anfragen werden innerhalb von 30 Tagen bearbeitet. Du hast außerdem das Recht, eine Beschwerde bei der zuständigen Datenschutzbehörde einzureichen.</p>
 
     <h3 id="delete-de">6. Kontolöschung</h3>
-    <p>Um dein Konto und alle zugehörigen Daten zu löschen, sende eine E-Mail an <a href="mailto:meuweteam@gmail.com">meuweteam@gmail.com</a> mit dem Betreff <strong>„Kontolöschung"</strong> und der mit deinem Google-Konto verknüpften E-Mail-Adresse. Dein Konto wird innerhalb von 30 Tagen gelöscht.</p>
+    <p>Um dein Konto und alle zugehörigen Daten zu löschen, sende eine E-Mail an <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a> mit dem Betreff <strong>„Kontolöschung"</strong> und der mit deinem Konto verknüpften E-Mail-Adresse. Dein Konto wird innerhalb von 30 Tagen gelöscht.</p>
 
     <h3>7. Cookies und lokaler Speicher</h3>
-    <p>Der Dienst verwendet keine Tracking- oder Werbe-Cookies. Im lokalen Speicher des Geräts (localStorage) wird ausschließlich dein zuletzt bekannter Standort gespeichert, um das Laden der Karte zu beschleunigen.</p>
+    <p>Der Dienst verwendet keine Werbe-Cookies. Er kann Analysedienste verwenden, um die Funktionsleistung zu messen. Im lokalen Speicher des Geräts (localStorage) wird dein zuletzt bekannter Standort gespeichert, um das Laden der Karte zu beschleunigen.</p>
 
     <h3>7. Änderungen dieser Erklärung</h3>
     <p>Bei wesentlichen Änderungen werden die Nutzer mindestens 14 Tage im Voraus über den Dienst informiert.</p>
@@ -222,10 +228,11 @@
     <h3>2. Datos que recopilamos y para qué</h3>
     <table>
       <tr><th>Datos</th><th>Finalidad</th><th>Base legal</th></tr>
-      <tr><td>Correo electrónico, nombre, foto de perfil (de la cuenta de Google)</td><td>Identificación del usuario y visualización del perfil</td><td>Contrato (Art. 6(1)(b) RGPD)</td></tr>
+      <tr><td>Correo electrónico, nombre, foto de perfil (de tu cuenta de Google o Apple, si se proporciona)</td><td>Identificación del usuario y visualización del perfil</td><td>Contrato (Art. 6(1)(b) RGPD)</td></tr>
       <tr><td>Ubicación (última posición GPS conocida)</td><td>Mostrar eventos cercanos, filtrar notificaciones push</td><td>Consentimiento (Art. 6(1)(a) RGPD)</td></tr>
       <tr><td>Contenido generado por el usuario (descripciones de eventos, mensajes de chat, fotos)</td><td>Prestación de las funcionalidades del Servicio</td><td>Contrato (Art. 6(1)(b) RGPD)</td></tr>
       <tr><td>Token FCM / suscripción Web Push</td><td>Envío de notificaciones push</td><td>Consentimiento (Art. 6(1)(a) RGPD)</td></tr>
+      <tr><td>Datos de uso (por ejemplo vistas de pantalla e interacciones con eventos)</td><td>Análisis de funciones y mejora del Servicio</td><td>Interés legítimo (Art. 6(1)(f) RGPD)</td></tr>
       <tr><td>Registros técnicos (direcciones IP, marcas de tiempo)</td><td>Seguridad y diagnóstico de errores</td><td>Interés legítimo (Art. 6(1)(f) RGPD)</td></tr>
     </table>
     <p>La cámara del dispositivo se utiliza únicamente cuando tú inicias de forma explícita la adición de una foto a un evento. Las fotos no se procesan de ninguna otra forma ni se analizan automáticamente.</p>
@@ -233,7 +240,8 @@
     <h3>3. Destinatarios de los datos</h3>
     <ul>
       <li><strong>Supabase Inc.</strong> — base de datos y almacenamiento de archivos (servidores en la UE).</li>
-      <li><strong>Google LLC / Firebase</strong> — autenticación (Google Sign-In) y notificaciones push (Firebase Cloud Messaging). Google puede tratar datos fuera del EEE bajo cláusulas contractuales tipo.</li>
+      <li><strong>Google LLC / Firebase / Google Analytics</strong> — autenticación (Google Sign-In), notificaciones push (Firebase Cloud Messaging) y analítica del Servicio. Google puede tratar datos fuera del EEE bajo cláusulas contractuales tipo.</li>
+      <li><strong>Apple Inc.</strong> — autenticación (Sign in with Apple), si eliges este método de inicio de sesión.</li>
       <li><strong>Cloudflare Inc.</strong> — hosting y CDN. Cloudflare puede tratar datos fuera del EEE bajo decisiones de adecuación o cláusulas contractuales tipo.</li>
     </ul>
     <p>Tus datos nunca se venden ni se comparten con terceros con fines de marketing.</p>
@@ -258,10 +266,10 @@
     <p>Para ejercer cualquiera de estos derechos, envía un correo electrónico desde tu dirección registrada a <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a>. Las solicitudes se atenderán en un plazo de 30 días. También tienes derecho a presentar una reclamación ante la autoridad de protección de datos competente.</p>
 
     <h3 id="delete-es">6. Eliminación de cuenta</h3>
-    <p>Para eliminar tu cuenta y todos los datos asociados, envía un correo a <a href="mailto:meuweteam@gmail.com">meuweteam@gmail.com</a> con el asunto <strong>"Eliminación de cuenta"</strong> y la dirección de correo vinculada a tu cuenta de Google. Tu cuenta se eliminará en un plazo de 30 días.</p>
+    <p>Para eliminar tu cuenta y todos los datos asociados, envía un correo a <a href="mailto:meuwe@gmail.com">meuwe@gmail.com</a> con el asunto <strong>"Eliminación de cuenta"</strong> y la dirección de correo vinculada a tu cuenta. Tu cuenta se eliminará en un plazo de 30 días.</p>
 
     <h3>7. Cookies y almacenamiento local</h3>
-    <p>El Servicio no utiliza cookies de seguimiento ni publicitarias. En el almacenamiento local del dispositivo (localStorage) solo se guarda tu última ubicación conocida para acelerar la carga del mapa.</p>
+    <p>El Servicio no utiliza cookies publicitarias. Puede usar tecnologías de analítica para medir el rendimiento de las funciones. En el almacenamiento local del dispositivo (localStorage) se guarda tu última ubicación conocida para acelerar la carga del mapa.</p>
 
     <h3>7. Cambios en esta Política</h3>
     <p>Para cambios significativos en esta política, los usuarios serán notificados a través del Servicio con al menos 14 días de antelación.</p>

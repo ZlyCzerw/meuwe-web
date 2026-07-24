@@ -136,7 +136,7 @@ const pl = {
       title: 'Jak to działa?',
       s1: { title: 'Otwórz mapę', desc: 'Pinezki w pobliżu pokazują co się dzieje — bez konta, bez algorytmu' },
       s2: { title: 'Znajdź coś dla siebie', desc: 'Muzyka, sport, pikniki, targi — filtruj po kategorii lub przeglądaj wszystko' },
-      s3: { title: 'Dołącz lub obserwuj', desc: 'Zaloguj się przez Google żeby dodać własne wydarzenie lub śledzić inne' },
+      s3: { title: 'Dołącz lub obserwuj', desc: 'Zaloguj się, żeby dodać własne wydarzenie lub śledzić inne' },
     },
     features: {
       title: 'Wszystko czego potrzebujesz',

@@ -10,7 +10,7 @@ meuwe is a hyperlocal social map for discovering and sharing local events in rea
 - Users can create events in under 10 seconds — title is the only required field
 - Supports private events visible only to people with an invite link
 - Push notifications for followed events
-- Works without creating an account (account needed only to add events, via Google OAuth)
+- Works without creating an account (account needed only to add events, via Google or Apple sign-in)
 - Available in 4 languages: Polish, English, German, Spanish
 
 ## Who uses it
