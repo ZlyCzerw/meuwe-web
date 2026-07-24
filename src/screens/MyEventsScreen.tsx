@@ -14,6 +14,10 @@ import NotificationDot from '../components/NotificationDot'
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
+// Height cap (~5 cards) applied to each section only when all three sections
+// are shown. With 1 or 2 sections they instead flex-fill the available height.
+const FIVE_ROWS = 450
+
 export default function MyEventsScreen({
   session,
   onBack,
@@ -62,17 +66,19 @@ export default function MyEventsScreen({
       ' · ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
   }
 
-  function Section({ title, items, dim }: { title: string; items: EventWithMsgCount[]; dim?: boolean }) {
+  function Section({ title, items, dim, mode }: { title: string; items: EventWithMsgCount[]; dim?: boolean; mode: 'fill' | 'cap5' }) {
     if (items.length === 0) return null
-    const scrollable = items.length > 5
+    const fill = mode === 'fill'
     return (
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 8, ...(fill ? { display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 } : {}) }}>
         <div style={{
           fontSize: 11, fontWeight: 800, color: C.inkSoft,
           textTransform: 'uppercase', letterSpacing: 0.8,
-          padding: '10px 4px 6px',
+          padding: '10px 4px 6px', flexShrink: 0,
         }}>{title}</div>
-        <div style={scrollable ? { maxHeight: 420, overflowY: 'auto', paddingRight: 2 } : {}}>
+        <div style={fill
+          ? { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 2 }
+          : { maxHeight: FIVE_ROWS, overflowY: 'auto', paddingRight: 2 }}>
           {items.map((ev, i) => {
             const meta = TAG_META[ev.category as Category] || TAG_META.party
             const computedStatus = computeStatus(ev)
@@ -163,6 +169,13 @@ export default function MyEventsScreen({
     )
   }
 
+  const sectionDefs = [
+    { key: 'live', title: t('event.sectionLive'), items: live, dim: false },
+    { key: 'upcoming', title: t('event.sectionUpcoming'), items: upcoming, dim: false },
+    { key: 'ended', title: t('event.sectionEnded'), items: ended, dim: true },
+  ].filter(s => s.items.length > 0)
+  const mode: 'fill' | 'cap5' = sectionDefs.length === 3 ? 'cap5' : 'fill'
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.cream }}>
       {/* Header */}
@@ -181,27 +194,30 @@ export default function MyEventsScreen({
         </div>
       </div>
 
-      {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 24px' }}>
+      {/* List — layout depends on how many sections have events:
+          1 → the section fills the whole area; 2 → the two split evenly;
+          3 → each section is capped (~5 rows) and the whole list scrolls. */}
+      <div style={{
+        flex: 1, minHeight: 0, padding: '4px 16px 24px',
+        ...(sectionDefs.length === 3
+          ? { overflowY: 'auto' as const }
+          : { display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' as const }),
+      }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: 40, color: C.inkSoft, fontWeight: 700 }}>
             {t('common.loading')}
           </div>
         )}
 
-        {!loading && events.length === 0 && (
+        {!loading && sectionDefs.length === 0 && (
           <div style={{ textAlign: 'center', padding: 40, color: C.inkSoft, fontWeight: 700 }}>
             {t('event.noEvents')}
           </div>
         )}
 
-        {!loading && (
-          <>
-            <Section title={t('event.sectionLive')} items={live} />
-            <Section title={t('event.sectionUpcoming')} items={upcoming} />
-            <Section title={t('event.sectionEnded')} items={ended} dim />
-          </>
-        )}
+        {!loading && sectionDefs.map(s => (
+          <Section key={s.key} title={s.title} items={s.items} dim={s.dim} mode={mode} />
+        ))}
       </div>
     </div>
   )
