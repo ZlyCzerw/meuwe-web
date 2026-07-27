@@ -14,6 +14,7 @@ const DE_COUNTRIES = new Set(['DE','AT','CH','LI'])
 export function countryToLang(code:string):Lang {
   const c=(code||'').toUpperCase()
   if (c==='PL') return 'pl'
+  if (c==='SI') return 'sl'
   if (ES_COUNTRIES.has(c)) return 'es'
   if (DE_COUNTRIES.has(c)) return 'de'
   return 'en'

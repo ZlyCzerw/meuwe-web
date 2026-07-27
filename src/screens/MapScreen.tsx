@@ -23,7 +23,7 @@ const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
 
 const DAYS_COUNT = 15         // yesterday + today + 13 future days (2 weeks forward)
 const TODAY_IDX  = 1          // index 1 = today
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 function idxToOffset(idx: number) { return idx - TODAY_IDX }  // 0→-1, 1→0, 2→+1 …
 

@@ -251,10 +251,22 @@ export const db = {
   upsertTag(name:string):string {
     return name.trim().toLowerCase().replace(/\s+/g,'-')
   },
+  // Custom-tag suggestions for the picker: ONLY the current user's tags. RLS on
+  // user_tags scopes this to auth.uid(), so other users' tags never leak here;
+  // logged-out users get an empty list.
   async getTags():Promise<string[]> {
-    const {data}=await supabase.from('event_tags').select('tag').order('tag')
+    const {data}=await supabase.from('user_tags').select('tag').order('tag')
     const unique=[...new Set((data||[]).map((r:any)=>r.tag as string))]
     return unique
+  },
+  // Record that the current user has used a custom tag: dedup it into the global
+  // `tags` catalogue and link it to the user in user_tags. No-op when logged out.
+  // Called whenever a custom tag is typed in the picker (create / filter / interests).
+  async addUserTag(rawTag:string):Promise<void> {
+    const sess=await this.getSession(); if(!sess) return
+    const tag=this.upsertTag(rawTag); if(!tag) return
+    await supabase.from('tags').upsert({name:tag},{onConflict:'name',ignoreDuplicates:true})
+    await supabase.from('user_tags').upsert({user_id:sess.user.id,tag},{onConflict:'user_id,tag',ignoreDuplicates:true})
   },
   async endEvent(eventId: string) {
     const sess = await this.getSession()

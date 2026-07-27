@@ -77,6 +77,20 @@ describe('is_private default', () => {
   })
 })
 
+describe('db.getTags (per-user)', () => {
+  it('reads the current user tags from user_tags, deduped — not global event_tags', async () => {
+    const rows = [{ tag: 'foobar' }, { tag: 'foobar' }, { tag: 'jazz' }]
+    const fromSpy = vi.spyOn(supabase, 'from').mockReturnValue({
+      select: () => ({ order: () => Promise.resolve({ data: rows, error: null }) }),
+    } as any)
+    const tags = await db.getTags()
+    expect(fromSpy).toHaveBeenCalledWith('user_tags')
+    expect(fromSpy).not.toHaveBeenCalledWith('event_tags')
+    expect(tags).toEqual(['foobar', 'jazz'])
+    fromSpy.mockRestore()
+  })
+})
+
 describe('db.signInApple', () => {
   afterEach(() => { (globalThis as any).__native = false; (globalThis as any).__ios = false })
 

@@ -13,6 +13,9 @@ describe('detectInitialLang', () => {
   it('falls back to es', () => {
     expect(detectInitialLang('es-MX')).toBe('es')
   })
+  it('falls back to sl', () => {
+    expect(detectInitialLang('sl-SI')).toBe('sl')
+  })
   it('defaults to en', () => {
     expect(detectInitialLang('fr-FR')).toBe('en')
   })

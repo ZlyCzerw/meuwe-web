@@ -34,6 +34,9 @@ export default function TagPickerModal({
     if (!canonical || selected.includes(canonical)) { setCustom(''); return }
     onChange([...selected, canonical])
     setSuggestions(prev => prev.includes(canonical) ? prev : [...prev, canonical].sort())
+    // Remember this custom tag for the current user (dedup catalogue + per-user
+    // visibility). Fire-and-forget; a no-op when the user isn't logged in.
+    db.addUserTag(canonical)
     setCustom('')
   }
 

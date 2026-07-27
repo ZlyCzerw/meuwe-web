@@ -138,7 +138,7 @@ const en: Resources = {
       title: 'How does it work?',
       s1: { title: 'Open the map', desc: "Nearby pins show what's going on — no account, no algorithm" },
       s2: { title: 'Find something for you', desc: 'Music, sport, picnics, fairs — filter by category or browse everything' },
-      s3: { title: 'Join or follow', desc: 'Sign in with Google to add your own event or track others' },
+      s3: { title: 'Join or follow', desc: 'Sign in to add your own event or track others' },
     },
     features: {
       title: 'Everything you need',

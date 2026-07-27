@@ -3,7 +3,7 @@ import { C, F } from '../lib/tokens'
 import type { EventWithMeta } from '../lib/types'
 import { pinHTML } from './mapIcons'
 
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 // "Choose an event" picker, styled after ConflictModal. Lists same-zone same-day
 // events (already sorted by start_time by the caller); selecting one opens the

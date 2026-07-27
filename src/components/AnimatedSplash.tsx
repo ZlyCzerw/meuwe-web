@@ -4,9 +4,10 @@ import BlobFace from './BlobFace'
 import ConfettiBurst from './ConfettiBurst'
 import { C } from '../lib/tokens'
 
-// Native launch splash: on an orange field (matching the static iOS LaunchScreen so the
-// hand-off is seamless) the green smiley blob pops in — growing with an overshoot and a
-// little bounce — while confetti bursts, then the whole thing fades out to reveal the app.
+// Native launch splash: on a cream→pink gradient (matching the native LaunchScreen/splash
+// on both iOS and Android so the hand-off is seamless) the green smiley blob pops in —
+// growing with an overshoot and a little bounce — while confetti bursts, then the whole
+// thing fades out to reveal the app.
 export default function AnimatedSplash({ onDone }: { onDone: () => void }) {
   const [confetti, setConfetti] = useState(false)
   const [leaving, setLeaving] = useState(false)

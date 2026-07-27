@@ -20,7 +20,7 @@ type Snap = 'peek' | 'half' | 'full'
 
 const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' }
 
-const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE' }
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 async function handleShare(event: { id: string; title: string }, showToast: () => void) {
   const origin = isNativePlatform() ? 'https://meuwe.eu' : window.location.origin
