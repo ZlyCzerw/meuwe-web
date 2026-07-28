@@ -7,8 +7,12 @@ import { C, INK, F } from '../lib/tokens'
 import NotificationDot from '../components/NotificationDot'
 import { db } from '../lib/supabase'
 import i18n, { setLanguage } from '../lib/i18n'
-import { subscribePush, unsubscribePush, getPushStatus } from '../lib/push'
-import type { Profile, Lang, PushStatus } from '../lib/types'
+import { enablePushOnThisDevice, disablePushOnThisDevice, getDevicePushState } from '../lib/push'
+import NotificationSetting from './NotificationSetting'
+import { resolvePushState } from '../lib/pushState'
+import type { DevicePushState } from '../lib/pushState'
+import { isAndroid, isIOS } from '../lib/platform'
+import type { Profile, Lang } from '../lib/types'
 
 function ProfilePanel({
   open,
@@ -38,8 +42,12 @@ function ProfilePanel({
   const [radius, setRadius] = useState<number>(profile?.radius_km ?? 10)
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? [])
   const [interestModalOpen, setInterestModalOpen] = useState(false)
-  const [pushStatus, setPushStatus] = useState<PushStatus>('unsubscribed')
+  // What this device can do. null = not checked yet.
+  const [pushDevice, setPushDevice] = useState<DevicePushState | null>(null)
   const [pushLoading, setPushLoading] = useState(false)
+  // Set only when an explicit attempt failed, so the failure is stated instead
+  // of leaving a toggle that silently did nothing.
+  const [pushError, setPushError] = useState(false)
 
   // Sync local state when profile loads / changes
   useEffect(() => {
@@ -47,29 +55,55 @@ function ProfilePanel({
     setInterests(profile?.interests ?? [])
   }, [profile])
 
-  // Sprawdź stan push przy otwarciu panelu
+  // Sprawdź stan tego urządzenia przy otwarciu panelu
   useEffect(() => {
-    if (open && session) getPushStatus().then(setPushStatus)
+    if (!open || !session) return
+    setPushError(false)
+    getDevicePushState(session.user.id).then(setPushDevice)
   }, [open, session])
+
+  // profile.push_enabled is the user's intent, one flag for the whole account.
+  // Whether this particular device delivers is a separate question.
+  const pushIntent = !!profile?.push_enabled
+  const pushState = pushDevice ? resolvePushState(pushIntent, pushDevice) : null
 
   async function handleTogglePush() {
     if (!session) return
     setPushLoading(true)
-    const isEnabled = profile?.push_enabled ?? false
-    if (isEnabled) {
-      await unsubscribePush()
+    setPushError(false)
+    if (pushIntent) {
+      // Off means off everywhere (the flag is per account), and this device also
+      // gives up its delivery target.
+      await disablePushOnThisDevice()
       await db.upsertProfile({ id: session.user.id, push_enabled: false })
+      setPushDevice(await getDevicePushState(session.user.id))
       reloadProfile()
     } else {
-      const status = await subscribePush(session.user.id)
-      setPushStatus(status)
-      if (status === 'subscribed') {
-        await db.upsertProfile({ id: session.user.id, push_enabled: true })
-        reloadProfile()
-      }
+      // The intent is recorded even when the device refuses, so the mismatch
+      // stays visible instead of the toggle springing back with no explanation.
+      const device = await enablePushOnThisDevice(session.user.id)
+      setPushDevice(device)
+      await db.upsertProfile({ id: session.user.id, push_enabled: true })
+      reloadProfile()
+      if (!(device.permission === 'granted' && device.registered)) setPushError(true)
     }
     setPushLoading(false)
   }
+
+  // Repair: the intent is already true, only this device is missing.
+  async function handleRepairPush() {
+    if (!session) return
+    setPushLoading(true)
+    setPushError(false)
+    const device = await enablePushOnThisDevice(session.user.id)
+    setPushDevice(device)
+    if (!(device.permission === 'granted' && device.registered)) setPushError(true)
+    setPushLoading(false)
+  }
+
+  const blockedHint = isIOS() ? t('profile.pushBlockedIos')
+    : isAndroid() ? t('profile.pushBlockedAndroid')
+    : t('profile.pushBlockedWeb')
 
   function handleRadiusChange(value: number) {
     setRadius(value)
@@ -333,58 +367,15 @@ function ProfilePanel({
             </div>
 
             {/* Push notifications */}
-            <div style={{ marginTop: 28 }}>
-              <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink, marginBottom: 12 }}>
-                {t('profile.notifications')}
-              </div>
-              {pushStatus === 'unsupported' ? (
-                <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
-                  {t('profile.notificationsUnsupported')}
-                </div>
-              ) : pushStatus === 'denied' ? (
-                <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600, padding: '10px 14px', borderRadius: 14, background: C.cream }}>
-                  {t('profile.notificationsDenied')}
-                </div>
-              ) : (
-                <button
-                  onClick={handleTogglePush}
-                  disabled={pushLoading}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', padding: '12px 16px', borderRadius: 20,
-                    background: !!(profile?.push_enabled) ? C.primarySoft : C.cream,
-                    border: `2px solid ${!!(profile?.push_enabled) ? C.primary : INK + '22'}`,
-                    cursor: pushLoading ? 'default' : 'pointer',
-                    transition: 'all 200ms ease',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                      stroke={!!(profile?.push_enabled) ? C.primary : C.inkSoft}
-                      strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                      {!!(profile?.push_enabled) ? null : <line x1="1" y1="1" x2="23" y2="23"/>}
-                    </svg>
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>
-                        {!!(profile?.push_enabled) ? t('profile.notificationsOn') : t('profile.notificationsOff')}
-                      </div>
-                      <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 1 }}>
-                        {t('profile.notificationsHint')}
-                      </div>
-                    </div>
-                  </div>
-                  {pushLoading ? (
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2.5px solid ${C.inkSoft}44`, borderTopColor: C.primary, animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 44, height: 24, borderRadius: 999, background: !!(profile?.push_enabled) ? C.primary : '#E0D8CF', border: `2px solid ${!!(profile?.push_enabled) ? INK : 'transparent'}`, position: 'relative', transition: 'all 200ms ease', flexShrink: 0 }}>
-                      <div style={{ position: 'absolute', top: 2, left: !!(profile?.push_enabled) ? 22 : 2, width: 16, height: 16, borderRadius: '50%', background: !!(profile?.push_enabled) ? '#fff' : C.inkSoft, transition: 'left 200ms cubic-bezier(0.34,1.56,0.64,1)' }} />
-                    </div>
-                  )}
-                </button>
-              )}
-            </div>
+            <NotificationSetting
+              state={pushState}
+              intent={pushIntent}
+              loading={pushLoading}
+              error={pushError}
+              blockedHint={blockedHint}
+              onToggle={handleTogglePush}
+              onRepair={handleRepairPush}
+            />
           </div>
 
           {/* Language switcher — always active */}

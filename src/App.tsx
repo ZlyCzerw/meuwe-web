@@ -4,7 +4,7 @@ import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
 import { refineLangByGeo } from './lib/i18n'
-import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler } from './lib/push'
+import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler, ensurePushRegistered } from './lib/push'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
@@ -80,6 +80,10 @@ export default function App() {
   const flySpotRef = useRef<((lat: number, lng: number, zoom: number) => void) | null>(null)
   const openEventId = selEvent?.id ?? myEventSelected?.id ?? followedEventSelected?.id ?? null
   const unread = useUnreadEvents(session, openEventId)
+  // Boot-time listeners (service worker messages) need the current session, not
+  // the one captured when they were installed.
+  const sessionRef = useRef(session)
+  useEffect(() => { sessionRef.current = session }, [session])
 
   const NAV_KEY = 'meuwe_nav'
   const NAV_TTL = 30 * 60_000
@@ -220,12 +224,25 @@ export default function App() {
         if (type === 'OPEN_EVENT' && eventId) {
           db.getEventById(eventId).then(ev => { if (ev) setSelEvent(ev) })
         }
-        if (type === 'PUSH_SUBSCRIPTION_CHANGED' && session) {
-          refreshPushSubscription(session.user.id)
+        // Read through the ref: this listener is installed once at boot, when
+        // `session` is still null, so the captured value would never be a user.
+        const current = sessionRef.current
+        if (type === 'PUSH_SUBSCRIPTION_CHANGED' && current) {
+          refreshPushSubscription(current.user.id)
         }
       })
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reconcile push after login. Registers a delivery target only when the system
+  // permission is ALREADY granted, so it can never raise a prompt at startup.
+  // A missing permission is left alone and surfaces in the profile toggle as a
+  // repairable mismatch. On native this is also what registers the FCM token for
+  // people who never touch the toggle; delivery still depends on push_enabled.
+  useEffect(() => {
+    if (!session) return
+    ensurePushRegistered(session.user.id)
+  }, [session?.user.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Register native FCM tap handler — opens event when user taps a notification
   useEffect(() => {

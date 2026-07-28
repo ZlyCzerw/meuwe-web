@@ -17,7 +17,9 @@ export interface Profile {
   language: string | null
 }
 
-export type PushStatus = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'
+// Push state lives in pushState.ts: one flag for the user's intent
+// (Profile.push_enabled) plus a per-device state, never collapsed into one enum.
+export type { PushPermission, DevicePushState, PushUiState } from './pushState'
 
 export interface EventRow {
   id: string

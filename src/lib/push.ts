@@ -1,53 +1,65 @@
 import { supabase } from './supabase'
 import { isNativePlatform, isAndroid } from './platform'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
+import type { DevicePushState, PushPermission } from './pushState'
 
 // Klucz publiczny VAPID — ustaw w .env jako VITE_VAPID_PUBLIC_KEY
 // Generujesz: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
 
-// ── Stan powiadomień ─────────────────────────────────────────────────────────
-
-export type PushStatus =
-  | 'unsupported'   // przeglądarka nie obsługuje Web Push
-  | 'denied'        // user zablokował
-  | 'subscribed'    // aktywna subskrypcja
-  | 'unsubscribed'  // obsługuje, ale nie zapisany
+// This module answers exactly one question: what can THIS device do right now.
+// Whether the user *wants* notifications lives in profile.push_enabled and is
+// never inferred here. See pushState.ts for how the two are combined.
 
 // ── Native FCM helpers ────────────────────────────────────────────────────────
 
-async function saveFcmToken(token: string): Promise<void> {
+/** @returns true when the token was stored for the current user. */
+async function saveFcmToken(token: string): Promise<boolean> {
   // SECURITY DEFINER RPC (not a direct upsert) so a token previously owned by
   // another account on this device is reassigned to the current user.
   const { error } = await supabase.rpc('register_push_device', {
     p_fcm_token: token,
     p_platform: isAndroid() ? 'android' : 'ios',
   })
-  if (error) console.error('[push] register_push_device failed:', error)
+  if (error) {
+    console.error('[push] register_push_device failed:', error)
+    return false
+  }
+  return true
 }
 
+// Registered once per app run. `removeAllListeners()` used to be called here on
+// every toggle, which also tore down the notificationActionPerformed listener
+// installed at boot by registerNativePushTapHandler — after enabling push in the
+// profile, tapping a notification no longer opened the event. Never call it.
+let tokenListenerReady = false
+async function ensureTokenRotationListener(): Promise<void> {
+  if (tokenListenerReady) return
+  tokenListenerReady = true
+  await FirebaseMessaging.addListener('tokenReceived', ({ token }) => {
+    if (token) saveFcmToken(token)
+  })
+}
+
+let tapHandlerReady = false
+let tapHandler: ((eventId: string) => void) | null = null
 export async function registerNativePushTapHandler(navigateToEvent: (eventId: string) => void): Promise<void> {
   if (!isNativePlatform()) return
+  // Keep the newest callback but only ever attach one listener, so a remount
+  // (StrictMode in dev) cannot open the same event twice.
+  tapHandler = navigateToEvent
+  if (tapHandlerReady) return
+  tapHandlerReady = true
   await FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
     const data = (event.notification?.data ?? {}) as Record<string, string>
-    if (data.eventId) navigateToEvent(data.eventId)
+    if (data.eventId) tapHandler?.(data.eventId)
   })
 }
 
-export async function registerNativePush(_userId: string): Promise<PushStatus> {
-  const perm = await FirebaseMessaging.requestPermissions()
-  if (perm.receive !== 'granted') return 'denied'
-
-  const { token } = await FirebaseMessaging.getToken()
-  if (!token) return 'unsubscribed'
-  await saveFcmToken(token)
-
-  // Token rotation
-  await FirebaseMessaging.removeAllListeners()
-  await FirebaseMessaging.addListener('tokenReceived', ({ token: t }) => {
-    if (t) saveFcmToken(t)
-  })
-  return 'subscribed'
+function mapNativePermission(receive: string): PushPermission {
+  if (receive === 'granted') return 'granted'
+  if (receive === 'denied') return 'denied'
+  return 'prompt' // 'prompt' | 'prompt-with-rationale'
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -73,62 +85,170 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 }
 
-// ── Status powiadomień ────────────────────────────────────────────────────────
+// ── Stan urządzenia ───────────────────────────────────────────────────────────
 
-export async function getPushStatus(): Promise<PushStatus> {
+/**
+ * What this device can do. Never prompts.
+ *
+ * `registered` means the delivery target is stored server-side for `userId`.
+ * When it cannot be confirmed (no session, failed query) it stays false: the UI
+ * then offers a repair instead of claiming delivery it cannot vouch for.
+ */
+export async function getDevicePushState(userId: string | null): Promise<DevicePushState> {
   if (isNativePlatform()) {
     const perm = await FirebaseMessaging.checkPermissions()
-    return perm.receive === 'granted' ? 'subscribed' : perm.receive === 'denied' ? 'denied' : 'unsubscribed'
+    const permission = mapNativePermission(perm.receive)
+    if (permission !== 'granted' || !userId) return { permission, registered: false }
+    const token = await getNativeToken()
+    if (!token) return { permission, registered: false }
+    return { permission, registered: await isTokenStored(userId, token) }
   }
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    return 'unsupported'
-  }
-  if (Notification.permission === 'denied') return 'denied'
 
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    return { permission: 'unsupported', registered: false }
+  }
+  const permission: PushPermission =
+    Notification.permission === 'granted' ? 'granted'
+    : Notification.permission === 'denied' ? 'denied'
+    : 'prompt'
+  if (permission !== 'granted' || !userId) return { permission, registered: false }
+
+  const sub = await getWebSubscription()
+  if (!sub) return { permission, registered: false }
+  return { permission, registered: await isEndpointStored(userId, sub.endpoint) }
+}
+
+async function getNativeToken(): Promise<string | null> {
   try {
-    const reg = await navigator.serviceWorker.getRegistration()
-    if (!reg) return 'unsubscribed'
-    const sub = await reg.pushManager.getSubscription()
-    return sub ? 'subscribed' : 'unsubscribed'
-  } catch {
-    return 'unsubscribed'
+    const { token } = await FirebaseMessaging.getToken()
+    return token || null
+  } catch (err) {
+    console.error('[push] getToken failed:', err)
+    return null
   }
 }
 
-// ── Subskrypcja ───────────────────────────────────────────────────────────────
+async function getWebSubscription(): Promise<PushSubscription | null> {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration()
+    if (!reg) return null
+    return await reg.pushManager.getSubscription()
+  } catch (err) {
+    console.error('[push] getSubscription failed:', err)
+    return null
+  }
+}
 
-export async function subscribePush(userId: string): Promise<PushStatus> {
-  if (isNativePlatform()) return registerNativePush(userId)
+async function isTokenStored(userId: string, token: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('push_devices')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('fcm_token', token)
+    .maybeSingle()
+  if (error) {
+    console.error('[push] push_devices lookup failed:', error)
+    return false
+  }
+  return !!data
+}
 
+async function isEndpointStored(userId: string, endpoint: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('endpoint', endpoint)
+    .maybeSingle()
+  if (error) {
+    console.error('[push] push_subscriptions lookup failed:', error)
+    return false
+  }
+  return !!data
+}
+
+// ── Włączenie na tym urządzeniu ───────────────────────────────────────────────
+
+/**
+ * Ask for the system permission (if it can still be asked for) and register the
+ * delivery target. Must be called from a user gesture. Returns the resulting
+ * device state — the caller decides what to tell the user; nothing is swallowed.
+ */
+export async function enablePushOnThisDevice(userId: string): Promise<DevicePushState> {
+  if (isNativePlatform()) {
+    const perm = await FirebaseMessaging.requestPermissions()
+    const permission = mapNativePermission(perm.receive)
+    if (permission !== 'granted') return { permission, registered: false }
+    return { permission, registered: await registerNativeToken() }
+  }
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    return { permission: 'unsupported', registered: false }
+  }
   if (!VAPID_PUBLIC_KEY) {
     console.error('[push] VITE_VAPID_PUBLIC_KEY not set')
-    return 'unsupported'
+    return { permission: 'unsupported', registered: false }
   }
 
-  // 1. Poproś o pozwolenie
-  const permission = await Notification.requestPermission()
-  if (permission !== 'granted') return 'denied'
+  const result = await Notification.requestPermission()
+  if (result !== 'granted') {
+    // 'denied' is final; 'default' means the prompt was dismissed and can return.
+    return { permission: result === 'denied' ? 'denied' : 'prompt', registered: false }
+  }
+  return { permission: 'granted', registered: await subscribeWeb(userId) }
+}
 
-  // 2. Zarejestruj SW (idempotent)
+/**
+ * Silent path used at startup. Registers only when the system permission is
+ * ALREADY granted, so it can never raise a prompt out of nowhere. When the
+ * permission is missing it just reports it, and the profile toggle renders the
+ * mismatch instead of hiding it.
+ *
+ * The user's intent is deliberately not consulted: a token is only an address,
+ * delivery is still gated server-side by profile.push_enabled.
+ */
+export async function ensurePushRegistered(userId: string): Promise<DevicePushState> {
+  const state = await getDevicePushState(userId)
+  if (state.permission !== 'granted' || state.registered) return state
+
+  const registered = isNativePlatform()
+    ? await registerNativeToken()
+    : await subscribeWeb(userId)
+  return { permission: 'granted', registered }
+}
+
+// No userId parameter: register_push_device derives the owner from the
+// authenticated session, which is also what makes account switching work.
+async function registerNativeToken(): Promise<boolean> {
+  const token = await getNativeToken()
+  if (!token) {
+    console.error('[push] permission granted but FCM returned no token')
+    return false
+  }
+  const saved = await saveFcmToken(token)
+  await ensureTokenRotationListener()
+  return saved
+}
+
+async function subscribeWeb(userId: string): Promise<boolean> {
   const reg = await registerServiceWorker()
-  if (!reg) return 'unsupported'
+  if (!reg) return false
 
-  // 3. Subskrybuj push
-  let sub: PushSubscription
-  try {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource,
-    })
-  } catch (err) {
-    console.error('[push] subscribe failed:', err)
-    return 'denied'
+  let sub = await getWebSubscription()
+  if (!sub) {
+    try {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource,
+      })
+    } catch (err) {
+      console.error('[push] subscribe failed:', err)
+      return false
+    }
   }
 
-  // 4. Zapisz w Supabase
   const json = sub.toJSON()
   const keys = json.keys as { p256dh: string; auth: string }
-
   const { error } = await supabase.from('push_subscriptions').upsert(
     {
       user_id: userId,
@@ -138,45 +258,35 @@ export async function subscribePush(userId: string): Promise<PushStatus> {
     },
     { onConflict: 'endpoint' }
   )
-
   if (error) {
     console.error('[push] save subscription failed:', error)
-    return 'unsubscribed'
+    return false
   }
-
-  return 'subscribed'
+  return true
 }
 
-// ── Anulowanie subskrypcji ────────────────────────────────────────────────────
+// ── Wyłączenie na tym urządzeniu ──────────────────────────────────────────────
 
-export async function unsubscribePush(): Promise<void> {
+export async function disablePushOnThisDevice(): Promise<void> {
   if (isNativePlatform()) {
-    const { token } = await FirebaseMessaging.getToken().catch(() => ({ token: null as string | null }))
+    const token = await getNativeToken()
     if (token) await supabase.from('push_devices').delete().eq('fcm_token', token)
-    await FirebaseMessaging.deleteToken().catch(() => {})
+    try { await FirebaseMessaging.deleteToken() }
+    catch (err) { console.error('[push] deleteToken failed:', err) }
     return
   }
 
-  const reg = await navigator.serviceWorker.getRegistration()
-  if (!reg) return
-
-  const sub = await reg.pushManager.getSubscription()
+  const sub = await getWebSubscription()
   if (!sub) return
-
   const endpoint = sub.endpoint
-
   await sub.unsubscribe()
-
-  // Usuń z Supabase
   await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
 }
 
 // ── Odświeżenie subskrypcji (pushsubscriptionchange) ─────────────────────────
 
 export async function refreshPushSubscription(userId: string): Promise<void> {
-  const status = await getPushStatus()
-  if (status === 'subscribed') return
-  if (status === 'unsubscribed') await subscribePush(userId)
+  await ensurePushRegistered(userId)
 }
 
 // ── Mute/unmute eventu ────────────────────────────────────────────────────────
