@@ -1,15 +1,32 @@
-// Throwaway dev harness: renders the real NotificationSetting in every state so
-// the broken ones can be looked at without owning four devices. Not part of the
-// app bundle — reached only via /push-preview.html in `npm run dev`.
+// Throwaway dev harness: renders the real notification UI in every state so the
+// broken ones can be looked at without owning four devices. Not part of the app
+// bundle — reached only via /push-preview.html in `npm run dev`.
+//
+//   /push-preview.html                  → every toggle state
+//   /push-preview.html?modal=ask        → the follow notification card
+//   /push-preview.html?modal=blocked    → ...after a system block
+//   /push-preview.html?lang=en          → any of the five languages
 import { createRoot } from 'react-dom/client'
 import '../index.css'
 import i18n from '../lib/i18n'
 import NotificationSetting from '../screens/NotificationSetting'
+import FollowNotifyModal from '../components/FollowNotifyModal'
 import { C, F } from '../lib/tokens'
 import type { PushUiState } from '../lib/pushState'
 
-const lang = new URLSearchParams(location.search).get('lang') || 'pl'
-i18n.changeLanguage(lang)
+const params = new URLSearchParams(location.search)
+i18n.changeLanguage(params.get('lang') || 'pl')
+
+const DEMO_EVENT = {
+  id: 'demo-1',
+  title: 'Koncert w knajpie',
+  description: 'Gramy od 21:00',
+  place_name: 'Bar Rynek 4',
+  lat: 50.0413,
+  lng: 21.999,
+  start_time: '2026-08-01T19:00:00+02:00',
+  end_time: '2026-08-01T23:30:00+02:00',
+}
 
 const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label: string }[] = [
   { state: 'on', intent: true, error: false, label: 'on — zgoda + zarejestrowane urządzenie' },
@@ -22,21 +39,35 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
   { state: null, intent: true, error: false, label: 'sprawdzanie urządzenia' },
 ]
 
-createRoot(document.getElementById('root')!).render(
-  <div style={{ background: '#fff', padding: 24, fontFamily: F.body, display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-    {CASES.map((c, i) => (
-      <div key={i} style={{ width: 330 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: C.inkSoft, letterSpacing: 0.4 }}>{c.label}</div>
-        <NotificationSetting
-          state={c.state}
-          intent={c.intent}
-          loading={false}
-          error={c.error}
-          blockedHint={i18n.t('profile.pushBlockedIos')}
-          onToggle={() => {}}
-          onRepair={() => {}}
-        />
-      </div>
-    ))}
-  </div>
+const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
+
+const root = createRoot(document.getElementById('root')!)
+
+root.render(
+  modal ? (
+    <FollowNotifyModal
+      event={DEMO_EVENT}
+      userId="demo-user"
+      reason={modal}
+      onEnabled={() => {}}
+      onClose={() => {}}
+    />
+  ) : (
+    <div style={{ background: '#fff', padding: 24, fontFamily: F.body, display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+      {CASES.map((c, i) => (
+        <div key={i} style={{ width: 330 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: C.inkSoft, letterSpacing: 0.4 }}>{c.label}</div>
+          <NotificationSetting
+            state={c.state}
+            intent={c.intent}
+            loading={false}
+            error={c.error}
+            blockedHint={i18n.t('profile.pushBlockedIos')}
+            onToggle={() => {}}
+            onRepair={() => {}}
+          />
+        </div>
+      ))}
+    </div>
+  )
 )

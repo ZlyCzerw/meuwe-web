@@ -549,6 +549,7 @@ export default function App() {
           onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
+          onProfileChanged={reloadProfile}
         />
       )}
       {isFollowedEvents && followedEventSelected && (
@@ -562,6 +563,7 @@ export default function App() {
           onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
+          onProfileChanged={reloadProfile}
         />
       )}
       {!isOverlay && selEvent && (
@@ -575,6 +577,7 @@ export default function App() {
           onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
+          onProfileChanged={reloadProfile}
         />
       )}
 

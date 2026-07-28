@@ -14,9 +14,15 @@ import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
 import { isNativePlatform } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
+import { getDevicePushState } from '../lib/push'
+import { resolvePushState } from '../lib/pushState'
+import FollowNotifyModal from '../components/FollowNotifyModal'
 import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
+
+/** Asked once per device: following again should not re-open the same card. */
+const FOLLOW_NOTIFY_ASKED_KEY = 'meuwe_follow_notify_asked'
 
 const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' }
 
@@ -46,16 +52,19 @@ function EventSheet({
   onAuthNeeded,
   onChatAuthNeeded,
   onEdit,
+  onProfileChanged,
 }: {
   event: EventWithMeta
   onClose: () => void
   session: Session | null
-  profile: { display_name: string | null; avatar_color: string | null } | null
+  profile: { display_name: string | null; avatar_color: string | null; push_enabled?: boolean | null } | null
   userPos?: { lat: number; lng: number } | null
   onLocate?: () => void
   onAuthNeeded?: () => void
   onChatAuthNeeded?: () => void
   onEdit?: (event: EventWithMeta) => void
+  /** Called after the follow flow changes push_enabled, so the app reloads it. */
+  onProfileChanged?: () => void
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -65,13 +74,14 @@ function EventSheet({
   const [sendErr, setSendErr] = useState('')
   const [photoIdx, setPhotoIdx] = useState(0)
   const [photoModal, setPhotoModal] = useState<number | null>(null)
-  const [shareToast, setShareToast] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [notifyReason, setNotifyReason] = useState<'ask' | 'blocked' | 'unsupported' | null>(null)
   const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
 
-  function showShareToast() {
-    setShareToast(true)
-    setTimeout(() => setShareToast(false), 2200)
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2200)
   }
 
   async function toggleFollow() {
@@ -83,7 +93,25 @@ function EventSheet({
       setIsFollowing(true)
       track.followEvent(event.id)
       await db.followEvent(event.id)
+      maybeAskForNotifications()
     }
+  }
+
+  // Following is only worth something if the news can reach you. Asked once per
+  // device, and only when this device would not deliver — never as a bare system
+  // prompt, always through the modal that explains what it is for.
+  async function maybeAskForNotifications() {
+    if (!session) return
+    try { if (localStorage.getItem(FOLLOW_NOTIFY_ASKED_KEY)) return } catch { /* private mode */ }
+    const device = await getDevicePushState(session.user.id)
+    const state = resolvePushState(!!profile?.push_enabled, device)
+    if (state === 'on') return
+    try { localStorage.setItem(FOLLOW_NOTIFY_ASKED_KEY, '1') } catch { /* private mode */ }
+    setNotifyReason(
+      state === 'unsupported' ? 'unsupported'
+        : state === 'blocked' ? 'blocked'
+        : 'ask'
+    )
   }
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const followChanRef = useRef<ReturnType<typeof db.subscribeFollowers> | null>(null)
@@ -366,7 +394,7 @@ function EventSheet({
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleShare(event, showShareToast)}
+                        onClick={() => handleShare(event, () => showToast(t('share.linkCopied')))}
                         style={{
                           width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
                           background: C.cream,
@@ -634,8 +662,8 @@ function EventSheet({
         </div>
       )}
 
-      {/* Share — link copied toast */}
-      {shareToast && (
+      {/* Transient confirmations (link copied, notifications enabled) */}
+      {toast && (
         <div style={{
           position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
           background: C.ink, color: '#fff', borderRadius: 999,
@@ -643,8 +671,18 @@ function EventSheet({
           whiteSpace: 'nowrap', zIndex: 10,
           animation: 'meuwe-fade-in 180ms ease',
         }}>
-          {t('share.linkCopied')}
+          {toast}
         </div>
+      )}
+
+      {notifyReason && session && (
+        <FollowNotifyModal
+          event={event}
+          userId={session.user.id}
+          reason={notifyReason}
+          onEnabled={() => { onProfileChanged?.(); showToast(t('followNotify.enabled')) }}
+          onClose={() => setNotifyReason(null)}
+        />
       )}
     </div>
   )
