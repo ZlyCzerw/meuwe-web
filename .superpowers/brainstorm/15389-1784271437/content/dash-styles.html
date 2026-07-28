@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meuwe - styl przerywanych ścieżek</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{--primary:#FF7A45;--cream:#FFF6EC;--ink:#2D2B2A;--inkSoft:#8A8580}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Nunito",system-ui,sans-serif;background:var(--cream);color:var(--ink)}
+  header{padding:16px 20px 6px}
+  h1{font-family:"Hanken Grotesk",system-ui;font-weight:900;font-size:22px;margin:0 0 4px}
+  .sub{color:var(--inkSoft);font-size:13px;font-weight:600;margin:0}
+  #status{padding:4px 20px 10px;font-size:12px;font-weight:800;color:var(--primary)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 20px}
+  .cell{background:#fff;border:2.5px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:0 3px 0 rgba(45,43,42,.2);position:relative}
+  .cap{position:absolute;top:8px;left:8px;z-index:500;background:rgba(255,255,255,.92);border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-weight:900;font-size:12px;pointer-events:none}
+  .cap small{display:block;font-weight:700;font-size:10px;color:var(--inkSoft)}
+  .map{width:100%;height:330px}
+  .note{padding:0 20px 24px;font-size:12px;color:var(--inkSoft);max-width:820px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}.map{height:300px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Który styl przerywanej ścieżki?</h1>
+  <p class="sub">Te same realne ścieżki OSM (Pole Mokotowskie) w 4 stylach linii na bazie CARTO Voyager. Zoomuj/przesuwaj - okna są zsynchronizowane.</p>
+</header>
+<div id="status">Pobieram ścieżki z OpenStreetMap...</div>
+
+<div class="grid" id="grid">
+  <div class="cell"><div class="cap">A · Kropki (ink) <small>subtelne, hand-drawn</small></div><div class="map" id="m0"></div></div>
+  <div class="cell"><div class="cap">B · Kreski (szary) <small>klasyczne przerywane</small></div><div class="map" id="m1"></div></div>
+  <div class="cell"><div class="cap">C · Kreski z białą obwódką <small>max czytelność</small></div><div class="map" id="m2"></div></div>
+  <div class="cell"><div class="cap">D · Kreski (ciepły brąz) <small>pod paletę cream</small></div><div class="map" id="m3"></div></div>
+</div>
+
+<p class="note">Pomarańcz (primary) celowo pominięty - jest zarezerwowany dla pinezek wydarzeń, żeby ścieżki się z nimi nie zlewały. Napisz w terminalu, który styl (A/B/C/D) i ewentualnie co dostroić (grubość, gęstość kreski). Możesz też mieszać - np. „C, ale cieńsze".</p>
+
+<script>
+const CENTER=[52.2118,20.9986], ZOOM=16;
+// (south,west,north,east)
+const BBOX=[52.204,20.985,52.219,21.013];
+const STYLES=[
+  {casing:null, line:{color:'#2D2B2A',weight:2,opacity:.75,dashArray:'1 7',lineCap:'round'}},
+  {casing:null, line:{color:'#6B655F',weight:2,opacity:.85,dashArray:'7 5'}},
+  {casing:{color:'#FFFFFF',weight:5,opacity:.9}, line:{color:'#2D2B2A',weight:2,opacity:.9,dashArray:'6 5'}},
+  {casing:null, line:{color:'#B5651D',weight:2.2,opacity:.9,dashArray:'6 4'}}
+];
+const maps=[],renderers=[];
+let syncing=false;
+STYLES.forEach((s,i)=>{
+  const m=L.map('m'+i,{zoomControl:false,attributionControl:false,preferCanvas:true}).setView(CENTER,ZOOM);
+  L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(m);
+  maps.push(m); renderers.push(L.canvas());
+  m.on('move zoom',()=>{if(syncing)return;syncing=true;const c=m.getCenter(),z=m.getZoom();maps.forEach(o=>{if(o!==m)o.setView(c,z,{animate:false})});syncing=false;});
+});
+const q=`[out:json][timeout:25];way["highway"~"^(path|footway|track|steps|cycleway|bridleway|pedestrian)$"](${BBOX.join(',')});out geom;`;
+fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)})
+ .then(r=>r.json())
+ .then(d=>{
+   const ways=(d.elements||[]).filter(e=>e.geometry);
+   document.getElementById('status').textContent=`Załadowano ${ways.length} ścieżek. Porównaj style A/B/C/D.`;
+   STYLES.forEach((s,i)=>{
+     const rn=renderers[i]; rn.addTo(maps[i]);
+     ways.forEach(w=>{
+       const pts=w.geometry.map(g=>[g.lat,g.lon]);
+       if(s.casing) L.polyline(pts,{...s.casing,renderer:rn}).addTo(maps[i]);
+       L.polyline(pts,{...s.line,renderer:rn}).addTo(maps[i]);
+     });
+   });
+ })
+ .catch(e=>{document.getElementById('status').textContent='Nie udało się pobrać z Overpass (limit/sieć). Odśwież stronę, aby spróbować ponownie.';});
+setTimeout(()=>maps.forEach(m=>m.invalidateSize()),200);
+</script>
+</body>
+</html>

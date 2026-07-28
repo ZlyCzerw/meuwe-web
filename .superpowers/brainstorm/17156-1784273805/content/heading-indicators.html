@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meuwe - wskaźnik kierunku patrzenia</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{--primary:#FF7A45;--cream:#FFF6EC;--ink:#2D2B2A;--inkSoft:#8A8580}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Nunito",system-ui,sans-serif;background:var(--cream);color:var(--ink)}
+  header{padding:16px 20px 6px}
+  h1{font-family:"Hanken Grotesk",system-ui;font-weight:900;font-size:22px;margin:0 0 4px}
+  .sub{color:var(--inkSoft);font-size:13px;font-weight:600;margin:0}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 20px 12px}
+  .grp{display:flex;gap:8px;align-items:center;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:6px 12px}
+  .grp b{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--inkSoft)}
+  button.chip{border:2px solid transparent;background:transparent;border-radius:999px;padding:6px 12px;font-weight:800;font-size:12px;color:var(--ink);cursor:pointer;font-family:inherit}
+  button.chip.on{background:var(--primary);color:#fff;border-color:var(--ink)}
+  input[type=range]{width:160px;accent-color:var(--primary)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px 20px}
+  .cell{background:#fff;border:2.5px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:0 3px 0 rgba(45,43,42,.2);position:relative}
+  .cap{position:absolute;top:8px;left:8px;z-index:600;background:rgba(255,255,255,.92);border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-weight:900;font-size:12px;pointer-events:none}
+  .cap small{display:block;font-weight:700;font-size:10px;color:var(--inkSoft)}
+  .map{width:100%;height:300px;position:relative}
+  .marker{position:absolute;top:50%;left:50%;width:120px;height:120px;margin:-60px 0 0 -60px;z-index:500;pointer-events:none}
+  .layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .rot{position:absolute;inset:0;transition:transform .12s linear}
+  .blob{width:26px;height:26px;border-radius:52% 48% 50% 50%/50% 52% 48% 50%;background:var(--primary);border:3px solid var(--ink);box-shadow:0 3px 0 #2D2B2A33;animation:breathe 3s ease-in-out infinite}
+  .halo{width:42px;height:42px;border-radius:50%;border:2px solid var(--primary);opacity:0;animation:halo 2.8s ease-out infinite}
+  .halo.b{animation-delay:1.4s}
+  @keyframes halo{0%{transform:scale(.62);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  .note{padding:0 20px 24px;font-size:12px;color:var(--inkSoft);max-width:900px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Wskaźnik kierunku patrzenia - 4 warianty</h1>
+  <p class="sub">Ten sam znacznik „me" w 4 stylach wskaźnika. Obserwuj przy obrocie, jak bardzo każdy „krzyczy".</p>
+</header>
+
+<div class="controls">
+  <div class="grp"><b>Kierunek</b><input id="head" type="range" min="0" max="359" value="35"><span id="hval" style="font-weight:800;font-size:12px;width:38px">35°</span></div>
+  <div class="grp"><b>Auto-obrót</b>
+    <button class="chip on" data-auto="on">Wł.</button>
+    <button class="chip" data-auto="off">Wył.</button>
+  </div>
+</div>
+
+<div class="grid" id="grid">
+  <div class="cell">
+    <div class="cap">1 · Daszek orbitujący <small>Twój pomysł</small></div>
+    <div class="map" id="m0"><div class="marker">
+      <div class="layer"><div class="halo"></div></div>
+      <div class="layer"><div class="halo b"></div></div>
+      <div class="rot" data-rot>
+        <svg width="120" height="120" viewBox="0 0 120 120" style="overflow:visible">
+          <g transform="translate(60,26)" style="filter:drop-shadow(0 2px 0 #2D2B2A22)">
+            <path d="M-9 7 L0 -6 L9 7" fill="none" stroke="#2D2B2A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="layer"><div class="blob"></div></div>
+    </div></div>
+  </div>
+
+  <div class="cell">
+    <div class="cap">2 · Stożek pola widzenia <small>Google / Apple</small></div>
+    <div class="map" id="m1"><div class="marker">
+      <div class="layer"><div class="halo"></div></div>
+      <div class="rot" data-rot>
+        <svg width="120" height="120" viewBox="0 0 120 120" style="overflow:visible">
+          <defs><radialGradient id="cone2" cx="50%" cy="100%" r="90%">
+            <stop offset="0%" stop-color="#FF7A45" stop-opacity=".55"/>
+            <stop offset="55%" stop-color="#FF7A45" stop-opacity=".28"/>
+            <stop offset="100%" stop-color="#FF7A45" stop-opacity="0"/>
+          </radialGradient></defs>
+          <path d="M60 60 L27 12 A58 58 0 0 1 93 12 Z" fill="url(#cone2)"/>
+        </svg>
+      </div>
+      <div class="layer"><div class="blob"></div></div>
+    </div></div>
+  </div>
+
+  <div class="cell">
+    <div class="cap">3 · Nacięcie „puck" <small>styl Mapbox</small></div>
+    <div class="map" id="m2"><div class="marker">
+      <div class="layer"><div class="halo"></div></div>
+      <div class="layer"><div class="halo b"></div></div>
+      <div class="rot" data-rot>
+        <svg width="120" height="120" viewBox="0 0 120 120" style="overflow:visible">
+          <g style="filter:drop-shadow(0 2px 0 #2D2B2A22)">
+            <path d="M52 50 L60 36 L68 50 Z" fill="#FF7A45" stroke="#2D2B2A" stroke-width="3" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="layer"><div class="blob"></div></div>
+    </div></div>
+  </div>
+
+  <div class="cell">
+    <div class="cap">4 · Łuk kierunkowy <small>subtelny „reflektor"</small></div>
+    <div class="map" id="m3"><div class="marker">
+      <div class="layer"><div class="halo"></div></div>
+      <div class="rot" data-rot>
+        <svg width="120" height="120" viewBox="0 0 120 120" style="overflow:visible">
+          <defs><filter id="glow4" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter></defs>
+          <circle cx="60" cy="60" r="21" fill="none" stroke="#FF7A45" stroke-width="3" opacity=".16"/>
+          <path d="M45.2 45.2 A21 21 0 0 1 74.8 45.2" fill="none" stroke="#FF7A45" stroke-width="4.5" stroke-linecap="round" filter="url(#glow4)"/>
+        </svg>
+      </div>
+      <div class="layer"><div class="blob"></div></div>
+    </div></div>
+  </div>
+</div>
+
+<p class="note">0° = północ (do góry). Wskaźnik obraca się zgodnie z kierunkiem. „Nienachalny" = przy każdym kącie nie zasłania mapy i nie przebija pinezek wydarzeń (pomarańcz świadomie stonowany). Napisz w terminalu numer, który wygrywa - albo co połączyć/dostroić. Potem naniosę na `meHTML` w kodzie.</p>
+
+<script>
+const maps=[];
+for(let i=0;i<4;i++){
+  const m=L.map('m'+i,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false}).setView([52.2150,21.0350],15);
+  L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(m);
+  maps.push(m);
+}
+const rots=[...document.querySelectorAll('[data-rot]')];
+const slider=document.getElementById('head'), hval=document.getElementById('hval');
+let h=35, auto=true;
+function apply(){rots.forEach(r=>r.style.transform='rotate('+h+'deg)');hval.textContent=Math.round(h)+'°';slider.value=Math.round(h);}
+slider.addEventListener('input',()=>{h=+slider.value;auto=false;setAuto(false);apply();});
+function setAuto(on){auto=on;document.querySelectorAll('[data-auto]').forEach(b=>b.classList.toggle('on',(b.dataset.auto==='on')===on));}
+document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>setAuto(b.dataset.auto==='on'));
+function tick(){if(auto){h=(h+0.6)%360;apply();}requestAnimationFrame(tick);}
+apply();tick();
+setTimeout(()=>maps.forEach(m=>m.invalidateSize()),200);
+</script>
+</body>
+</html>
