@@ -35,3 +35,7 @@ android/captures/
 !android/app/debug.keystore
 android/keystore.properties
 scripts/event-sync/.geocache.json
+
+# Xcode archives / local build output
+build/
+store-assets/_build/
