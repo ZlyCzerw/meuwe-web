@@ -8,6 +8,8 @@
 //   /push-preview.html?promo=android    → the mobile web "get the app" sheet
 //   /push-preview.html?step=location    → native first-run location card
 //   /push-preview.html?step=invite      → invite friends card
+//   /push-preview.html?step=account     → the account and data sub-screen
+//   /push-preview.html?step=delete      → the delete confirmation
 //   /push-preview.html?lang=en          → any of the five languages
 import { createRoot } from 'react-dom/client'
 import '../index.css'
@@ -17,6 +19,8 @@ import FollowNotifyModal from '../components/FollowNotifyModal'
 import AppPromoSheet from '../components/AppPromoSheet'
 import LocationOnboardingModal from '../components/LocationOnboardingModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
+import AccountPanel from '../screens/AccountPanel'
+import DeleteAccountModal from '../components/DeleteAccountModal'
 import { C, F } from '../lib/tokens'
 import type { PushUiState } from '../lib/pushState'
 
@@ -47,12 +51,16 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
-const step = params.get('step') as 'location' | 'invite' | null
+const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | null
 
 const root = createRoot(document.getElementById('root')!)
 
 root.render(
-  step === 'location' ? (
+  step === 'account' ? (
+    <AccountPanel open onClose={() => {}} onDeleted={() => {}} />
+  ) : step === 'delete' ? (
+    <DeleteAccountModal onDeleted={() => {}} onClose={() => {}} />
+  ) : step === 'location' ? (
     <LocationOnboardingModal onAllow={async () => {}} onSkip={() => {}} />
   ) : step === 'invite' ? (
     <InviteFriendsModal onClose={() => {}} />

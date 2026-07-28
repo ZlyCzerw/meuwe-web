@@ -23,6 +23,7 @@ function ProfilePanel({
   reloadProfile,
   onOpenMyEvents,
   onOpenFollowedEvents,
+  onOpenAccount,
   myEventsUnread = false,
   followedUnread = false,
 }: {
@@ -34,6 +35,7 @@ function ProfilePanel({
   reloadProfile: () => void
   onOpenMyEvents: () => void
   onOpenFollowedEvents: () => void
+  onOpenAccount: () => void
   myEventsUnread?: boolean
   followedUnread?: boolean
 }) {
@@ -415,6 +417,16 @@ function ProfilePanel({
           >
             {session ? t('profile.signOut') : t('profile.backToLogin')}
           </button>
+          {/* Account and data — same weight as sign out, one step below it. The
+              deletion itself lives inside, not on this label. */}
+          {session && (
+            <button
+              onClick={onOpenAccount}
+              style={{ padding: '12px 0', fontSize: 14, fontWeight: 700, color: C.inkSoft, background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              {t('account.entry')}
+            </button>
+          )}
         <a
           href="/terms.html"
           target="_blank"

@@ -484,9 +484,10 @@ function EventSheet({
 
                   {/* Creator — compact inline */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <Avatar size={28} initials={(event.profiles?.display_name || '?')[0].toUpperCase()} color={event.profiles?.avatar_color || C.sky} />
+                    <Avatar size={28} initials={(event.profiles?.display_name || t('account.deletedUser'))[0].toUpperCase()} color={event.profiles?.avatar_color || C.sky} />
                     <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500 }}>
-                      {t('event.organizer')} <strong style={{ color: C.ink }}>{event.profiles?.display_name || '?'}</strong>
+                      {/* No profile means the account was deleted; the event stays. */}
+                      {t('event.organizer')} <strong style={{ color: C.ink }}>{event.profiles?.display_name || t('account.deletedUser')}</strong>
                     </span>
                     {session?.user.id === event.creator_id && (
                       <span style={{ marginLeft: 4, padding: '2px 8px', borderRadius: 999, background: C.primarySoft, color: C.primaryPress, fontSize: 11, fontWeight: 800 }}>{t('event.moderator')}</span>
@@ -573,7 +574,7 @@ function EventSheet({
                             fontSize: 11, color: C.inkSoft, fontWeight: 700,
                             marginBottom: 4, marginLeft: 44,
                           }}>
-                            {m.author_name || '?'} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
+                            {m.author_name || t('account.deletedUser')} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
@@ -584,7 +585,7 @@ function EventSheet({
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: 12, fontWeight: 900, color: INK,
                             }}>
-                              {(m.author_name || '?')[0].toUpperCase()}
+                              {(m.author_name || t('account.deletedUser'))[0].toUpperCase()}
                             </div>
                           )}
                           <div style={{

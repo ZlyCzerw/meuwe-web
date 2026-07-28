@@ -43,6 +43,7 @@ function renderPanel(pushEnabled: boolean) {
       reloadProfile={() => {}}
       onOpenMyEvents={() => {}}
       onOpenFollowedEvents={() => {}}
+      onOpenAccount={() => {}}
     />
   )
 }
@@ -130,6 +131,7 @@ describe('ProfilePanel notifications', () => {
         open onClose={() => {}} session={session} profile={profile(true)}
         onSignOut={() => {}} reloadProfile={() => {}}
         onOpenMyEvents={() => {}} onOpenFollowedEvents={() => {}}
+        onOpenAccount={() => {}}
       />
     )
     expect(await screen.findByText('Notifications blocked by the system')).toBeInTheDocument()

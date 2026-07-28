@@ -16,6 +16,7 @@ import EventSheet from './screens/EventSheet'
 import CreateSheet from './screens/CreateSheet'
 import Toast from './components/Toast'
 import ProfilePanel from './screens/ProfilePanel'
+import AccountPanel from './screens/AccountPanel'
 import ConfettiBurst from './components/ConfettiBurst'
 import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
@@ -50,6 +51,7 @@ export default function App() {
   const [selEvent, setSelEvent] = useState<EventWithMeta | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   // Animated launch splash — native only (web has the landing page). Shows once per cold start.
@@ -117,6 +119,7 @@ export default function App() {
     myEventSelected,
     followedEventSelected,
     createOpen,
+    accountOpen,
     profileOpen,
     screen,
   })
@@ -129,10 +132,11 @@ export default function App() {
       myEventSelected,
       followedEventSelected,
       createOpen,
+      accountOpen,
       profileOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModal, selEvent, createOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, selEvent, createOpen, accountOpen, profileOpen])
 
   useEffect(() => {
     function onPopState() {
@@ -144,6 +148,7 @@ export default function App() {
         return
       }
       if (s.createOpen) { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null); return }
+      if (s.accountOpen) { setAccountOpen(false); return }
       if (s.profileOpen) { setProfileOpen(false); return }
       if (s.screen === 'myEvents') { setScreen('map'); return }
       if (s.screen === 'followedEvents') { setScreen('map'); return }
@@ -520,6 +525,18 @@ export default function App() {
     window.history.replaceState({ layer: 'welcome' }, '')
   }
 
+  // The account is already gone server-side and the local session was cleared
+  // by deleteAccount(); this only puts the UI back where a signed-out person
+  // belongs.
+  function handleAccountDeleted() {
+    setAccountOpen(false)
+    setProfileOpen(false)
+    setSelEvent(null)
+    setScreen('welcome')
+    window.history.replaceState({ layer: 'welcome' }, '')
+    showToast(t('account.deleted'))
+  }
+
   function handleEdit(ev: EventWithMeta) {
     // Edit is launched from EventSheet, which can live in the MyEvents/Followed
     // overlays where CreateSheet is gated `!isOverlay`. Route every edit through
@@ -734,6 +751,10 @@ export default function App() {
         profile={profile}
         onSignOut={handleSignOut}
         reloadProfile={reloadProfile}
+        onOpenAccount={() => {
+          setAccountOpen(true)
+          window.history.pushState({ layer: 'account' }, '')
+        }}
         onOpenMyEvents={() => {
           setProfileOpen(false); setScreen('myEvents')
           window.history.pushState({ layer: 'myEvents' }, '')
@@ -749,6 +770,11 @@ export default function App() {
       {promoOpen && promoOs && (
         <AppPromoSheet os={promoOs} onClose={() => setPromoOpen(false)} />
       )}
+      <AccountPanel
+        open={accountOpen && !isOverlay}
+        onClose={() => window.history.back()}
+        onDeleted={handleAccountDeleted}
+      />
       {locationModalOpen && (
         <LocationOnboardingModal onAllow={handleAllowLocation} onSkip={finishLocationStep} />
       )}
