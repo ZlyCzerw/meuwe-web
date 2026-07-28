@@ -111,6 +111,11 @@ const pl = {
     pushBlockedAndroid: 'Otwórz Ustawienia, wybierz Aplikacje, potem meuwe i Powiadomienia, i włącz je.',
     pushBlockedWeb: 'Kliknij ikonę obok adresu strony i zezwól tej stronie na powiadomienia.',
   },
+  appPromo: {
+    title: 'meuwe działa lepiej w aplikacji',
+    body: 'Powiadomienia o wydarzeniach obok Ciebie, szybsza mapa i skrót na ekranie głównym.',
+    later: 'Nie teraz',
+  },
   store: {
     hint: 'Albo pobierz aplikację',
     soon: 'Wkrótce w',

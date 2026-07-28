@@ -119,6 +119,11 @@ const sl: Resources = {
     travel: 'potovanja', yoga: 'joga', dance: 'ples', comedy: 'komedija', kids: 'otroci', pets: 'hišni ljubljenčki',
     volunteering: 'prostovoljstvo', workshop: 'delavnica', alert: 'opozorilo',
   },
+  appPromo: {
+    title: 'meuwe deluje bolje v aplikaciji',
+    body: 'Obvestila o dogodkih blizu tebe, hitrejši zemljevid in bližnjica na začetnem zaslonu.',
+    later: 'Ne zdaj',
+  },
   store: {
     hint: 'Ali prenesi aplikacijo',
     soon: 'Kmalu v',

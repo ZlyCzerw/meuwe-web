@@ -20,7 +20,9 @@ import ConfettiBurst from './components/ConfettiBurst'
 import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
-import { StoreHint } from './components/StoreBadge'
+import { StoreHint, deviceStoreOs } from './components/StoreBadge'
+import AppPromoSheet from './components/AppPromoSheet'
+import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
@@ -85,6 +87,14 @@ export default function App() {
   // the one captured when they were installed.
   const sessionRef = useRef(session)
   useEffect(() => { sessionRef.current = session }, [session])
+
+  // ── "Get the app" nudge (mobile web only) ──────────────────────────────────
+  // deviceStoreOs() is null on desktop, inside the app, and while that store has
+  // no listing, which is all the "never show" cases in one check.
+  const promoOs = deviceStoreOs()
+  const [promoOpen, setPromoOpen] = useState(false)
+  const promoStateRef = useRef(readPromoState())
+  const arrivedAtRef = useRef(Date.now())
 
   const NAV_KEY = 'meuwe_nav'
   const NAV_TTL = 30 * 60_000
@@ -183,6 +193,38 @@ export default function App() {
 
   // Analytics
   useEffect(() => { if (selEvent) track.viewEvent(selEvent.id, selEvent.title) }, [selEvent])
+
+  // Interest signal for the app nudge: distinct events opened.
+  useEffect(() => {
+    if (!selEvent) return
+    const next = recordEventView(promoStateRef.current, selEvent.id)
+    if (next === promoStateRef.current) return
+    promoStateRef.current = next
+    writePromoState(next)
+  }, [selEvent?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Decide when to surface it. Polled rather than event-driven because one of
+  // the triggers is simply time spent, and because the sheet must wait for a
+  // clear screen: no event sheet, no create flow, no other modal.
+  useEffect(() => {
+    if (!promoOs) return
+    const tick = () => {
+      if (promoOpen) return
+      const layers = navLayersRef.current
+      const busy = layers.authModal || layers.selEvent || layers.myEventSelected
+        || layers.followedEventSelected || layers.createOpen || layers.profileOpen
+        || layers.screen !== 'map' || pickingLocation
+      if (busy) return
+      const now = Date.now()
+      const seconds = (now - arrivedAtRef.current) / 1000
+      if (!canShowPromo(promoStateRef.current, seconds, now)) return
+      promoStateRef.current = markPromoShown(promoStateRef.current, now)
+      writePromoState(promoStateRef.current)
+      setPromoOpen(true)
+    }
+    const id = setInterval(tick, 10_000)
+    return () => clearInterval(id)
+  }, [promoOs, promoOpen, pickingLocation])
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
@@ -638,6 +680,9 @@ export default function App() {
         followedUnread={unread.hasFollowed}
       />
       <ConfettiBurst visible={showConfetti} />
+      {promoOpen && promoOs && (
+        <AppPromoSheet os={promoOs} onClose={() => setPromoOpen(false)} />
+      )}
       {authModal && (
         <div
           onClick={() => window.history.back()}

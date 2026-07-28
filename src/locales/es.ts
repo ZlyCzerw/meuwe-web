@@ -119,6 +119,11 @@ const es: Resources = {
     travel: 'viajes', yoga: 'yoga', dance: 'baile', comedy: 'comedia', kids: 'niños', pets: 'mascotas',
     volunteering: 'voluntariado', workshop: 'taller', alert: 'alerta',
   },
+  appPromo: {
+    title: 'meuwe va mejor en la app',
+    body: 'Notificaciones de eventos cerca de ti, un mapa más rápido y un acceso directo en tu pantalla de inicio.',
+    later: 'Ahora no',
+  },
   store: {
     hint: 'O descarga la app',
     soon: 'Pronto en',
