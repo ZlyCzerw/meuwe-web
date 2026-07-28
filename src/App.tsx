@@ -22,6 +22,9 @@ import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
 import { StoreHint, deviceStoreOs } from './components/StoreBadge'
 import AppPromoSheet from './components/AppPromoSheet'
+import LocationOnboardingModal from './components/LocationOnboardingModal'
+import InviteFriendsModal from './components/InviteFriendsModal'
+import { readOnboardingState, writeOnboardingState, locationPromptDelayMs } from './lib/onboarding'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
@@ -87,6 +90,13 @@ export default function App() {
   // the one captured when they were installed.
   const sessionRef = useRef(session)
   useEffect(() => { sessionRef.current = session }, [session])
+
+  // ── Native first run ───────────────────────────────────────────────────────
+  // On the web the browser owns the permission prompt, so nothing is gated there.
+  const [nativeGeoAllowed, setNativeGeoAllowed] = useState(!isNativePlatform())
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
+  const onboardingRef = useRef(readOnboardingState())
 
   // ── "Get the app" nudge (mobile web only) ──────────────────────────────────
   // deviceStoreOs() is null on desktop, inside the app, and while that store has
@@ -228,6 +238,31 @@ export default function App() {
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
+  // Native: decide whether to explain the location permission, and when. The
+  // system dialog is never raised from here — only from the modal's button.
+  useEffect(() => {
+    if (!isNativePlatform() || screen !== 'map') return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    Geolocation.checkPermissions()
+      .then(perm => {
+        if (cancelled) return
+        if (perm.location === 'granted' || perm.coarseLocation === 'granted') {
+          setNativeGeoAllowed(true)
+          return
+        }
+        // Already answered once: respect it and leave the map on its fallbacks.
+        if (onboardingRef.current.locationDone) return
+        const delay = locationPromptDelayMs({
+          fromDeepLink: !!deepLinkIdRef.current || !!urlSpotRef.current,
+          hasAnyPosition: !!(userPos || lastKnownPos || ipPos || urlSpotRef.current),
+        })
+        timer = setTimeout(() => { if (!cancelled) setLocationModalOpen(true) }, delay)
+      })
+      .catch(err => console.error('[geo] checkPermissions failed:', err))
+    return () => { cancelled = true; if (timer) clearTimeout(timer) }
+  }, [screen]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
     if (screen !== 'map') return
@@ -240,6 +275,8 @@ export default function App() {
     }
 
     if (isNativePlatform()) {
+      // Gated: watching would raise the system dialog behind the explanation.
+      if (!nativeGeoAllowed) return
       const watchPromise = Geolocation.watchPosition(
         { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 },
         (p) => { if (p) onPos(p.coords.latitude, p.coords.longitude) },
@@ -255,7 +292,7 @@ export default function App() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     )
     return () => navigator.geolocation.clearWatch(watchId)
-  }, [screen])
+  }, [screen, nativeGeoAllowed])
 
   // Rejestruj service worker przy starcie
   useEffect(() => {
@@ -445,6 +482,34 @@ export default function App() {
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(null), 2600)
+  }
+
+  function finishLocationStep() {
+    onboardingRef.current = { ...onboardingRef.current, locationDone: true }
+    writeOnboardingState(onboardingRef.current)
+    setLocationModalOpen(false)
+    // Never two dialogs at once: the invite waits until the location card is
+    // gone, and it is offered exactly once.
+    if (!onboardingRef.current.inviteDone) {
+      onboardingRef.current = { ...onboardingRef.current, inviteDone: true }
+      writeOnboardingState(onboardingRef.current)
+      setTimeout(() => setInviteModalOpen(true), 900)
+    }
+  }
+
+  async function handleAllowLocation() {
+    try {
+      const res = await Geolocation.requestPermissions()
+      const ok = res.location === 'granted' || res.coarseLocation === 'granted'
+      setNativeGeoAllowed(ok)
+      // A refusal is stated, not hidden: the map keeps working on the fallback
+      // chain and the toast says where to change it later.
+      if (!ok) showToast(t('onboarding.locationDenied'))
+    } catch (err) {
+      console.error('[geo] requestPermissions failed:', err)
+      showToast(t('onboarding.locationDenied'))
+    }
+    finishLocationStep()
   }
 
   async function handleSignOut() {
@@ -682,6 +747,12 @@ export default function App() {
       <ConfettiBurst visible={showConfetti} />
       {promoOpen && promoOs && (
         <AppPromoSheet os={promoOs} onClose={() => setPromoOpen(false)} />
+      )}
+      {locationModalOpen && (
+        <LocationOnboardingModal onAllow={handleAllowLocation} onSkip={finishLocationStep} />
+      )}
+      {inviteModalOpen && (
+        <InviteFriendsModal onClose={() => setInviteModalOpen(false)} />
       )}
       {authModal && (
         <div

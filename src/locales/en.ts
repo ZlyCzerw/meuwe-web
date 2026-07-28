@@ -119,6 +119,22 @@ const en: Resources = {
     travel: 'travel', yoga: 'yoga', dance: 'dance', comedy: 'comedy', kids: 'kids', pets: 'pets',
     volunteering: 'volunteering', workshop: 'workshop', alert: 'alert',
   },
+  onboarding: {
+    locationTitle: "We'll show what is nearby",
+    locationBody: 'The map needs your location to centre where you are and show the events around you right away.',
+    locationAllow: 'Turn on location',
+    locationSkip: 'Not now',
+    locationDenied: 'Without location the map shows your area roughly. You can change it in system settings.',
+  },
+  invite: {
+    title: 'No party of one',
+    body: 'meuwe comes alive when your neighbours are on the map too. Send friends the link, it takes a second.',
+    share: 'Invite friends',
+    later: 'Maybe later',
+    copied: 'Link copied',
+    failed: 'Could not open sharing or copy the link.',
+    message: 'See what is happening around you on meuwe:',
+  },
   appPromo: {
     title: 'meuwe works better in the app',
     body: 'Notifications about events near you, a faster map and a shortcut on your home screen.',

@@ -119,6 +119,22 @@ const es: Resources = {
     travel: 'viajes', yoga: 'yoga', dance: 'baile', comedy: 'comedia', kids: 'niños', pets: 'mascotas',
     volunteering: 'voluntariado', workshop: 'taller', alert: 'alerta',
   },
+  onboarding: {
+    locationTitle: 'Te enseñamos lo que hay cerca',
+    locationBody: 'El mapa necesita tu ubicación para centrarse donde estás y mostrarte los eventos de tu alrededor desde el principio.',
+    locationAllow: 'Activar ubicación',
+    locationSkip: 'Ahora no',
+    locationDenied: 'Sin ubicación el mapa muestra tu zona de forma aproximada. Puedes cambiarlo en los ajustes del sistema.',
+  },
+  invite: {
+    title: 'Solos no hay fiesta',
+    body: 'meuwe cobra vida cuando tus vecinos también están en el mapa. Manda el enlace a tus amigos, es un momento.',
+    share: 'Invitar a amigos',
+    later: 'Quizá más tarde',
+    copied: 'Enlace copiado',
+    failed: 'No se pudo abrir el menú de compartir ni copiar el enlace.',
+    message: 'Mira lo que pasa cerca de ti en meuwe:',
+  },
   appPromo: {
     title: 'meuwe va mejor en la app',
     body: 'Notificaciones de eventos cerca de ti, un mapa más rápido y un acceso directo en tu pantalla de inicio.',

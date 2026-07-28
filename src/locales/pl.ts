@@ -111,6 +111,22 @@ const pl = {
     pushBlockedAndroid: 'Otwórz Ustawienia, wybierz Aplikacje, potem meuwe i Powiadomienia, i włącz je.',
     pushBlockedWeb: 'Kliknij ikonę obok adresu strony i zezwól tej stronie na powiadomienia.',
   },
+  onboarding: {
+    locationTitle: 'Pokażemy, co jest obok',
+    locationBody: 'Mapa potrzebuje Twojej lokalizacji, żeby od razu wyśrodkować się tam, gdzie jesteś, i pokazać wydarzenia w pobliżu.',
+    locationAllow: 'Włącz lokalizację',
+    locationSkip: 'Nie teraz',
+    locationDenied: 'Bez lokalizacji mapa pokaże okolicę orientacyjnie. Możesz to zmienić w ustawieniach systemu.',
+  },
+  invite: {
+    title: 'Sami tu nie potańczymy',
+    body: 'meuwe ożywa, gdy sąsiedzi też są na mapie. Podeślij znajomym link, zajmie Ci to chwilę.',
+    share: 'Zaproś znajomych',
+    later: 'Może później',
+    copied: 'Link skopiowany',
+    failed: 'Nie udało się otworzyć udostępniania ani skopiować linku.',
+    message: 'Zobacz co dzieje się w okolicy na meuwe:',
+  },
   appPromo: {
     title: 'meuwe działa lepiej w aplikacji',
     body: 'Powiadomienia o wydarzeniach obok Ciebie, szybsza mapa i skrót na ekranie głównym.',

@@ -119,6 +119,22 @@ const de: Resources = {
     travel: 'Reisen', yoga: 'Yoga', dance: 'Tanzen', comedy: 'Comedy', kids: 'Kinder', pets: 'Haustiere',
     volunteering: 'Ehrenamt', workshop: 'Workshop', alert: 'Alarm',
   },
+  onboarding: {
+    locationTitle: 'Wir zeigen, was in der Nähe ist',
+    locationBody: 'Die Karte braucht deinen Standort, um sofort dort zu zentrieren, wo du bist, und die Events um dich herum zu zeigen.',
+    locationAllow: 'Standort aktivieren',
+    locationSkip: 'Jetzt nicht',
+    locationDenied: 'Ohne Standort zeigt die Karte deine Gegend nur ungefähr. Du kannst das in den Systemeinstellungen ändern.',
+  },
+  invite: {
+    title: 'Allein tanzt es sich schlecht',
+    body: 'meuwe lebt davon, dass deine Nachbarn auch auf der Karte sind. Schick Freunden den Link, das dauert nur einen Moment.',
+    share: 'Freunde einladen',
+    later: 'Vielleicht später',
+    copied: 'Link kopiert',
+    failed: 'Teilen konnte nicht geöffnet und der Link nicht kopiert werden.',
+    message: 'Schau auf meuwe, was in deiner Nähe los ist:',
+  },
   appPromo: {
     title: 'meuwe läuft besser in der App',
     body: 'Benachrichtigungen zu Events in deiner Nähe, eine schnellere Karte und ein Symbol auf dem Startbildschirm.',

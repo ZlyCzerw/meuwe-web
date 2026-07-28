@@ -6,6 +6,8 @@
 //   /push-preview.html?modal=ask        → the follow notification card
 //   /push-preview.html?modal=blocked    → ...after a system block
 //   /push-preview.html?promo=android    → the mobile web "get the app" sheet
+//   /push-preview.html?step=location    → native first-run location card
+//   /push-preview.html?step=invite      → invite friends card
 //   /push-preview.html?lang=en          → any of the five languages
 import { createRoot } from 'react-dom/client'
 import '../index.css'
@@ -13,6 +15,8 @@ import i18n from '../lib/i18n'
 import NotificationSetting from '../screens/NotificationSetting'
 import FollowNotifyModal from '../components/FollowNotifyModal'
 import AppPromoSheet from '../components/AppPromoSheet'
+import LocationOnboardingModal from '../components/LocationOnboardingModal'
+import InviteFriendsModal from '../components/InviteFriendsModal'
 import { C, F } from '../lib/tokens'
 import type { PushUiState } from '../lib/pushState'
 
@@ -43,11 +47,16 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
+const step = params.get('step') as 'location' | 'invite' | null
 
 const root = createRoot(document.getElementById('root')!)
 
 root.render(
-  promo ? (
+  step === 'location' ? (
+    <LocationOnboardingModal onAllow={async () => {}} onSkip={() => {}} />
+  ) : step === 'invite' ? (
+    <InviteFriendsModal onClose={() => {}} />
+  ) : promo ? (
     <AppPromoSheet os={promo} onClose={() => {}} />
   ) : modal ? (
     <FollowNotifyModal

@@ -119,6 +119,22 @@ const sl: Resources = {
     travel: 'potovanja', yoga: 'joga', dance: 'ples', comedy: 'komedija', kids: 'otroci', pets: 'hišni ljubljenčki',
     volunteering: 'prostovoljstvo', workshop: 'delavnica', alert: 'opozorilo',
   },
+  onboarding: {
+    locationTitle: 'Pokažemo, kaj je blizu',
+    locationBody: 'Zemljevid potrebuje tvojo lokacijo, da se takoj postavi tja, kjer si, in pokaže dogodke v bližini.',
+    locationAllow: 'Vklopi lokacijo',
+    locationSkip: 'Ne zdaj',
+    locationDenied: 'Brez lokacije zemljevid pokaže okolico le približno. To lahko spremeniš v sistemskih nastavitvah.',
+  },
+  invite: {
+    title: 'Sami ne bo zabave',
+    body: 'meuwe zaživi, ko so na zemljevidu tudi sosedje. Pošlji prijateljem povezavo, traja trenutek.',
+    share: 'Povabi prijatelje',
+    later: 'Morda pozneje',
+    copied: 'Povezava kopirana',
+    failed: 'Deljenja ni bilo mogoče odpreti in povezave ne kopirati.',
+    message: 'Poglej, kaj se dogaja v tvoji okolici na meuwe:',
+  },
   appPromo: {
     title: 'meuwe deluje bolje v aplikaciji',
     body: 'Obvestila o dogodkih blizu tebe, hitrejši zemljevid in bližnjica na začetnem zaslonu.',

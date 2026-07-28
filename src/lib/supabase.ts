@@ -328,6 +328,7 @@ export const db = {
     | 'browse_guest' | 'signin_google' | 'signin_apple'
     | 'follow_push_enable' | 'follow_calendar' | 'follow_calendar_google'
     | 'event_calendar' | 'store_ios' | 'store_android'
+    | 'invite_friends'
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})
