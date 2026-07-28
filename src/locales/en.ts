@@ -119,6 +119,14 @@ const en: Resources = {
     travel: 'travel', yoga: 'yoga', dance: 'dance', comedy: 'comedy', kids: 'kids', pets: 'pets',
     volunteering: 'volunteering', workshop: 'workshop', alert: 'alert',
   },
+  calendar: {
+    add: 'Add to calendar',
+    downloaded: 'Calendar file downloaded',
+    opened: 'Handed to your calendar',
+    failed: 'Could not add to a calendar',
+    googleAlt: 'Or Google Calendar',
+    googleRetry: 'Try Google Calendar',
+  },
   followNotify: {
     title: "We'll let you know",
     body: 'We will send a notification when the organizer changes details, when the event starts and when someone writes in the chat.',

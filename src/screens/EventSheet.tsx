@@ -12,8 +12,9 @@ import { C, INK, F, TAG_META } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
-import { isNativePlatform } from '../lib/platform'
+import { isNativePlatform, isAndroid } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
+import { addToCalendar, openGoogleCalendar } from '../lib/calendar'
 import { getDevicePushState } from '../lib/push'
 import { resolvePushState } from '../lib/pushState'
 import FollowNotifyModal from '../components/FollowNotifyModal'
@@ -23,6 +24,16 @@ type Snap = 'peek' | 'half' | 'full'
 
 /** Asked once per device: following again should not re-open the same card. */
 const FOLLOW_NOTIFY_ASKED_KEY = 'meuwe_follow_notify_asked'
+
+/** How long the Google Calendar alternative stays offered after an attempt. */
+const CALENDAR_HINT_MS = 9000
+
+const circleBtn: React.CSSProperties = {
+  width: 44, height: 44, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+  border: 'none', boxShadow: 'none',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  transition: 'all 220ms cubic-bezier(0.34,1.56,0.64,1)',
+}
 
 const HEIGHTS: Record<Snap, string> = { peek: '130px', half: '56%', full: '93%' }
 
@@ -77,11 +88,30 @@ function EventSheet({
   const [toast, setToast] = useState<string | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [notifyReason, setNotifyReason] = useState<'ask' | 'blocked' | 'unsupported' | null>(null)
+  const [calendarBusy, setCalendarBusy] = useState(false)
+  const [calendarHint, setCalendarHint] = useState<'ok' | 'failed' | null>(null)
   const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
 
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(null), 2200)
+  }
+
+  // Needs no permission and behaves the same everywhere, so it is offered to
+  // guests too — no session check.
+  async function handleCalendar() {
+    setCalendarBusy(true)
+    db.trackClick('event_calendar')
+    const result = await addToCalendar(event)
+    setCalendarBusy(false)
+    if (result === 'failed') {
+      setCalendarHint('failed')
+      showToast(t('calendar.failed'))
+    } else {
+      setCalendarHint('ok')
+      showToast(result === 'opened' ? t('calendar.opened') : t('calendar.downloaded'))
+    }
+    setTimeout(() => setCalendarHint(null), CALENDAR_HINT_MS)
   }
 
   async function toggleFollow() {
@@ -119,6 +149,10 @@ function EventSheet({
   const chatRef = useRef<HTMLDivElement | null>(null)
   const touchStartY = useRef<number | null>(null)
   const lastSendRef = useRef<number>(0)
+
+  // On iOS the share sheet reliably offers "Add to Calendar", so the extra link
+  // would only be noise there.
+  const showGoogleCalendarAlt = !isNativePlatform() || isAndroid()
 
   const isFull = snap === 'full'
   const isPeek = snap === 'peek'
@@ -375,43 +409,63 @@ function EventSheet({
                         </a>
                       </div>
                     </div>
-                    {/* Right: Follow + Share circles */}
+                    {/* Right: Follow + Calendar + Share circles. 44 px, so three
+                        of them still fit next to the distance column on a 360 px phone. */}
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
                       <button
                         onClick={toggleFollow}
-                        style={{
-                          width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-                          background: isFollowing ? C.primarySoft : C.cream,
-                          border: 'none',
-                          boxShadow: 'none',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          transition: 'all 220ms cubic-bezier(0.34,1.56,0.64,1)',
-                        }}
+                        style={{ ...circleBtn, background: isFollowing ? C.primarySoft : C.cream }}
                         title={isFollowing ? t('follow.following') : t('follow.follow')}
+                        aria-label={isFollowing ? t('follow.following') : t('follow.follow')}
                       >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill={isFollowing ? C.primary : 'none'} stroke={isFollowing ? C.primary : INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill={isFollowing ? C.primary : 'none'} stroke={isFollowing ? C.primary : INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleShare(event, () => showToast(t('share.linkCopied')))}
-                        style={{
-                          width: 48, height: 48, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-                          background: C.cream,
-                          border: 'none',
-                          boxShadow: 'none',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          transition: 'all 220ms cubic-bezier(0.34,1.56,0.64,1)',
-                        }}
-                        title={t('share.share')}
+                        onClick={handleCalendar}
+                        disabled={calendarBusy}
+                        style={{ ...circleBtn, background: C.cream, cursor: calendarBusy ? 'default' : 'pointer' }}
+                        title={t('calendar.add')}
+                        aria-label={t('calendar.add')}
                       >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="5" width="18" height="16" rx="3"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                          <line x1="8" y1="3" x2="8" y2="7"/>
+                          <line x1="16" y1="3" x2="16" y2="7"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleShare(event, () => showToast(t('share.linkCopied')))}
+                        style={{ ...circleBtn, background: C.cream }}
+                        title={t('share.share')}
+                        aria-label={t('share.share')}
+                      >
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="15 14 20 9 15 4"/>
                           <path d="M4 20v-7a4 4 0 014-4h12"/>
                         </svg>
                       </button>
                     </div>
                   </div>
+
+                  {/* Google Calendar alternative: a downloaded .ics is not always
+                      picked up by anything on Android or the web, so the link stays
+                      offered for a while after the attempt. */}
+                  {calendarHint && showGoogleCalendarAlt && (
+                    <button
+                      onClick={() => { openGoogleCalendar(event); setCalendarHint(null) }}
+                      style={{
+                        display: 'block', margin: '-4px 0 12px auto', padding: '6px 12px',
+                        borderRadius: 999, background: 'transparent', border: `2px solid ${INK}22`,
+                        fontSize: 12, fontWeight: 700, color: C.ink, cursor: 'pointer',
+                        animation: 'meuwe-fade-in 180ms ease',
+                      }}
+                    >
+                      {calendarHint === 'failed' ? t('calendar.googleRetry') : t('calendar.googleAlt')}
+                    </button>
+                  )}
 
                   {/* Tags */}
                   {event.tags?.length > 0 && (() => {

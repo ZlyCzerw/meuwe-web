@@ -119,6 +119,14 @@ const de: Resources = {
     travel: 'Reisen', yoga: 'Yoga', dance: 'Tanzen', comedy: 'Comedy', kids: 'Kinder', pets: 'Haustiere',
     volunteering: 'Ehrenamt', workshop: 'Workshop', alert: 'Alarm',
   },
+  calendar: {
+    add: 'Zum Kalender hinzufügen',
+    downloaded: 'Kalenderdatei heruntergeladen',
+    opened: 'An deinen Kalender übergeben',
+    failed: 'Konnte nicht zum Kalender hinzugefügt werden',
+    googleAlt: 'Oder Google Kalender',
+    googleRetry: 'Google Kalender versuchen',
+  },
   followNotify: {
     title: 'Wir sagen dir Bescheid',
     body: 'Du bekommst eine Benachrichtigung, wenn die Veranstalterin oder der Veranstalter Details ändert, wenn das Event startet und wenn jemand im Chat schreibt.',

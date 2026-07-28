@@ -111,6 +111,14 @@ const pl = {
     pushBlockedAndroid: 'Otwórz Ustawienia, wybierz Aplikacje, potem meuwe i Powiadomienia, i włącz je.',
     pushBlockedWeb: 'Kliknij ikonę obok adresu strony i zezwól tej stronie na powiadomienia.',
   },
+  calendar: {
+    add: 'Dodaj do kalendarza',
+    downloaded: 'Plik kalendarza pobrany',
+    opened: 'Przekazano do kalendarza',
+    failed: 'Nie udało się dodać do kalendarza',
+    googleAlt: 'Albo Kalendarz Google',
+    googleRetry: 'Spróbuj Kalendarza Google',
+  },
   followNotify: {
     title: 'Damy Ci znać',
     body: 'Wyślemy powiadomienie, gdy organizator zmieni szczegóły, gdy wydarzenie się zacznie i gdy ktoś napisze na czacie.',

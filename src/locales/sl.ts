@@ -119,6 +119,14 @@ const sl: Resources = {
     travel: 'potovanja', yoga: 'joga', dance: 'ples', comedy: 'komedija', kids: 'otroci', pets: 'hišni ljubljenčki',
     volunteering: 'prostovoljstvo', workshop: 'delavnica', alert: 'opozorilo',
   },
+  calendar: {
+    add: 'Dodaj v koledar',
+    downloaded: 'Datoteka koledarja prenesena',
+    opened: 'Predano tvojemu koledarju',
+    failed: 'Dodajanje v koledar ni uspelo',
+    googleAlt: 'Ali Google Koledar',
+    googleRetry: 'Poskusi Google Koledar',
+  },
   followNotify: {
     title: 'Sporočili ti bomo',
     body: 'Poslali bomo obvestilo, ko organizator spremeni podrobnosti, ko se dogodek začne in ko kdo piše v klepetu.',

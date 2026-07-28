@@ -119,6 +119,14 @@ const es: Resources = {
     travel: 'viajes', yoga: 'yoga', dance: 'baile', comedy: 'comedia', kids: 'niños', pets: 'mascotas',
     volunteering: 'voluntariado', workshop: 'taller', alert: 'alerta',
   },
+  calendar: {
+    add: 'Añadir al calendario',
+    downloaded: 'Archivo de calendario descargado',
+    opened: 'Enviado a tu calendario',
+    failed: 'No se pudo añadir al calendario',
+    googleAlt: 'O Google Calendar',
+    googleRetry: 'Prueba con Google Calendar',
+  },
   followNotify: {
     title: 'Te avisaremos',
     body: 'Enviaremos una notificación cuando quien organiza cambie los detalles, cuando el evento empiece y cuando alguien escriba en el chat.',
