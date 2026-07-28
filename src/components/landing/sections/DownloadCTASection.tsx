@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { db } from '../../../lib/supabase'
+import { IOS_STORE_URL, ANDROID_STORE_URL } from '../../../lib/appConfig'
 import '../landing.css'
 
 function AppleIcon() {
@@ -34,18 +36,30 @@ export function DownloadCTASection() {
       <p className="lp-body lp-anim lp-slide-up lp-delay-1" style={{ color: 'rgba(255,246,236,0.75)', maxWidth: 400, margin: '0 auto 52px', textAlign: 'center' }}>
         {t('landing.downloadBody')}
       </p>
+      {/* Live as soon as appConfig has the URL. An empty one stays greyed out
+          with a "soon" label here, rather than linking nowhere. */}
       <div className="lp-stores lp-anim lp-slide-up lp-delay-2">
-        <a className="lp-store-btn lp-disabled">
+        <a
+          className={`lp-store-btn${IOS_STORE_URL ? '' : ' lp-disabled'}`}
+          {...(IOS_STORE_URL
+            ? { href: IOS_STORE_URL, target: '_blank', rel: 'noopener noreferrer', onClick: () => db.trackClick('store_ios') }
+            : { 'aria-disabled': true })}
+        >
           <AppleIcon />
           <div>
-            <span className="lp-store-label-top">{t('landing.footer.storePre')}</span>
+            <span className="lp-store-label-top">{IOS_STORE_URL ? t('landing.footer.storePre') : t('store.soon')}</span>
             <span className="lp-store-label-main">App Store</span>
           </div>
         </a>
-        <a href="#" className="lp-store-btn lp-disabled">
+        <a
+          className={`lp-store-btn${ANDROID_STORE_URL ? '' : ' lp-disabled'}`}
+          {...(ANDROID_STORE_URL
+            ? { href: ANDROID_STORE_URL, target: '_blank', rel: 'noopener noreferrer', onClick: () => db.trackClick('store_android') }
+            : { 'aria-disabled': true })}
+        >
           <GoogleIcon />
           <div>
-            <span className="lp-store-label-top">{t('landing.footer.storePre')}</span>
+            <span className="lp-store-label-top">{ANDROID_STORE_URL ? t('landing.footer.storePre') : t('store.soon')}</span>
             <span className="lp-store-label-main">Google Play</span>
           </div>
         </a>

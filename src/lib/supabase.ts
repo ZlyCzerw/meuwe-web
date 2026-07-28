@@ -327,7 +327,7 @@ export const db = {
   trackClick(action:
     | 'browse_guest' | 'signin_google' | 'signin_apple'
     | 'follow_push_enable' | 'follow_calendar' | 'follow_calendar_google'
-    | 'event_calendar'
+    | 'event_calendar' | 'store_ios' | 'store_android'
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})

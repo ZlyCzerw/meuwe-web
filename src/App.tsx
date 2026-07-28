@@ -20,6 +20,7 @@ import ConfettiBurst from './components/ConfettiBurst'
 import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
+import { StoreHint } from './components/StoreBadge'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
@@ -688,6 +689,31 @@ export default function App() {
               </svg>
               {t('welcome.google')}
             </button>
+            {/* Same button as Welcome.tsx: black fill, white Apple mark, official
+                wording — Apple requires Sign in with Apple wherever Google is offered. */}
+            <button
+              onClick={() => {
+                setAuthModal(null)
+                db.trackClick('signin_apple')
+                if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
+                db.signInApple()
+              }}
+              style={{
+                width: '100%', padding: '16px 24px', borderRadius: 999,
+                background: '#000', border: `2.5px solid ${C.ink}`, boxShadow: `0 4px 0 ${C.ink}33`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer',
+                marginTop: -8,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 384 512" fill="#fff" aria-hidden="true">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+              </svg>
+              {t('welcome.apple')}
+            </button>
+            {/* Only on a phone whose store listing exists — nothing on desktop,
+                nothing inside the app, nothing while the App Store URL is empty. */}
+            <StoreHint />
             <button
               onClick={() => window.history.back()}
               style={{ background: 'none', border: 'none', color: C.inkSoft, fontSize: 14, cursor: 'pointer', fontWeight: 700, fontFamily: F.body }}

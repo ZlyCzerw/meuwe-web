@@ -111,6 +111,11 @@ const pl = {
     pushBlockedAndroid: 'Otwórz Ustawienia, wybierz Aplikacje, potem meuwe i Powiadomienia, i włącz je.',
     pushBlockedWeb: 'Kliknij ikonę obok adresu strony i zezwól tej stronie na powiadomienia.',
   },
+  store: {
+    hint: 'Albo pobierz aplikację',
+    soon: 'Wkrótce w',
+    downloadTitle: 'Miej meuwe pod ręką',
+  },
   calendar: {
     add: 'Dodaj do kalendarza',
     downloaded: 'Plik kalendarza pobrany',

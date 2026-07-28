@@ -119,6 +119,11 @@ const en: Resources = {
     travel: 'travel', yoga: 'yoga', dance: 'dance', comedy: 'comedy', kids: 'kids', pets: 'pets',
     volunteering: 'volunteering', workshop: 'workshop', alert: 'alert',
   },
+  store: {
+    hint: 'Or get the app',
+    soon: 'Soon on',
+    downloadTitle: 'Keep meuwe at hand',
+  },
   calendar: {
     add: 'Add to calendar',
     downloaded: 'Calendar file downloaded',

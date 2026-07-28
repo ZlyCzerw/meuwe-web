@@ -5,7 +5,8 @@ import BlobFace from '../components/BlobFace'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
 import { db } from '../lib/supabase'
-import { isNativePlatform } from '../lib/platform'
+import { isNativePlatform, mobileOS } from '../lib/platform'
+import StoreBadge from '../components/StoreBadge'
 
 function isInAppBrowser(): boolean {
   if (isNativePlatform()) return false
@@ -150,7 +151,11 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
       </div>
 
       {/* Buttons */}
-      <div style={{ padding: '0 24px calc(52px + env(safe-area-inset-bottom))', position: 'relative', zIndex: 1 }}>
+      <div style={{
+        // Native has no store badges below, so it keeps the roomier bottom inset.
+        padding: `0 24px calc(${native ? 52 : 24}px + env(safe-area-inset-bottom))`,
+        position: 'relative', zIndex: 1,
+      }}>
         <button
           onClick={() => { db.trackClick('signin_google'); onSignIn('google') }}
           style={{
@@ -204,6 +209,18 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         >
           {t('welcome.skip')}
         </button>
+        {/* Store badges — landing hero only. Inside the app they would invite
+            someone to install what they are already using. On a phone only that
+            phone's store is shown; a desktop visitor sees both. */}
+        {!native && (() => {
+          const os = mobileOS()
+          const shown = os ? [os] : (['ios', 'android'] as const)
+          return (
+            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {shown.map(s => <StoreBadge key={s} os={s} />)}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

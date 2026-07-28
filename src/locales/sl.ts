@@ -119,6 +119,11 @@ const sl: Resources = {
     travel: 'potovanja', yoga: 'joga', dance: 'ples', comedy: 'komedija', kids: 'otroci', pets: 'hišni ljubljenčki',
     volunteering: 'prostovoljstvo', workshop: 'delavnica', alert: 'opozorilo',
   },
+  store: {
+    hint: 'Ali prenesi aplikacijo',
+    soon: 'Kmalu v',
+    downloadTitle: 'Imej meuwe pri roki',
+  },
   calendar: {
     add: 'Dodaj v koledar',
     downloaded: 'Datoteka koledarja prenesena',

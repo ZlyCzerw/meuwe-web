@@ -119,6 +119,11 @@ const de: Resources = {
     travel: 'Reisen', yoga: 'Yoga', dance: 'Tanzen', comedy: 'Comedy', kids: 'Kinder', pets: 'Haustiere',
     volunteering: 'Ehrenamt', workshop: 'Workshop', alert: 'Alarm',
   },
+  store: {
+    hint: 'Oder hol dir die App',
+    soon: 'Bald im',
+    downloadTitle: 'Hab meuwe griffbereit',
+  },
   calendar: {
     add: 'Zum Kalender hinzufügen',
     downloaded: 'Kalenderdatei heruntergeladen',
