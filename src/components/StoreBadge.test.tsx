@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import StoreBadge, { deviceStoreOs, StoreHint, storeUrl } from './StoreBadge'
+import StoreBadge, { StoreHint } from './StoreBadge'
+import { deviceStoreOs, storeUrl } from '../lib/stores'
 
 vi.mock('../lib/supabase', () => ({ db: { trackClick: vi.fn() }, supabase: {} }))
 

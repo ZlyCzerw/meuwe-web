@@ -58,8 +58,12 @@ function ProfilePanel({
   // Sprawdź stan tego urządzenia przy otwarciu panelu
   useEffect(() => {
     if (!open || !session) return
-    setPushError(false)
-    getDevicePushState(session.user.id).then(setPushDevice)
+    getDevicePushState(session.user.id).then(device => {
+      setPushDevice(device)
+      // A stale failure from a previous visit must not shout at a panel that
+      // just re-checked the device.
+      setPushError(false)
+    })
   }, [open, session])
 
   // profile.push_enabled is the user's intent, one flag for the whole account.

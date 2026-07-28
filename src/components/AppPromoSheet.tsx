@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import DragHandle from './DragHandle'
-import StoreBadge, { type StoreOs } from './StoreBadge'
+import StoreBadge from './StoreBadge'
+import type { StoreOs } from '../lib/stores'
 
 // Bottom sheet nudging a mobile web visitor towards the app. Deliberately has
 // no backdrop: the map underneath stays visible and usable, so this can never

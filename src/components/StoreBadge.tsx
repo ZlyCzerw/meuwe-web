@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import { db } from '../lib/supabase'
-import { IOS_STORE_URL, ANDROID_STORE_URL } from '../lib/appConfig'
-import { mobileOS, isNativePlatform } from '../lib/platform'
+import { storeUrl, deviceStoreOs, type StoreOs } from '../lib/stores'
 
 // Store badges. Both platforms require the "Download on the / Get it on" wording
 // above the store name and the store's own mark, so the badge keeps that shape
@@ -11,12 +10,6 @@ import { mobileOS, isNativePlatform } from '../lib/platform'
 // An empty URL in appConfig means the listing does not exist yet. In the app it
 // renders nothing at all — never a link that goes nowhere. On the landing page
 // `disabled` shows the badge greyed out with a "soon" label instead.
-
-export type StoreOs = 'ios' | 'android'
-
-export function storeUrl(os: StoreOs): string {
-  return os === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL
-}
 
 function AppleMark({ color }: { color: string }) {
   return (
@@ -89,16 +82,6 @@ export default function StoreBadge({
       {content}
     </a>
   )
-}
-
-/**
- * The store the visitor could actually install from: null on desktop (no app to
- * install), inside the app itself, or while that listing does not exist yet.
- */
-export function deviceStoreOs(): StoreOs | null {
-  const os = mobileOS()
-  if (isNativePlatform() || !os || !storeUrl(os)) return null
-  return os
 }
 
 /** Badge for the device the visitor is holding, or nothing. */
