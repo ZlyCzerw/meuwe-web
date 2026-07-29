@@ -8,6 +8,7 @@
 //   /push-preview.html?promo=android    → the mobile web "get the app" sheet
 //   /push-preview.html?step=location    → native first-run location card
 //   /push-preview.html?step=invite      → invite friends card
+//   /push-preview.html?step=profile     → the profile panel (fake session)
 //   /push-preview.html?step=account     → the account and data sub-screen
 //   /push-preview.html?step=delete      → the delete confirmation
 //   /push-preview.html?lang=en          → any of the five languages
@@ -19,6 +20,7 @@ import FollowNotifyModal from '../components/FollowNotifyModal'
 import AppPromoSheet from '../components/AppPromoSheet'
 import LocationOnboardingModal from '../components/LocationOnboardingModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
+import ProfilePanel from '../screens/ProfilePanel'
 import AccountPanel from '../screens/AccountPanel'
 import DeleteAccountModal from '../components/DeleteAccountModal'
 import { C, F } from '../lib/tokens'
@@ -51,12 +53,28 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
-const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | null
+const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | null
 
 const root = createRoot(document.getElementById('root')!)
 
 root.render(
-  step === 'account' ? (
+  step === 'profile' ? (
+    <ProfilePanel
+      open
+      onClose={() => {}}
+      session={{ user: { id: 'demo', email: 'demo@meuwe.eu' } } as never}
+      profile={{
+        id: 'demo', display_name: 'Ala', avatar_color: null, radius_km: 10,
+        interests: [], last_lat: null, last_lng: null, last_seen_at: null,
+        created_at: '', push_enabled: false, language: 'pl',
+      }}
+      onSignOut={() => {}}
+      reloadProfile={() => {}}
+      onOpenMyEvents={() => {}}
+      onOpenFollowedEvents={() => {}}
+      onOpenAccount={() => {}}
+    />
+  ) : step === 'account' ? (
     <AccountPanel open onClose={() => {}} onDeleted={() => {}} />
   ) : step === 'delete' ? (
     <DeleteAccountModal onDeleted={() => {}} onClose={() => {}} />

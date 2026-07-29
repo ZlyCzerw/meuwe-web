@@ -410,23 +410,25 @@ function ProfilePanel({
             </div>
           </div>
 
-          {/* Sign out / back to login */}
-          <button
-            onClick={() => { onSignOut(); onClose() }}
-            style={{ marginTop: 36, padding: '12px 0', fontSize: 14, fontWeight: 700, color: C.inkSoft, background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            {session ? t('profile.signOut') : t('profile.backToLogin')}
-          </button>
-          {/* Account and data — same weight as sign out, one step below it. The
-              deletion itself lives inside, not on this label. */}
-          {session && (
+          {/* Account and data + sign out. Column, not two inline buttons, or they
+              sit side by side on one line. Same weight for both; the deletion
+              itself lives inside the account screen, not on this label. */}
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            {session && (
+              <button
+                onClick={onOpenAccount}
+                style={{ padding: '12px 0', fontSize: 14, fontWeight: 700, color: C.inkSoft, background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                {t('account.entry')}
+              </button>
+            )}
             <button
-              onClick={onOpenAccount}
+              onClick={() => { onSignOut(); onClose() }}
               style={{ padding: '12px 0', fontSize: 14, fontWeight: 700, color: C.inkSoft, background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              {t('account.entry')}
+              {session ? t('profile.signOut') : t('profile.backToLogin')}
             </button>
-          )}
+          </div>
         <a
           href="/terms.html"
           target="_blank"
