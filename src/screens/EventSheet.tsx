@@ -14,6 +14,7 @@ import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
 import { isNativePlatform, isAndroid } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
+import { authorLabel, authorInitial } from '../lib/authorLabel'
 import { addToCalendar, openGoogleCalendar } from '../lib/calendar'
 import { getDevicePushState } from '../lib/push'
 import { resolvePushState } from '../lib/pushState'
@@ -153,6 +154,8 @@ function EventSheet({
   // On iOS the share sheet reliably offers "Add to Calendar", so the extra link
   // would only be noise there.
   const showGoogleCalendarAlt = !isNativePlatform() || isAndroid()
+
+  const deletedLabels = { deleted: t('account.deletedUser'), unknown: '?' }
 
   const isFull = snap === 'full'
   const isPeek = snap === 'peek'
@@ -484,10 +487,11 @@ function EventSheet({
 
                   {/* Creator — compact inline */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <Avatar size={28} initials={(event.profiles?.display_name || t('account.deletedUser'))[0].toUpperCase()} color={event.profiles?.avatar_color || C.sky} />
+                    <Avatar size={28} initials={authorInitial(event.creator_id, event.profiles?.display_name, deletedLabels)} color={event.profiles?.avatar_color || C.sky} />
                     <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500 }}>
-                      {/* No profile means the account was deleted; the event stays. */}
-                      {t('event.organizer')} <strong style={{ color: C.ink }}>{event.profiles?.display_name || t('account.deletedUser')}</strong>
+                      {/* A null creator_id means the account was deleted and the
+                          event stayed. A missing name is something else entirely. */}
+                      {t('event.organizer')} <strong style={{ color: C.ink }}>{authorLabel(event.creator_id, event.profiles?.display_name, deletedLabels)}</strong>
                     </span>
                     {session?.user.id === event.creator_id && (
                       <span style={{ marginLeft: 4, padding: '2px 8px', borderRadius: 999, background: C.primarySoft, color: C.primaryPress, fontSize: 11, fontWeight: 800 }}>{t('event.moderator')}</span>
@@ -574,7 +578,7 @@ function EventSheet({
                             fontSize: 11, color: C.inkSoft, fontWeight: 700,
                             marginBottom: 4, marginLeft: 44,
                           }}>
-                            {m.author_name || t('account.deletedUser')} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
+                            {authorLabel(m.author_id, m.author_name, deletedLabels)} · {new Date(m.created_at).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '82%' }}>
@@ -585,7 +589,7 @@ function EventSheet({
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: 12, fontWeight: 900, color: INK,
                             }}>
-                              {(m.author_name || t('account.deletedUser'))[0].toUpperCase()}
+                              {authorInitial(m.author_id, m.author_name, deletedLabels)}
                             </div>
                           )}
                           <div style={{
