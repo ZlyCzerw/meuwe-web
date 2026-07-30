@@ -98,6 +98,8 @@ describe('db.signInApple', () => {
     const spy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({ data: {}, error: null } as any)
     ;(globalThis as any).__ios = false
     await db.signInApple()
-    expect(spy).toHaveBeenCalledWith({ provider: 'apple', options: { redirectTo: location.origin } })
+    // Trailing slash on purpose: a bare origin can miss a "/**" entry in the
+    // project's Redirect URLs, and Supabase then falls back to Site URL.
+    expect(spy).toHaveBeenCalledWith({ provider: 'apple', options: { redirectTo: `${location.origin}/` } })
   })
 })
