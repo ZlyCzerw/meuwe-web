@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
 import { sendFcmToMany } from '../_shared/fcm.ts'
 import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { selectEventAudience, type AudienceProfile } from '../_shared/audience.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -11,17 +12,6 @@ const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT')!
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
 
 const WINDOW_MINUTES = 5
-const MAX_RADIUS_KM = 50
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
@@ -43,7 +33,7 @@ Deno.serve(async (req) => {
 
   const { data: events, error: evErr } = await admin
     .from('events')
-    .select('id, title, lat, lng')
+    .select('id, title, lat, lng, is_private, creator_id')
     .gte('start_time', now.toISOString())
     .lte('start_time', windowEnd.toISOString())
     .is('start_notified_at', null)
@@ -55,7 +45,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ processed: 0 }), { status: 200 })
   }
 
-  type Profile = { id: string; interests: string[] | null; radius_km: number | null; last_lat: number; last_lng: number; language: string | null }
+  type Profile = AudienceProfile & { language: string | null }
 
   const { data: profiles } = await admin
     .from('profiles')
@@ -71,18 +61,46 @@ Deno.serve(async (req) => {
   let totalSent = 0
 
   for (const event of events) {
-    const { data: tagRows } = await admin
-      .from('event_tags').select('tag').eq('event_id', event.id)
-    const tags: string[] = (tagRows ?? []).map((r: { tag: string }) => r.tag)
-
-    const targetIds = (profiles ?? [] as Profile[]).filter((p: Profile) => {
-      if (tags.length > 0) {
-        const interests = p.interests ?? []
-        if (!interests.some((i: string) => tags.includes(i))) return false
+    // Wydarzenie prywatne nie ma zasięgu geograficznego — liczą się wyłącznie
+    // obserwujący i twórca (który obserwuje własne wydarzenie). Tagi nie
+    // rozszerzają tego kręgu.
+    let tags: string[] = []
+    let followerIds: string[] = []
+    if (event.is_private) {
+      const { data: followRows, error: followErr } = await admin
+        .from('event_follows').select('user_id').eq('event_id', event.id)
+      if (followErr) {
+        // Nie oznaczamy jako powiadomionego — cron spróbuje ponownie.
+        console.error(`[push-event-start] event ${event.id}: błąd pobrania obserwujących, pomijam:`, followErr)
+        continue
       }
-      const radius = Math.min(p.radius_km ?? 10, MAX_RADIUS_KM)
-      return haversineKm(p.last_lat, p.last_lng, event.lat, event.lng) <= radius
-    }).map((p: Profile) => p.id)
+      followerIds = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
+    } else {
+      const { data: tagRows } = await admin
+        .from('event_tags').select('tag').eq('event_id', event.id)
+      tags = (tagRows ?? []).map((r: { tag: string }) => r.tag)
+    }
+
+    const targetIds = selectEventAudience({
+      isPrivate: event.is_private,
+      tags,
+      profiles: (profiles ?? []) as Profile[],
+      lat: event.lat,
+      lng: event.lng,
+      creatorId: event.creator_id,
+      followerIds,
+    })
+
+    // Obserwujący bez świeżej lokalizacji nie ma go w `profiles` — dociągamy
+    // jego język, żeby nie dostał powiadomienia po angielsku.
+    const missingLang = targetIds.filter((id) => !langByUser.has(id))
+    if (missingLang.length > 0) {
+      const { data: extra } = await admin
+        .from('profiles').select('id, language').in('id', missingLang)
+      for (const p of (extra ?? []) as { id: string; language: string | null }[]) {
+        langByUser.set(p.id, pickLang(p.language))
+      }
+    }
 
     if (targetIds.length > 0) {
       const { data: subs } = await admin

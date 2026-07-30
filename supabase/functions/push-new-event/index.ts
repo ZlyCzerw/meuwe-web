@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
 import { sendFcmToMany } from '../_shared/fcm.ts'
 import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { selectEventAudience, type AudienceProfile } from '../_shared/audience.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -9,18 +10,6 @@ const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY')!
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY')!
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT')!
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') ?? ''
-
-const MAX_RADIUS_KM = 50
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
@@ -54,6 +43,29 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+  // Wydarzenie prywatne widzą tylko twórca i obserwujący, więc nie może być
+  // żadnego fan-outu po lokalizacji/tagach. Świeżo wstawiony event nie ma
+  // jeszcze obserwujących poza twórcą — nie ma kogo powiadomić.
+  let isPrivate: boolean
+  if (typeof record.is_private === 'boolean') {
+    isPrivate = record.is_private
+  } else {
+    // Webhook bez tej kolumny — dopytujemy bazę i przy błędzie milczymy,
+    // zamiast zgadywać, że event jest publiczny.
+    const { data: visibility, error: visErr } = await admin
+      .from('events').select('is_private').eq('id', eventId).single()
+    if (visErr || !visibility) {
+      console.error('[push-new-event] nie udało się ustalić is_private, pomijam wysyłkę:', visErr)
+      return new Response(JSON.stringify({ sent: 0, reason: 'visibility unknown' }), { status: 500 })
+    }
+    isPrivate = visibility.is_private
+  }
+
+  if (isPrivate) {
+    console.log(`[push-new-event] event=${eventId} jest prywatny — brak fan-outu`)
+    return new Response(JSON.stringify({ sent: 0, reason: 'private event' }), { status: 200 })
+  }
+
   // Pobierz tagi eventu
   const { data: tagRows, error: tagErr } = await admin
     .from('event_tags').select('tag').eq('event_id', eventId)
@@ -72,19 +84,19 @@ Deno.serve(async (req) => {
   if (profErr) console.error('[push-new-event] profiles error:', profErr)
   console.log(`[push-new-event] active profiles with location: ${(profiles ?? []).length}`)
 
-  type Profile = { id: string; interests: string[] | null; radius_km: number | null; last_lat: number; last_lng: number; language: string | null }
+  type Profile = AudienceProfile & { language: string | null }
 
-  const targetIds = (profiles ?? [] as Profile[]).filter((p: Profile) => {
-    if (p.id === creatorId) return false // nie powiadamiaj twórcy
-    // Jeśli event bez tagów — powiadamiaj wszystkich w okolicy
-    if (tags.length > 0) {
-      const interests = p.interests ?? []
-      if (!interests.some((i: string) => tags.includes(i))) return false
-    }
-    const radius = Math.min(p.radius_km ?? 10, MAX_RADIUS_KM)
-    const dist = haversineKm(p.last_lat, p.last_lng, eventLat, eventLng)
-    return dist <= radius
-  }).map((p: Profile) => p.id)
+  // Event bez tagów trafia do wszystkich w okolicy, z tagami — tylko do
+  // zainteresowanych. Twórca nie dostaje powiadomienia o własnym wydarzeniu.
+  const targetIds = selectEventAudience({
+    isPrivate: false,
+    tags,
+    profiles: (profiles ?? []) as Profile[],
+    lat: eventLat,
+    lng: eventLng,
+    creatorId,
+    excludeCreator: true,
+  })
 
   const langByUser = new Map<string, Lang>(
     (profiles ?? []).map((p: Profile) => [p.id, pickLang(p.language)])
