@@ -16,13 +16,24 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { flowType: 'pkce' },
 })
 
+// Where Supabase should send the browser back after OAuth.
+//
+// The trailing slash is load-bearing. Supabase validates this against the
+// project's Redirect URLs and silently falls back to Site URL when it does not
+// match: a bare "https://meuwe.eu" can miss a "https://meuwe.eu/**" pattern, and
+// then a real user is thrown at whatever Site URL happens to say. With the slash
+// it matches both the exact entry and the wildcard one.
+function authRedirectTo(): string {
+  return `${location.origin}/`
+}
+
 export const db = {
   signInGoogle() {
     if (isNativePlatform()) {
       // native: dynamic import keeps the Firebase plugin out of the web bundle
       return import('./nativeAuth').then(m => m.signInGoogleNative())
     }
-    return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin } })
+    return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: authRedirectTo() } })
   },
   signInApple() {
     if (isIOS()) {
@@ -30,7 +41,7 @@ export const db = {
       return import('./nativeAuth').then(m => m.signInAppleNative())
     }
     // web + Android: Supabase OAuth redirect
-    return supabase.auth.signInWithOAuth({ provider:'apple', options:{ redirectTo: location.origin } })
+    return supabase.auth.signInWithOAuth({ provider:'apple', options:{ redirectTo: authRedirectTo() } })
   },
   signOut() { return supabase.auth.signOut() },
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
