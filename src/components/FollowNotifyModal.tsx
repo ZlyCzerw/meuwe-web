@@ -51,7 +51,7 @@ export default function FollowNotifyModal({
     setBusy(true)
     db.trackClick('follow_push_enable')
     const device = await enablePushOnThisDevice(userId)
-    await db.upsertProfile({ id: userId, push_enabled: true })
+    await db.updateProfile({ id: userId, push_enabled: true })
     setBusy(false)
     if (device.permission === 'granted' && device.registered) {
       onEnabled()

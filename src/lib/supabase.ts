@@ -2,6 +2,7 @@ import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm } from './geo'
 import { isNativePlatform, isIOS } from './platform'
+import { WEB_ORIGIN } from './appConfig'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -23,9 +24,20 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 // match: a bare "https://meuwe.eu" can miss a "https://meuwe.eu/**" pattern, and
 // then a real user is thrown at whatever Site URL happens to say. With the slash
 // it matches both the exact entry and the wildcard one.
+// Natywnie `location.origin` to wewnętrzny origin WebView (https://localhost na
+// Androidzie), pod który przeglądarka systemowa nie ma jak wrócić — logowanie
+// kończyło się w Chrome na nieosiągalnym adresie. Odsyłamy więc na App Link
+// meuwe.eu, który aplikacja przechwytuje (intent-filter w AndroidManifest), i
+// dokańczamy wymianę kodu w `appUrlOpen`.
 function authRedirectTo(): string {
-  return `${location.origin}/`
+  return isNativePlatform() ? `${WEB_ORIGIN}/` : `${location.origin}/`
 }
+
+// Nazwa pokazywana obok wydarzeń i wiadomości liczona jest w bazie
+// (profiles.name_shown = nickname, a w jego braku display_name). Aliasujemy ją
+// z powrotem na `display_name`, żeby każdy ekran czytał jedno pole i żeby
+// reguła nie rozłaziła się po pięciu zapytaniach.
+const PROFILE_PUBLIC = 'display_name:name_shown,avatar_color'
 
 export const db = {
   signInGoogle() {
@@ -43,6 +55,13 @@ export const db = {
     // web + Android: Supabase OAuth redirect
     return supabase.auth.signInWithOAuth({ provider:'apple', options:{ redirectTo: authRedirectTo() } })
   },
+  // Dokończenie logowania, które wróciło App Linkiem z przeglądarki. Rzuca
+  // wyjątkiem, żeby wywołujący mógł pokazać błąd zamiast zostawić użytkownika
+  // na ekranie logowania bez słowa wyjaśnienia.
+  async completeOAuth(code: string) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) throw new Error(error.message)
+  },
   signOut() { return supabase.auth.signOut() },
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
   async getSession() { const {data}=await supabase.auth.getSession(); return data.session },
@@ -50,18 +69,33 @@ export const db = {
     // Explicit columns (not '*'): anon/authenticated lack SELECT on the location
     // columns (last_lat/last_lng/last_seen_at), so 'select=*' 403s. getProfile
     // never needs location — it's write-only from the client.
-    const {data}=await supabase.from('profiles').select('id,display_name,avatar_color,radius_km,interests,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
+    const {data}=await supabase.from('profiles').select('id,display_name,nickname,name_shown,avatar_color,radius_km,interests,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
   },
-  // NOTE: the trailing `.select('id')` on these upserts is load-bearing.
+  // UPDATE, never upsert. A profile row is created in exactly one place: the
+  // handle_new_user trigger on auth.users (migration 20260729). An upsert here
+  // would quietly create a second birthplace for profiles — one that only knows
+  // the id and the single field being written, so it produces rows with no
+  // display_name. That is what made every staging event read "Dodane przez ?".
+  //
+  // NOTE: the trailing `.select('id')` is load-bearing.
   // profiles has a column-level SELECT grant that omits the location columns
   // (last_lat/last_lng/last_seen_at) to hide them from other users' reads
-  // (migration 20260702_profiles_hide_location). A bare `.upsert()` makes PostgREST
+  // (migration 20260702_profiles_hide_location). A bare write makes PostgREST
   // return the FULL row representation (RETURNING *), which needs SELECT on every
   // column — including the ungranted location ones — and fails with
   // 42501 "permission denied for table profiles". Selecting only `id` (which IS
   // granted) narrows the RETURNING to a readable column, so the write succeeds
   // while location stays hidden. Do not remove the `.select('id')`.
-  async upsertProfile(p:Partial<Profile>&{id:string}) { return supabase.from('profiles').upsert(p).select('id') },
+  async updateProfile(p:Partial<Profile>&{id:string}) {
+    const { id, ...fields } = p
+    const res = await supabase.from('profiles').update(fields).eq('id', id).select('id')
+    // Zero rows means the profile does not exist, which after the trigger fix
+    // should be impossible. Say so instead of letting the write vanish.
+    if (!res.error && (res.data?.length ?? 0) === 0) {
+      console.error('[updateProfile] no profile row for', id, '— the signup trigger did not run')
+    }
+    return res
+  },
   // Unlike the other profiles writes, location touches the SELECT-hidden columns
   // (last_lat/last_lng/last_seen_at), so even `.select('id')` can't save a direct
   // upsert — writing columns the caller can't SELECT trips 42501 at the merge/
@@ -73,7 +107,7 @@ export const db = {
     return supabase.rpc('update_my_location', { p_lat: lat, p_lng: lng })
   },
   async updateProfileLanguage(uid: string, language: string) {
-    return supabase.from('profiles').upsert({ id: uid, language }).select('id')
+    return this.updateProfile({ id: uid, language })
   },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111
@@ -89,7 +123,7 @@ export const db = {
     const endTimeFloor = dayOffset === 0 ? now : dayStart
 
     const {data,error}=await supabase.from('events')
-      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
+      .select(`*,profiles(${PROFILE_PUBLIC}),event_tags(tag)`)
       .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
       .in('status',['live','upcoming','extended'])
       .lte('start_time', dayEnd.toISOString())
@@ -161,7 +195,7 @@ export const db = {
   async getMyEvents(userId: string): Promise<EventWithMsgCount[]> {
     const { data, error } = await supabase
       .from('events')
-      .select('*, profiles(display_name,avatar_color), event_tags(tag)')
+      .select(`*, profiles(${PROFILE_PUBLIC}), event_tags(tag)`)
       .eq('creator_id', userId)
       .order('start_time', { ascending: false })
     if (error) { console.error(error); return [] }
@@ -202,7 +236,7 @@ export const db = {
     // NULL), and `.eq('id', null)` would be a nonsense filter — skip the lookup.
     const [{ data: prof, error: profErr }, { data: tagRows, error: tagErr }] = await Promise.all([
       e.creator_id
-        ? supabase.from('profiles').select('display_name,avatar_color').eq('id', e.creator_id).maybeSingle()
+        ? supabase.from('profiles').select(PROFILE_PUBLIC).eq('id', e.creator_id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       supabase.from('event_tags').select('tag').eq('event_id', id),
     ])
@@ -241,7 +275,7 @@ export const db = {
     if (eventIds.length === 0) return []
     const { data, error } = await supabase
       .from('events')
-      .select('*, profiles(display_name,avatar_color), event_tags(tag)')
+      .select(`*, profiles(${PROFILE_PUBLIC}), event_tags(tag)`)
       .in('id', eventIds)
       .neq('creator_id', userId)
       .order('start_time', { ascending: false })
@@ -311,7 +345,7 @@ export const db = {
       })
       .eq('id', eventId)
       .eq('creator_id', sess.user.id)
-      .select('*,profiles(display_name,avatar_color),event_tags(tag)')
+      .select(`*,profiles(${PROFILE_PUBLIC}),event_tags(tag)`)
       .single()
     if (!error && data) {
       await supabase.from('event_tags').delete().eq('event_id', eventId)
@@ -343,7 +377,7 @@ export const db = {
     | 'browse_guest' | 'signin_google' | 'signin_apple'
     | 'follow_push_enable' | 'follow_calendar' | 'follow_calendar_google'
     | 'event_calendar' | 'store_ios' | 'store_android'
-    | 'invite_friends' | 'delete_account'
+    | 'invite_friends' | 'delete_account' | 'nickname_save'
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})

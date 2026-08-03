@@ -81,7 +81,7 @@ function ProfilePanel({
       // Off means off everywhere (the flag is per account), and this device also
       // gives up its delivery target.
       await disablePushOnThisDevice()
-      await db.upsertProfile({ id: session.user.id, push_enabled: false })
+      await db.updateProfile({ id: session.user.id, push_enabled: false })
       setPushDevice(await getDevicePushState(session.user.id))
       reloadProfile()
     } else {
@@ -89,7 +89,7 @@ function ProfilePanel({
       // stays visible instead of the toggle springing back with no explanation.
       const device = await enablePushOnThisDevice(session.user.id)
       setPushDevice(device)
-      await db.upsertProfile({ id: session.user.id, push_enabled: true })
+      await db.updateProfile({ id: session.user.id, push_enabled: true })
       reloadProfile()
       if (!(device.permission === 'granted' && device.registered)) setPushError(true)
     }
@@ -117,7 +117,7 @@ function ProfilePanel({
 
   function handleRadiusCommit(value: number) {
     if (session) {
-      db.upsertProfile({ id: session.user.id, radius_km: value })
+      db.updateProfile({ id: session.user.id, radius_km: value })
     }
   }
 
@@ -127,7 +127,7 @@ function ProfilePanel({
       ? interests.filter(x => x !== tag)
       : [...interests, tag]
     setInterests(newArr)
-    db.upsertProfile({ id: session.user.id, interests: newArr }).then(() => reloadProfile())
+    db.updateProfile({ id: session.user.id, interests: newArr }).then(() => reloadProfile())
   }
 
   const initials = session
@@ -288,7 +288,7 @@ function ProfilePanel({
                 selected={interests}
                 onChange={newTags => {
                   setInterests(newTags)
-                  if (session) db.upsertProfile({ id: session.user.id, interests: newTags }).then(() => reloadProfile())
+                  if (session) db.updateProfile({ id: session.user.id, interests: newTags }).then(() => reloadProfile())
                 }}
                 onClose={() => setInterestModalOpen(false)}
               />

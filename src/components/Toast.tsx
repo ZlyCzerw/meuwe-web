@@ -16,6 +16,11 @@ export default function Toast({ visible, label }: { visible: boolean; label: str
         borderRadius: 999,
         fontSize: 13,
         fontWeight: 700,
+        // Bez width:max-content pigułka jest przycinana do połowy ekranu (bo
+        // left:50%), przez co dłuższe komunikaty łamią się na kilka linii.
+        width: 'max-content',
+        maxWidth: 'calc(100vw - 32px)',
+        textAlign: 'center',
         boxShadow: '0 8px 32px rgba(45,43,42,0.18)',
         pointerEvents: 'none',
         zIndex: 999,

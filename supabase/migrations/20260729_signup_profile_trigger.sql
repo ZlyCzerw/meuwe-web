@@ -49,7 +49,22 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Backfill the rows that were created nameless while the trigger was missing.
+-- ── Backfill ─────────────────────────────────────────────────────────────────
+-- Accounts that signed up while the trigger was missing have either no profile
+-- row at all, or a bare one conjured by a client upsert (id + one field, no name).
+
+insert into public.profiles (id, display_name, avatar_color)
+select u.id,
+       coalesce(
+         u.raw_user_meta_data->>'full_name',
+         u.raw_user_meta_data->>'name',
+         nullif(split_part(coalesce(u.email, ''), '@', 1), '')
+       ),
+       '#FF7A45'
+  from auth.users u
+  left join public.profiles p on p.id = u.id
+ where p.id is null;
+
 update public.profiles p
    set display_name = coalesce(
          u.raw_user_meta_data->>'full_name',
@@ -59,3 +74,15 @@ update public.profiles p
   from auth.users u
  where u.id = p.id
    and (p.display_name is null or btrim(p.display_name) = '');
+
+-- ── One birthplace for profiles ──────────────────────────────────────────────
+-- The trigger above is SECURITY DEFINER, so it inserts regardless of these
+-- grants. The client has no business creating profile rows: every write it makes
+-- (radius, interests, push_enabled, language) targets a row that must already
+-- exist. Leaving INSERT in its hands is what let a missing trigger turn into
+-- nameless accounts instead of a loud failure.
+--
+-- ORDER OF DEPLOYMENT: ship the client that uses UPDATE (db.updateProfile)
+-- BEFORE running this, or an older tab still doing an upsert will get 42501.
+drop policy if exists "profiles_insert" on public.profiles;
+revoke insert on public.profiles from anon, authenticated;

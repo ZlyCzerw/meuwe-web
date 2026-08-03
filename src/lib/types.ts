@@ -5,7 +5,12 @@ export type EventStatus = 'live' | 'upcoming' | 'extended' | 'ended'
 
 export interface Profile {
   id: string
+  /** Nazwa od dostawcy logowania, ustawiana raz przy rejestracji. */
   display_name: string | null
+  /** Nazwa wybrana przez użytkownika; null = zostaje ta od dostawcy. */
+  nickname: string | null
+  /** Nazwa do pokazania. Liczona w bazie: nickname, a w jego braku display_name. */
+  name_shown: string | null
   avatar_color: string | null
   radius_km: number | null
   interests: string[] | null

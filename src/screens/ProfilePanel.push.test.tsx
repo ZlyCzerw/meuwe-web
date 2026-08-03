@@ -18,7 +18,7 @@ vi.mock('../lib/push', () => ({
 }))
 
 vi.mock('../lib/supabase', () => ({
-  db: { upsertProfile: vi.fn().mockResolvedValue({}) },
+  db: { updateProfile: vi.fn().mockResolvedValue({}) },
   supabase: {},
 }))
 
@@ -26,7 +26,8 @@ const session = { user: { id: 'u1', email: 'a@b.c' } } as unknown as Session
 
 function profile(pushEnabled: boolean): Profile {
   return {
-    id: 'u1', display_name: 'Ala', avatar_color: null, radius_km: 10,
+    id: 'u1', display_name: 'Ala', nickname: null, name_shown: 'Ala',
+    avatar_color: null, radius_km: 10,
     interests: [], last_lat: null, last_lng: null, last_seen_at: null,
     created_at: '', push_enabled: pushEnabled, language: 'en',
   }

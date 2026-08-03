@@ -157,7 +157,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         position: 'relative', zIndex: 1,
       }}>
         <button
-          onClick={() => { db.trackClick('signin_google'); onSignIn('google') }}
+          onClick={() => onSignIn('google')}
           style={{
             width: '100%', padding: '16px 24px', borderRadius: 999,
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
@@ -174,7 +174,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
           {t('welcome.google')}
         </button>
         <button
-          onClick={() => { db.trackClick('signin_apple'); onSignIn('apple') }}
+          onClick={() => onSignIn('apple')}
           style={{
             marginTop: 12, width: '100%', padding: '16px 24px', borderRadius: 999,
             background: '#000', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,

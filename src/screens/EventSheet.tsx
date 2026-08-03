@@ -69,7 +69,7 @@ function EventSheet({
   event: EventWithMeta
   onClose: () => void
   session: Session | null
-  profile: { display_name: string | null; avatar_color: string | null; push_enabled?: boolean | null } | null
+  profile: { display_name: string | null; name_shown?: string | null; avatar_color: string | null; push_enabled?: boolean | null } | null
   userPos?: { lat: number; lng: number } | null
   onLocate?: () => void
   onAuthNeeded?: () => void
@@ -229,8 +229,11 @@ function EventSheet({
       setIsFollowing(true)
       db.followEvent(event.id)
     }
+    // Nazwa wpisywana jest do wiadomości na stałe, więc bierzemy tę pokazywaną
+    // dziś (nickname, a w jego braku nazwa od dostawcy). Starych wiadomości
+    // zmiana nazwy nie dotyka — tak samo jak w każdym komunikatorze.
     const authorName =
-      profile?.display_name || session.user?.email?.split('@')[0] || '?'
+      profile?.name_shown || profile?.display_name || session.user?.email?.split('@')[0] || '?'
     const authorColor = profile?.avatar_color || C.primary
     const result = await db.sendMessage(event.id, text, authorName, authorColor)
     if (result?.error) setSendErr(t('event.sendError'))

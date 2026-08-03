@@ -11,6 +11,7 @@
 //   /push-preview.html?step=profile     → the profile panel (fake session)
 //   /push-preview.html?step=account     → the account and data sub-screen
 //   /push-preview.html?step=delete      → the delete confirmation
+//   /push-preview.html?step=nickname    → the username modal
 //   /push-preview.html?lang=en          → any of the five languages
 import { createRoot } from 'react-dom/client'
 import '../index.css'
@@ -23,6 +24,7 @@ import InviteFriendsModal from '../components/InviteFriendsModal'
 import ProfilePanel from '../screens/ProfilePanel'
 import AccountPanel from '../screens/AccountPanel'
 import DeleteAccountModal from '../components/DeleteAccountModal'
+import NicknameModal from '../components/NicknameModal'
 import { C, F } from '../lib/tokens'
 import type { PushUiState } from '../lib/pushState'
 
@@ -53,7 +55,7 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
-const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | null
+const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | 'nickname' | null
 
 const root = createRoot(document.getElementById('root')!)
 
@@ -64,7 +66,8 @@ root.render(
       onClose={() => {}}
       session={{ user: { id: 'demo', email: 'demo@meuwe.eu' } } as never}
       profile={{
-        id: 'demo', display_name: 'Ala', avatar_color: null, radius_km: 10,
+        id: 'demo', display_name: 'Ala', nickname: null, name_shown: 'Ala',
+        avatar_color: null, radius_km: 10,
         interests: [], last_lat: null, last_lng: null, last_seen_at: null,
         created_at: '', push_enabled: false, language: 'pl',
       }}
@@ -75,7 +78,9 @@ root.render(
       onOpenAccount={() => {}}
     />
   ) : step === 'account' ? (
-    <AccountPanel open onClose={() => {}} onDeleted={() => {}} />
+    <AccountPanel open onClose={() => {}} onDeleted={() => {}} currentName="Ala" onNicknameSaved={() => {}} />
+  ) : step === 'nickname' ? (
+    <NicknameModal currentName="k7f3x9mn2p" onSaved={() => {}} onClose={() => {}} />
   ) : step === 'delete' ? (
     <DeleteAccountModal onDeleted={() => {}} onClose={() => {}} />
   ) : step === 'location' ? (

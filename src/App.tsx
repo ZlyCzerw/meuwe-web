@@ -8,7 +8,9 @@ import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHa
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
-import { isNativePlatform } from './lib/platform'
+import { isNativePlatform, isAndroid } from './lib/platform'
+import { createBackExitGate, BACK_EXIT_WINDOW_MS } from './lib/backExit'
+import { parseOAuthCallback } from './lib/oauthCallback'
 import { Geolocation } from '@capacitor/geolocation'
 import { App as CapApp } from '@capacitor/app'
 import MapScreen from './screens/MapScreen'
@@ -53,6 +55,8 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const backExitRef = useRef(createBackExitGate())
   const [showConfetti, setShowConfetti] = useState(false)
   // Animated launch splash — native only (web has the landing page). Shows once per cold start.
   const [showSplash, setShowSplash] = useState(isNativePlatform())
@@ -344,6 +348,20 @@ export default function App() {
     if (!isNativePlatform()) return
     let remove: (() => void) | undefined
     CapApp.addListener('appUrlOpen', ({ url }) => {
+      // Powrót z logowania OAuth otwartego w przeglądarce (Android + Apple).
+      const oauth = parseOAuthCallback(url)
+      if (oauth) {
+        if (oauth.kind === 'error') {
+          console.error('[appUrlOpen] oauth error:', oauth.message)
+          showToast(i18n.t('auth.signInFailed'))
+          return
+        }
+        db.completeOAuth(oauth.code).catch((e: unknown) => {
+          console.error('[appUrlOpen] exchangeCodeForSession:', e)
+          showToast(i18n.t('auth.signInFailed'))
+        })
+        return
+      }
       let parsed: URL
       try { parsed = new URL(url) } catch { return }
       const p = parsed.searchParams
@@ -358,6 +376,29 @@ export default function App() {
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
       const z = parseInt(p.get('zoom') ?? '', 10)
       goToSpot(lat, lng, Number.isFinite(z) ? z : undefined)
+    }).then(handle => { remove = () => handle.remove() })
+    return () => { remove?.() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Systemowy przycisk/gest wstecz (Android). Rejestracja listenera odbiera
+  // Capacitorowi domyślną obsługę — i dobrze, bo od API 36 (predictive back)
+  // domyślna ścieżka gubi kolejne naciśnięcia: pierwsze wstecz dawało popstate,
+  // następne już nie. Warstwy zamyka nadal jeden handler popstate, tu tylko
+  // wywołujemy history.back(). Na gołej mapie nie ma dokąd wracać: pierwsze
+  // wstecz podpowiada, drugie w ciągu 4 s minimalizuje apkę.
+  // iOS pomijamy — nie ma tam systemowego wstecz wychodzącego z aplikacji,
+  // a minimalizacja z kodu jest zabroniona (prywatne API = odrzucenie w App Store).
+  useEffect(() => {
+    if (!isAndroid()) return
+    let remove: (() => void) | undefined
+    CapApp.addListener('backButton', () => {
+      const s = navLayersRef.current
+      const layerOpen = !!(s.authModal || s.selEvent || s.myEventSelected || s.followedEventSelected ||
+        s.createOpen || s.accountOpen || s.profileOpen ||
+        s.screen === 'myEvents' || s.screen === 'followedEvents')
+      if (layerOpen) { window.history.back(); return }
+      if (backExitRef.current.press()) { CapApp.minimizeApp(); return }
+      showToast(i18n.t('map.backAgainToExit'), BACK_EXIT_WINDOW_MS)
     }).then(handle => { remove = () => handle.remove() })
     return () => { remove?.() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -485,9 +526,33 @@ export default function App() {
     window.history.replaceState({ layer: 'map' }, '')
   }
 
-  function showToast(msg: string) {
+  function showToast(msg: string, ms = 2600) {
     setToast(msg)
-    setTimeout(() => setToast(null), 2600)
+    // Bez czyszczenia poprzedniego timera dłuższy komunikat zniknąłby wcześniej,
+    // bo zamknąłby go timer wcześniejszego toasta.
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(null), ms)
+  }
+
+  // Logowanie natywne rzuca wyjątkiem (brak idToken, błąd Firebase, brak
+  // uprawnienia), a webowe zwraca `error` w odpowiedzi. Dotąd nikt tego nie
+  // odbierał, więc nieudana próba kończyła się ciszą — użytkownik widział
+  // martwy przycisk i nie miał pojęcia, co poszło nie tak.
+  function startSignIn(provider: 'google' | 'apple') {
+    db.trackClick(provider === 'apple' ? 'signin_apple' : 'signin_google')
+    if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
+    Promise.resolve(provider === 'apple' ? db.signInApple() : db.signInGoogle())
+      .then(res => {
+        const err = (res as { error?: { message?: string } } | void)?.error
+        if (err) throw new Error(err.message ?? 'sign-in returned an error')
+      })
+      .catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error(`[signIn:${provider}]`, msg)
+        // Zamknięcie arkusza przez użytkownika to nie awaria.
+        if (/cancel/i.test(msg)) return
+        showToast(t('auth.signInFailed'))
+      })
   }
 
   function finishLocationStep() {
@@ -591,9 +656,7 @@ export default function App() {
   if (screen === 'welcome') {
     const signIn = (mode: 'google' | 'apple' | 'skip') => {
       if (mode === 'skip') { goToMap(); return }
-      if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
-      if (mode === 'apple') { db.signInApple(); return }
-      db.signInGoogle()
+      startSignIn(mode)
     }
     if (isNativePlatform()) return <Welcome onSignIn={signIn} />
     return <Landing onSignIn={signIn} />
@@ -774,6 +837,8 @@ export default function App() {
         open={accountOpen && !isOverlay}
         onClose={() => window.history.back()}
         onDeleted={handleAccountDeleted}
+        currentName={profile?.name_shown || profile?.display_name || session?.user.email?.split('@')[0] || ''}
+        onNicknameSaved={() => { reloadProfile(); showToast(t('account.nicknameSaved')) }}
       />
       {locationModalOpen && (
         <LocationOnboardingModal onAllow={handleAllowLocation} onSkip={finishLocationStep} />
@@ -813,9 +878,7 @@ export default function App() {
             <button
               onClick={() => {
                 setAuthModal(null)
-                db.trackClick('signin_google')
-                if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
-                db.signInGoogle()
+                startSignIn('google')
               }}
               style={{
                 width: '100%', padding: '16px 24px', borderRadius: 999,
@@ -837,9 +900,7 @@ export default function App() {
             <button
               onClick={() => {
                 setAuthModal(null)
-                db.trackClick('signin_apple')
-                if (deepLinkIdRef.current) sessionStorage.setItem('pending_event', deepLinkIdRef.current)
-                db.signInApple()
+                startSignIn('apple')
               }}
               style={{
                 width: '100%', padding: '16px 24px', borderRadius: 999,
