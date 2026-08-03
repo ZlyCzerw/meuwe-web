@@ -130,12 +130,17 @@ function ProfilePanel({
     db.updateProfile({ id: session.user.id, interests: newArr }).then(() => reloadProfile())
   }
 
+  // name_shown to nazwa wybrana przez użytkownika, a w jej braku ta od dostawcy
+  // logowania. Po zmianie nazwy w panelu konta menu ma pokazywać nową, nie tę,
+  // z którą konto powstało.
+  const shownName = profile?.name_shown || profile?.display_name
+
   const initials = session
-    ? (profile?.display_name || session.user.email || '?')[0].toUpperCase()
+    ? (shownName || session.user.email || '?')[0].toUpperCase()
     : '?'
 
   const displayName = session
-    ? profile?.display_name || session.user.email?.split('@')[0] || ''
+    ? shownName || session.user.email?.split('@')[0] || ''
     : t('profile.guest')
 
   const currentLang = i18n.language as Lang

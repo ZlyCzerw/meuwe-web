@@ -66,7 +66,9 @@ root.render(
       onClose={() => {}}
       session={{ user: { id: 'demo', email: 'demo@meuwe.eu' } } as never}
       profile={{
-        id: 'demo', display_name: 'Ala', nickname: null, name_shown: 'Ala',
+        // Konto założone przez Apple z ukrytym adresem, właściciel nadał sobie
+        // nazwę — panel ma pokazać "Ala", a nie "k7f3x9mn2p".
+        id: 'demo', display_name: 'k7f3x9mn2p', nickname: 'Ala', name_shown: 'Ala',
         avatar_color: null, radius_km: 10,
         interests: [], last_lat: null, last_lng: null, last_seen_at: null,
         created_at: '', push_enabled: false, language: 'pl',
