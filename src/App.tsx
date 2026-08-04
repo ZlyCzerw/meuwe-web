@@ -4,7 +4,7 @@ import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
 import { refineLangByGeo } from './lib/i18n'
-import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler, ensurePushRegistered } from './lib/push'
+import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler, ensurePushRegistered, getDevicePushState } from './lib/push'
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
@@ -32,6 +32,9 @@ import InviteFriendsModal from './components/InviteFriendsModal'
 import { readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS } from './lib/onboarding'
 import { INITIAL_SCAN_KM } from './lib/appConfig'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
+import PushAskModal from './components/PushAskModal'
+import * as pushAsk from './lib/pushAsk'
+import { resolvePushState } from './lib/pushState'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
@@ -115,6 +118,18 @@ export default function App() {
   const [promoOpen, setPromoOpen] = useState(false)
   const promoStateRef = useRef(readPromoState())
   const arrivedAtRef = useRef(Date.now())
+
+  // ── Asking for notifications ───────────────────────────────────────────────
+  // EventSheet writes to the same ledger when someone follows, so every change
+  // here is a read-modify-write against storage rather than a long-lived copy
+  // in memory — two writers, one book.
+  const [pushAskOpen, setPushAskOpen] = useState(false)
+  const sessionCountedRef = useRef(false)
+  const updatePushAsk = (fn: (s: pushAsk.PushAskState) => pushAsk.PushAskState) => {
+    const next = fn(pushAsk.readPushAskState())
+    pushAsk.writePushAskState(next)
+    return next
+  }
 
   const NAV_KEY = 'meuwe_nav'
   const NAV_TTL = 30 * 60_000
@@ -217,14 +232,25 @@ export default function App() {
   // Analytics
   useEffect(() => { if (selEvent) track.viewEvent(selEvent.id, selEvent.title) }, [selEvent])
 
-  // Interest signal for the app nudge: distinct events opened.
+  // Interest signal for the app nudge: distinct events opened. The same signal
+  // counts towards asking for notifications, kept in its own ledger because the
+  // two have different ceilings and cooldowns.
   useEffect(() => {
     if (!selEvent) return
     const next = recordEventView(promoStateRef.current, selEvent.id)
-    if (next === promoStateRef.current) return
-    promoStateRef.current = next
-    writePromoState(next)
+    if (next !== promoStateRef.current) {
+      promoStateRef.current = next
+      writePromoState(next)
+    }
+    updatePushAsk(s => pushAsk.recordEventView(s, selEvent.id))
   }, [selEvent?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Second session is a trigger of its own, so it is counted once per cold start.
+  useEffect(() => {
+    if (screen !== 'map' || sessionCountedRef.current) return
+    sessionCountedRef.current = true
+    updatePushAsk(pushAsk.recordSessionStart)
+  }, [screen])
 
   // Decide when to surface it. Polled rather than event-driven because one of
   // the triggers is simply time spent, and because the sheet must wait for a
@@ -248,6 +274,36 @@ export default function App() {
     const id = setInterval(tick, 10_000)
     return () => clearInterval(id)
   }, [promoOs, promoOpen, pickingLocation])
+
+  // Same shape for the notification ask: polled, because the triggers fire at
+  // moments when another layer is usually open and the card has to wait for a
+  // clear screen. The device is only queried once the cheap half says yes.
+  useEffect(() => {
+    if (!session) return
+    let cancelled = false
+    const uid = session.user.id
+    const tick = async () => {
+      if (cancelled || pushAskOpen) return
+      const layers = navLayersRef.current
+      const busy = layers.authModal || layers.selEvent || layers.myEventSelected
+        || layers.followedEventSelected || layers.createOpen || layers.profileOpen
+        || layers.accountOpen || layers.screen !== 'map'
+        || pickingLocation || promoOpen || locationModalOpen || interestsModalOpen || inviteModalOpen
+      if (busy) return
+      if (!pushAsk.isPushAskDue(pushAsk.readPushAskState(), Date.now())) return
+      const device = await getDevicePushState(uid)
+      if (cancelled) return
+      const state = resolvePushState(!!profile?.push_enabled, device)
+      // No calendar to fall back on here, so a device that cannot be repaired
+      // in-app is left alone rather than shown a button that does nothing.
+      if (!pushAsk.canAskForPush(pushAsk.readPushAskState(), { pushState: state, canOfferFallback: false }, Date.now())) return
+      updatePushAsk(s => pushAsk.markAsked(s, Date.now()))
+      setPushAskOpen(true)
+    }
+    const id = setInterval(tick, 10_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [session, profile?.push_enabled, pushAskOpen, pickingLocation, promoOpen,
+      locationModalOpen, interestsModalOpen, inviteModalOpen])
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
@@ -671,6 +727,9 @@ export default function App() {
     setTimeout(() => setShowConfetti(false), 900)
     showToast(t('create.added'))
     track.createEvent('')
+    // Someone who just put an event on the map has the clearest reason to want
+    // to hear about the ones around it.
+    updatePushAsk(pushAsk.recordCreate)
   }
 
   // Animated launch splash covers the boot (session resolves behind it), then reveals the app.
@@ -898,6 +957,20 @@ export default function App() {
       )}
       {inviteModalOpen && (
         <InviteFriendsModal onClose={() => setInviteModalOpen(false)} />
+      )}
+      {pushAskOpen && session && (
+        <PushAskModal
+          userId={session.user.id}
+          onEnabled={() => {
+            setPushAskOpen(false)
+            reloadProfile()
+            showToast(t('followNotify.enabled'))
+          }}
+          onDecline={() => {
+            updatePushAsk(s => pushAsk.markDeclined(s, Date.now()))
+            setPushAskOpen(false)
+          }}
+        />
       )}
       {authModal && (
         <div

@@ -18,13 +18,14 @@ import { authorLabel, authorInitial } from '../lib/authorLabel'
 import { addToCalendar, openGoogleCalendar } from '../lib/calendar'
 import { getDevicePushState } from '../lib/push'
 import { resolvePushState } from '../lib/pushState'
+import {
+  readPushAskState, writePushAskState, recordFollow, isPushAskDue, canAskForPush,
+  markAsked, markDeclined,
+} from '../lib/pushAsk'
 import FollowNotifyModal from '../components/FollowNotifyModal'
 import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
-
-/** Asked once per device: following again should not re-open the same card. */
-const FOLLOW_NOTIFY_ASKED_KEY = 'meuwe_follow_notify_asked'
 
 /** How long the Google Calendar alternative stays offered after an attempt. */
 const CALENDAR_HINT_MS = 9000
@@ -89,6 +90,9 @@ function EventSheet({
   const [toast, setToast] = useState<string | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [notifyReason, setNotifyReason] = useState<'ask' | 'blocked' | 'unsupported' | null>(null)
+  // The card calls onEnabled and then onClose on the way out, so the close
+  // handler has to know which of the two endings it is closing.
+  const notifyEnabledRef = useRef(false)
   const [calendarBusy, setCalendarBusy] = useState(false)
   const [calendarHint, setCalendarHint] = useState<'ok' | 'failed' | null>(null)
   const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
@@ -128,21 +132,35 @@ function EventSheet({
     }
   }
 
-  // Following is only worth something if the news can reach you. Asked once per
-  // device, and only when this device would not deliver — never as a bare system
-  // prompt, always through the modal that explains what it is for.
+  // Following is only worth something if the news can reach you, and only when
+  // this device would not deliver — never as a bare system prompt, always
+  // through the modal that explains what it is for.
+  //
+  // The follow is one of four triggers now (see lib/pushAsk.ts) and shares one
+  // ledger with the rest, so refusing here also holds off the other three. The
+  // card still opens for a 'blocked' or 'unsupported' device because this is the
+  // one place with a second answer: the calendar.
   async function maybeAskForNotifications() {
     if (!session) return
-    try { if (localStorage.getItem(FOLLOW_NOTIFY_ASKED_KEY)) return } catch { /* private mode */ }
+    const followed = recordFollow(readPushAskState())
+    writePushAskState(followed)
+    if (!isPushAskDue(followed, Date.now())) return
     const device = await getDevicePushState(session.user.id)
     const state = resolvePushState(!!profile?.push_enabled, device)
-    if (state === 'on') return
-    try { localStorage.setItem(FOLLOW_NOTIFY_ASKED_KEY, '1') } catch { /* private mode */ }
+    if (!canAskForPush(followed, { pushState: state, canOfferFallback: true }, Date.now())) return
+    writePushAskState(markAsked(readPushAskState(), Date.now()))
+    notifyEnabledRef.current = false
     setNotifyReason(
       state === 'unsupported' ? 'unsupported'
         : state === 'blocked' ? 'blocked'
         : 'ask'
     )
+  }
+
+  /** Closing without turning them on is a refusal; it starts the cooldown. */
+  function closeNotifyCard() {
+    if (!notifyEnabledRef.current) writePushAskState(markDeclined(readPushAskState(), Date.now()))
+    setNotifyReason(null)
   }
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const followChanRef = useRef<ReturnType<typeof db.subscribeFollowers> | null>(null)
@@ -742,8 +760,11 @@ function EventSheet({
           event={event}
           userId={session.user.id}
           reason={notifyReason}
-          onEnabled={() => { onProfileChanged?.(); showToast(t('followNotify.enabled')) }}
-          onClose={() => setNotifyReason(null)}
+          onEnabled={() => {
+            notifyEnabledRef.current = true
+            onProfileChanged?.(); showToast(t('followNotify.enabled'))
+          }}
+          onClose={closeNotifyCard}
         />
       )}
     </div>

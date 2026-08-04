@@ -189,6 +189,10 @@ const en: Resources = {
     googleAlt: 'Or Google Calendar',
     googleRetry: 'Try Google Calendar',
   },
+  pushAsk: {
+    title: 'Know when something starts nearby',
+    body: 'We will send a notification when a new event appears within your radius. Nothing else.',
+  },
   followNotify: {
     title: "We'll let you know",
     body: 'We will send a notification when the organizer changes details, when the event starts and when someone writes in the chat.',

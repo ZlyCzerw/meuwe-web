@@ -189,6 +189,10 @@ const es: Resources = {
     googleAlt: 'O Google Calendar',
     googleRetry: 'Prueba con Google Calendar',
   },
+  pushAsk: {
+    title: 'Entérate cuando algo empiece cerca',
+    body: 'Te enviaremos una notificación cuando aparezca un evento nuevo dentro de tu radio. Nada más.',
+  },
   followNotify: {
     title: 'Te avisaremos',
     body: 'Enviaremos una notificación cuando quien organiza cambie los detalles, cuando el evento empiece y cuando alguien escriba en el chat.',

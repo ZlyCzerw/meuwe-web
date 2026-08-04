@@ -189,6 +189,10 @@ const de: Resources = {
     googleAlt: 'Oder Google Kalender',
     googleRetry: 'Google Kalender versuchen',
   },
+  pushAsk: {
+    title: 'Erfahre, wenn nebenan etwas losgeht',
+    body: 'Wir schicken eine Benachrichtigung, wenn in deinem Umkreis ein neues Event auftaucht. Sonst nichts.',
+  },
   followNotify: {
     title: 'Wir sagen dir Bescheid',
     body: 'Du bekommst eine Benachrichtigung, wenn die Veranstalterin oder der Veranstalter Details ändert, wenn das Event startet und wenn jemand im Chat schreibt.',

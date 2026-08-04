@@ -189,6 +189,10 @@ const sl: Resources = {
     googleAlt: 'Ali Google Koledar',
     googleRetry: 'Poskusi Google Koledar',
   },
+  pushAsk: {
+    title: 'Izvedi, ko se v bližini kaj začne',
+    body: 'Poslali ti bomo obvestilo, ko se v tvojem obsegu pojavi nov dogodek. Nič drugega.',
+  },
   followNotify: {
     title: 'Sporočili ti bomo',
     body: 'Poslali bomo obvestilo, ko organizator spremeni podrobnosti, ko se dogodek začne in ko kdo piše v klepetu.',

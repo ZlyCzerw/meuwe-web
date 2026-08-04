@@ -181,6 +181,10 @@ const pl = {
     googleAlt: 'Albo Kalendarz Google',
     googleRetry: 'Spróbuj Kalendarza Google',
   },
+  pushAsk: {
+    title: 'Damy znać, gdy coś zacznie się obok',
+    body: 'Wyślemy powiadomienie, gdy w Twoim promieniu pojawi się nowe wydarzenie. Nic poza tym.',
+  },
   followNotify: {
     title: 'Damy Ci znać',
     body: 'Wyślemy powiadomienie, gdy organizator zmieni szczegóły, gdy wydarzenie się zacznie i gdy ktoś napisze na czacie.',
