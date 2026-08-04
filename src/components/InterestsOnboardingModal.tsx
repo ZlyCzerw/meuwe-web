@@ -87,7 +87,12 @@ export default function InterestsOnboardingModal({
       </div>
 
       <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex' }}>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: `0 ${PAD}px 16px` }}>
+        {/* scrollbarWidth: none keeps the grid exactly as wide as the button
+            below it. A classic scrollbar would take its width out of this
+            container only, pulling the right-hand pills in while "Gotowe" kept
+            the full width — the two would stop lining up on any browser that
+            still draws one. WebKit is already covered by index.css. */}
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: `0 ${PAD}px 16px`, scrollbarWidth: 'none' }}>
           {/* A fixed two-column grid rather than a wrapping row. Pills sized to
               their own text left a different ragged edge on every line and a
               wide gutter down the right; two even columns give the eye one
@@ -117,7 +122,9 @@ export default function InterestsOnboardingModal({
             shown as well as described. Borderless: a white card here competed
             with the pills for attention at the exact moment the pills are the
             thing to look at. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px', marginBottom: 12 }}>
+        {/* No inset of its own: the avatar starts on the same rail as the pills
+            above and the button below, at PAD. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{
             width: 30, height: 30, flexShrink: 0, borderRadius: '50%',
             background: C.berry, border: `2px solid ${INK}`,
