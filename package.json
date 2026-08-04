@@ -11,8 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cap:sync": "npm run build && npx cap sync",
-    "cap:android": "npm run build && npx cap sync android && npx cap open android"
+    "prep:native": "npm run build && rm -rf dist/screenshots",
+    "cap:sync": "npm run prep:native && npx cap sync",
+    "cap:android": "npm run prep:native && npx cap sync android && npx cap open android"
   },
   "reactSnap": {
     "source": "dist",
