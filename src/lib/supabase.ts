@@ -1,6 +1,7 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
-import { haversineKm } from './geo'
+import { haversineKm, MAX_MAP_KM } from './geo'
+import { PROBE_DAYS, type ProbeEvent } from './emptyState'
 import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
 
@@ -108,6 +109,33 @@ export const db = {
   },
   async updateProfileLanguage(uid: string, language: string) {
     return this.updateProfile({ id: uid, language })
+  },
+  /**
+   * Four coordinates per event and nothing else, for the week ahead.
+   *
+   * getEvents is the wrong tool for "is there anything around here at all": it
+   * joins profiles and tags and then makes a second round trip for interaction
+   * counts, and an empty map would have paid that three times over. This asks
+   * the one question the empty card and the startup zoom both need, once.
+   *
+   * Returns null — not an empty array — when the query fails, so callers can
+   * tell "nothing is happening" apart from "we could not find out".
+   */
+  async probeNearby(lat: number, lng: number): Promise<ProbeEvent[] | null> {
+    const d = MAX_MAP_KM / 111
+    const now = new Date()
+    const horizon = new Date()
+    horizon.setDate(horizon.getDate() + PROBE_DAYS + 1)
+    horizon.setHours(0, 0, 0, 0)
+
+    const { data, error } = await supabase.from('events')
+      .select('lat, lng, start_time, end_time')
+      .gte('lat', lat - d).lte('lat', lat + d).gte('lng', lng - d).lte('lng', lng + d)
+      .in('status', ['live', 'upcoming', 'extended'])
+      .lte('start_time', horizon.toISOString())
+      .gte('end_time', now.toISOString())
+    if (error) { console.error('[probeNearby]', error); return null }
+    return (data ?? []) as ProbeEvent[]
   },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
     const d=km/111

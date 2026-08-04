@@ -8,6 +8,46 @@ export function haversineKm(lat1:number,lng1:number,lat2:number,lng2:number):num
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
 }
 
+/** Closest the map ever opens itself. Past this a lone event fills the screen with one roof. */
+export const MAX_MAP_ZOOM = 18
+/** Widest the map ever opens itself — matches MAX_RADIUS_KM in the fan-out. */
+export const MAX_MAP_KM = 50
+
+/**
+ * The zoom level that frames `targetKm` from the centre to the nearer screen
+ * edge, on a portrait phone.
+ *
+ * Solve for Z: (shortPx/2) x 40075 x cos(lat) / (256 x 2^Z) = targetKm
+ */
+export function kmToZoom(targetKm: number, lat: number): number {
+  const shortPx = Math.min(window.innerWidth, window.innerHeight)
+  const cosLat = Math.cos(lat * Math.PI / 180)
+  const km = Math.min(Math.max(targetKm, 0.01), MAX_MAP_KM)
+  const z = Math.log2((shortPx / 2) * 40075 * cosLat / (256 * km))
+  return Math.max(kmToZoomUnclamped(MAX_MAP_KM, lat), Math.min(MAX_MAP_ZOOM, Math.round(z)))
+}
+
+function kmToZoomUnclamped(km: number, lat: number): number {
+  const shortPx = Math.min(window.innerWidth, window.innerHeight)
+  const cosLat = Math.cos(lat * Math.PI / 180)
+  return Math.round(Math.log2((shortPx / 2) * 40075 * cosLat / (256 * km)))
+}
+
+/**
+ * Where the map opens on a cold start: far enough to take in the nearest thing
+ * happening, and the same distance again, so the first pin on screen is not the
+ * only pin on screen.
+ *
+ * Same rule as radiusFromNearest in lib/onboarding — one answer explains both
+ * what you see at launch and what you get told about later. `nearestKm` is null
+ * when nothing was found or the position is unknown, and then the widest view is
+ * the only one that can show anything at all.
+ */
+export function startupZoom(nearestKm: number | null, lat: number): number {
+  if (nearestKm === null) return kmToZoom(MAX_MAP_KM, lat)
+  return kmToZoom(Math.min(nearestKm * 2, MAX_MAP_KM), lat)
+}
+
 const ES_COUNTRIES = new Set(['ES','MX','AR','CO','CL','PE','VE','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PA','UY','GQ','PR'])
 const DE_COUNTRIES = new Set(['DE','AT','CH','LI'])
 

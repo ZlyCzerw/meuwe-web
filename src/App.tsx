@@ -33,7 +33,8 @@ import {
   readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS,
   radiusFromNearest, MAX_ONBOARDING_RADIUS_KM,
 } from './lib/onboarding'
-import { INITIAL_SCAN_KM } from './lib/appConfig'
+import { startupZoom, MAX_MAP_KM } from './lib/geo'
+import { summariseProbe } from './lib/emptyState'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import PushAskModal from './components/PushAskModal'
 import * as pushAsk from './lib/pushAsk'
@@ -78,6 +79,10 @@ export default function App() {
   const [authModal, setAuthModal] = useState<'event' | 'chat' | null>(null)
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
+  // The zoom goToMap settled on. MapScreen reads it when the first GPS fix
+  // arrives, which used to slam the map to a hardcoded 15 and throw the whole
+  // calculation away a second after it was made.
+  const startupZoomRef = useRef<number | null>(null)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
   // Captured at render time, before the mount effect strips ?event= from the URL.
   const deepLinkIdRef = useRef<string | null>(
@@ -588,34 +593,33 @@ export default function App() {
     if (!navRestoredRef.current) goToMap()
   }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Visible half-width on portrait phone = shorter screen edge / 2.
-  // Solve: (shortPx/2) × 40075 × cos(lat) / (256 × 2^Z) = targetKm
-  function kmToZoom(targetKm: number, lat: number): number {
-    const shortPx = Math.min(window.innerWidth, window.innerHeight)
-    const cosLat = Math.cos(lat * Math.PI / 180)
-    const z = Math.log2((shortPx / 2) * 40075 * cosLat / (256 * targetKm))
-    return Math.max(9, Math.min(15, Math.round(z)))
-  }
-
+  /**
+   * Opens the map, then works out how far to zoom and applies it.
+   *
+   * It used to await up to two full getEvents calls before the map was even
+   * shown, so a slow connection held the user on the previous screen for the
+   * whole round trip. The map now opens immediately at the widest sensible
+   * view and tightens once the probe answers — moving in on something is a
+   * readable gesture, and moving in on nothing costs nobody anything.
+   */
   async function goToMap() {
-    const pos = userPos || lastKnownPos
-    const maxKm = profile?.radius_km ?? INITIAL_SCAN_KM
-    let zoom = 15
-    if (pos) {
-      const nearby = await db.getEvents(pos.lat, pos.lng, 15, 0)
-      if (nearby.length === 0) {
-        const wider = await db.getEvents(pos.lat, pos.lng, maxKm, 0)
-        if (wider.length === 0) {
-          zoom = kmToZoom(maxKm, pos.lat)
-        } else {
-          const nearest = wider.reduce((a, b) => a.distKm < b.distKm ? a : b)
-          zoom = kmToZoom(Math.min(nearest.distKm * 2, maxKm), pos.lat)
-        }
-      }
-    }
-    setInitialMapZoom(zoom)
     setScreen('map')
     window.history.replaceState({ layer: 'map' }, '')
+
+    // Only a real fix earns a computed zoom. An IP guess is city-level accurate,
+    // so framing it tightly around "the nearest event" would be confident about
+    // a centre we are not confident about; MapScreen keeps its coarse IP_ZOOM
+    // for that case.
+    const pos = userPos || lastKnownPos
+    if (!pos) return
+    const events = await db.probeNearby(pos.lat, pos.lng)
+    if (events === null) return // query failed; leave the view where it is
+    const { nearestKm } = summariseProbe(events, {
+      lat: pos.lat, lng: pos.lng, viewKm: MAX_MAP_KM, now: new Date(),
+    })
+    startupZoomRef.current = startupZoom(nearestKm, pos.lat)
+    setInitialMapZoom(startupZoomRef.current)
+    flySpotRef.current?.(pos.lat, pos.lng, startupZoomRef.current)
   }
 
   function showToast(msg: string, ms = 2600) {

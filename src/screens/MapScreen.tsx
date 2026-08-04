@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Session } from '@supabase/supabase-js'
@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
-import { haversineKm } from '../lib/geo'
+import { haversineKm, startupZoom, MAX_MAP_KM } from '../lib/geo'
+import { db } from '../lib/supabase'
+import { enablePushOnThisDevice } from '../lib/push'
+import { summariseProbe, pickEmptyStateVariant, type NearbyProbe, type EmptyVariant } from '../lib/emptyState'
 import { pinHTML, meHTML, privateHTML, clusterHTML } from '../components/mapIcons'
 import { isCurrentlyLive } from '../lib/eventStatus'
 import Avatar from '../components/Avatar'
@@ -98,6 +101,32 @@ function MapScreen({
   const pendingRecenterCheckRef = useRef(false)
 
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
+
+  // ── Empty state ────────────────────────────────────────────────────────────
+  // `probed` separates "asked and there is nothing" from "have not asked yet",
+  // because only the first of those earns the words "be the first".
+  const [probe, setProbe] = useState<{ key: string; result: NearbyProbe | null } | null>(null)
+  const [notifyDone, setNotifyDone] = useState(false)
+  const autoWidenedRef = useRef(false)
+
+  const emptyCtaStyle: React.CSSProperties = {
+    marginTop: 10, width: '100%', padding: '10px 14px', borderRadius: 999,
+    background: C.primary, color: '#fff', border: `2px solid ${INK}`,
+    fontFamily: F.display, fontSize: 14, fontWeight: 800, cursor: 'pointer',
+  }
+
+  function dayLabel(idx: number): string {
+    if (idxToOffset(idx) === 0) return t('map.today')
+    return idxToDate(idx).toLocaleDateString(loc, { weekday: 'long' })
+  }
+
+  /** Pulls the view back far enough to take in something `km` away. */
+  function widenTo(km: number) {
+    const map = leafRef.current
+    if (!map) return
+    const c = map.getCenter()
+    map.flyTo([c.lat, c.lng], startupZoom(km, c.lat), { duration: 0.8 })
+  }
 
   function toggleFilter(f: string) {
     setSelectedFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
@@ -217,10 +246,13 @@ function MapScreen({
       const icon = L.divIcon({ html: meHTML(), className: 'meuwe-icon', iconSize: [72, 72], iconAnchor: [36, 36] })
       meRef.current = L.marker([userPos.lat, userPos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
     }
-    // Center map only once on first GPS fix
+    // Center map only once on first GPS fix. It keeps whatever zoom the map is
+    // already on: a hardcoded 15 here used to overwrite the startup zoom a
+    // second after it was worked out, so the framing calculation never actually
+    // reached the screen. A position fix moves the centre, not the scale.
     if (!centeredRef.current) {
       centeredRef.current = true
-      map.setView([userPos.lat, userPos.lng], 15, { animate: true })
+      map.setView([userPos.lat, userPos.lng], map.getZoom(), { animate: true })
     } else {
       // GPS fired — check if recenter needed (map may have moved while GPS was unavailable)
       const center = map.getCenter()
@@ -250,6 +282,63 @@ function MapScreen({
     if (centeredRef.current || userPosRef.current) return
     map.setView([ipPos.lat, ipPos.lng], IP_ZOOM, { animate: true })
   }, [ipPos]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The empty map asks one cheap question — anything later today further out,
+  // anything on a later day — instead of the three heavy ones getEvents would
+  // have cost. Debounced, because panning fires this on every settle.
+  // The answer is stored with the view it was computed for. Deriving "have we
+  // asked about *this* view" from that key, rather than resetting a flag as the
+  // view changes, keeps a stale answer from being shown against a new position
+  // and keeps setState out of the effect body.
+  const probeKey = `${eventsPos.lat.toFixed(3)},${eventsPos.lng.toFixed(3)},${Math.round(mapRadiusKm)}`
+  const isEmptyView = visibleEvents.length === 0 && !loading && !pickingLocation
+
+  useEffect(() => {
+    if (!isEmptyView) return
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      const rows = await db.probeNearby(eventsPos.lat, eventsPos.lng)
+      if (cancelled) return
+      setProbe({
+        key: probeKey,
+        result: rows === null ? null : summariseProbe(rows, {
+          lat: eventsPos.lat, lng: eventsPos.lng, viewKm: mapRadiusKm, now: new Date(),
+        }),
+      })
+    }, 400)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [isEmptyView, probeKey, eventsPos.lat, eventsPos.lng, mapRadiusKm])
+
+  const emptyVariant = useMemo<EmptyVariant>(
+    () => probe?.key === probeKey ? pickEmptyStateVariant(probe.result) : { kind: 'unknown' },
+    [probe, probeKey],
+  )
+
+  // Nothing in view but something on today further out: widen once, rather than
+  // asking the user to press a button to be shown what they came for. Once per
+  // mount — after that the card offers the same move as a choice, so a user who
+  // deliberately zoomed back in is not fought over it.
+  useEffect(() => {
+    if (autoWidenedRef.current || emptyVariant.kind !== 'wider') return
+    autoWidenedRef.current = true
+    widenTo(emptyVariant.nearestKm)
+  }, [emptyVariant])
+
+  // The fan-out measures from profiles.last_lat/lng, so this is only honest
+  // while the user is looking at their own neighbourhood.
+  const canNotifyHere = !!session && !!userPos
+    && haversineKm(eventsPos.lat, eventsPos.lng, userPos.lat, userPos.lng) <= (profile?.radius_km ?? MAX_MAP_KM)
+
+  async function handleNotifyHere() {
+    if (!session) { onAuthNeeded(); return }
+    await enablePushOnThisDevice(session.user.id)
+    await db.updateProfile({
+      id: session.user.id,
+      push_enabled: true,
+      radius_km: Math.min(MAX_MAP_KM, Math.max(profile?.radius_km ?? 0, Math.ceil(mapRadiusKm))),
+    })
+    setNotifyDone(true)
+  }
 
   // Pins — update on events change. Private events render individually; public
   // events are grouped by 3x3 m zone: singletons open the half-sheet directly,
@@ -618,23 +707,81 @@ function MapScreen({
         />
       )}
 
-      {/* Empty state */}
+      {/* Empty state — a fork with a way out, not a dead end. See lib/emptyState. */}
+      {/* Centring and bobbing are two elements on purpose: the bob keyframes
+          animate `transform`, so putting both on one node let the animation win
+          and the card drifted off centre — invisible while it was a narrow
+          bubble, half off-screen once it grew buttons. */}
       {visibleEvents.length === 0 && !loading && !pickingLocation && (
         <div style={{
           position: 'absolute', top: '38%', left: '50%',
           transform: 'translate(-50%,-50%)',
-          animation: 'bob 4s ease-in-out infinite', pointerEvents: 'none', zIndex: 5,
+          pointerEvents: 'none', zIndex: 5, width: 268,
         }}>
+          {/* Only the card takes taps; the box around it must stay transparent
+              to dragging or the map would be pinned wherever this appears. */}
           <div style={{
-            padding: '14px 20px', background: '#fff',
+            animation: 'bob 4s ease-in-out infinite',
+            pointerEvents: 'auto',
+            padding: '16px 18px', background: '#fff',
             borderRadius: '24px 24px 24px 8px',
             border: `2px solid ${INK}22`,
             boxShadow: '0 8px 32px rgba(45,43,42,0.08)',
-            fontFamily: F.display, fontSize: 15, fontWeight: 800, color: C.ink,
-            textAlign: 'center', maxWidth: 240,
+            fontFamily: F.display, color: C.ink, textAlign: 'center',
           }}>
-            {t('map.empty')}<br />
-            <span style={{ color: C.primary }}>{t('map.emptyCta')}</span>
+            {emptyVariant.kind === 'nextDay' && (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
+                  {t('map.emptyToday', { km: Math.round(mapRadiusKm) })}
+                </div>
+                <button
+                  onClick={() => setDayIdx(TODAY_IDX + emptyVariant.dayOffset)}
+                  style={emptyCtaStyle}
+                >
+                  {t('map.emptyNextDayCta', {
+                    day: dayLabel(TODAY_IDX + emptyVariant.dayOffset),
+                    count: emptyVariant.count,
+                  })}
+                </button>
+              </>
+            )}
+
+            {emptyVariant.kind === 'wider' && (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
+                  {t('map.emptyWider', { km: Math.round(emptyVariant.nearestKm) })}
+                </div>
+                <button onClick={() => widenTo(emptyVariant.nearestKm)} style={emptyCtaStyle}>
+                  {t('map.emptyWiderCta')}
+                </button>
+              </>
+            )}
+
+            {(emptyVariant.kind === 'nothing' || emptyVariant.kind === 'unknown') && (
+              <div style={{ fontSize: 15, fontWeight: 800 }}>
+                {t('map.empty')}<br />
+                <span style={{ color: C.primary }}>{t('map.emptyCta')}</span>
+              </div>
+            )}
+
+            {/* Offered only where the fan-out can honour it: it measures from the
+                account's own last position, so promising alerts for a city the
+                user is merely looking at would be a promise we cannot keep. */}
+            {canNotifyHere && (
+              <button
+                onClick={handleNotifyHere}
+                disabled={notifyDone}
+                style={{
+                  marginTop: 10, width: '100%', padding: '8px 10px',
+                  background: 'none', border: 'none',
+                  fontFamily: F.display, fontSize: 12.5, fontWeight: 700,
+                  color: notifyDone ? C.grass : C.inkSoft,
+                  cursor: notifyDone ? 'default' : 'pointer',
+                }}
+              >
+                {t(notifyDone ? 'map.emptyNotifyDone' : 'map.emptyNotify')}
+              </button>
+            )}
           </div>
         </div>
       )}
