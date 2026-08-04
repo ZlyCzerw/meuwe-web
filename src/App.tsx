@@ -29,7 +29,10 @@ import AppPromoSheet from './components/AppPromoSheet'
 import LocationOnboardingModal from './components/LocationOnboardingModal'
 import InterestsOnboardingModal from './components/InterestsOnboardingModal'
 import InviteFriendsModal from './components/InviteFriendsModal'
-import { readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS } from './lib/onboarding'
+import {
+  readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS,
+  radiusFromNearest, MAX_ONBOARDING_RADIUS_KM,
+} from './lib/onboarding'
 import { INITIAL_SCAN_KM } from './lib/appConfig'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import PushAskModal from './components/PushAskModal'
@@ -108,6 +111,9 @@ export default function App() {
   const [nativeGeoAllowed, setNativeGeoAllowed] = useState(!isNativePlatform())
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [interestsModalOpen, setInterestsModalOpen] = useState(false)
+  // Worked out from how far away the nearest event actually is, at the moment
+  // the step opens. Until then, the widest setting — see radiusFromNearest.
+  const [interestsRadiusKm, setInterestsRadiusKm] = useState(MAX_ONBOARDING_RADIUS_KM)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const onboardingRef = useRef(readOnboardingState())
 
@@ -352,10 +358,12 @@ export default function App() {
         || layers.accountOpen || layers.screen !== 'map'
         || pickingLocation || promoOpen || inviteModalOpen
       if (busy) return
-      setInterestsModalOpen(true)
+      void openInterestsStep()
     }, DEFAULT_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [screen, session, nativeGeoAllowed, locationModalOpen, pickingLocation, promoOpen, inviteModalOpen])
+    // openInterestsStep is redefined every render; listing it would restart the
+    // timer on each one and the card would never reach the end of its delay.
+  }, [screen, session, nativeGeoAllowed, locationModalOpen, pickingLocation, promoOpen, inviteModalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
@@ -648,17 +656,39 @@ export default function App() {
     // The interests step needs an account to write to; a guest goes straight to
     // the invite and is asked after signing in (see the effect below).
     if (session && !onboardingRef.current.interestsDone) {
-      setTimeout(() => setInterestsModalOpen(true), 900)
+      setTimeout(() => { void openInterestsStep() }, 900)
       return
     }
     offerInvite()
   }
 
-  function finishInterestsStep(saved: boolean) {
+  // The radius is not a question any more: it is twice the distance to the
+  // nearest thing happening, worked out here so the card can just state the
+  // outcome. A failed lookup is not fatal — radiusFromNearest(null) opens up to
+  // the widest setting, which is the safe direction for someone with nothing
+  // nearby.
+  async function openInterestsStep() {
+    const pos = userPos || lastKnownPos || ipPos
+    let nearestKm: number | null = null
+    if (pos) {
+      try {
+        const nearby = await db.getEvents(pos.lat, pos.lng, MAX_ONBOARDING_RADIUS_KM, 0)
+        if (nearby.length > 0) {
+          nearestKm = nearby.reduce((a, b) => a.distKm < b.distKm ? a : b).distKm
+        }
+      } catch (err) {
+        console.error('[onboarding] nearest-event lookup failed:', err)
+      }
+    }
+    setInterestsRadiusKm(radiusFromNearest(nearestKm))
+    setInterestsModalOpen(true)
+  }
+
+  function finishInterestsStep() {
     onboardingRef.current = { ...onboardingRef.current, interestsDone: true }
     writeOnboardingState(onboardingRef.current)
     setInterestsModalOpen(false)
-    if (saved) reloadProfile()
+    reloadProfile()
     offerInvite()
   }
 
@@ -950,9 +980,9 @@ export default function App() {
       {interestsModalOpen && session && (
         <InterestsOnboardingModal
           userId={session.user.id}
+          radiusKm={interestsRadiusKm}
           initial={(profile?.name_shown || profile?.display_name || session.user.email || '?')[0]}
-          onDone={() => finishInterestsStep(true)}
-          onSkip={() => finishInterestsStep(false)}
+          onDone={finishInterestsStep}
         />
       )}
       {inviteModalOpen && (

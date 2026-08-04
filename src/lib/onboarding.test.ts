@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   parseOnboardingState, emptyOnboardingState, locationPromptDelayMs,
+  radiusFromNearest, MIN_ONBOARDING_RADIUS_KM, MAX_ONBOARDING_RADIUS_KM,
   DEEP_LINK_DELAY_MS, DEFAULT_DELAY_MS,
 } from './onboarding'
 
@@ -27,6 +28,37 @@ describe('parseOnboardingState', () => {
     const old = '{"locationDone":true,"inviteDone":true}'
     expect(parseOnboardingState(old).interestsDone).toBe(false)
     expect(parseOnboardingState(old).locationDone).toBe(true)
+  })
+})
+
+describe('radiusFromNearest', () => {
+  it('reaches twice as far as the nearest thing happening', () => {
+    expect(radiusFromNearest(8)).toBe(16)
+    expect(radiusFromNearest(12.5)).toBe(25)
+  })
+
+  // In a city the nearest event can be 300 m away. Twice that is a radius of
+  // 600 m, which would notify the new account about almost nothing — the exact
+  // silence this whole step exists to end.
+  it('does not shrink to a radius that would notify nobody', () => {
+    expect(radiusFromNearest(0.3)).toBe(MIN_ONBOARDING_RADIUS_KM)
+    expect(radiusFromNearest(0)).toBe(MIN_ONBOARDING_RADIUS_KM)
+  })
+
+  it('stops at the widest radius the fan-out honours', () => {
+    expect(radiusFromNearest(40)).toBe(MAX_ONBOARDING_RADIUS_KM)
+    expect(MAX_ONBOARDING_RADIUS_KM).toBe(50)
+  })
+
+  // Nothing nearby, or no idea where the user is: ask as widely as we can
+  // rather than as narrowly.
+  it('opens up all the way when there is nothing to measure against', () => {
+    expect(radiusFromNearest(null)).toBe(MAX_ONBOARDING_RADIUS_KM)
+  })
+
+  it('always returns a whole number of kilometres', () => {
+    expect(radiusFromNearest(7.3)).toBe(15)
+    expect(Number.isInteger(radiusFromNearest(3.7))).toBe(true)
   })
 })
 

@@ -53,6 +53,29 @@ export function writeOnboardingState(state: OnboardingState): void {
 }
 
 /**
+ * Floor for the radius the interests step writes. Twice the distance to the
+ * nearest event is the rule, but in a dense city that distance can be 300 m,
+ * and a 600 m radius notifies the new account about nothing at all.
+ */
+export const MIN_ONBOARDING_RADIUS_KM = 5
+/** Matches MAX_RADIUS_KM in supabase/functions/_shared/audience.ts — past it the fan-out ignores the value anyway. */
+export const MAX_ONBOARDING_RADIUS_KM = 50
+
+/**
+ * The radius to start a new account on: far enough to take in the nearest thing
+ * happening, and then the same distance again.
+ *
+ * `nearestKm` is null when nothing was found within range or the user's position
+ * is unknown. That is not a reason to pick a small number — with nothing nearby,
+ * the wide end is the only setting that can ever deliver anything.
+ */
+export function radiusFromNearest(nearestKm: number | null): number {
+  if (nearestKm === null) return MAX_ONBOARDING_RADIUS_KM
+  const doubled = Math.round(nearestKm * 2)
+  return Math.min(Math.max(doubled, MIN_ONBOARDING_RADIUS_KM), MAX_ONBOARDING_RADIUS_KM)
+}
+
+/**
  * How long to wait before explaining the location permission.
  *
  * `hasAnyPosition` is false when nothing in the MapScreen fallback chain has a

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import InterestsOnboardingModal from './InterestsOnboardingModal'
-import { ONBOARDING_CATEGORIES } from '../lib/tokens'
+import { ALL_CATEGORIES } from '../lib/tokens'
 // Without this the translator returns raw keys and every assertion is meaningless.
 import '../lib/i18n'
 
@@ -16,67 +16,74 @@ beforeEach(() => {
   updateProfile.mockResolvedValue({ error: null })
 })
 
+const doneButton = () => screen.getByRole('button', { name: 'Done' })
+
 describe('InterestsOnboardingModal', () => {
-  it('offers the same six categories as the filter bar, in the same order', () => {
-    render(<InterestsOnboardingModal userId="u1" onDone={() => {}} onSkip={() => {}} />)
-    expect(ONBOARDING_CATEGORIES).toEqual(['party', 'music', 'culture', 'sport', 'food', 'outdoor'])
-    for (const cat of ONBOARDING_CATEGORIES) {
-      expect(screen.getByRole('button', { name: new RegExp(cat, 'i') })).toBeInTheDocument()
+  it('offers the same vocabulary as the picker behind the plus button', () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    for (const cat of ALL_CATEGORIES) {
+      expect(screen.getByRole('button', { name: new RegExp(`^${cat}$`, 'i') })).toBeInTheDocument()
     }
   })
 
-  it('writes the picked interests and the radius in one go', async () => {
-    const onDone = vi.fn()
-    render(<InterestsOnboardingModal userId="u1" onDone={onDone} onSkip={() => {}} />)
+  it('does not ask a brand-new account to invent its own tag', () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: /music/i }))
-    fireEvent.click(screen.getByRole('button', { name: /food/i }))
-    fireEvent.click(screen.getByText('Done'))
+  // The radius is worked out from what is actually happening nearby, so there is
+  // nothing here for the user to set.
+  it('shows no radius control', () => {
+    const { container } = render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    expect(container.querySelector('input[type=range]')).toBeNull()
+  })
+
+  // Skipping is gone: the step is the only thing standing between a new account
+  // and an empty interests column, which the fan-out reads as "notify nobody".
+  it('offers no way past without an answer', () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    expect(screen.queryByText('Skip')).not.toBeInTheDocument()
+    expect(doneButton()).toBeDisabled()
+  })
+
+  it('stays shut until at least one thing is picked, then opens', () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    expect(doneButton()).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    expect(doneButton()).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    expect(doneButton()).toBeDisabled()
+  })
+
+  it('writes the picked interests with the radius it was handed', async () => {
+    const onDone = vi.fn()
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={onDone} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^food$/i }))
+    fireEvent.click(doneButton())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: ['music', 'food'], radius_km: 10 })
+    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: ['music', 'food'], radius_km: 17 })
   })
 
-  it('lets a tile be turned back off', async () => {
-    render(<InterestsOnboardingModal userId="u1" onDone={() => {}} onSkip={() => {}} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /music/i }))
-    fireEvent.click(screen.getByRole('button', { name: /music/i }))
-    fireEvent.click(screen.getByText('Done'))
-
-    await waitFor(() => expect(updateProfile).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: [], radius_km: 10 })
+  it('still tells the user where to change this later', () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} initial="w" onDone={() => {}} />)
+    expect(screen.getByText(/change this any time in the menu/i)).toBeInTheDocument()
+    expect(screen.getByText('W')).toBeInTheDocument()
   })
 
-  it('saves the radius the user dragged to', async () => {
-    render(<InterestsOnboardingModal userId="u1" onDone={() => {}} onSkip={() => {}} />)
-
-    fireEvent.change(screen.getByLabelText('How far we look'), { target: { value: '25' } })
-    fireEvent.click(screen.getByText('Done'))
-
-    await waitFor(() => expect(updateProfile).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: [], radius_km: 25 })
-  })
-
-  // Skipping is an answer, not a write: the profile keeps whatever it had.
-  it('writes nothing when the step is skipped', () => {
-    const onSkip = vi.fn()
-    render(<InterestsOnboardingModal userId="u1" onDone={() => {}} onSkip={onSkip} />)
-
-    fireEvent.click(screen.getByText('Skip'))
-
-    expect(onSkip).toHaveBeenCalled()
-    expect(updateProfile).not.toHaveBeenCalled()
-  })
-
-  // A failed write must not pretend the step succeeded — but it must not trap
-  // the user in the modal either. It closes, and the failure is logged.
+  // A failed write must not pretend it succeeded, but it must not trap the user
+  // in a modal with no way out either.
   it('closes even when the write fails', async () => {
     updateProfile.mockRejectedValue(new Error('offline'))
     const onDone = vi.fn()
-    render(<InterestsOnboardingModal userId="u1" onDone={onDone} onSkip={() => {}} />)
+    render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={onDone} />)
 
-    fireEvent.click(screen.getByText('Done'))
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
   })

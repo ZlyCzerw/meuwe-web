@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { C, INK, ALL_CATEGORIES, TAG_META } from '../lib/tokens'
+import { C, INK, ALL_CATEGORIES } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
+import CategoryChip from './CategoryChip'
 import { db } from '../lib/supabase'
 
 export default function TagPickerModal({
@@ -96,29 +97,14 @@ export default function TagPickerModal({
         {/* Scrollable tag grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {ALL_CATEGORIES.map(cat => {
-              const meta = TAG_META[cat as Category]
-              const isOn = selected.includes(cat)
-              return (
-                <button
-                  key={cat}
-                  onClick={() => toggle(cat)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '8px 14px', borderRadius: 999,
-                    background: isOn ? meta.color : `${meta.color}33`,
-                    color: isOn ? '#fff' : C.ink,
-                    fontSize: 13, fontWeight: 700,
-                    border: isOn ? `2px solid ${INK}` : '2px solid transparent',
-                    transition: 'all 180ms cubic-bezier(0.34,1.56,0.64,1)',
-                    transform: isOn ? 'scale(1.05)' : 'scale(1)',
-                  }}
-                >
-                  <span style={{ fontSize: 15, display: 'inline-flex', alignItems: 'center' }} dangerouslySetInnerHTML={{ __html: meta.glyph }} />
-                  <span>{t('tags.' + cat)}</span>
-                </button>
-              )
-            })}
+            {ALL_CATEGORIES.map(cat => (
+              <CategoryChip
+                key={cat}
+                category={cat}
+                selected={selected.includes(cat)}
+                onToggle={() => toggle(cat)}
+              />
+            ))}
 
             {/* Custom tags already added */}
             {selected
