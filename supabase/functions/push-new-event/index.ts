@@ -1,8 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
 import { sendFcmToMany } from '../_shared/fcm.ts'
-import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
 import { selectEventAudience, type AudienceProfile } from '../_shared/audience.ts'
+import { filterDeliverable } from '../_shared/recipients.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -73,10 +74,14 @@ Deno.serve(async (req) => {
   const tags: string[] = (tagRows ?? []).map((r: { tag: string }) => r.tag)
   console.log(`[push-new-event] tags: [${tags.join(', ')}]`)
 
-  // Znajdź aktywnych userów z subskrypcjami push
+  // Znajdź aktywnych userów z subskrypcjami push.
+  // push_enabled tutaj to wyłącznie zmniejszenie payloadu — bramką pozostaje
+  // filterDeliverable poniżej, żeby reguła miała jedno miejsce. Gdyby te dwa
+  // kiedyś się rozjechały, ten filtr może tylko zawęzić listę, nigdy poszerzyć.
   const { data: profiles, error: profErr } = await admin
     .from('profiles')
-    .select('id, interests, radius_km, last_lat, last_lng, language')
+    .select('id, interests, radius_km, last_lat, last_lng')
+    .eq('push_enabled', true)
     .not('last_lat', 'is', null)
     .not('last_lng', 'is', null)
     .gte('last_seen_at', new Date(Date.now() - 30 * 86400_000).toISOString())
@@ -84,25 +89,25 @@ Deno.serve(async (req) => {
   if (profErr) console.error('[push-new-event] profiles error:', profErr)
   console.log(`[push-new-event] active profiles with location: ${(profiles ?? []).length}`)
 
-  type Profile = AudienceProfile & { language: string | null }
+  // Język pobiera filterDeliverable dla finalnej listy, więc to zapytanie —
+  // idące po wszystkich aktywnych profilach — nie musi go ciągnąć.
 
   // Event bez tagów trafia do wszystkich w okolicy, z tagami — tylko do
   // zainteresowanych. Twórca nie dostaje powiadomienia o własnym wydarzeniu.
-  const targetIds = selectEventAudience({
+  const audienceIds = selectEventAudience({
     isPrivate: false,
     tags,
-    profiles: (profiles ?? []) as Profile[],
+    profiles: (profiles ?? []) as AudienceProfile[],
     lat: eventLat,
     lng: eventLng,
     creatorId,
     excludeCreator: true,
   })
 
-  const langByUser = new Map<string, Lang>(
-    (profiles ?? []).map((p: Profile) => [p.id, pickLang(p.language)])
-  )
+  // Świeżo wstawionego wydarzenia nikt nie zdążył wyciszyć, więc bez eventId.
+  const { ids: targetIds, langByUser } = await filterDeliverable(admin, audienceIds)
 
-  console.log(`[push-new-event] target users: ${targetIds.length}`)
+  console.log(`[push-new-event] audience: ${audienceIds.length}, deliverable: ${targetIds.length}`)
 
   if (targetIds.length === 0) {
     return new Response(JSON.stringify({ sent: 0, reason: 'no matching users' }), { status: 200 })

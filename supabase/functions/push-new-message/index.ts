@@ -1,7 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
 import { sendFcmToMany } from '../_shared/fcm.ts'
-import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { filterDeliverable } from '../_shared/recipients.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -69,38 +70,12 @@ Deno.serve(async (req) => {
   const recipientList = [...recipientSet]
   console.log(`[push-new-message] candidates: ${recipientList.length}`)
 
-  // 4. Remove muted users
-  const { data: mutes } = await admin
-    .from('notification_mutes')
-    .select('user_id')
-    .eq('event_id', eventId)
-    .in('user_id', recipientList)
-
-  const mutedIds = new Set(
-    (mutes ?? []).map((m: { user_id: string }) => m.user_id)
-  )
-  const finalRecipients = recipientList.filter(id => !mutedIds.has(id))
-
-  if (finalRecipients.length === 0) {
-    console.log('[push-new-message] all muted')
-    return new Response(JSON.stringify({ sent: 0, reason: 'all muted' }), { status: 200 })
-  }
-
-  // 5a. Filter to users with push_enabled = true
-  const { data: enabledProfiles } = await admin
-    .from('profiles')
-    .select('id, language')
-    .in('id', finalRecipients)
-    .eq('push_enabled', true)
-
-  const enabledRecipients = (enabledProfiles ?? []).map((p: { id: string }) => p.id)
-  const langByUser = new Map<string, Lang>(
-    (enabledProfiles ?? []).map((p: { id: string; language: string | null }) => [p.id, pickLang(p.language)])
-  )
-  console.log(`[push-new-message] push-enabled recipients: ${enabledRecipients.length}`)
+  // 4. One gate for muted users, push_enabled and language (see _shared/recipients.ts)
+  const { ids: enabledRecipients, langByUser } = await filterDeliverable(admin, recipientList, { eventId })
+  console.log(`[push-new-message] deliverable recipients: ${enabledRecipients.length}`)
 
   if (enabledRecipients.length === 0) {
-    return new Response(JSON.stringify({ sent: 0, reason: 'push not enabled' }), { status: 200 })
+    return new Response(JSON.stringify({ sent: 0, reason: 'nobody deliverable' }), { status: 200 })
   }
 
   // 5b. Fetch push subscriptions

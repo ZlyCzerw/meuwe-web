@@ -1,8 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { sendToMany } from '../_shared/webpush.ts'
 import { sendFcmToMany } from '../_shared/fcm.ts'
-import { pickLang, NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
+import { NOTIF_TEXT, groupSubsByLang, type Lang } from '../_shared/notif-i18n.ts'
 import { selectEventAudience, type AudienceProfile } from '../_shared/audience.ts'
+import { filterDeliverable } from '../_shared/recipients.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -45,18 +46,18 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ processed: 0 }), { status: 200 })
   }
 
-  type Profile = AudienceProfile & { language: string | null }
+  // Język pobiera filterDeliverable dla finalnej listy odbiorców.
 
+  // push_enabled tutaj to tylko zmniejszenie payloadu; bramką jest
+  // filterDeliverable, przez które przechodzi finalna lista odbiorców — także
+  // obserwujący wydarzenia prywatnego, których w tym zapytaniu w ogóle nie ma.
   const { data: profiles } = await admin
     .from('profiles')
-    .select('id, interests, radius_km, last_lat, last_lng, language')
+    .select('id, interests, radius_km, last_lat, last_lng')
+    .eq('push_enabled', true)
     .not('last_lat', 'is', null)
     .not('last_lng', 'is', null)
     .gte('last_seen_at', new Date(Date.now() - 30 * 86400_000).toISOString())
-
-  const langByUser = new Map<string, Lang>(
-    (profiles ?? []).map((p: Profile) => [p.id, pickLang(p.language)])
-  )
 
   let totalSent = 0
 
@@ -81,26 +82,20 @@ Deno.serve(async (req) => {
       tags = (tagRows ?? []).map((r: { tag: string }) => r.tag)
     }
 
-    const targetIds = selectEventAudience({
+    const audienceIds = selectEventAudience({
       isPrivate: event.is_private,
       tags,
-      profiles: (profiles ?? []) as Profile[],
+      profiles: (profiles ?? []) as AudienceProfile[],
       lat: event.lat,
       lng: event.lng,
       creatorId: event.creator_id,
       followerIds,
     })
 
-    // Obserwujący bez świeżej lokalizacji nie ma go w `profiles` — dociągamy
-    // jego język, żeby nie dostał powiadomienia po angielsku.
-    const missingLang = targetIds.filter((id) => !langByUser.has(id))
-    if (missingLang.length > 0) {
-      const { data: extra } = await admin
-        .from('profiles').select('id, language').in('id', missingLang)
-      for (const p of (extra ?? []) as { id: string; language: string | null }[]) {
-        langByUser.set(p.id, pickLang(p.language))
-      }
-    }
+    // Jedna bramka dla wszystkich: push_enabled, wyciszenia tego wydarzenia i
+    // język odbiorcy. Wcześniej start wydarzenia szedł także do osób, które je
+    // wyciszyły, i do tych, które nigdy nie włączyły powiadomień.
+    const { ids: targetIds, langByUser } = await filterDeliverable(admin, audienceIds, { eventId: event.id })
 
     if (targetIds.length > 0) {
       const { data: subs } = await admin
@@ -142,7 +137,7 @@ Deno.serve(async (req) => {
     }
 
     await admin.from('events').update({ start_notified_at: now.toISOString() }).eq('id', event.id)
-    console.log(`[push-event-start] event ${event.id} processed, targetIds: ${targetIds.length}`)
+    console.log(`[push-event-start] event ${event.id} processed, audience: ${audienceIds.length}, deliverable: ${targetIds.length}`)
   }
 
   return new Response(JSON.stringify({ processed: events.length, sent: totalSent }), { status: 200 })
