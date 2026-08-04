@@ -21,6 +21,15 @@ import CategoryChip from './CategoryChip'
 /** The card's single left edge — header, grid and footer all use it. */
 const PAD = 20
 
+// The waiting state of "Gotowe". It has to read as not-yet-usable without
+// becoming unreadable: C.inkSoft on the old #E8DFD0 measured 2.77:1, which is
+// under every threshold there is. Both ends move a quarter of the way out of
+// the grey — the label towards ink, the fill towards white — for 4.06:1. Still
+// short of the 4.5:1 that body text would need, but this is a label on a
+// deliberately dormant control, and going further starts to look enabled.
+const DISABLED_BG = '#EEE7DC'
+const DISABLED_INK = '#736F6B'
+
 export default function InterestsOnboardingModal({
   userId,
   radiusKm,
@@ -125,8 +134,8 @@ export default function InterestsOnboardingModal({
           disabled={!ready || busy}
           style={{
             width: '100%', padding: '15px', borderRadius: 999,
-            background: ready ? C.primary : '#E8DFD0',
-            color: ready ? '#fff' : C.inkSoft,
+            background: ready ? C.primary : DISABLED_BG,
+            color: ready ? '#fff' : DISABLED_INK,
             fontSize: 16, fontWeight: 800,
             border: `2.5px solid ${ready ? INK : 'transparent'}`,
             boxShadow: ready ? '0 6px 16px rgba(255,122,69,0.35)' : 'none',

@@ -50,7 +50,14 @@ export default function CategoryChip({
         fontSize: md ? 14 : 13,
         fontWeight: 700,
         textAlign: 'left',
-        border: selected ? `2px solid ${INK}` : '2px solid transparent',
+        // The picker leaves an unselected pill borderless, which works on the
+        // white sheet. On the first-run card the same pill sits on cream and
+        // reads as a soft patch of colour rather than a shape — it needs the
+        // outline to be a pill the way the primary button is one. Selected still
+        // takes the full ink border, so the difference stays obvious.
+        border: selected
+          ? `2px solid ${INK}`
+          : md ? `2px solid ${INK}33` : '2px solid transparent',
         transition: 'background 180ms ease, border-color 180ms ease, transform 180ms cubic-bezier(0.34,1.56,0.64,1)',
         transform: !md && selected ? 'scale(1.05)' : 'scale(1)',
       }}
