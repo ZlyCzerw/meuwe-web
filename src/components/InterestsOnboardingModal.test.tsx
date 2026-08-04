@@ -21,8 +21,11 @@ const doneButton = () => screen.getByRole('button', { name: 'Done' })
 describe('InterestsOnboardingModal', () => {
   it('offers the same vocabulary as the picker behind the plus button', () => {
     render(<InterestsOnboardingModal userId="u1" radiusKm={20} onDone={() => {}} />)
+    // One pass over the tree: twenty-one separate getByRole calls walked it
+    // twenty-one times and timed out under a full-suite run.
+    const labels = screen.getAllByRole('button').map(b => b.textContent?.trim())
     for (const cat of ALL_CATEGORIES) {
-      expect(screen.getByRole('button', { name: new RegExp(`^${cat}$`, 'i') })).toBeInTheDocument()
+      expect(labels).toContain(cat)
     }
   })
 

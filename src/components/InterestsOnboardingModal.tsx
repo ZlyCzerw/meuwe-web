@@ -18,6 +18,9 @@ import CategoryChip from './CategoryChip'
 // The radius is not asked about at all; it arrives already worked out from how
 // far away the nearest event actually is (radiusFromNearest in lib/onboarding).
 
+/** The card's single left edge — header, grid and footer all use it. */
+const PAD = 20
+
 export default function InterestsOnboardingModal({
   userId,
   radiusKm,
@@ -62,18 +65,25 @@ export default function InterestsOnboardingModal({
         paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      <div style={{ padding: '32px 24px 16px', flexShrink: 0 }}>
-        <div style={{ fontFamily: F.display, fontSize: 28, fontWeight: 900, color: C.ink, marginBottom: 10 }}>
+      {/* Centred, and the sentence under it with the heading — a centred title
+          over left-set body text reads as a mistake rather than a choice. The
+          grid and footer keep their single left edge at PAD. */}
+      <div style={{ padding: `28px ${PAD}px 16px`, flexShrink: 0, textAlign: 'center' }}>
+        <div style={{ fontFamily: F.display, fontSize: 26, fontWeight: 900, color: C.ink, marginBottom: 8 }}>
           {t('onboarding.interestsTitle')}
         </div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: C.inkSoft, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: C.inkSoft, lineHeight: 1.45 }}>
           {t('onboarding.interestsBody')}
         </div>
       </div>
 
       <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex' }}>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0 20px 16px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: `0 ${PAD}px 16px` }}>
+          {/* A fixed two-column grid rather than a wrapping row. Pills sized to
+              their own text left a different ragged edge on every line and a
+              wide gutter down the right; two even columns give the eye one
+              vertical line to follow through twenty-one options. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {ALL_CATEGORIES.map(cat => (
               <CategoryChip
                 key={cat}
@@ -93,20 +103,19 @@ export default function InterestsOnboardingModal({
         }} />
       </div>
 
-      <div style={{ flexShrink: 0, padding: '0 20px 24px' }}>
+      <div style={{ flexShrink: 0, padding: `0 ${PAD}px 20px` }}>
         {/* The hint points at a control the user has not noticed yet, so it is
-            shown as well as described. */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: '#fff', borderRadius: 16, padding: '10px 12px', marginBottom: 14,
-        }}>
+            shown as well as described. Borderless: a white card here competed
+            with the pills for attention at the exact moment the pills are the
+            thing to look at. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px', marginBottom: 12 }}>
           <div style={{
-            width: 34, height: 34, flexShrink: 0, borderRadius: '50%',
+            width: 30, height: 30, flexShrink: 0, borderRadius: '50%',
             background: C.berry, border: `2px solid ${INK}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: F.display, fontWeight: 900, fontSize: 16, color: '#fff',
+            fontFamily: F.display, fontWeight: 900, fontSize: 14, color: '#fff',
           }}>{(initial || '?').toUpperCase()}</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, lineHeight: 1.4 }}>
             {t('onboarding.interestsMenuHint')}
           </div>
         </div>
