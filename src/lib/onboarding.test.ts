@@ -16,6 +16,17 @@ describe('parseOnboardingState', () => {
   it('only accepts real booleans, so a stray value cannot skip a step', () => {
     expect(parseOnboardingState('{"locationDone":"yes"}').locationDone).toBe(false)
     expect(parseOnboardingState('{"locationDone":true}').locationDone).toBe(true)
+    expect(parseOnboardingState('{"interestsDone":"yes"}').interestsDone).toBe(false)
+    expect(parseOnboardingState('{"interestsDone":true}').interestsDone).toBe(true)
+  })
+
+  // Everyone who installed before the interests step has an entry without the
+  // field. Reading it as "not done yet" is what makes them see the new step
+  // instead of silently skipping it.
+  it('offers the interests step to someone stored before it existed', () => {
+    const old = '{"locationDone":true,"inviteDone":true}'
+    expect(parseOnboardingState(old).interestsDone).toBe(false)
+    expect(parseOnboardingState(old).locationDone).toBe(true)
   })
 })
 

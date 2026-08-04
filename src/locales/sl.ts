@@ -155,6 +155,12 @@ const sl: Resources = {
     locationAllow: 'Vklopi lokacijo',
     locationSkip: 'Ne zdaj',
     locationDenied: 'Brez lokacije zemljevid pokaže okolico le približno. To lahko spremeniš v sistemskih nastavitvah.',
+    interestsTitle: 'Kaj te zanima?',
+    interestsBody: 'Izberi, o čem naj ti sporočimo. Brez tega gredo novi dogodki v bližini mimo tebe.',
+    interestsRadius: 'Kako daleč iščemo',
+    interestsMenuHint: 'To lahko kadar koli spremeniš v meniju - tapni krog s prvo črko svojega imena zgoraj levo.',
+    interestsDone: 'Končano',
+    interestsSkip: 'Preskoči',
   },
   invite: {
     title: 'Sami ne bo zabave',

@@ -155,6 +155,12 @@ const en: Resources = {
     locationAllow: 'Turn on location',
     locationSkip: 'Not now',
     locationDenied: 'Without location the map shows your area roughly. You can change it in system settings.',
+    interestsTitle: 'What are you into?',
+    interestsBody: 'Pick what we should tell you about. Without this, new events next door pass you by.',
+    interestsRadius: 'How far we look',
+    interestsMenuHint: 'You can change this any time in the menu - tap the circle with the first letter of your name, top left.',
+    interestsDone: 'Done',
+    interestsSkip: 'Skip',
   },
   invite: {
     title: 'No party of one',

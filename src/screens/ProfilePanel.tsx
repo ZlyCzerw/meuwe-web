@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
+import RadiusSlider from '../components/RadiusSlider'
+import { DEFAULT_RADIUS_KM } from '../lib/appConfig'
 import { C, INK, F } from '../lib/tokens'
 import NotificationDot from '../components/NotificationDot'
 import { db } from '../lib/supabase'
@@ -41,7 +43,7 @@ function ProfilePanel({
 }) {
   const { t } = useTranslation()
 
-  const [radius, setRadius] = useState<number>(profile?.radius_km ?? 10)
+  const [radius, setRadius] = useState<number>(profile?.radius_km ?? DEFAULT_RADIUS_KM)
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? [])
   const [interestModalOpen, setInterestModalOpen] = useState(false)
   // What this device can do. null = not checked yet.
@@ -53,7 +55,7 @@ function ProfilePanel({
 
   // Sync local state when profile loads / changes
   useEffect(() => {
-    setRadius(profile?.radius_km ?? 10)
+    setRadius(profile?.radius_km ?? DEFAULT_RADIUS_KM)
     setInterests(profile?.interests ?? [])
   }, [profile])
 
@@ -348,33 +350,12 @@ function ProfilePanel({
 
             {/* Radius */}
             <div style={{ marginTop: 28 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
-                  {t('profile.radius')}
-                </div>
-                <div style={{ fontFamily: F.display, fontSize: 20, fontWeight: 900, color: C.primary }}>
-                  {radius} km
-                </div>
-              </div>
-              <div style={{ position: 'relative', marginTop: 16, height: 36 }}>
-                <div style={{ position: 'absolute', top: 16, left: 0, right: 0, height: 6, borderRadius: 999, background: '#EFE4D2' }} />
-                <div style={{ position: 'absolute', top: 16, left: 0, height: 6, borderRadius: 999, background: C.primary, width: `${(radius / 50) * 100}%` }} />
-                <input
-                  type="range" min="1" max="50" value={radius}
-                  onChange={e => handleRadiusChange(Number(e.target.value))}
-                  onPointerUp={e => handleRadiusCommit(Number((e.target as HTMLInputElement).value))}
-                  style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer' }}
-                />
-                <div style={{
-                  position: 'absolute', top: 6, left: `calc(${(radius / 50) * 100}% - 13px)`,
-                  width: 26, height: 26, borderRadius: '50%', background: '#fff',
-                  border: `3px solid ${C.primary}`, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', pointerEvents: 'none',
-                }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.inkSoft, fontWeight: 600, marginTop: 4 }}>
-                <span>1 km</span>
-                <span>50 km</span>
-              </div>
+              <RadiusSlider
+                value={radius}
+                onChange={handleRadiusChange}
+                onCommit={handleRadiusCommit}
+                label={t('profile.radius')}
+              />
             </div>
 
             {/* Push notifications */}

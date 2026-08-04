@@ -27,8 +27,10 @@ import { StoreHint } from './components/StoreBadge'
 import { deviceStoreOs } from './lib/stores'
 import AppPromoSheet from './components/AppPromoSheet'
 import LocationOnboardingModal from './components/LocationOnboardingModal'
+import InterestsOnboardingModal from './components/InterestsOnboardingModal'
 import InviteFriendsModal from './components/InviteFriendsModal'
-import { readOnboardingState, writeOnboardingState, locationPromptDelayMs } from './lib/onboarding'
+import { readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS } from './lib/onboarding'
+import { INITIAL_SCAN_KM } from './lib/appConfig'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
@@ -102,6 +104,7 @@ export default function App() {
   // On the web the browser owns the permission prompt, so nothing is gated there.
   const [nativeGeoAllowed, setNativeGeoAllowed] = useState(!isNativePlatform())
   const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [interestsModalOpen, setInterestsModalOpen] = useState(false)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const onboardingRef = useRef(readOnboardingState())
 
@@ -272,6 +275,31 @@ export default function App() {
       .catch(err => console.error('[geo] checkPermissions failed:', err))
     return () => { cancelled = true; if (timer) clearTimeout(timer) }
   }, [screen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The interests step outside the native permission chain: on the web, where
+  // the location card never runs, and on a native install that already holds the
+  // permission — in both cases finishLocationStep is never called, so without
+  // this the step would reach nobody. Guests are skipped: the write needs an
+  // account, and the effect re-runs when one appears.
+  useEffect(() => {
+    if (screen !== 'map' || !session) return
+    if (onboardingRef.current.interestsDone) return
+    // The location card is open or still pending — it hands over on its own.
+    if (isNativePlatform() && !nativeGeoAllowed && !onboardingRef.current.locationDone) return
+    if (locationModalOpen) return
+
+    const timer = setTimeout(() => {
+      if (onboardingRef.current.interestsDone) return
+      const layers = navLayersRef.current
+      const busy = layers.authModal || layers.selEvent || layers.myEventSelected
+        || layers.followedEventSelected || layers.createOpen || layers.profileOpen
+        || layers.accountOpen || layers.screen !== 'map'
+        || pickingLocation || promoOpen || inviteModalOpen
+      if (busy) return
+      setInterestsModalOpen(true)
+    }, DEFAULT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [screen, session, nativeGeoAllowed, locationModalOpen, pickingLocation, promoOpen, inviteModalOpen])
 
   // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
@@ -507,7 +535,7 @@ export default function App() {
 
   async function goToMap() {
     const pos = userPos || lastKnownPos
-    const maxKm = profile?.radius_km ?? 30
+    const maxKm = profile?.radius_km ?? INITIAL_SCAN_KM
     let zoom = 15
     if (pos) {
       const nearby = await db.getEvents(pos.lat, pos.lng, 15, 0)
@@ -555,17 +583,34 @@ export default function App() {
       })
   }
 
+  // Never two dialogs at once: each step hands over only once its own card is
+  // gone. location → interests → invite, and each is offered exactly once.
   function finishLocationStep() {
     onboardingRef.current = { ...onboardingRef.current, locationDone: true }
     writeOnboardingState(onboardingRef.current)
     setLocationModalOpen(false)
-    // Never two dialogs at once: the invite waits until the location card is
-    // gone, and it is offered exactly once.
-    if (!onboardingRef.current.inviteDone) {
-      onboardingRef.current = { ...onboardingRef.current, inviteDone: true }
-      writeOnboardingState(onboardingRef.current)
-      setTimeout(() => setInviteModalOpen(true), 900)
+    // The interests step needs an account to write to; a guest goes straight to
+    // the invite and is asked after signing in (see the effect below).
+    if (session && !onboardingRef.current.interestsDone) {
+      setTimeout(() => setInterestsModalOpen(true), 900)
+      return
     }
+    offerInvite()
+  }
+
+  function finishInterestsStep(saved: boolean) {
+    onboardingRef.current = { ...onboardingRef.current, interestsDone: true }
+    writeOnboardingState(onboardingRef.current)
+    setInterestsModalOpen(false)
+    if (saved) reloadProfile()
+    offerInvite()
+  }
+
+  function offerInvite() {
+    if (onboardingRef.current.inviteDone) return
+    onboardingRef.current = { ...onboardingRef.current, inviteDone: true }
+    writeOnboardingState(onboardingRef.current)
+    setTimeout(() => setInviteModalOpen(true), 900)
   }
 
   async function handleAllowLocation() {
@@ -842,6 +887,14 @@ export default function App() {
       />
       {locationModalOpen && (
         <LocationOnboardingModal onAllow={handleAllowLocation} onSkip={finishLocationStep} />
+      )}
+      {interestsModalOpen && session && (
+        <InterestsOnboardingModal
+          userId={session.user.id}
+          initial={(profile?.name_shown || profile?.display_name || session.user.email || '?')[0]}
+          onDone={() => finishInterestsStep(true)}
+          onSkip={() => finishInterestsStep(false)}
+        />
       )}
       {inviteModalOpen && (
         <InviteFriendsModal onClose={() => setInviteModalOpen(false)} />

@@ -155,6 +155,12 @@ const es: Resources = {
     locationAllow: 'Activar ubicación',
     locationSkip: 'Ahora no',
     locationDenied: 'Sin ubicación el mapa muestra tu zona de forma aproximada. Puedes cambiarlo en los ajustes del sistema.',
+    interestsTitle: '¿Qué te interesa?',
+    interestsBody: 'Elige de qué te avisamos. Sin esto, los eventos nuevos a tu lado pasan de largo.',
+    interestsRadius: 'Hasta dónde buscamos',
+    interestsMenuHint: 'Puedes cambiarlo cuando quieras en el menú - toca el círculo con la primera letra de tu nombre, arriba a la izquierda.',
+    interestsDone: 'Listo',
+    interestsSkip: 'Omitir',
   },
   invite: {
     title: 'Solos no hay fiesta',

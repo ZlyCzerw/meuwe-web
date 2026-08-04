@@ -155,6 +155,12 @@ const de: Resources = {
     locationAllow: 'Standort aktivieren',
     locationSkip: 'Jetzt nicht',
     locationDenied: 'Ohne Standort zeigt die Karte deine Gegend nur ungefähr. Du kannst das in den Systemeinstellungen ändern.',
+    interestsTitle: 'Was interessiert dich?',
+    interestsBody: 'Wähle, worüber wir dir Bescheid geben. Ohne das ziehen neue Events nebenan an dir vorbei.',
+    interestsRadius: 'Wie weit wir suchen',
+    interestsMenuHint: 'Du kannst das jederzeit im Menü ändern - tippe oben links auf den Kreis mit dem ersten Buchstaben deines Namens.',
+    interestsDone: 'Fertig',
+    interestsSkip: 'Überspringen',
   },
   invite: {
     title: 'Allein tanzt es sich schlecht',

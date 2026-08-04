@@ -1,7 +1,12 @@
-// First-run flow for the native app. The rule it exists to enforce: no system
-// permission dialog appears before a sentence explaining why, and never two
-// dialogs at once. Notifications are deliberately NOT part of it — they are
-// asked for at the first follow, where the reason is obvious (see EventSheet).
+// First run: location → interests → invite. The rule it exists to enforce: no
+// system permission dialog appears before a sentence explaining why, and never
+// two dialogs at once. Notifications are deliberately NOT part of it — they are
+// asked for once the user has shown some interest (see lib/pushAsk.ts).
+//
+// The interests step is the one with a backend consequence: selectEventAudience
+// (supabase/functions/_shared/audience.ts) drops anyone whose `interests` share
+// nothing with a tagged event, so an account that never answered it is invisible
+// to the geo fan-out.
 
 export const ONBOARDING_KEY = 'meuwe_onboarding_v1'
 
@@ -13,11 +18,14 @@ export const DEFAULT_DELAY_MS = 3_000
 export interface OnboardingState {
   /** Set once the location step has been answered, either way. */
   locationDone: boolean
+  /** Set once the interests step has been answered, either way. */
+  interestsDone: boolean
   /** Set once the invite sheet has been offered, so it is offered only once. */
   inviteDone: boolean
 }
 
-export const emptyOnboardingState = (): OnboardingState => ({ locationDone: false, inviteDone: false })
+export const emptyOnboardingState = (): OnboardingState =>
+  ({ locationDone: false, interestsDone: false, inviteDone: false })
 
 export function parseOnboardingState(raw: string | null): OnboardingState {
   if (!raw) return emptyOnboardingState()
@@ -25,6 +33,9 @@ export function parseOnboardingState(raw: string | null): OnboardingState {
     const parsed = JSON.parse(raw) as Partial<OnboardingState>
     return {
       locationDone: parsed.locationDone === true,
+      // Missing field (anything stored before this step existed) reads as false,
+      // so an existing install is offered the step rather than skipping it.
+      interestsDone: parsed.interestsDone === true,
       inviteDone: parsed.inviteDone === true,
     }
   } catch {

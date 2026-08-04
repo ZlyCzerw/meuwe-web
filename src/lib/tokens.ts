@@ -31,6 +31,18 @@ export const ALL_CATEGORIES: Category[] = [
   'volunteering', 'workshop', 'alert',
 ]
 
+// Bar order; party + music lead per product requirement, then the rest. This is
+// the one place the product decides how it ranks its categories: the filter bar
+// renders it in order, and the first-run interests step takes the top of it.
+export const PRIORITY_FILTERS: Category[] = [
+  'party', 'music', 'culture', 'sport', 'food', 'outdoor', 'family', 'art',
+  'film', 'gaming', 'tech', 'nature', 'travel', 'yoga', 'dance', 'comedy',
+  'kids', 'pets', 'volunteering', 'workshop', 'alert',
+]
+
+/** The six offered during the first run — a grid, not a catalogue. */
+export const ONBOARDING_CATEGORIES: Category[] = PRIORITY_FILTERS.slice(0, 6)
+
 // SAFETY: icon() returns a static, hardcoded SVG string — not user input.
 // dangerouslySetInnerHTML in MapScreen.tsx is safe because these values
 // are compile-time constants defined in this file only.

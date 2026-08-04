@@ -10,6 +10,23 @@ export const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=
 export const WEB_ORIGIN = 'https://meuwe.eu'
 
 /**
+ * How far around themselves a user is notified about, when they have not said
+ * otherwise. Must stay in step with DEFAULT_RADIUS_KM in
+ * supabase/functions/_shared/audience.ts, which is the server's copy — the two
+ * cannot import each other (Deno vs the web bundle), so they are kept equal by
+ * hand and by the comment on both sides.
+ */
+export const DEFAULT_RADIUS_KM = 10
+
+/**
+ * How far the map looks for something to show when it is picking the opening
+ * zoom. Deliberately wider than DEFAULT_RADIUS_KM: this one is not a promise
+ * about notifications, it only decides how much of the world the first frame
+ * covers, and starting too tight is how a new user lands on an empty map.
+ */
+export const INITIAL_SCAN_KM = 30
+
+/**
  * Address-book import (invite friends). OFF by design.
  *
  * Turning this on is not a code-only change. Before flipping it you must:

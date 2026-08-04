@@ -1,16 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { C, INK, TAG_META } from '../lib/tokens'
+import { C, INK, TAG_META, PRIORITY_FILTERS } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { computeVisibleCount } from '../lib/filterBarFit'
 
-// Bar order; party + music lead per product requirement, then the rest.
-const PRIORITY_FILTERS: Category[] = [
-  'party', 'music', 'culture', 'sport', 'food', 'outdoor', 'family', 'art',
-  'film', 'gaming', 'tech', 'nature', 'travel', 'yoga', 'dance', 'comedy',
-  'kids', 'pets', 'volunteering', 'workshop', 'alert',
-]
 const GAP = 8
 
 type Props = {
