@@ -2,10 +2,28 @@ import { supabase } from './supabase'
 import { isNativePlatform, isAndroid } from './platform'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import type { DevicePushState, PushPermission } from './pushState'
+import { webPushSupported } from './webPushSupport'
 
 // Klucz publiczny VAPID — ustaw w .env jako VITE_VAPID_PUBLIC_KEY
 // Generujesz: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
+
+/**
+ * Asked by both the "what can this device do" and the "turn it on" paths, so
+ * they can never again disagree about whether web push is available here.
+ * Without the key PushManager.subscribe has nothing to subscribe with, and a
+ * browser holding every API is still a browser that cannot receive anything.
+ */
+function thisBrowserCanPush(): boolean {
+  const ok = webPushSupported({
+    serviceWorker: 'serviceWorker' in navigator,
+    PushManager: 'PushManager' in window,
+    Notification: 'Notification' in window,
+    hasVapidKey: !!VAPID_PUBLIC_KEY,
+  })
+  if (!ok && !VAPID_PUBLIC_KEY) console.warn('[push] VITE_VAPID_PUBLIC_KEY not set — web push is off')
+  return ok
+}
 
 // This module answers exactly one question: what can THIS device do right now.
 // Whether the user *wants* notifications lives in profile.push_enabled and is
@@ -104,9 +122,7 @@ export async function getDevicePushState(userId: string | null): Promise<DeviceP
     return { permission, registered: await isTokenStored(userId, token) }
   }
 
-  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    return { permission: 'unsupported', registered: false }
-  }
+  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false }
   const permission: PushPermission =
     Notification.permission === 'granted' ? 'granted'
     : Notification.permission === 'denied' ? 'denied'
@@ -182,14 +198,7 @@ export async function enablePushOnThisDevice(userId: string): Promise<DevicePush
     return { permission, registered: await registerNativeToken() }
   }
 
-  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    return { permission: 'unsupported', registered: false }
-  }
-  if (!VAPID_PUBLIC_KEY) {
-    console.error('[push] VITE_VAPID_PUBLIC_KEY not set')
-    return { permission: 'unsupported', registered: false }
-  }
-
+  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false }
   const result = await Notification.requestPermission()
   if (result !== 'granted') {
     // 'denied' is final; 'default' means the prompt was dismissed and can return.

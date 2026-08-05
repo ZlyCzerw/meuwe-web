@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F, ALL_CATEGORIES } from '../lib/tokens'
 import { db } from '../lib/supabase'
+import { enablePushOnThisDevice } from '../lib/push'
 import CategoryChip from './CategoryChip'
 
 // Step two of the first run. It exists because of a backend rule, not because
@@ -55,7 +56,17 @@ export default function InterestsOnboardingModal({
     if (!ready) return
     setBusy(true)
     try {
-      await db.updateProfile({ id: userId, interests: picked, radius_km: radiusKm })
+      // The card promises to let the user know when something happens nearby, so
+      // "Gotowe" has to be the moment that becomes true — saving the categories
+      // and leaving notifications off would make the promise something they only
+      // discover is empty weeks later, by never hearing anything.
+      //
+      // A refusal is not a failure of this step: the categories are still worth
+      // keeping, and 'denied' remains repairable from the profile. Only a
+      // platform that cannot deliver at all is left unclaimed.
+      const device = await enablePushOnThisDevice(userId)
+      const wish = device.permission === 'unsupported' ? {} : { push_enabled: true }
+      await db.updateProfile({ id: userId, interests: picked, radius_km: radiusKm, ...wish })
     } catch (err) {
       // Stated, not hidden — but the user is not held here over it. The profile
       // panel can still set both fields.

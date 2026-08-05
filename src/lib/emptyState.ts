@@ -88,6 +88,18 @@ export function summariseProbe(
 }
 
 /**
+ * Whether the empty map deserves a card at all.
+ *
+ * The card answers one question: "I opened this and there is nothing here."
+ * Someone who has already watched pins appear while panning has answered it for
+ * themselves — telling them again each time they cross a field is noise, not
+ * help. And once said, it is said: one card per visit.
+ */
+export function shouldOfferWayOut(ctx: { seenAnyEvent: boolean; alreadyOffered: boolean }): boolean {
+  return !ctx.seenAnyEvent && !ctx.alreadyOffered
+}
+
+/**
  * Which way out to offer, cheapest first: another day is one tap and the map has
  * content; a wider look is one tap and a longer trip; being the first is work.
  * `null` means the probe failed, which is not the same as nothing being there.

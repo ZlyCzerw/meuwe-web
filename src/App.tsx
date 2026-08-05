@@ -1017,6 +1017,11 @@ export default function App() {
           onDecline={() => {
             updatePushAsk(s => pushAsk.markDeclined(s, Date.now()))
             setPushAskOpen(false)
+            // A refusal can still have written something — the card records the
+            // wish when the system prompt is denied, so the profile can offer
+            // the repair. Without this reload the menu kept showing the state
+            // from before the card was ever opened.
+            reloadProfile()
           }}
         />
       )}

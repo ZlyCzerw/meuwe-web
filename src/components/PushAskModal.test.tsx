@@ -51,6 +51,30 @@ describe('PushAskModal', () => {
     expect(onEnabled).not.toHaveBeenCalled()
   })
 
+  // Recording the wish is only useful where something can still be done about
+  // it: 'denied' shows up in the profile as blocked, with the system-settings
+  // way out. 'unsupported' has no way out at all, so writing it there leaves an
+  // account marked as wanting notifications it can never receive.
+  it('records the wish when the system said no, because that can still be repaired', async () => {
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} />)
+
+    fireEvent.click(screen.getByText('Turn on notifications'))
+
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', push_enabled: true }))
+  })
+
+  it('records nothing when the platform cannot deliver at all', async () => {
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'unsupported', registered: false })
+    const onDecline = vi.fn()
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} />)
+
+    fireEvent.click(screen.getByText('Turn on notifications'))
+
+    await waitFor(() => expect(onDecline).toHaveBeenCalled())
+    expect(updateProfile).not.toHaveBeenCalled()
+  })
+
   it('takes "not now" for an answer without touching the device', () => {
     const onDecline = vi.fn()
     render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} />)

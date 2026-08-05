@@ -9,7 +9,10 @@ import { useEvents } from '../hooks/useEvents'
 import { haversineKm, startupZoom, MAX_MAP_KM } from '../lib/geo'
 import { db } from '../lib/supabase'
 import { enablePushOnThisDevice } from '../lib/push'
-import { summariseProbe, pickEmptyStateVariant, type NearbyProbe, type EmptyVariant } from '../lib/emptyState'
+import {
+  summariseProbe, pickEmptyStateVariant, shouldOfferWayOut,
+  type NearbyProbe, type EmptyVariant,
+} from '../lib/emptyState'
 import { pinHTML, meHTML, privateHTML, clusterHTML } from '../components/mapIcons'
 import { isCurrentlyLive } from '../lib/eventStatus'
 import Avatar from '../components/Avatar'
@@ -108,6 +111,10 @@ function MapScreen({
   const [probe, setProbe] = useState<{ key: string; result: NearbyProbe | null } | null>(null)
   const [notifyDone, setNotifyDone] = useState(false)
   const autoWidenedRef = useRef(false)
+  // Two facts the card needs about this visit, not about this viewport: has the
+  // map ever had anything on it, and has the card already had its say.
+  const seenAnyEventRef = useRef(false)
+  const offeredWayOutRef = useRef(false)
 
   const emptyCtaStyle: React.CSSProperties = {
     marginTop: 10, width: '100%', padding: '10px 14px', borderRadius: 999,
@@ -291,10 +298,20 @@ function MapScreen({
   // view changes, keeps a stale answer from being shown against a new position
   // and keeps setState out of the effect body.
   const probeKey = `${eventsPos.lat.toFixed(3)},${eventsPos.lng.toFixed(3)},${Math.round(mapRadiusKm)}`
+  // The card is gated by the probe rather than by a render-time check: the probe
+  // effect is the one place allowed to look at the refs, and it simply declines
+  // to ask about a view it should not comment on. No probe, no card.
   const isEmptyView = visibleEvents.length === 0 && !loading && !pickingLocation
 
   useEffect(() => {
+    if (visibleEvents.length > 0) { seenAnyEventRef.current = true; return }
     if (!isEmptyView) return
+    // Someone who has already watched pins appear knows the map has things on
+    // it; telling them so every time they cross a field is noise.
+    if (!shouldOfferWayOut({
+      seenAnyEvent: seenAnyEventRef.current,
+      alreadyOffered: offeredWayOutRef.current,
+    })) return
     let cancelled = false
     const timer = setTimeout(async () => {
       const rows = await db.probeNearby(eventsPos.lat, eventsPos.lng)
@@ -307,7 +324,7 @@ function MapScreen({
       })
     }, 400)
     return () => { cancelled = true; clearTimeout(timer) }
-  }, [isEmptyView, probeKey, eventsPos.lat, eventsPos.lng, mapRadiusKm])
+  }, [isEmptyView, probeKey, eventsPos.lat, eventsPos.lng, mapRadiusKm, visibleEvents.length])
 
   const emptyVariant = useMemo<EmptyVariant>(
     () => probe?.key === probeKey ? pickEmptyStateVariant(probe.result) : { kind: 'unknown' },
@@ -712,7 +729,7 @@ function MapScreen({
           animate `transform`, so putting both on one node let the animation win
           and the card drifted off centre — invisible while it was a narrow
           bubble, half off-screen once it grew buttons. */}
-      {visibleEvents.length === 0 && !loading && !pickingLocation && (
+      {isEmptyView && probe?.key === probeKey && (
         <div style={{
           position: 'absolute', top: '38%', left: '50%',
           transform: 'translate(-50%,-50%)',
@@ -735,7 +752,12 @@ function MapScreen({
                   {t('map.emptyToday', { km: Math.round(mapRadiusKm) })}
                 </div>
                 <button
-                  onClick={() => setDayIdx(TODAY_IDX + emptyVariant.dayOffset)}
+                  onClick={() => {
+                    // Acted on, so it has said its piece — a user who lands on
+                    // another empty day is not told the same thing again.
+                    offeredWayOutRef.current = true
+                    setDayIdx(TODAY_IDX + emptyVariant.dayOffset)
+                  }}
                   style={emptyCtaStyle}
                 >
                   {t('map.emptyNextDayCta', {
@@ -751,7 +773,10 @@ function MapScreen({
                 <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
                   {t('map.emptyWider', { km: Math.round(emptyVariant.nearestKm) })}
                 </div>
-                <button onClick={() => widenTo(emptyVariant.nearestKm)} style={emptyCtaStyle}>
+                <button
+                  onClick={() => { offeredWayOutRef.current = true; widenTo(emptyVariant.nearestKm) }}
+                  style={emptyCtaStyle}
+                >
                   {t('map.emptyWiderCta')}
                 </button>
               </>

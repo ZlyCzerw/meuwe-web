@@ -6,14 +6,17 @@ import { ALL_CATEGORIES } from '../lib/tokens'
 import '../lib/i18n'
 
 const updateProfile = vi.fn<() => Promise<unknown>>()
+const enablePushOnThisDevice = vi.fn<() => Promise<{ permission: string; registered: boolean }>>()
 vi.mock('../lib/supabase', () => ({
   db: { updateProfile: (...a: unknown[]) => updateProfile(...(a as [])) },
   supabase: {},
 }))
+vi.mock('../lib/push', () => ({ enablePushOnThisDevice: () => enablePushOnThisDevice() }))
 
 beforeEach(() => {
   vi.clearAllMocks()
   updateProfile.mockResolvedValue({ error: null })
+  enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: true })
 })
 
 const doneButton = () => screen.getByRole('button', { name: 'Done' })
@@ -69,7 +72,53 @@ describe('InterestsOnboardingModal', () => {
     fireEvent.click(doneButton())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: ['music', 'food'], radius_km: 17 })
+    expect(updateProfile).toHaveBeenCalledWith({
+      id: 'u1', interests: ['music', 'food'], radius_km: 17, push_enabled: true,
+    })
+  })
+
+  // The card says "we'll let you know when something happens nearby". Saving the
+  // categories and leaving notifications off would make that a lie the user only
+  // discovers weeks later, by never hearing anything.
+  it('turns notifications on, because that is what the card promised', async () => {
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
+
+    await waitFor(() => expect(enablePushOnThisDevice).toHaveBeenCalled())
+    expect(updateProfile).toHaveBeenCalledWith({
+      id: 'u1', interests: ['music'], radius_km: 17, push_enabled: true,
+    })
+  })
+
+  it('saves the interests even when the device refuses notifications', async () => {
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
+    const onDone = vi.fn()
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={onDone} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    // Still recorded: 'denied' is repairable from the profile, so the wish is worth keeping.
+    expect(updateProfile).toHaveBeenCalledWith({
+      id: 'u1', interests: ['music'], radius_km: 17, push_enabled: true,
+    })
+  })
+
+  // Nothing to repair here, so claiming the wish would leave the profile
+  // permanently promising something this platform cannot do.
+  it('does not claim notifications on a platform that cannot deliver them', async () => {
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'unsupported', registered: false })
+    const onDone = vi.fn()
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={onDone} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: ['music'], radius_km: 17 })
   })
 
   it('still tells the user where to change this later', () => {

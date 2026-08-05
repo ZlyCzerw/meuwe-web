@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  summariseProbe, pickEmptyStateVariant, PROBE_DAYS,
+  summariseProbe, pickEmptyStateVariant, shouldOfferWayOut, PROBE_DAYS,
   type ProbeEvent, type NearbyProbe,
 } from './emptyState'
 
@@ -64,6 +64,24 @@ describe('summariseProbe', () => {
     const over: ProbeEvent = { ...ev(2, 0, 9), end_time: new Date('2026-08-04T13:00:00').toISOString() }
     expect(probe([running], 1).widerToday + (probe([running]).nearestKm !== null ? 1 : 0)).toBeGreaterThan(0)
     expect(probe([over]).nearestKm).toBeNull()
+  })
+})
+
+describe('shouldOfferWayOut', () => {
+  // The card answers "I opened this and there is nothing here". Someone who has
+  // already watched pins come and go while panning knows perfectly well that the
+  // map has things on it, and does not need telling every time they cross a
+  // field.
+  it('offers a way out to someone who has not seen anything yet', () => {
+    expect(shouldOfferWayOut({ seenAnyEvent: false, alreadyOffered: false })).toBe(true)
+  })
+
+  it('stays quiet once the user has seen the map working', () => {
+    expect(shouldOfferWayOut({ seenAnyEvent: true, alreadyOffered: false })).toBe(false)
+  })
+
+  it('says its piece once per visit, not on every empty patch', () => {
+    expect(shouldOfferWayOut({ seenAnyEvent: false, alreadyOffered: true })).toBe(false)
   })
 })
 

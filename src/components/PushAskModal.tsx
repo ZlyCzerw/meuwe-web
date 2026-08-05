@@ -30,9 +30,14 @@ export default function PushAskModal({
     setBusy(true)
     db.trackClick('push_ask_enable')
     const device = await enablePushOnThisDevice(userId)
-    // The intent is recorded even when the device refuses, so the profile panel
-    // shows the mismatch and offers the repair instead of hiding it.
-    await db.updateProfile({ id: userId, push_enabled: true })
+    // The wish is recorded even when the device refuses, so the profile panel
+    // shows the mismatch and offers the repair instead of hiding it — but only
+    // where a repair exists. 'unsupported' has none, and an account marked as
+    // wanting notifications it can never receive is a lie the profile would
+    // then have to keep telling.
+    if (device.permission !== 'unsupported') {
+      await db.updateProfile({ id: userId, push_enabled: true })
+    }
     setBusy(false)
     if (device.permission === 'granted' && device.registered) {
       onEnabled()
