@@ -92,11 +92,9 @@ piątek 17:00 (strefa liczona z last_lat/lng - Warszawa i Wyspy Kanaryjskie
 mają inne godziny). Wysyłkę do jednego użytkownika częściej niż raz na 6 dni
 blokuje `last_digest_at`, więc podwójne odpalenie niczego nie zdubluje.
 
-> Historycznie zadanie push-event-start chodziło na cron-job.org (POST z
-> nagłówkami `Authorization: Bearer <anon_key>` + `x-cron-secret`, body `{}`).
-> Po przejściu na pg_cron zadania na cron-job.org należy wyłączyć - dla
-> event-start zaraz po pierwszym udanym przebiegu, żeby dwa crony nie zdążyły
-> zdublować powiadomienia o starcie.
+> Wcześniejsza wersja tej instrukcji opisywała zadanie na cron-job.org, ale
+> nigdy nie zostało założone - push-event-start do 2026-08-05 nie był
+> wywoływany wcale. pg_cron to pierwszy działający harmonogram w projekcie.
 
 ## 7. Frontend — zmienna środowiskowa
 

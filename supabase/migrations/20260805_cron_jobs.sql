@@ -1,9 +1,12 @@
--- Harmonogram powiadomień w samym Supabase (pg_cron + pg_net) zamiast
--- zewnętrznego cron-job.org.
+-- Harmonogram powiadomień w samym Supabase (pg_cron + pg_net).
 --
--- Dlaczego: brak zależności od zewnętrznego konta, sekrety nie opuszczają
--- projektu (Vault), a definicja zadań leży w repo jak każda migracja zamiast
--- w klikanym ręcznie panelu.
+-- To jest PIERWSZY działający harmonogram w projekcie: stara instrukcja
+-- opisywała zadanie na cron-job.org, ale nigdy nie zostało założone, więc
+-- push-event-start do 2026-08-05 nie był wywoływany wcale.
+--
+-- Dlaczego pg_cron, nie zewnętrzny cron: brak zależności od obcego konta,
+-- sekrety nie opuszczają projektu (Vault), a definicja zadań leży w repo jak
+-- każda migracja zamiast w klikanym ręcznie panelu.
 --
 -- URUCHAMIANE RĘCZNIE w SQL Editorze (historia migracji na PROD jest pusta,
 -- `supabase db push` jest niebezpieczny). Ten sam plik działa na staging
@@ -30,15 +33,13 @@
 --     from cron.job_run_details
 --     join cron.job using (jobid)
 --     order by start_time desc limit 20;
--- oraz w logach funkcji (Dashboard → Edge Functions) - powinny pojawiać się
--- wpisy z pg_cron obok dotychczasowych z cron-job.org.
+-- oraz w logach funkcji (Dashboard → Edge Functions).
 --
--- Dopiero po potwierdzeniu wyłącz zadania na cron-job.org. Nakładka dwóch
--- cronów przez chwilę:
---   - dla push-weekly-digest jest bezpieczna (last_digest_at, odstęp 6 dni),
---   - dla push-event-start może zdublować powiadomienie o starcie, jeśli oba
---     crony trafią w to samo 5-minutowe okno przed zapisem start_notified_at -
---     więc cron-job.org wyłącz zaraz po pierwszym udanym przebiegu z pg_cron.
+-- `succeeded` w job_run_details znaczy tylko "pg_cron wysłał żądanie";
+-- odpowiedź funkcji sprawdza się w net._http_response:
+--   select status_code, content::text, created
+--     from net._http_response order by created desc limit 5;
+-- 200 = działa; 401 = cron_secret w Vault różni się od CRON_SECRET funkcji.
 --
 -- Wycofanie:
 --   select cron.unschedule('push-event-start');
