@@ -36,7 +36,7 @@ import {
 import { startupZoom, MAX_MAP_KM } from './lib/geo'
 import { summariseProbe } from './lib/emptyState'
 import { isScreenClear, type OverlayFlags } from './lib/overlays'
-import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
+import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown, markPromoDismissed } from './lib/appPromo'
 import PushAskModal from './components/PushAskModal'
 import * as pushAsk from './lib/pushAsk'
 import { resolvePushState } from './lib/pushState'
@@ -130,6 +130,13 @@ export default function App() {
   const [promoOpen, setPromoOpen] = useState(false)
   const promoStateRef = useRef(readPromoState())
   const arrivedAtRef = useRef(Date.now())
+  // Closing the sheet is the refusal, not opening it: a showing nobody saw must
+  // not count towards the three that buy three days of silence.
+  const dismissPromo = () => {
+    promoStateRef.current = markPromoDismissed(promoStateRef.current, Date.now())
+    writePromoState(promoStateRef.current)
+    setPromoOpen(false)
+  }
 
   // ── Asking for notifications ───────────────────────────────────────────────
   // EventSheet writes to the same ledger when someone follows, so every change
@@ -983,7 +990,7 @@ export default function App() {
       />
       <ConfettiBurst visible={showConfetti} />
       {promoOpen && promoOs && (
-        <AppPromoSheet os={promoOs} onClose={() => setPromoOpen(false)} />
+        <AppPromoSheet os={promoOs} onClose={dismissPromo} />
       )}
       <AccountPanel
         open={accountOpen && !isOverlay}
