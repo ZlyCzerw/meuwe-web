@@ -72,38 +72,31 @@ Otwórz: **Supabase Dashboard → Database → Webhooks → Create new hook**
 
 > `service_role_key` znajdziesz w: **Settings → API → service_role**
 
-## 6. cron-job.org — "Event starts" (bezpłatny)
+## 6. Harmonogram — Supabase Cron (pg_cron + pg_net)
 
-1. Zarejestruj się na https://cron-job.org
-2. Stwórz nowe zadanie:
-   - **URL:** `https://bcfhsbnbvsuxsiwmeway.supabase.co/functions/v1/push-event-start`
-   - **Metoda:** POST
-   - **Nagłówki:**
-     ```
-     Authorization: Bearer <anon_key>
-     Content-Type: application/json
-     x-cron-secret: <CRON_SECRET z kroku 3>
-     ```
-   - **Interwał:** co 5 minut
-   - **Body:** `{}`
+Oba cykliczne wywołania (start wydarzeń co 5 minut, cotygodniowy digest co
+godzinę) planuje sam Supabase. Definicja zadań:
+`supabase/migrations/20260805_cron_jobs.sql` - uruchamiana ręcznie w SQL
+Editorze, osobno na staging i na PROD.
 
-> `anon_key` znajdziesz w: **Settings → API → anon public**
+Zanim uruchomisz, dodaj w Vault (Project Settings → Vault) trzy sekrety:
+`project_url`, `anon_key`, `cron_secret` - wartości i szczegóły opisane w
+komentarzu na górze tego pliku SQL. Tam też są zapytania kontrolne
+(`cron.job`, `cron.job_run_details`) i wycofanie.
 
-## 6b. cron-job.org — "Weekly digest" (piątek 17:00 lokalnie)
+Digest wymaga też kolumny `profiles.last_digest_at` - migracja
+`supabase/migrations/20260805_weekly_digest.sql`, również ręcznie.
 
-Drugie zadanie, te same nagłówki co w kroku 6:
+Dlaczego digest chodzi co godzinę: funkcja sama sprawdza, u kogo właśnie jest
+piątek 17:00 (strefa liczona z last_lat/lng - Warszawa i Wyspy Kanaryjskie
+mają inne godziny). Wysyłkę do jednego użytkownika częściej niż raz na 6 dni
+blokuje `last_digest_at`, więc podwójne odpalenie niczego nie zdubluje.
 
-- **URL:** `https://bcfhsbnbvsuxsiwmeway.supabase.co/functions/v1/push-weekly-digest`
-- **Metoda:** POST, **Body:** `{}`
-- **Interwał:** co godzinę, o pełnej godzinie (np. `0 * * * *`)
-
-Zadanie chodzi co godzinę, bo to funkcja sama sprawdza, u kogo właśnie jest
-piątek 17:00 (strefa liczona z last_lat/lng - Warszawa i Wyspy Kanaryjskie mają
-inne godziny). Wysyłkę do jednego użytkownika częściej niż raz na 6 dni blokuje
-`profiles.last_digest_at`, więc podwójne odpalenie crona niczego nie zdubluje.
-
-Przed pierwszym uruchomieniem wykonaj ręcznie w SQL Editorze migrację
-`supabase/migrations/20260805_weekly_digest.sql` (kolumna `last_digest_at`).
+> Historycznie zadanie push-event-start chodziło na cron-job.org (POST z
+> nagłówkami `Authorization: Bearer <anon_key>` + `x-cron-secret`, body `{}`).
+> Po przejściu na pg_cron zadania na cron-job.org należy wyłączyć - dla
+> event-start zaraz po pierwszym udanym przebiegu, żeby dwa crony nie zdążyły
+> zdublować powiadomienia o starcie.
 
 ## 7. Frontend — zmienna środowiskowa
 
