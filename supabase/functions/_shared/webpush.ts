@@ -11,8 +11,13 @@ export interface PushSubscriptionRecord {
 export interface PushPayload {
   title: string
   body: string
-  type: 'new_event' | 'event_start' | 'message'
+  type: 'new_event' | 'event_start' | 'update' | 'message' | 'digest'
   eventId?: string
+  /** Digest only: the map spot the notification click should open. */
+  url?: string
+  lat?: number
+  lng?: number
+  km?: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -12,15 +12,19 @@ describe('pickLang', () => {
     expect(pickLang('fr')).toBe('en')
     expect(pickLang(undefined)).toBe('en')
   })
+  it('knows Slovenian', () => {
+    expect(pickLang('sl-SI')).toBe('sl')
+  })
 })
 
 describe('NOTIF_TEXT', () => {
-  it('has all four languages for new_event title', () => {
+  it('has all five languages for new_event title', () => {
     expect(NOTIF_TEXT.new_event.title).toEqual({
       pl: 'Nowe wydarzenie w pobliżu',
       en: 'New event nearby',
       es: 'Nuevo evento cerca de ti',
       de: 'Neues Event in der Nähe',
+      sl: 'Nov dogodek v bližini',
     })
   })
   it('has update body and message fallback name', () => {

@@ -428,7 +428,7 @@ export const db = {
   trackClick(action:
     | 'browse_guest' | 'signin_google' | 'signin_apple'
     | 'follow_push_enable' | 'follow_calendar' | 'follow_calendar_google'
-    | 'push_ask_enable'
+    | 'push_ask_enable' | 'digest_open'
     | 'event_calendar' | 'store_ios' | 'store_android'
     | 'invite_friends' | 'delete_account' | 'nickname_save'
   ) {

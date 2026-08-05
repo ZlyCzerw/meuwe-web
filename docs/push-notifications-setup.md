@@ -89,6 +89,22 @@ Otwórz: **Supabase Dashboard → Database → Webhooks → Create new hook**
 
 > `anon_key` znajdziesz w: **Settings → API → anon public**
 
+## 6b. cron-job.org — "Weekly digest" (piątek 17:00 lokalnie)
+
+Drugie zadanie, te same nagłówki co w kroku 6:
+
+- **URL:** `https://bcfhsbnbvsuxsiwmeway.supabase.co/functions/v1/push-weekly-digest`
+- **Metoda:** POST, **Body:** `{}`
+- **Interwał:** co godzinę, o pełnej godzinie (np. `0 * * * *`)
+
+Zadanie chodzi co godzinę, bo to funkcja sama sprawdza, u kogo właśnie jest
+piątek 17:00 (strefa liczona z last_lat/lng - Warszawa i Wyspy Kanaryjskie mają
+inne godziny). Wysyłkę do jednego użytkownika częściej niż raz na 6 dni blokuje
+`profiles.last_digest_at`, więc podwójne odpalenie crona niczego nie zdubluje.
+
+Przed pierwszym uruchomieniem wykonaj ręcznie w SQL Editorze migrację
+`supabase/migrations/20260805_weekly_digest.sql` (kolumna `last_digest_at`).
+
 ## 7. Frontend — zmienna środowiskowa
 
 Stwórz plik `.env` (na podstawie `.env.example`):

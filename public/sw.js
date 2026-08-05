@@ -24,18 +24,20 @@ self.addEventListener('push', e => {
     console.warn('[sw] push received but e.data is null (decryption failed?)')
   }
 
-  const { title, body, type, eventId, icon } = payload
+  const { title, body, type, eventId, icon, url, lat, lng, km } = payload
 
   const options = {
     body,
     icon: icon || '/favicon.svg',
     badge: '/favicon.svg',
-    tag: eventId || type || 'meuwe',       // grupuje powiadomienia tego samego eventu
+    // Grupuje powiadomienia tego samego eventu; digest nie ma eventId, więc
+    // spada na type — dwa digesty nigdy nie leżą obok siebie.
+    tag: eventId || type || 'meuwe',
     renotify: type === 'message',           // przy wiadomościach wibruj za każdym razem
-    data: { eventId, type },
-    actions: type === 'new_event' || type === 'event_start' || type === 'update'
-      ? [{ action: 'open', title: 'Zobacz' }]
-      : [{ action: 'open', title: 'Odpisz' }],
+    data: { eventId, type, url, lat, lng, km },
+    actions: type === 'message'
+      ? [{ action: 'open', title: 'Odpisz' }]
+      : [{ action: 'open', title: 'Zobacz' }],
     vibrate: [100, 50, 100],
   }
 
@@ -47,20 +49,22 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close()
 
-  const { eventId } = e.notification.data || {}
-  const url = eventId ? `/?event=${eventId}` : '/'
+  const { eventId, url, lat, lng, km } = e.notification.data || {}
+  // Event push niesie eventId; digest niesie gotowy adres mapy (lat/lng/km).
+  const target = eventId ? `/?event=${eventId}` : (url || '/')
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Jeśli apka już otwarta — skieruj ją na właściwy event
+      // Jeśli apka już otwarta — skieruj ją na właściwy event albo punkt mapy
       for (const client of clientList) {
         if ('focus' in client) {
-          client.postMessage({ type: 'OPEN_EVENT', eventId })
+          if (eventId) client.postMessage({ type: 'OPEN_EVENT', eventId })
+          else if (lat != null && lng != null) client.postMessage({ type: 'OPEN_SPOT', lat, lng, km })
           return client.focus()
         }
       }
       // W przeciwnym razie otwórz nowe okno
-      return self.clients.openWindow(url)
+      return self.clients.openWindow(target)
     })
   )
 })

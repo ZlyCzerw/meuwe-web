@@ -59,18 +59,32 @@ async function ensureTokenRotationListener(): Promise<void> {
   })
 }
 
+export interface PushTapHandlers {
+  openEvent: (eventId: string) => void
+  /** Digest tap: centre the map on the spot the count was computed for. */
+  openSpot: (lat: number, lng: number, km?: number) => void
+}
+
 let tapHandlerReady = false
-let tapHandler: ((eventId: string) => void) | null = null
-export async function registerNativePushTapHandler(navigateToEvent: (eventId: string) => void): Promise<void> {
+let tapHandler: PushTapHandlers | null = null
+export async function registerNativePushTapHandler(handlers: PushTapHandlers): Promise<void> {
   if (!isNativePlatform()) return
-  // Keep the newest callback but only ever attach one listener, so a remount
+  // Keep the newest callbacks but only ever attach one listener, so a remount
   // (StrictMode in dev) cannot open the same event twice.
-  tapHandler = navigateToEvent
+  tapHandler = handlers
   if (tapHandlerReady) return
   tapHandlerReady = true
   await FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+    // A native tap delivers no URL, only this data bag — so the digest's spot
+    // rides in the payload (as strings; FCM data allows nothing else).
     const data = (event.notification?.data ?? {}) as Record<string, string>
-    if (data.eventId) tapHandler?.(data.eventId)
+    if (data.eventId) { tapHandler?.openEvent(data.eventId); return }
+    const lat = parseFloat(data.lat ?? '')
+    const lng = parseFloat(data.lng ?? '')
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const km = parseFloat(data.km ?? '')
+      tapHandler?.openSpot(lat, lng, Number.isFinite(km) ? km : undefined)
+    }
   })
 }
 

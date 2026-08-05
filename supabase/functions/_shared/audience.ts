@@ -9,7 +9,8 @@ export const MAX_RADIUS_KM = 50
 
 // Mirror of DEFAULT_RADIUS_KM in src/lib/appConfig.ts. Deno and the web bundle
 // cannot share a module, so the two are kept equal by hand — change both.
-const DEFAULT_RADIUS_KM = 10
+// Exported for the weekly digest, which applies the same radius rule.
+export const DEFAULT_RADIUS_KM = 10
 
 export type AudienceProfile = {
   id: string

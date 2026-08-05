@@ -22,7 +22,7 @@ describe('deliverableFrom', () => {
   })
 
   it('carries each recipient language, so nobody is notified in a foreign one', () => {
-    const { langByUser } = deliverableFrom([p('a', 'de'), p('b', null), p('c', 'sl')], [])
+    const { langByUser } = deliverableFrom([p('a', 'de'), p('b', null), p('c', 'fr')], [])
     expect(langByUser.get('a')).toBe('de')
     // No language recorded, and one we have no notification text for, both fall
     // back to English rather than dropping the recipient.

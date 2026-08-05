@@ -1,9 +1,9 @@
 // Static notification strings only. Dynamic parts (event title, author name,
 // message text) are never translated here.
-export type Lang = 'pl' | 'en' | 'es' | 'de'
+export type Lang = 'pl' | 'en' | 'es' | 'de' | 'sl'
 export type NotifType = 'new_event' | 'event_start' | 'update' | 'message'
 
-const SUPPORTED: readonly Lang[] = ['pl', 'en', 'es', 'de']
+const SUPPORTED: readonly Lang[] = ['pl', 'en', 'es', 'de', 'sl']
 
 export function pickLang(lang: string | null | undefined): Lang {
   const l = (lang ?? '').slice(0, 2).toLowerCase()
@@ -17,6 +17,7 @@ export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Reco
       en: 'New event nearby',
       es: 'Nuevo evento cerca de ti',
       de: 'Neues Event in der Nähe',
+      sl: 'Nov dogodek v bližini',
     },
   },
   event_start: {
@@ -25,6 +26,7 @@ export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Reco
       en: 'An event is about to start',
       es: 'Un evento está por comenzar',
       de: 'Ein Event beginnt gleich',
+      sl: 'Dogodek se kmalu začne',
     },
   },
   update: {
@@ -33,6 +35,7 @@ export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Reco
       en: 'The event has been updated',
       es: 'El evento ha sido actualizado',
       de: 'Das Event wurde aktualisiert',
+      sl: 'Dogodek je bil posodobljen',
     },
   },
   message: {
@@ -42,6 +45,7 @@ export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Reco
       en: 'Someone',
       es: 'Alguien',
       de: 'Jemand',
+      sl: 'Nekdo',
     },
   },
 }

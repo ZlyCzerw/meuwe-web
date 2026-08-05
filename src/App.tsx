@@ -33,7 +33,7 @@ import {
   readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS,
   radiusFromNearest, MAX_ONBOARDING_RADIUS_KM,
 } from './lib/onboarding'
-import { startupZoom, MAX_MAP_KM } from './lib/geo'
+import { startupZoom, kmToZoom, MAX_MAP_KM } from './lib/geo'
 import { summariseProbe } from './lib/emptyState'
 import { isScreenClear, type OverlayFlags } from './lib/overlays'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown, markPromoDismissed } from './lib/appPromo'
@@ -89,13 +89,17 @@ export default function App() {
   const deepLinkIdRef = useRef<string | null>(
     new URLSearchParams(window.location.search).get('event')
   )
-  // Deep link / QR to a specific map spot: ?lat=..&lng=..[&zoom=..] opens the map centred
-  // there — as a guest when there's no session, or as the logged-in user when there is one.
+  // Deep link / QR to a specific map spot: ?lat=..&lng=..[&zoom=..|&km=..] opens the map
+  // centred there — as a guest when there's no session, or as the logged-in user when there
+  // is one. `km` (the weekly digest sends it) names the distance to frame rather than a zoom
+  // level, because the zoom that shows a given distance depends on this screen's size.
   const urlSpotRef = useRef<{ lat: number; lng: number; zoom?: number } | null>((() => {
     const p = new URLSearchParams(window.location.search)
     const lat = parseFloat(p.get('lat') ?? '')
     const lng = parseFloat(p.get('lng') ?? '')
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+    const km = parseFloat(p.get('km') ?? '')
+    if (Number.isFinite(km)) return { lat, lng, zoom: kmToZoom(km, lat) }
     const z = parseInt(p.get('zoom') ?? '', 10)
     return { lat, lng, zoom: Number.isFinite(z) ? z : undefined }
   })())
@@ -243,7 +247,10 @@ export default function App() {
 
   // On mount: check ?event=<id> deep link
   useEffect(() => {
-    const eventId = new URLSearchParams(window.location.search).get('event')
+    const params = new URLSearchParams(window.location.search)
+    // The weekly digest tags its map link, so opens are countable.
+    if (params.get('src') === 'digest') db.trackClick('digest_open')
+    const eventId = params.get('event')
     if (!eventId) return
     window.history.replaceState({}, '', '/')
     db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
@@ -426,11 +433,17 @@ export default function App() {
   useEffect(() => {
     registerServiceWorker().then(reg => {
       if (!reg) return
-      // Nasłuchuj wiadomości od SW (OPEN_EVENT, PUSH_SUBSCRIPTION_CHANGED)
+      // Nasłuchuj wiadomości od SW (OPEN_EVENT, OPEN_SPOT, PUSH_SUBSCRIPTION_CHANGED)
       navigator.serviceWorker.addEventListener('message', e => {
-        const { type, eventId } = e.data || {}
+        const { type, eventId, lat, lng, km } = e.data || {}
         if (type === 'OPEN_EVENT' && eventId) {
           db.getEventById(eventId).then(ev => { if (ev) setSelEvent(ev) })
+        }
+        // Tapnięcie w digest przy otwartej karcie: wycentruj mapę na punkcie,
+        // dla którego policzono liczbę z powiadomienia.
+        if (type === 'OPEN_SPOT' && Number.isFinite(lat) && Number.isFinite(lng)) {
+          db.trackClick('digest_open')
+          goToSpot(lat, lng, Number.isFinite(km) ? kmToZoom(km, lat) : undefined)
         }
         // Read through the ref: this listener is installed once at boot, when
         // `session` is still null, so the captured value would never be a user.
@@ -452,10 +465,17 @@ export default function App() {
     ensurePushRegistered(session.user.id)
   }, [session?.user.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Register native FCM tap handler — opens event when user taps a notification
+  // Register native FCM tap handler — an event push opens the event, a digest
+  // centres the map on the spot its count was computed for.
   useEffect(() => {
-    registerNativePushTapHandler((eventId) => {
-      db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
+    registerNativePushTapHandler({
+      openEvent: (eventId) => {
+        db.getEventById(eventId).then(ev => { if (ev) setDeepLinkEvent(ev) })
+      },
+      openSpot: (lat, lng, km) => {
+        db.trackClick('digest_open')
+        goToSpot(lat, lng, km != null ? kmToZoom(km, lat) : undefined)
+      },
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -492,8 +512,12 @@ export default function App() {
       const lat = parseFloat(p.get('lat') ?? '')
       const lng = parseFloat(p.get('lng') ?? '')
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+      if (p.get('src') === 'digest') db.trackClick('digest_open')
+      // km (digest) wins over zoom: it names a distance, and only this device
+      // knows what zoom shows that distance on its screen.
+      const km = parseFloat(p.get('km') ?? '')
       const z = parseInt(p.get('zoom') ?? '', 10)
-      goToSpot(lat, lng, Number.isFinite(z) ? z : undefined)
+      goToSpot(lat, lng, Number.isFinite(km) ? kmToZoom(km, lat) : Number.isFinite(z) ? z : undefined)
     }).then(handle => { remove = () => handle.remove() })
     return () => { remove?.() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps

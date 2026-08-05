@@ -3,22 +3,33 @@ import { SignJWT, importPKCS8 } from 'npm:jose@5'
 export interface FcmPayload {
   title: string
   body: string
-  type: 'new_event' | 'event_start' | 'update' | 'message'
-  eventId: string
+  type: 'new_event' | 'event_start' | 'update' | 'message' | 'digest'
+  /** Event pushes carry the event; the digest carries a map spot instead. */
+  eventId?: string
+  lat?: number
+  lng?: number
+  km?: number
+  /** Android notification tag — two pushes with the same tag replace, never stack. */
+  collapseTag?: string
 }
 
 export interface FcmMessage {
   token: string
   notification: { title: string; body: string }
   data: Record<string, string>
+  android?: { notification: { tag: string } }
 }
 
 export function buildFcmMessage(token: string, p: FcmPayload): FcmMessage {
-  return {
-    token,
-    notification: { title: p.title, body: p.body },
-    data: { type: p.type, eventId: p.eventId },
-  }
+  // FCM data values must be strings; the tap handler parses numbers back out.
+  const data: Record<string, string> = { type: p.type }
+  if (p.eventId) data.eventId = p.eventId
+  if (p.lat != null) data.lat = String(p.lat)
+  if (p.lng != null) data.lng = String(p.lng)
+  if (p.km != null) data.km = String(p.km)
+  const msg: FcmMessage = { token, notification: { title: p.title, body: p.body }, data }
+  if (p.collapseTag) msg.android = { notification: { tag: p.collapseTag } }
+  return msg
 }
 
 interface ServiceAccount { client_email: string; private_key: string; project_id: string }
