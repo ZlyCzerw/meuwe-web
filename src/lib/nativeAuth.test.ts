@@ -3,21 +3,63 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const signInWithGoogle = vi.fn()
 const signInWithApple = vi.fn()
 const signInWithIdToken = vi.fn()
+const firebaseSignOut = vi.fn()
 
 vi.mock('@capacitor-firebase/authentication', () => ({
   FirebaseAuthentication: {
     signInWithGoogle: (...a: any[]) => signInWithGoogle(...a),
     signInWithApple: (...a: any[]) => signInWithApple(...a),
+    signOut: () => firebaseSignOut(),
   },
 }))
 vi.mock('./supabase', () => ({
   supabase: { auth: { signInWithIdToken: (...a: any[]) => signInWithIdToken(...a) } },
 }))
 
-import { signInGoogleNative, signInAppleNative } from './nativeAuth'
+import { signInGoogleNative, signInAppleNative, signOutNative } from './nativeAuth'
+
+describe('signOutNative', () => {
+  beforeEach(() => { firebaseSignOut.mockReset() })
+
+  // Supabase's own signOut leaves the provider alone, and the provider is what
+  // remembers the account. Without this the picker never appears again.
+  it('clears the provider that remembers the account', async () => {
+    firebaseSignOut.mockResolvedValue(undefined)
+    await signOutNative()
+    expect(firebaseSignOut).toHaveBeenCalled()
+  })
+})
 
 describe('signInGoogleNative', () => {
-  beforeEach(() => { signInWithGoogle.mockReset(); signInWithIdToken.mockReset() })
+  beforeEach(() => { signInWithGoogle.mockReset(); signInWithIdToken.mockReset(); firebaseSignOut.mockReset() })
+
+  // Anyone who signed out on a build without signOutNative still has a cached
+  // account. Clearing it here is what makes the fix work for them too, rather
+  // than only from their next sign-out onwards.
+  it('clears the remembered account before offering the picker', async () => {
+    const order: string[] = []
+    firebaseSignOut.mockImplementation(() => { order.push('signOut'); return Promise.resolve() })
+    signInWithGoogle.mockImplementation(() => {
+      order.push('signIn')
+      return Promise.resolve({ credential: { idToken: 'GTOKEN' } })
+    })
+    signInWithIdToken.mockResolvedValue({ data: {}, error: null })
+
+    await signInGoogleNative()
+
+    expect(order).toEqual(['signOut', 'signIn'])
+  })
+
+  // A provider that will not sign out is no reason to refuse to sign in.
+  it('signs in anyway when clearing the provider fails', async () => {
+    firebaseSignOut.mockRejectedValue(new Error('no user'))
+    signInWithGoogle.mockResolvedValue({ credential: { idToken: 'GTOKEN' } })
+    signInWithIdToken.mockResolvedValue({ data: {}, error: null })
+
+    await signInGoogleNative()
+
+    expect(signInWithIdToken).toHaveBeenCalledWith({ provider: 'google', token: 'GTOKEN' })
+  })
 
   it('passes the Google idToken to supabase signInWithIdToken', async () => {
     signInWithGoogle.mockResolvedValue({ credential: { idToken: 'GTOKEN' } })

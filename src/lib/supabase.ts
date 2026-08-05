@@ -2,6 +2,7 @@ import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
+import { markSignedOut, takeSignedOutFlag, googleOAuthOptions } from './authPrompt'
 import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
 
@@ -46,7 +47,13 @@ export const db = {
       // native: dynamic import keeps the Firebase plugin out of the web bundle
       return import('./nativeAuth').then(m => m.signInGoogleNative())
     }
-    return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: authRedirectTo() } })
+    // Google reuses whatever account the browser is already in unless asked
+    // otherwise, so someone who just signed out to switch accounts would be put
+    // straight back into the one they left. See lib/authPrompt.
+    return supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: googleOAuthOptions(authRedirectTo(), takeSignedOutFlag()),
+    })
   },
   signInApple() {
     if (isIOS()) {
@@ -63,7 +70,24 @@ export const db = {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) throw new Error(error.message)
   },
-  signOut() { return supabase.auth.signOut() },
+  /**
+   * Signing out has to end at Supabase whatever else happens, so the provider
+   * cleanup is best-effort and logged rather than awaited into the happy path.
+   * Without it the native Google client keeps the account and the next sign-in
+   * skips the picker entirely.
+   */
+  async signOut() {
+    markSignedOut()
+    if (isNativePlatform()) {
+      try {
+        const m = await import('./nativeAuth')
+        await m.signOutNative()
+      } catch (err) {
+        console.error('[auth] native signOut failed:', err)
+      }
+    }
+    return supabase.auth.signOut()
+  },
   onAuthChange(cb:(s:Session|null)=>void) { return supabase.auth.onAuthStateChange((_e,s)=>cb(s)) },
   async getSession() { const {data}=await supabase.auth.getSession(); return data.session },
   async getProfile(uid:string):Promise<Profile|null> {
