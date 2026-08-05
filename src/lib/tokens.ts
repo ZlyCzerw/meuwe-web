@@ -40,8 +40,6 @@ export const PRIORITY_FILTERS: Category[] = [
   'kids', 'pets', 'volunteering', 'workshop', 'alert',
 ]
 
-/** The six offered during the first run — a grid, not a catalogue. */
-export const ONBOARDING_CATEGORIES: Category[] = PRIORITY_FILTERS.slice(0, 6)
 
 // SAFETY: icon() returns a static, hardcoded SVG string — not user input.
 // dangerouslySetInnerHTML in MapScreen.tsx is safe because these values
