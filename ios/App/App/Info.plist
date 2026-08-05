@@ -59,6 +59,10 @@
 	<string>Choose a photo to add to your event.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>meuwe uses the compass to show which way you are facing on the map.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>meuwe adds an event you choose to your calendar, so you get a reminder before it starts.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>meuwe adds an event you choose to your calendar, so you get a reminder before it starts.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

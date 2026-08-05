@@ -187,11 +187,14 @@ const de: Resources = {
   },
   calendar: {
     add: 'Zum Kalender hinzufügen',
+    added: 'Zum Kalender hinzugefügt',
     downloaded: 'Kalenderdatei heruntergeladen',
-    opened: 'An deinen Kalender übergeben',
     failed: 'Konnte nicht zum Kalender hinzugefügt werden',
-    googleAlt: 'Oder Google Kalender',
-    googleRetry: 'Google Kalender versuchen',
+    other: 'Anderer Kalender',
+    chooseTitle: 'Welcher Kalender?',
+    google: 'Google Kalender',
+    outlook: 'Outlook',
+    file: '.ics-Datei (Apple und andere)',
   },
   pushAsk: {
     title: 'Erfahre, wenn nebenan etwas losgeht',
@@ -208,8 +211,7 @@ const de: Resources = {
     blockedBody: 'Benachrichtigungen sind in den Systemeinstellungen blockiert, wir können nur über den Kalender erinnern, eine Stunde vor Beginn.',
     unsupportedBody: 'Dieser Browser unterstützt keine Benachrichtigungen. Füge das Event deinem Kalender hinzu, die Erinnerung kommt eine Stunde vor Beginn.',
     calendar: 'Zum Kalender hinzufügen',
-    googleCalendar: 'In Google Kalender öffnen',
-    calendarFailed: 'Die Datei konnte an keinen Kalender übergeben werden. Versuche Google Kalender.',
+    calendarFailed: 'Konnte nicht zum Kalender hinzugefügt werden. Wähle einen anderen.',
   },
   tagPicker: {
     customPlaceholder: 'Eigener Tag…',

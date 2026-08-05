@@ -1,48 +1,71 @@
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
-import { Share } from '@capacitor/share'
-import { isNativePlatform } from './platform'
-import { buildIcs, icsFileName, googleCalendarUrl, type IcsEvent } from './ics'
+import { isNativePlatform, isIOS, mobileOS } from './platform'
+import { buildIcs, icsFileName, googleCalendarUrl, outlookCalendarUrl, type IcsEvent } from './ics'
+import { pickCalendarRoute, type CalendarTarget } from './calendarRoute'
 
-// Handing the .ics to the OS. Everything platform-specific lives here; the file
-// itself is built by ics.ts, which stays pure and testable.
+// Getting an event into someone's calendar. The decision of where it should go
+// lives in calendarRoute.ts, the file itself in ics.ts; this module is only the
+// part that touches the platform.
 
 export type CalendarResult =
-  | 'opened'      // handed to the system (native share sheet)
-  | 'downloaded'  // browser download started
-  | 'failed'      // nothing happened, and the caller must say so
+  /** Saved, and we saw it happen. Only iOS can say this. */
+  | 'added'
+  /** Passed to the calendar or to a calendar site; the ending is theirs to write. */
+  | 'handedOff'
+  /** The user backed out of the system screen. Not a failure, not a success. */
+  | 'cancelled'
+  /** An .ics file left the browser. */
+  | 'downloaded'
+  /** We do not know which calendar this person uses — the caller should ask. */
+  | 'choose'
+  /** Nothing happened, and the caller must say so. */
+  | 'failed'
 
-export async function addToCalendar(event: IcsEvent): Promise<CalendarResult> {
-  const content = buildIcs(event)
-  const fileName = icsFileName(event)
+export async function addToCalendar(
+  event: IcsEvent,
+  ctx: { provider: string | null },
+): Promise<CalendarResult> {
+  const route = pickCalendarRoute({
+    native: isNativePlatform(),
+    provider: ctx.provider,
+    mobile: mobileOS(),
+  })
 
-  if (isNativePlatform()) {
+  if (route === 'native') {
     try {
-      // Cache, not Documents: this is a hand-off file, not user data to keep.
-      const { uri } = await Filesystem.writeFile({
-        path: fileName,
-        data: content,
-        directory: Directory.Cache,
-        encoding: Encoding.UTF8,
-      })
-      // iOS offers "Add to Calendar" for a text/calendar attachment; Android
-      // routes the file to whichever calendar app claims it.
-      await Share.share({ title: event.title, files: [uri] })
-      return 'opened'
+      const { createEventNative } = await import('./nativeCalendar')
+      const ids = await createEventNative(event)
+      if (ids.length > 0) return 'added'
+      // An empty result means "cancelled" on iOS and "we cannot tell" on
+      // Android, so only iOS gets to call it a cancellation.
+      return isIOS() ? 'cancelled' : 'handedOff'
     } catch (err) {
-      // A dismissed share sheet also lands here. Distinguishing the two is not
-      // worth a fragile string match, so the caller offers the Google Calendar
-      // link as a way out rather than claiming success.
-      console.error('[calendar] native share failed:', err)
-      return 'failed'
+      // No calendar app at all, or the plugin refused. Falling through to the
+      // web routes still gets the event somewhere.
+      console.error('[calendar] the system calendar screen did not open:', err)
+      return 'choose'
     }
   }
 
+  if (route === 'google') return openCalendarTarget(event, 'google')
+  return 'choose'
+}
+
+/** One of the destinations offered by the chooser. */
+export function openCalendarTarget(event: IcsEvent, target: CalendarTarget): CalendarResult {
+  if (target === 'file') return downloadIcs(event)
+  const url = target === 'google' ? googleCalendarUrl(event) : outlookCalendarUrl(event)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  return 'handedOff'
+}
+
+/** The last resort: a file, for Apple Calendar and anything else. */
+function downloadIcs(event: IcsEvent): CalendarResult {
   try {
-    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' })
+    const blob = new Blob([buildIcs(event)], { type: 'text/calendar;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = fileName
+    a.download = icsFileName(event)
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -53,9 +76,4 @@ export async function addToCalendar(event: IcsEvent): Promise<CalendarResult> {
     console.error('[calendar] download failed:', err)
     return 'failed'
   }
-}
-
-/** Alternative route for Android and the web, where a download can go nowhere. */
-export function openGoogleCalendar(event: IcsEvent): void {
-  window.open(googleCalendarUrl(event), '_blank', 'noopener,noreferrer')
 }

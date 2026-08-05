@@ -187,11 +187,14 @@ const en: Resources = {
   },
   calendar: {
     add: 'Add to calendar',
+    added: 'Added to your calendar',
     downloaded: 'Calendar file downloaded',
-    opened: 'Handed to your calendar',
     failed: 'Could not add to a calendar',
-    googleAlt: 'Or Google Calendar',
-    googleRetry: 'Try Google Calendar',
+    other: 'Another calendar',
+    chooseTitle: 'Which calendar?',
+    google: 'Google Calendar',
+    outlook: 'Outlook',
+    file: '.ics file (Apple and others)',
   },
   pushAsk: {
     title: 'Know when something starts nearby',
@@ -208,8 +211,7 @@ const en: Resources = {
     blockedBody: 'Notifications are blocked in your system settings, so the calendar is the only reminder we can give you, an hour before the start.',
     unsupportedBody: 'This browser does not support notifications. Add the event to your calendar and the reminder arrives an hour before it starts.',
     calendar: 'Add to calendar',
-    googleCalendar: 'Open in Google Calendar',
-    calendarFailed: 'Could not hand the file to a calendar. Try Google Calendar.',
+    calendarFailed: 'Could not add it to a calendar. Pick another one.',
   },
   tagPicker: {
     customPlaceholder: 'Custom tag…',

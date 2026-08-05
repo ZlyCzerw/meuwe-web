@@ -1,5 +1,7 @@
 ext {
-    minSdkVersion = 22
+    // 24 is the floor for @ebarooni/capacitor-calendar, which opens the system
+    // calendar screen instead of handing an .ics file to a share sheet.
+    minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
     androidxActivityVersion = '1.8.0'

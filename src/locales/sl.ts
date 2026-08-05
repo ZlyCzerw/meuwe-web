@@ -187,11 +187,14 @@ const sl: Resources = {
   },
   calendar: {
     add: 'Dodaj v koledar',
+    added: 'Dodano v koledar',
     downloaded: 'Datoteka koledarja prenesena',
-    opened: 'Predano tvojemu koledarju',
     failed: 'Dodajanje v koledar ni uspelo',
-    googleAlt: 'Ali Google Koledar',
-    googleRetry: 'Poskusi Google Koledar',
+    other: 'Drug koledar',
+    chooseTitle: 'Kateri koledar?',
+    google: 'Google Koledar',
+    outlook: 'Outlook',
+    file: 'Datoteka .ics (Apple in drugi)',
   },
   pushAsk: {
     title: 'Izvedi, ko se v bližini kaj začne',
@@ -208,8 +211,7 @@ const sl: Resources = {
     blockedBody: 'Obvestila so blokirana v sistemskih nastavitvah, zato te lahko opomnimo le prek koledarja, uro pred začetkom.',
     unsupportedBody: 'Ta brskalnik ne podpira obvestil. Dodaj dogodek v koledar in opomnik pride uro pred začetkom.',
     calendar: 'Dodaj v koledar',
-    googleCalendar: 'Odpri v Google Koledarju',
-    calendarFailed: 'Datoteke ni bilo mogoče predati koledarju. Poskusi Google Koledar.',
+    calendarFailed: 'Dodajanje v koledar ni uspelo. Izberi drugega.',
   },
   tagPicker: {
     customPlaceholder: 'Oznaka po meri…',

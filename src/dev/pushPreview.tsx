@@ -95,6 +95,7 @@ root.render(
     <FollowNotifyModal
       event={DEMO_EVENT}
       userId="demo-user"
+      provider="google"
       reason={modal}
       onEnabled={() => {}}
       onClose={() => {}}

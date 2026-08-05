@@ -187,11 +187,14 @@ const es: Resources = {
   },
   calendar: {
     add: 'Añadir al calendario',
+    added: 'Añadido a tu calendario',
     downloaded: 'Archivo de calendario descargado',
-    opened: 'Enviado a tu calendario',
     failed: 'No se pudo añadir al calendario',
-    googleAlt: 'O Google Calendar',
-    googleRetry: 'Prueba con Google Calendar',
+    other: 'Otro calendario',
+    chooseTitle: '¿Qué calendario?',
+    google: 'Google Calendar',
+    outlook: 'Outlook',
+    file: 'Archivo .ics (Apple y otros)',
   },
   pushAsk: {
     title: 'Entérate cuando algo empiece cerca',
@@ -208,8 +211,7 @@ const es: Resources = {
     blockedBody: 'Las notificaciones están bloqueadas en los ajustes del sistema, así que solo podemos recordártelo con el calendario, una hora antes del inicio.',
     unsupportedBody: 'Este navegador no admite notificaciones. Añade el evento a tu calendario y el recordatorio llegará una hora antes del inicio.',
     calendar: 'Añadir al calendario',
-    googleCalendar: 'Abrir en Google Calendar',
-    calendarFailed: 'No se pudo pasar el archivo a un calendario. Prueba con Google Calendar.',
+    calendarFailed: 'No se pudo añadir al calendario. Elige otro.',
   },
   tagPicker: {
     customPlaceholder: 'Tag personalizado…',

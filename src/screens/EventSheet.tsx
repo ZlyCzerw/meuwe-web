@@ -12,10 +12,11 @@ import { C, INK, F, TAG_META } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
-import { isNativePlatform, isAndroid } from '../lib/platform'
+import { isNativePlatform } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
 import { authorLabel, authorInitial } from '../lib/authorLabel'
-import { addToCalendar, openGoogleCalendar } from '../lib/calendar'
+import { addToCalendar, type CalendarResult } from '../lib/calendar'
+import CalendarChooserModal from '../components/CalendarChooserModal'
 import { getDevicePushState } from '../lib/push'
 import { resolvePushState } from '../lib/pushState'
 import {
@@ -27,7 +28,7 @@ import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
 
-/** How long the Google Calendar alternative stays offered after an attempt. */
+/** How long "another calendar" stays offered after an attempt. */
 const CALENDAR_HINT_MS = 9000
 
 const circleBtn: React.CSSProperties = {
@@ -95,6 +96,7 @@ function EventSheet({
   const notifyEnabledRef = useRef(false)
   const [calendarBusy, setCalendarBusy] = useState(false)
   const [calendarHint, setCalendarHint] = useState<'ok' | 'failed' | null>(null)
+  const [calendarChooser, setCalendarChooser] = useState(false)
   const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
 
   function showToast(msg: string) {
@@ -107,14 +109,26 @@ function EventSheet({
   async function handleCalendar() {
     setCalendarBusy(true)
     db.trackClick('event_calendar')
-    const result = await addToCalendar(event)
+    const result = await addToCalendar(event, { provider: authProvider })
     setCalendarBusy(false)
+    settleCalendar(result)
+  }
+
+  /**
+   * Says only what is known to have happened. 'handedOff' covers the system
+   * screen on Android and a calendar site in a new tab — in both the story ends
+   * somewhere we cannot see, and a toast claiming success would be a guess.
+   */
+  function settleCalendar(result: CalendarResult) {
+    if (result === 'choose') { setCalendarChooser(true); return }
+    setCalendarChooser(false)
     if (result === 'failed') {
       setCalendarHint('failed')
       showToast(t('calendar.failed'))
     } else {
       setCalendarHint('ok')
-      showToast(result === 'opened' ? t('calendar.opened') : t('calendar.downloaded'))
+      if (result === 'added') showToast(t('calendar.added'))
+      else if (result === 'downloaded') showToast(t('calendar.downloaded'))
     }
     setTimeout(() => setCalendarHint(null), CALENDAR_HINT_MS)
   }
@@ -169,9 +183,9 @@ function EventSheet({
   const touchStartY = useRef<number | null>(null)
   const lastSendRef = useRef<number>(0)
 
-  // On iOS the share sheet reliably offers "Add to Calendar", so the extra link
-  // would only be noise there.
-  const showGoogleCalendarAlt = !isNativePlatform() || isAndroid()
+  // How the account signed in, which is how lib/calendarRoute knows whether the
+  // calendar can be guessed at instead of asked about.
+  const authProvider = (session?.user.app_metadata?.provider as string | undefined) ?? null
 
   const deletedLabels = { deleted: t('account.deletedUser'), unknown: '?' }
 
@@ -474,12 +488,13 @@ function EventSheet({
                     </div>
                   </div>
 
-                  {/* Google Calendar alternative: a downloaded .ics is not always
-                      picked up by anything on Android or the web, so the link stays
-                      offered for a while after the attempt. */}
-                  {calendarHint && showGoogleCalendarAlt && (
+                  {/* The route we picked can still be the wrong one — a Google
+                      account with an Outlook calendar, a phone whose calendar app
+                      swallowed the hand-off. The way out stays offered for a while
+                      after each attempt. */}
+                  {calendarHint && (
                     <button
-                      onClick={() => { openGoogleCalendar(event); setCalendarHint(null) }}
+                      onClick={() => { setCalendarChooser(true); setCalendarHint(null) }}
                       style={{
                         display: 'block', margin: '-4px 0 12px auto', padding: '6px 12px',
                         borderRadius: 999, background: 'transparent', border: `2px solid ${INK}22`,
@@ -487,7 +502,7 @@ function EventSheet({
                         animation: 'meuwe-fade-in 180ms ease',
                       }}
                     >
-                      {calendarHint === 'failed' ? t('calendar.googleRetry') : t('calendar.googleAlt')}
+                      {t('calendar.other')}
                     </button>
                   )}
 
@@ -759,12 +774,21 @@ function EventSheet({
         <FollowNotifyModal
           event={event}
           userId={session.user.id}
+          provider={authProvider}
           reason={notifyReason}
           onEnabled={() => {
             notifyEnabledRef.current = true
             onProfileChanged?.(); showToast(t('followNotify.enabled'))
           }}
           onClose={closeNotifyCard}
+        />
+      )}
+
+      {calendarChooser && (
+        <CalendarChooserModal
+          event={event}
+          onPicked={settleCalendar}
+          onClose={() => setCalendarChooser(false)}
         />
       )}
     </div>

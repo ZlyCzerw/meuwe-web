@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { enablePushOnThisDevice } from '../lib/push'
-import { addToCalendar, openGoogleCalendar } from '../lib/calendar'
-import { isIOS, isAndroid, isNativePlatform } from '../lib/platform'
+import { addToCalendar } from '../lib/calendar'
+import CalendarChooserModal from './CalendarChooserModal'
+import { isIOS, isAndroid } from '../lib/platform'
 import type { IcsEvent } from '../lib/ics'
 
 // Shown the first time someone follows an event while this device would not
@@ -19,12 +20,15 @@ type View = 'ask' | 'fallback'
 export default function FollowNotifyModal({
   event,
   userId,
+  provider,
   reason,
   onEnabled,
   onClose,
 }: {
   event: IcsEvent
   userId: string
+  /** How the account signed in — lets the calendar skip the "which one?" question. */
+  provider: string | null
   /**
    * 'ask' — the prompt can still be raised.
    * 'blocked' — the system permission is denied, no prompt is possible.
@@ -38,14 +42,11 @@ export default function FollowNotifyModal({
   const [view, setView] = useState<View>(reason === 'ask' ? 'ask' : 'fallback')
   const [busy, setBusy] = useState(false)
   const [calendarFailed, setCalendarFailed] = useState(false)
+  const [chooser, setChooser] = useState(false)
 
   const blockedHint = isIOS() ? t('profile.pushBlockedIos')
     : isAndroid() ? t('profile.pushBlockedAndroid')
     : t('profile.pushBlockedWeb')
-
-  // Google Calendar is the documented way out where a file download can be
-  // swallowed. On iOS the share sheet is the reliable route, so it is not shown.
-  const showGoogleFallback = !isNativePlatform() || isAndroid()
 
   async function handleEnable() {
     setBusy(true)
@@ -66,8 +67,10 @@ export default function FollowNotifyModal({
     setBusy(true)
     setCalendarFailed(false)
     db.trackClick('follow_calendar')
-    const result = await addToCalendar(event)
+    const result = await addToCalendar(event, { provider })
     setBusy(false)
+    // Nothing is known about this device's calendar: ask rather than guess.
+    if (result === 'choose') { setChooser(true); return }
     if (result === 'failed') {
       setCalendarFailed(true)
       return
@@ -159,19 +162,6 @@ export default function FollowNotifyModal({
           </button>
         )}
 
-        {view === 'fallback' && showGoogleFallback && (
-          <button
-            onClick={() => { db.trackClick('follow_calendar_google'); openGoogleCalendar(event); onClose() }}
-            style={{
-              marginTop: 10, width: '100%', padding: '12px', borderRadius: 999,
-              background: 'transparent', border: `2px solid ${INK}22`,
-              color: C.ink, fontSize: 14, fontWeight: 800, cursor: 'pointer',
-            }}
-          >
-            {t('followNotify.googleCalendar')}
-          </button>
-        )}
-
         <button
           onClick={onClose}
           style={{
@@ -183,6 +173,18 @@ export default function FollowNotifyModal({
           {view === 'ask' ? t('followNotify.later') : t('common.close')}
         </button>
       </div>
+
+      {chooser && (
+        <CalendarChooserModal
+          event={event}
+          onPicked={result => {
+            setChooser(false)
+            if (result === 'failed') setCalendarFailed(true)
+            else onClose()
+          }}
+          onClose={() => setChooser(false)}
+        />
+      )}
     </div>
   )
 }

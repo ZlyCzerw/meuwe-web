@@ -179,11 +179,14 @@ const pl = {
   },
   calendar: {
     add: 'Dodaj do kalendarza',
+    added: 'Dodano do kalendarza',
     downloaded: 'Plik kalendarza pobrany',
-    opened: 'Przekazano do kalendarza',
     failed: 'Nie udało się dodać do kalendarza',
-    googleAlt: 'Albo Kalendarz Google',
-    googleRetry: 'Spróbuj Kalendarza Google',
+    other: 'Inny kalendarz',
+    chooseTitle: 'Który kalendarz?',
+    google: 'Kalendarz Google',
+    outlook: 'Outlook',
+    file: 'Plik .ics (Apple i inne)',
   },
   pushAsk: {
     title: 'Damy znać, gdy coś zacznie się obok',
@@ -200,8 +203,7 @@ const pl = {
     blockedBody: 'Powiadomienia są zablokowane w ustawieniach systemu, więc możemy przypomnieć tylko przez kalendarz, godzinę przed startem.',
     unsupportedBody: 'Ta przeglądarka nie obsługuje powiadomień. Dodaj wydarzenie do kalendarza, a przypomnienie przyjdzie godzinę przed startem.',
     calendar: 'Dodaj do kalendarza',
-    googleCalendar: 'Otwórz w Kalendarzu Google',
-    calendarFailed: 'Nie udało się przekazać pliku do kalendarza. Spróbuj Kalendarza Google.',
+    calendarFailed: 'Nie udało się dodać do kalendarza. Wybierz inny.',
   },
   tagPicker: {
     customPlaceholder: 'Własny tag…',

@@ -132,17 +132,44 @@ export function icsFileName(event: { id: string; title: string }): string {
   return `meuwe-${slug || event.id}.ics`
 }
 
+function eventPlace(event: IcsEvent): string {
+  return event.place_name?.trim() || `${event.lat.toFixed(5)}, ${event.lng.toFixed(5)}`
+}
+
+function eventNotes(event: IcsEvent): string {
+  return [event.description?.trim(), eventUrl(event.id)].filter(Boolean).join('\n\n')
+}
+
 /**
- * Google Calendar "template" link — the fallback offered on Android and the web,
- * where downloading a file is not always handled by anything.
+ * Google Calendar's "template" form. On Android this address is claimed by the
+ * installed Google Calendar, so it opens the app with the event already filled
+ * in rather than a web page.
  */
 export function googleCalendarUrl(event: IcsEvent): string {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
     dates: `${toIcsUtc(event.start_time)}/${toIcsUtc(event.end_time)}`,
-    details: [event.description?.trim(), eventUrl(event.id)].filter(Boolean).join('\n\n'),
-    location: event.place_name?.trim() || `${event.lat.toFixed(5)}, ${event.lng.toFixed(5)}`,
+    details: eventNotes(event),
+    location: eventPlace(event),
   })
   return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+/**
+ * Outlook's compose form. It wants ISO 8601 rather than the compact iCalendar
+ * stamp — same instant, different spelling, and getting it wrong moves the
+ * event without saying so.
+ */
+export function outlookCalendarUrl(event: IcsEvent): string {
+  const params = new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: event.title,
+    startdt: new Date(event.start_time).toISOString(),
+    enddt: new Date(event.end_time).toISOString(),
+    body: eventNotes(event),
+    location: eventPlace(event),
+  })
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildIcs, toIcsUtc, escapeIcsText, foldIcsLine, icsFileName,
-  googleCalendarUrl, eventUrl, REMINDER_MINUTES, type IcsEvent,
+  googleCalendarUrl, outlookCalendarUrl, eventUrl, REMINDER_MINUTES, type IcsEvent,
 } from './ics'
 
 const event: IcsEvent = {
@@ -158,5 +158,27 @@ describe('googleCalendarUrl', () => {
     expect(url.searchParams.get('dates')).toBe('20260801T170000Z/20260801T213000Z')
     expect(url.searchParams.get('text')).toBe('Koncert w knajpie')
     expect(url.searchParams.get('details')).toContain(eventUrl('abc-123'))
+  })
+})
+
+describe('outlookCalendarUrl', () => {
+  const url = new URL(outlookCalendarUrl(event))
+
+  it('targets the Outlook compose form', () => {
+    expect(url.origin + url.pathname).toBe('https://outlook.live.com/calendar/0/deeplink/compose')
+    expect(url.searchParams.get('rru')).toBe('addevent')
+  })
+
+  // Outlook wants ISO 8601, not the compact iCalendar stamp Google takes. Same
+  // instant, different spelling — getting this wrong moves the event silently.
+  it('spells the instants the way Outlook reads them', () => {
+    expect(url.searchParams.get('startdt')).toBe('2026-08-01T17:00:00.000Z')
+    expect(url.searchParams.get('enddt')).toBe('2026-08-01T21:30:00.000Z')
+  })
+
+  it('carries the title, the place and the meuwe link', () => {
+    expect(url.searchParams.get('subject')).toBe('Koncert w knajpie')
+    expect(url.searchParams.get('location')).toBe('Bar Rynek 4')
+    expect(url.searchParams.get('body')).toContain(eventUrl('abc-123'))
   })
 })
