@@ -35,6 +35,7 @@ import {
 } from './lib/onboarding'
 import { startupZoom, MAX_MAP_KM } from './lib/geo'
 import { summariseProbe } from './lib/emptyState'
+import { isScreenClear, type OverlayFlags } from './lib/overlays'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown } from './lib/appPromo'
 import PushAskModal from './components/PushAskModal'
 import * as pushAsk from './lib/pushAsk'
@@ -157,6 +158,28 @@ export default function App() {
     screen,
   })
 
+  // Mirror of every layer, refreshed on each render so the two polled cards read
+  // the truth rather than whatever their interval closed over. isScreenClear
+  // (lib/overlays) is the single rule both of them ask.
+  const overlayRef = useRef<OverlayFlags | null>(null)
+  overlayRef.current = {
+    screen,
+    authModal: !!authModal,
+    selEvent: !!selEvent,
+    myEventSelected: !!myEventSelected,
+    followedEventSelected: !!followedEventSelected,
+    createOpen,
+    profileOpen,
+    accountOpen,
+    pickingLocation,
+    promoOpen,
+    locationModalOpen,
+    interestsModalOpen,
+    inviteModalOpen,
+    pushAskOpen,
+  }
+  const screenIsClear = () => !!overlayRef.current && isScreenClear(overlayRef.current)
+
   useEffect(() => {
     navStateRef.current = { screen, myEventSelected, followedEventSelected }
     navLayersRef.current = {
@@ -269,12 +292,7 @@ export default function App() {
   useEffect(() => {
     if (!promoOs) return
     const tick = () => {
-      if (promoOpen) return
-      const layers = navLayersRef.current
-      const busy = layers.authModal || layers.selEvent || layers.myEventSelected
-        || layers.followedEventSelected || layers.createOpen || layers.profileOpen
-        || layers.screen !== 'map' || pickingLocation
-      if (busy) return
+      if (!screenIsClear()) return
       const now = Date.now()
       const seconds = (now - arrivedAtRef.current) / 1000
       if (!canShowPromo(promoStateRef.current, seconds, now)) return
@@ -284,7 +302,9 @@ export default function App() {
     }
     const id = setInterval(tick, 10_000)
     return () => clearInterval(id)
-  }, [promoOs, promoOpen, pickingLocation])
+    // The tick reads the layer mirror rather than this closure, so the interval
+    // no longer has to be rebuilt whenever a layer opens or shuts.
+  }, [promoOs])
 
   // Same shape for the notification ask: polled, because the triggers fire at
   // moments when another layer is usually open and the card has to wait for a
@@ -294,13 +314,7 @@ export default function App() {
     let cancelled = false
     const uid = session.user.id
     const tick = async () => {
-      if (cancelled || pushAskOpen) return
-      const layers = navLayersRef.current
-      const busy = layers.authModal || layers.selEvent || layers.myEventSelected
-        || layers.followedEventSelected || layers.createOpen || layers.profileOpen
-        || layers.accountOpen || layers.screen !== 'map'
-        || pickingLocation || promoOpen || locationModalOpen || interestsModalOpen || inviteModalOpen
-      if (busy) return
+      if (cancelled || !screenIsClear()) return
       if (!pushAsk.isPushAskDue(pushAsk.readPushAskState(), Date.now())) return
       const device = await getDevicePushState(uid)
       if (cancelled) return
@@ -313,8 +327,8 @@ export default function App() {
     }
     const id = setInterval(tick, 10_000)
     return () => { cancelled = true; clearInterval(id) }
-  }, [session, profile?.push_enabled, pushAskOpen, pickingLocation, promoOpen,
-      locationModalOpen, interestsModalOpen, inviteModalOpen])
+    // Same here: the layer list lives in the mirror, not in these deps.
+  }, [session, profile?.push_enabled])
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
