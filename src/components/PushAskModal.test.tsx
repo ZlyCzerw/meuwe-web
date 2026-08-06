@@ -20,7 +20,7 @@ beforeEach(() => {
 
 describe('PushAskModal', () => {
   it('says what the notifications are for before asking for anything', () => {
-    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} />)
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} onFailed={() => {}} />)
     expect(screen.getByText(/when something starts nearby/i)).toBeInTheDocument()
     expect(enablePushOnThisDevice).not.toHaveBeenCalled()
   })
@@ -28,7 +28,7 @@ describe('PushAskModal', () => {
   it('records the intent and the device together when accepted', async () => {
     enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: true })
     const onEnabled = vi.fn()
-    render(<PushAskModal userId="u1" onEnabled={onEnabled} onDecline={() => {}} />)
+    render(<PushAskModal userId="u1" onEnabled={onEnabled} onDecline={() => {}} onFailed={() => {}} />)
 
     fireEvent.click(screen.getByText('Turn on notifications'))
 
@@ -43,7 +43,7 @@ describe('PushAskModal', () => {
     enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
     const onEnabled = vi.fn()
     const onDecline = vi.fn()
-    render(<PushAskModal userId="u1" onEnabled={onEnabled} onDecline={onDecline} />)
+    render(<PushAskModal userId="u1" onEnabled={onEnabled} onDecline={onDecline} onFailed={() => {}} />)
 
     fireEvent.click(screen.getByText('Turn on notifications'))
 
@@ -57,7 +57,7 @@ describe('PushAskModal', () => {
   // account marked as wanting notifications it can never receive.
   it('records the wish when the system said no, because that can still be repaired', async () => {
     enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
-    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} />)
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} onFailed={() => {}} />)
 
     fireEvent.click(screen.getByText('Turn on notifications'))
 
@@ -67,7 +67,7 @@ describe('PushAskModal', () => {
   it('records nothing when the platform cannot deliver at all', async () => {
     enablePushOnThisDevice.mockResolvedValue({ permission: 'unsupported', registered: false })
     const onDecline = vi.fn()
-    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} />)
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} onFailed={() => {}} />)
 
     fireEvent.click(screen.getByText('Turn on notifications'))
 
@@ -75,9 +75,24 @@ describe('PushAskModal', () => {
     expect(updateProfile).not.toHaveBeenCalled()
   })
 
+  // Permission granted but no delivery address is our failure, not the user's
+  // answer. Filing it as a refusal would buy 14 days of silence on a network
+  // blip, and the user would never learn why nothing arrives.
+  it('does not count a failed registration as a refusal', async () => {
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: false })
+    const onDecline = vi.fn()
+    const onFailed = vi.fn()
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} onFailed={onFailed} />)
+
+    fireEvent.click(screen.getByText('Turn on notifications'))
+
+    await waitFor(() => expect(onFailed).toHaveBeenCalled())
+    expect(onDecline).not.toHaveBeenCalled()
+  })
+
   it('takes "not now" for an answer without touching the device', () => {
     const onDecline = vi.fn()
-    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} />)
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={onDecline} onFailed={() => {}} />)
 
     fireEvent.click(screen.getByText('Not now'))
 

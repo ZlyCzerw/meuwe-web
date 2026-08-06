@@ -17,11 +17,14 @@ export default function PushAskModal({
   userId,
   onEnabled,
   onDecline,
+  onFailed,
 }: {
   userId: string
   onEnabled: () => void
   /** Pressed "not now", or the system prompt was refused — both start the cooldown. */
   onDecline: () => void
+  /** The system said yes but no delivery address came of it. Not an answer, so no cooldown. */
+  onFailed: () => void
 }) {
   const { t } = useTranslation()
   const [busy, setBusy] = useState(false)
@@ -41,6 +44,13 @@ export default function PushAskModal({
     setBusy(false)
     if (device.permission === 'granted' && device.registered) {
       onEnabled()
+      return
+    }
+    // A granted permission that produced no delivery address is a failure on
+    // our side. Filing it as a refusal would spend the cooldown on a network
+    // blip and leave the user wondering why nothing ever arrives.
+    if (device.permission === 'granted') {
+      onFailed()
       return
     }
     onDecline()

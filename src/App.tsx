@@ -1052,6 +1052,11 @@ export default function App() {
             reloadProfile()
             showToast(t('followNotify.enabled'))
           }}
+          onFailed={() => {
+            setPushAskOpen(false)
+            reloadProfile()
+            showToast(t('profile.pushRepairFailed'))
+          }}
           onDecline={() => {
             updatePushAsk(s => pushAsk.markDeclined(s, Date.now()))
             setPushAskOpen(false)
