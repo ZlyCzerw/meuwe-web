@@ -1,6 +1,6 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
-import { haversineKm, MAX_MAP_KM } from './geo'
+import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
 import { markSignedOut, takeSignedOutFlag, googleOAuthOptions } from './authPrompt'
 import { isNativePlatform, isIOS } from './platform'
@@ -146,7 +146,7 @@ export const db = {
    * tell "nothing is happening" apart from "we could not find out".
    */
   async probeNearby(lat: number, lng: number): Promise<ProbeEvent[] | null> {
-    const d = MAX_MAP_KM / 111
+    const { dLat, dLng } = bboxDeltas(MAX_MAP_KM, lat)
     const now = new Date()
     const horizon = new Date()
     horizon.setDate(horizon.getDate() + PROBE_DAYS + 1)
@@ -154,7 +154,7 @@ export const db = {
 
     const { data, error } = await supabase.from('events')
       .select('lat, lng, start_time, end_time')
-      .gte('lat', lat - d).lte('lat', lat + d).gte('lng', lng - d).lte('lng', lng + d)
+      .gte('lat', lat - dLat).lte('lat', lat + dLat).gte('lng', lng - dLng).lte('lng', lng + dLng)
       .in('status', ['live', 'upcoming', 'extended'])
       .lte('start_time', horizon.toISOString())
       .gte('end_time', now.toISOString())
@@ -162,7 +162,7 @@ export const db = {
     return (data ?? []) as ProbeEvent[]
   },
   async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
-    const d=km/111
+    const {dLat,dLng}=bboxDeltas(km,lat)
     // Compute the target day's start/end in local time, then convert to UTC.
     // This replicates the same semantics as the previous toDateString() comparison.
     const now    = new Date()
@@ -176,7 +176,7 @@ export const db = {
 
     const {data,error}=await supabase.from('events')
       .select(`*,profiles(${PROFILE_PUBLIC}),event_tags(tag)`)
-      .gte('lat',lat-d).lte('lat',lat+d).gte('lng',lng-d).lte('lng',lng+d)
+      .gte('lat',lat-dLat).lte('lat',lat+dLat).gte('lng',lng-dLng).lte('lng',lng+dLng)
       .in('status',['live','upcoming','extended'])
       .lte('start_time', dayEnd.toISOString())
       .gte('end_time',   endTimeFloor.toISOString())

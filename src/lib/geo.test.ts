@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   haversineKm, countryToLang, parseIpGeo, getIpLocation,
-  kmToZoom, startupZoom, MAX_MAP_ZOOM,
+  kmToZoom, startupZoom, MAX_MAP_ZOOM, bboxDeltas,
 } from './geo'
 
 describe('haversineKm', () => {
@@ -11,6 +11,65 @@ describe('haversineKm', () => {
   it('Warsaw→Krakow ≈ 252 km', () => {
     expect(haversineKm(52.2297,21.0122,50.0647,19.945)).toBeGreaterThan(240)
     expect(haversineKm(52.2297,21.0122,50.0647,19.945)).toBeLessThan(265)
+  })
+})
+
+describe('bboxDeltas', () => {
+  const RZESZOW = { lat: 50.0413, lng: 21.9990 }
+  const TENERIFE = { lat: 28.4636, lng: -16.2518 }
+
+  // The box is only useful if its edge is actually the distance it promises, so
+  // every reach test asks haversineKm rather than re-deriving the arithmetic.
+  const reachesNorth = (km: number, lat: number, lng: number) => {
+    const { dLat } = bboxDeltas(km, lat)
+    return haversineKm(lat, lng, lat + dLat, lng)
+  }
+  const reachesEast = (km: number, lat: number, lng: number) => {
+    const { dLng } = bboxDeltas(km, lat)
+    return haversineKm(lat, lng, lat, lng + dLng)
+  }
+
+  it('reaches the asked-for distance north, at any latitude', () => {
+    for (const lat of [0, 28.4636, 50.0413, -33.9]) {
+      expect(reachesNorth(50, lat, 21)).toBeCloseTo(50, 0)
+    }
+  })
+
+  it('reaches the asked-for distance east too — the point of the fix', () => {
+    expect(reachesEast(50, RZESZOW.lat, RZESZOW.lng)).toBeCloseTo(50, 0)
+    expect(reachesEast(50, TENERIFE.lat, TENERIFE.lng)).toBeCloseTo(50, 0)
+    expect(reachesEast(15, RZESZOW.lat, RZESZOW.lng)).toBeCloseTo(15, 0)
+  })
+
+  it('widens longitude away from the equator and leaves it alone on it', () => {
+    const equator = bboxDeltas(50, 0)
+    expect(equator.dLng).toBeCloseTo(equator.dLat, 10)
+    expect(bboxDeltas(50, RZESZOW.lat).dLng).toBeGreaterThan(bboxDeltas(50, RZESZOW.lat).dLat)
+    // Rzeszów squashes harder than Tenerife: cos(50) < cos(28).
+    expect(bboxDeltas(50, RZESZOW.lat).dLng).toBeGreaterThan(bboxDeltas(50, TENERIFE.lat).dLng)
+  })
+
+  it('is symmetric about the equator', () => {
+    expect(bboxDeltas(50, -50.0413)).toEqual(bboxDeltas(50, 50.0413))
+  })
+
+  it('now fetches the event 40 km due east that the old box missed', () => {
+    // 40 km east of Rzeszów, built without touching bboxDeltas.
+    const east = { lat: RZESZOW.lat, lng: RZESZOW.lng + 40 / (111.19 * Math.cos(RZESZOW.lat * Math.PI / 180)) }
+    expect(haversineKm(RZESZOW.lat, RZESZOW.lng, east.lat, east.lng)).toBeCloseTo(40, 0)
+
+    const offset = east.lng - RZESZOW.lng
+    expect(offset).toBeLessThanOrEqual(bboxDeltas(50, RZESZOW.lat).dLng)
+    expect(offset).toBeGreaterThan(50 / 111) // the one-delta box the queries used to build
+  })
+
+  it('stays finite at the poles', () => {
+    for (const lat of [90, -90, 89.999]) {
+      const { dLng } = bboxDeltas(50, lat)
+      expect(Number.isFinite(dLng)).toBe(true)
+      expect(dLng).toBeLessThanOrEqual(180)
+    }
+    expect(bboxDeltas(50, 90).dLng).toBe(180)
   })
 })
 

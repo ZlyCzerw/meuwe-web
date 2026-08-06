@@ -13,6 +13,31 @@ export const MAX_MAP_ZOOM = 18
 /** Widest the map ever opens itself — matches MAX_RADIUS_KM in the fan-out. */
 export const MAX_MAP_KM = 50
 
+/** Kilometres to a degree of latitude. Longitude is this times cos(lat). */
+const KM_PER_DEG_LAT = 111
+
+/**
+ * Half-width of a lat/lng box that reaches `km` in every direction from a point.
+ *
+ * The two deltas are not the same number. Meridians stay 111 km apart all the
+ * way up, but parallels converge, so a degree of longitude is only 111·cos(lat)
+ * km wide. Dividing by 111 on both axes — which both map queries used to do —
+ * quietly squashes the box east-west: a "50 km" box reaches 32 km in Rzeszów
+ * and 44 in Tenerife, and an event due east of you is simply never fetched.
+ *
+ * The box is only the coarse filter. Callers that owe an exact radius measure
+ * it again with haversineKm; the ones that don't would rather show a pin from
+ * just past the corner than miss one inside the circle.
+ */
+export function bboxDeltas(km: number, lat: number): { dLat: number; dLng: number } {
+  const cosLat = Math.abs(Math.cos(lat * Math.PI / 180))
+  // cos(lat) reaches zero at the poles and the longitude delta would run off to
+  // infinity. 180° is both the widest a box can be and, up there, the true
+  // answer: every meridian is a short walk from the pole.
+  const dLng = cosLat > 0 ? Math.min(km / (KM_PER_DEG_LAT * cosLat), 180) : 180
+  return { dLat: km / KM_PER_DEG_LAT, dLng }
+}
+
 /**
  * The zoom level that frames `targetKm` from the centre to the nearer screen
  * edge, on a portrait phone.
