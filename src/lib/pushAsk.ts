@@ -143,3 +143,38 @@ export function canAskForPush(
   if ((ctx.pushState === 'blocked' || ctx.pushState === 'unsupported') && !ctx.canOfferFallback) return false
   return isPushAskDue(state, now)
 }
+
+/**
+ * The whole decision a polling caller has to make, in one place a test can
+ * reach.
+ *
+ * `canAskForPush` answers "is this device worth asking". This adds the two
+ * questions that come first, because the poll runs seconds after launch, when
+ * neither answer may have arrived yet:
+ *
+ *   intentKnown     — the profile has loaded. Without it resolvePushState sees
+ *                     no intent and returns 'off' before it even looks at the
+ *                     device, so a registered phone reads as never asked.
+ *   deviceConfirmed — the device answered. No FCM token yet, or a lookup that
+ *                     failed offline, looks exactly like "not registered".
+ *
+ * Neither is a reason to interrupt anyone, and neither is worth spending one of
+ * the three asks this account will ever get: the poll comes round again in ten
+ * seconds, and by then the answer is usually real.
+ */
+export function shouldOpenPushAsk(
+  state: PushAskState,
+  ctx: {
+    intentKnown: boolean
+    pushState: PushUiState
+    deviceConfirmed: boolean
+    canOfferFallback: boolean
+  },
+  now: number,
+): boolean {
+  if (!ctx.intentKnown) return false
+  // 'off' is a statement about the account, not about this handset, so an
+  // unreadable device does not stand in the way of asking.
+  if (ctx.pushState !== 'off' && !ctx.deviceConfirmed) return false
+  return canAskForPush(state, { pushState: ctx.pushState, canOfferFallback: ctx.canOfferFallback }, now)
+}

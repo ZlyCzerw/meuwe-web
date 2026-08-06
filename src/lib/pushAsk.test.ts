@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  parsePushAskState, emptyPushAskState, canAskForPush, isPushAskDue,
+  parsePushAskState, emptyPushAskState, canAskForPush, isPushAskDue, shouldOpenPushAsk,
   recordEventView, recordSessionStart, recordFollow, recordCreate,
   markAsked, markDeclined,
   PUSH_ASK_MAX, PUSH_ASK_COOLDOWN_MS, PUSH_ASK_MIN_EVENT_VIEWS,
@@ -144,5 +144,38 @@ describe('canAskForPush and what the device can do', () => {
     for (const pushState of ['off', 'needsPermission', 'needsRegistration'] as const) {
       expect(canAskForPush(triggered(), { pushState, canOfferFallback: false }, NOW)).toBe(true)
     }
+  })
+})
+
+describe('shouldOpenPushAsk', () => {
+  const triggered = () => recordFollow(emptyPushAskState())
+  const ctx = (over: Partial<Parameters<typeof shouldOpenPushAsk>[1]>) => ({
+    intentKnown: true, pushState: 'off' as const, deviceConfirmed: true, canOfferFallback: false, ...over,
+  })
+
+  // The profile arrives over the network, and until it does, resolvePushState
+  // sees no intent and returns 'off' before it even looks at the device — so a
+  // fully registered phone reads as someone who was never asked.
+  it('stays quiet while the profile has not loaded', () => {
+    expect(shouldOpenPushAsk(triggered(), ctx({ intentKnown: false }), NOW)).toBe(false)
+  })
+
+  // A cold start where FCM has not produced a token yet is indistinguishable
+  // from a device that was never registered. The poll comes round again in ten
+  // seconds, and by then the answer is usually real.
+  it('stays quiet while the device reading is unconfirmed', () => {
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'needsRegistration', deviceConfirmed: false }), NOW)).toBe(false)
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'needsPermission', deviceConfirmed: false }), NOW)).toBe(false)
+  })
+
+  // 'off' is a statement about the account, not about this handset.
+  it('still asks someone who never opted in, even if the device could not be checked', () => {
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'off', deviceConfirmed: false }), NOW)).toBe(true)
+  })
+
+  it('asks on a confirmed reading, exactly as canAskForPush would', () => {
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'off' }), NOW)).toBe(true)
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'on' }), NOW)).toBe(false)
+    expect(shouldOpenPushAsk(triggered(), ctx({ pushState: 'needsPermission' }), NOW)).toBe(true)
   })
 })

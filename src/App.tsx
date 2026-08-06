@@ -335,14 +335,21 @@ export default function App() {
       const state = resolvePushState(!!profile?.push_enabled, device)
       // No calendar to fall back on here, so a device that cannot be repaired
       // in-app is left alone rather than shown a button that does nothing.
-      if (!pushAsk.canAskForPush(pushAsk.readPushAskState(), { pushState: state, canOfferFallback: false }, Date.now())) return
+      if (!pushAsk.shouldOpenPushAsk(pushAsk.readPushAskState(), {
+        intentKnown: profile !== null,
+        pushState: state,
+        deviceConfirmed: device.confirmed,
+        canOfferFallback: false,
+      }, Date.now())) return
       updatePushAsk(s => pushAsk.markAsked(s, Date.now()))
       setPushAskOpen(true)
     }
     const id = setInterval(tick, 10_000)
     return () => { cancelled = true; clearInterval(id) }
     // Same here: the layer list lives in the mirror, not in these deps.
-  }, [session, profile?.push_enabled])
+    // Depends on the whole profile, not just the flag: "not loaded yet" is an
+    // input of its own now, and the tick has to see it change.
+  }, [session, profile])
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
