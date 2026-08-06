@@ -25,6 +25,15 @@ describe('PushAskModal', () => {
     expect(enablePushOnThisDevice).not.toHaveBeenCalled()
   })
 
+  // Someone who turned notifications on months ago is not a stranger to the
+  // idea. Pitching it to them again reads as a bug; what they need to hear is
+  // which device is the problem.
+  it('tells a returning user what is actually wrong instead of pitching', () => {
+    render(<PushAskModal userId="u1" mode="repair" onEnabled={() => {}} onDecline={() => {}} onFailed={() => {}} />)
+    expect(screen.getByText(/this device does not receive notifications/i)).toBeInTheDocument()
+    expect(screen.queryByText(/when something starts nearby/i)).not.toBeInTheDocument()
+  })
+
   it('records the intent and the device together when accepted', async () => {
     enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: true })
     const onEnabled = vi.fn()

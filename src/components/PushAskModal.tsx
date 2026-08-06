@@ -12,14 +12,23 @@ import { enablePushOnThisDevice } from '../lib/push'
 //
 // The buttons deliberately reuse followNotify.enable / followNotify.later: the
 // same action asked in two places should not be worded two ways.
+//
+// Two conversations, not one. 'ask' is for an account that never opted in, and
+// pitches. 'repair' is for one that opted in long ago and landed on a device
+// that cannot deliver — pitching to them reads as a bug, because they already
+// said yes; what they need told is which device is the problem. The wording is
+// the profile panel's, so the same fault is described the same way wherever the
+// user meets it.
 
 export default function PushAskModal({
   userId,
+  mode = 'ask',
   onEnabled,
   onDecline,
   onFailed,
 }: {
   userId: string
+  mode?: 'ask' | 'repair'
   onEnabled: () => void
   /** Pressed "not now", or the system prompt was refused — both start the cooldown. */
   onDecline: () => void
@@ -84,10 +93,10 @@ export default function PushAskModal({
         </div>
 
         <div style={{ fontFamily: F.display, fontSize: 22, fontWeight: 900, color: C.ink, marginBottom: 10 }}>
-          {t('pushAsk.title')}
+          {t(mode === 'repair' ? 'profile.pushNotHereTitle' : 'pushAsk.title')}
         </div>
         <div style={{ fontSize: 15, fontWeight: 600, color: C.inkSoft, lineHeight: 1.5, marginBottom: 22 }}>
-          {t('pushAsk.body')}
+          {t(mode === 'repair' ? 'profile.pushNotHereBody' : 'pushAsk.body')}
         </div>
 
         <button

@@ -147,6 +147,9 @@ export default function App() {
   // here is a read-modify-write against storage rather than a long-lived copy
   // in memory — two writers, one book.
   const [pushAskOpen, setPushAskOpen] = useState(false)
+  // Which conversation the card is having — decided when it opens, from the
+  // state that opened it, so it cannot drift as the device reconnects.
+  const [pushAskMode, setPushAskMode] = useState<'ask' | 'repair'>('ask')
   const sessionCountedRef = useRef(false)
   const updatePushAsk = (fn: (s: pushAsk.PushAskState) => pushAsk.PushAskState) => {
     const next = fn(pushAsk.readPushAskState())
@@ -342,6 +345,7 @@ export default function App() {
         canOfferFallback: false,
       }, Date.now())) return
       updatePushAsk(s => pushAsk.markAsked(s, Date.now()))
+      setPushAskMode(state === 'off' ? 'ask' : 'repair')
       setPushAskOpen(true)
     }
     const id = setInterval(tick, 10_000)
@@ -1047,6 +1051,7 @@ export default function App() {
       {pushAskOpen && session && (
         <PushAskModal
           userId={session.user.id}
+          mode={pushAskMode}
           onEnabled={() => {
             setPushAskOpen(false)
             reloadProfile()
