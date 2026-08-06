@@ -23,8 +23,6 @@ const pl = {
     emptyCta: 'bądź pierwszy!',
     emptyToday: 'Dziś nic w promieniu {{km}} km',
     emptyNextDayCta: 'Zobacz: {{day}} ({{count}})',
-    emptyWider: 'Najbliższe wydarzenie {{km}} km stąd',
-    emptyWiderCta: 'Pokaż szerzej',
     emptyNotify: 'Powiadom mnie, gdy coś się tu pojawi',
     emptyNotifyDone: 'Damy znać, gdy coś się pojawi',
     today: 'Dziś', yesterday: 'Wczoraj',

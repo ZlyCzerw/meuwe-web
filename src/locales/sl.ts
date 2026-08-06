@@ -25,8 +25,6 @@ const sl: Resources = {
     emptyCta: 'bodi prvi!',
     emptyToday: 'Danes ni ničesar v {{km}} km',
     emptyNextDayCta: 'Poglej {{day}} ({{count}})',
-    emptyWider: 'Najbližji dogodek je {{km}} km stran',
-    emptyWiderCta: 'Poglej širše',
     emptyNotify: 'Sporoči mi, ko se tu kaj pojavi',
     emptyNotifyDone: 'Sporočili ti bomo, ko se kaj pojavi',
     today: 'Danes', yesterday: 'Včeraj',

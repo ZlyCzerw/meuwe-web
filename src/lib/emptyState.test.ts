@@ -88,15 +88,27 @@ describe('shouldOfferWayOut', () => {
 describe('pickEmptyStateVariant', () => {
   const base: NearbyProbe = { nearestKm: null, widerToday: 0, nextDay: null }
 
-  // Another day is the cheapest way out: one tap and the map has content.
-  it('offers another day before anything else', () => {
+  // Anything today within reach is something the map is about to frame by
+  // itself, so there is nothing to announce — whatever else the probe found.
+  it('says nothing when today has something within reach', () => {
     const v = pickEmptyStateVariant({ ...base, nearestKm: 8, widerToday: 4, nextDay: { dayOffset: 1, count: 3 } })
-    expect(v).toEqual({ kind: 'nextDay', dayOffset: 1, count: 3 })
+    expect(v).toEqual({ kind: 'wider', nearestKm: 8 })
   })
 
-  it('offers a wider look when today has something further out', () => {
+  it('widens without a word when today has something further out', () => {
     expect(pickEmptyStateVariant({ ...base, nearestKm: 12, widerToday: 2 }))
       .toEqual({ kind: 'wider', nearestKm: 12 })
+  })
+
+  it('has nothing to say or do when the nearest thing is already in view', () => {
+    expect(pickEmptyStateVariant({ ...base, nearestKm: 3, widerToday: 0 }))
+      .toEqual({ kind: 'none' })
+  })
+
+  // Only once today is empty as far as meuwe reaches does another day get offered.
+  it('offers another day when nothing today is within reach', () => {
+    expect(pickEmptyStateVariant({ ...base, nextDay: { dayOffset: 1, count: 3 } }))
+      .toEqual({ kind: 'nextDay', dayOffset: 1, count: 3 })
   })
 
   // Only now is "be the first" honest.

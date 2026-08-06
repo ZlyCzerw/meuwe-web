@@ -25,8 +25,6 @@ const de: Resources = {
     emptyCta: 'sei der Erste!',
     emptyToday: 'Heute nichts im Umkreis von {{km}} km',
     emptyNextDayCta: '{{day}} ansehen ({{count}})',
-    emptyWider: 'Nächstes Event {{km}} km entfernt',
-    emptyWiderCta: 'Weiter umsehen',
     emptyNotify: 'Sag Bescheid, wenn hier etwas auftaucht',
     emptyNotifyDone: 'Wir sagen Bescheid, wenn etwas auftaucht',
     today: 'Heute', yesterday: 'Gestern',

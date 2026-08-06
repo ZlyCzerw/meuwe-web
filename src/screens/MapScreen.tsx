@@ -96,7 +96,9 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
-  const [mapRadiusKm, setMapRadiusKm] = useState(15)
+  // How far out events are fetched, and the number the empty card quotes. Null
+  // until the map has been laid out and has a view to measure — see useEvents.
+  const [mapRadiusKm, setMapRadiusKm] = useState<number | null>(null)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [pickerEvents, setPickerEvents] = useState<EventWithMeta[] | null>(null)
@@ -127,12 +129,38 @@ function MapScreen({
     return idxToDate(idx).toLocaleDateString(loc, { weekday: 'long' })
   }
 
+  /**
+   * Adopts (lat, lng, zoom) as the view that events are fetched for, at the
+   * moment the view is requested rather than when its animation lands. moveend
+   * is not a reliable courier for this: Leaflet stops an interrupted animation
+   * without ever firing it, which used to leave the fetch radius on its
+   * hardcoded default — a wide startup view over an empty 15 km fetch box —
+   * until the first touch of the map. Asking early also means the events for
+   * the destination load while the flight is still in the air.
+   */
+  function adoptView(map: L.Map, lat: number, lng: number, zoom: number) {
+    const size = map.getSize()
+    const corner = map.unproject(map.project([lat, lng], zoom).add([size.x / 2, -size.y / 2]), zoom)
+    // MAX_MAP_KM is the edge of what meuwe deals in at all — the fan-out, the
+    // probe and the startup framing all stop there. A viewport pulled wider
+    // than that (a landscape window, a pinch out) must not turn into a search
+    // meuwe cannot honour, nor into a card claiming a 99 km radius.
+    setMapRadiusKm(Math.min(Math.ceil(haversineKm(lat, lng, corner.lat, corner.lng)), MAX_MAP_KM))
+    setMapCenter({ lat, lng })
+  }
+
+  /** Flies to the point and adopts the destination as the fetch view now. */
+  function flyAdopting(map: L.Map, lat: number, lng: number, zoom: number, duration: number) {
+    adoptView(map, lat, lng, zoom)
+    map.flyTo([lat, lng], zoom, { duration })
+  }
+
   /** Pulls the view back far enough to take in something `km` away. */
   function widenTo(km: number) {
     const map = leafRef.current
     if (!map) return
     const c = map.getCenter()
-    map.flyTo([c.lat, c.lng], startupZoom(km, c.lat), { duration: 0.8 })
+    flyAdopting(map, c.lat, c.lng, startupZoom(km, c.lat), 0.8)
   }
 
   function toggleFilter(f: string) {
@@ -193,8 +221,9 @@ function MapScreen({
   useEffect(() => {
     if (leafRef.current || !mapRef.current) return
     const initialPos = initialCenter || userPosRef.current
+    const start = initialPos || lastKnownPos || ipPos || WARSAW
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([(initialPos || lastKnownPos || ipPos || WARSAW).lat, (initialPos || lastKnownPos || ipPos || WARSAW).lng], initialZoom)
+      .setView([start.lat, start.lng], initialZoom)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
@@ -206,12 +235,12 @@ function MapScreen({
       const zoom = 16
       const offsetPx = window.innerHeight * 0.25
       const target = map.project([lat, lng], zoom)
-      const shifted = target.add([0, offsetPx])
-      map.flyTo(map.unproject(shifted, zoom), zoom, { duration: 0.7 })
+      const shifted = map.unproject(target.add([0, offsetPx]), zoom)
+      flyAdopting(map, shifted.lat, shifted.lng, zoom, 0.7)
     })
     // Smart-link spot: center exactly on the point at the requested zoom, no sheet offset.
     onRegisterFlyToSpot?.((lat, lng, zoom) => {
-      map.flyTo([lat, lng], Math.min(zoom, 19), { duration: 0.7 })
+      flyAdopting(map, lat, lng, Math.min(zoom, 19), 0.7)
     })
     map.on('moveend', () => {
       const up = userPosRef.current
@@ -224,13 +253,12 @@ function MapScreen({
       }
       if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
       moveTimerRef.current = setTimeout(() => {
-        const bounds = map.getBounds()
-        const corner = bounds.getNorthEast()
-        const rawKm = haversineKm(center.lat, center.lng, corner.lat, corner.lng)
-        setMapRadiusKm(Math.min(Math.ceil(rawKm), 200))
-        setMapCenter({ lat: center.lat, lng: center.lng })
+        adoptView(map, center.lat, center.lng, map.getZoom())
       }, 300)
     })
+    // The state the map opens on is a view too — without this, a map that
+    // starts at the right zoom and is never moved fetches for no view at all.
+    adoptView(map, start.lat, start.lng, initialZoom)
     leafRef.current = map
     // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
     // add the me marker immediately using the always-current ref.
@@ -287,6 +315,7 @@ function MapScreen({
     const map = leafRef.current
     if (!ipPos || !map) return
     if (centeredRef.current || userPosRef.current) return
+    adoptView(map, ipPos.lat, ipPos.lng, IP_ZOOM)
     map.setView([ipPos.lat, ipPos.lng], IP_ZOOM, { animate: true })
   }, [ipPos]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -297,7 +326,7 @@ function MapScreen({
   // asked about *this* view" from that key, rather than resetting a flag as the
   // view changes, keeps a stale answer from being shown against a new position
   // and keeps setState out of the effect body.
-  const probeKey = `${eventsPos.lat.toFixed(3)},${eventsPos.lng.toFixed(3)},${Math.round(mapRadiusKm)}`
+  const probeKey = `${eventsPos.lat.toFixed(3)},${eventsPos.lng.toFixed(3)},${mapRadiusKm ?? '?'}`
   // The card is gated by the probe rather than by a render-time check: the probe
   // effect is the one place allowed to look at the refs, and it simply declines
   // to ask about a view it should not comment on. No probe, no card.
@@ -305,7 +334,7 @@ function MapScreen({
 
   useEffect(() => {
     if (visibleEvents.length > 0) { seenAnyEventRef.current = true; return }
-    if (!isEmptyView) return
+    if (!isEmptyView || mapRadiusKm === null) return
     // Someone who has already watched pins appear knows the map has things on
     // it; telling them so every time they cross a field is noise.
     if (!shouldOfferWayOut({
@@ -331,15 +360,14 @@ function MapScreen({
     [probe, probeKey],
   )
 
-  // Nothing in view but something on today further out: widen once, rather than
-  // asking the user to press a button to be shown what they came for. Once per
-  // mount — after that the card offers the same move as a choice, so a user who
-  // deliberately zoomed back in is not fought over it.
+  // Nothing in view but something on today within reach: widen to it instead of
+  // saying a word about it. Once per mount, so a user who deliberately zoomed
+  // back in afterwards is not fought over it.
   useEffect(() => {
     if (autoWidenedRef.current || emptyVariant.kind !== 'wider') return
     autoWidenedRef.current = true
     widenTo(emptyVariant.nearestKm)
-  }, [emptyVariant])
+  }, [emptyVariant]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // The fan-out measures from profiles.last_lat/lng, so this is only honest
   // while the user is looking at their own neighbourhood.
@@ -352,7 +380,7 @@ function MapScreen({
     await db.updateProfile({
       id: session.user.id,
       push_enabled: true,
-      radius_km: Math.min(MAX_MAP_KM, Math.max(profile?.radius_km ?? 0, Math.ceil(mapRadiusKm))),
+      radius_km: Math.min(MAX_MAP_KM, Math.max(profile?.radius_km ?? 0, Math.ceil(mapRadiusKm ?? 0))),
     })
     setNotifyDone(true)
   }
@@ -397,7 +425,7 @@ function MapScreen({
 
   function doRecenter() {
     const p = userPos || lastKnownPos || ipPos || WARSAW
-    leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })
+    if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7)
     setRecenter(false)
   }
 
@@ -448,7 +476,7 @@ function MapScreen({
       {/* Search bar */}
       {!pickingLocation && (
         <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 20 }}>
-          <SearchBar userPos={userPos} onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+          <SearchBar userPos={userPos} onSelect={p => { if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7) }} />
         </div>
       )}
 
@@ -660,7 +688,7 @@ function MapScreen({
             </div>
             {/* Address search */}
             <div style={{ position: 'relative', zIndex: 50 }}>
-              <SearchBar userPos={userPos} onSelect={p => leafRef.current?.flyTo([p.lat, p.lng], 15, { duration: 0.7 })} />
+              <SearchBar userPos={userPos} onSelect={p => { if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7) }} />
             </div>
             {/* Hint */}
             <div style={{ textAlign: 'center', fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>
@@ -749,7 +777,10 @@ function MapScreen({
             {emptyVariant.kind === 'nextDay' && (
               <>
                 <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
-                  {t('map.emptyToday', { km: Math.round(mapRadiusKm) })}
+                  {/* The card only exists because nothing today is within
+                      MAX_MAP_KM, so that — not the size of the viewport — is
+                      the distance it can honestly quote. */}
+                  {t('map.emptyToday', { km: MAX_MAP_KM })}
                 </div>
                 <button
                   onClick={() => {
@@ -764,20 +795,6 @@ function MapScreen({
                     day: dayLabel(TODAY_IDX + emptyVariant.dayOffset),
                     count: emptyVariant.count,
                   })}
-                </button>
-              </>
-            )}
-
-            {emptyVariant.kind === 'wider' && (
-              <>
-                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
-                  {t('map.emptyWider', { km: Math.round(emptyVariant.nearestKm) })}
-                </div>
-                <button
-                  onClick={() => { offeredWayOutRef.current = true; widenTo(emptyVariant.nearestKm) }}
-                  style={emptyCtaStyle}
-                >
-                  {t('map.emptyWiderCta')}
                 </button>
               </>
             )}

@@ -34,8 +34,10 @@ export interface NearbyProbe {
 export type EmptyVariant =
   /** Nothing today, but a later day has some — one tap away. */
   | { kind: 'nextDay'; dayOffset: number; count: number }
-  /** Nothing in view, but today has something further out. */
+  /** Today has something within reach, further out than the view: frame it, silently. */
   | { kind: 'wider'; nearestKm: number }
+  /** Today has something within reach and already in view. Nothing to do. */
+  | { kind: 'none' }
   /** Genuinely nothing, all week, as far as the fan-out reaches. */
   | { kind: 'nothing' }
   /** The probe failed. Say the old neutral line and promise nothing. */
@@ -100,13 +102,23 @@ export function shouldOfferWayOut(ctx: { seenAnyEvent: boolean; alreadyOffered: 
 }
 
 /**
- * Which way out to offer, cheapest first: another day is one tap and the map has
- * content; a wider look is one tap and a longer trip; being the first is work.
+ * What the empty map owes the user.
+ *
+ * MAX_MAP_KM is how far meuwe reaches, and anything today inside that is
+ * something the map frames by itself — twice the distance to the nearest, so it
+ * lands on screen with room around it. That case needs no words: a card saying
+ * "nothing nearby" over a map about to fill with pins is the bug this rule
+ * exists to prevent. Only once today is empty as far as we can see does the card
+ * appear, and then it offers whichever way out exists — another day first,
+ * because it is one tap; being the first is work.
+ *
  * `null` means the probe failed, which is not the same as nothing being there.
  */
 export function pickEmptyStateVariant(probe: NearbyProbe | null): EmptyVariant {
   if (!probe) return { kind: 'unknown' }
+  if (probe.nearestKm !== null) {
+    return probe.widerToday > 0 ? { kind: 'wider', nearestKm: probe.nearestKm } : { kind: 'none' }
+  }
   if (probe.nextDay) return { kind: 'nextDay', ...probe.nextDay }
-  if (probe.widerToday > 0 && probe.nearestKm !== null) return { kind: 'wider', nearestKm: probe.nearestKm }
   return { kind: 'nothing' }
 }
