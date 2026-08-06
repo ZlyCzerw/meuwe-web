@@ -56,7 +56,7 @@ beforeEach(() => {
 
 describe('ProfilePanel notifications', () => {
   it('says notifications are on only when this device is registered', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'granted', registered: true })
+    getDevicePushState.mockResolvedValue({ permission: 'granted', registered: true, confirmed: true })
     renderPanel(true)
     expect(await screen.findByText('Notifications enabled')).toBeInTheDocument()
     expect(screen.queryByText('Turn on for this device')).not.toBeInTheDocument()
@@ -64,7 +64,7 @@ describe('ProfilePanel notifications', () => {
 
   it('warns and offers a fix when the intent is on but the device never asked', async () => {
     // The web-then-native case: push_enabled survived, this device has nothing.
-    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false, confirmed: true })
     renderPanel(true)
     expect(await screen.findByText('This device does not receive notifications')).toBeInTheDocument()
     expect(screen.getByText('Turn on for this device')).toBeInTheDocument()
@@ -72,14 +72,14 @@ describe('ProfilePanel notifications', () => {
   })
 
   it('warns when the permission is held but no token or subscription exists', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'granted', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'granted', registered: false, confirmed: true })
     renderPanel(true)
     expect(await screen.findByText('This device does not receive notifications')).toBeInTheDocument()
     expect(screen.getByText('Turn on for this device')).toBeInTheDocument()
   })
 
   it('explains a system-level block instead of offering a dead button', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'denied', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'denied', registered: false, confirmed: true })
     renderPanel(true)
     expect(await screen.findByText('Notifications blocked by the system')).toBeInTheDocument()
     expect(screen.getByText(/allow notifications for this site/)).toBeInTheDocument()
@@ -87,15 +87,15 @@ describe('ProfilePanel notifications', () => {
   })
 
   it('shows the plain off state without any warning', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false, confirmed: true })
     renderPanel(false)
     expect(await screen.findByText('Enable notifications')).toBeInTheDocument()
     expect(screen.queryByText('This device does not receive notifications')).not.toBeInTheDocument()
   })
 
   it('states the failure when the repair does not work', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false })
-    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false, confirmed: true })
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false, confirmed: true })
     renderPanel(true)
 
     fireEvent.click(await screen.findByText('Turn on for this device'))
@@ -108,8 +108,8 @@ describe('ProfilePanel notifications', () => {
   })
 
   it('clears the warning once the repair succeeds', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false })
-    enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: true })
+    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false, confirmed: true })
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'granted', registered: true, confirmed: true })
     renderPanel(true)
 
     fireEvent.click(await screen.findByText('Turn on for this device'))
@@ -119,8 +119,8 @@ describe('ProfilePanel notifications', () => {
   })
 
   it('records the intent even when the device refuses, and says so', async () => {
-    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false })
-    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false })
+    getDevicePushState.mockResolvedValue({ permission: 'prompt', registered: false, confirmed: true })
+    enablePushOnThisDevice.mockResolvedValue({ permission: 'denied', registered: false, confirmed: true })
     const { rerender } = renderPanel(false)
 
     fireEvent.click(await screen.findByText('Enable notifications'))

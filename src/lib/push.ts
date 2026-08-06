@@ -130,22 +130,27 @@ export async function getDevicePushState(userId: string | null): Promise<DeviceP
   if (isNativePlatform()) {
     const perm = await FirebaseMessaging.checkPermissions()
     const permission = mapNativePermission(perm.receive)
-    if (permission !== 'granted' || !userId) return { permission, registered: false }
+    if (permission !== 'granted' || !userId) return { permission, registered: false, confirmed: true }
     const token = await getNativeToken()
-    if (!token) return { permission, registered: false }
-    return { permission, registered: await isTokenStored(userId, token) }
+    // No token is not the same as no registration: FCM returns nothing while it
+    // is still initialising or offline, which is the state a cold start is in.
+    if (!token) return { permission, registered: false, confirmed: false }
+    const stored = await isTokenStored(userId, token)
+    return { permission, registered: stored === true, confirmed: stored !== null }
   }
 
-  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false }
+  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false, confirmed: true }
   const permission: PushPermission =
     Notification.permission === 'granted' ? 'granted'
     : Notification.permission === 'denied' ? 'denied'
     : 'prompt'
-  if (permission !== 'granted' || !userId) return { permission, registered: false }
+  if (permission !== 'granted' || !userId) return { permission, registered: false, confirmed: true }
 
-  const sub = await getWebSubscription()
-  if (!sub) return { permission, registered: false }
-  return { permission, registered: await isEndpointStored(userId, sub.endpoint) }
+  const lookup = await getWebSubscription()
+  if (!lookup.ok) return { permission, registered: false, confirmed: false }
+  if (!lookup.sub) return { permission, registered: false, confirmed: true }
+  const stored = await isEndpointStored(userId, lookup.sub.endpoint)
+  return { permission, registered: stored === true, confirmed: stored !== null }
 }
 
 async function getNativeToken(): Promise<string | null> {
@@ -158,18 +163,26 @@ async function getNativeToken(): Promise<string | null> {
   }
 }
 
-async function getWebSubscription(): Promise<PushSubscription | null> {
+/**
+ * `ok: false` means the question could not be put at all — no service worker
+ * registration yet (it is registered in parallel at boot), or the call threw.
+ * `ok: true, sub: null` is a real answer: this browser holds no subscription.
+ */
+type SubscriptionLookup = { ok: true; sub: PushSubscription | null } | { ok: false }
+
+async function getWebSubscription(): Promise<SubscriptionLookup> {
   try {
     const reg = await navigator.serviceWorker.getRegistration()
-    if (!reg) return null
-    return await reg.pushManager.getSubscription()
+    if (!reg) return { ok: false }
+    return { ok: true, sub: await reg.pushManager.getSubscription() }
   } catch (err) {
     console.error('[push] getSubscription failed:', err)
-    return null
+    return { ok: false }
   }
 }
 
-async function isTokenStored(userId: string, token: string): Promise<boolean> {
+/** `null` when the lookup itself failed — not the same as "no row". */
+async function isTokenStored(userId: string, token: string): Promise<boolean | null> {
   const { data, error } = await supabase
     .from('push_devices')
     .select('id')
@@ -178,12 +191,13 @@ async function isTokenStored(userId: string, token: string): Promise<boolean> {
     .maybeSingle()
   if (error) {
     console.error('[push] push_devices lookup failed:', error)
-    return false
+    return null
   }
   return !!data
 }
 
-async function isEndpointStored(userId: string, endpoint: string): Promise<boolean> {
+/** `null` when the lookup itself failed — not the same as "no row". */
+async function isEndpointStored(userId: string, endpoint: string): Promise<boolean | null> {
   const { data, error } = await supabase
     .from('push_subscriptions')
     .select('id')
@@ -192,7 +206,7 @@ async function isEndpointStored(userId: string, endpoint: string): Promise<boole
     .maybeSingle()
   if (error) {
     console.error('[push] push_subscriptions lookup failed:', error)
-    return false
+    return null
   }
   return !!data
 }
@@ -208,17 +222,17 @@ export async function enablePushOnThisDevice(userId: string): Promise<DevicePush
   if (isNativePlatform()) {
     const perm = await FirebaseMessaging.requestPermissions()
     const permission = mapNativePermission(perm.receive)
-    if (permission !== 'granted') return { permission, registered: false }
-    return { permission, registered: await registerNativeToken() }
+    if (permission !== 'granted') return { permission, registered: false, confirmed: true }
+    return { permission, registered: await registerNativeToken(), confirmed: true }
   }
 
-  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false }
+  if (!thisBrowserCanPush()) return { permission: 'unsupported', registered: false, confirmed: true }
   const result = await Notification.requestPermission()
   if (result !== 'granted') {
     // 'denied' is final; 'default' means the prompt was dismissed and can return.
-    return { permission: result === 'denied' ? 'denied' : 'prompt', registered: false }
+    return { permission: result === 'denied' ? 'denied' : 'prompt', registered: false, confirmed: true }
   }
-  return { permission: 'granted', registered: await subscribeWeb(userId) }
+  return { permission: 'granted', registered: await subscribeWeb(userId), confirmed: true }
 }
 
 /**
@@ -237,7 +251,7 @@ export async function ensurePushRegistered(userId: string): Promise<DevicePushSt
   const registered = isNativePlatform()
     ? await registerNativeToken()
     : await subscribeWeb(userId)
-  return { permission: 'granted', registered }
+  return { permission: 'granted', registered, confirmed: true }
 }
 
 // No userId parameter: register_push_device derives the owner from the
@@ -257,7 +271,8 @@ async function subscribeWeb(userId: string): Promise<boolean> {
   const reg = await registerServiceWorker()
   if (!reg) return false
 
-  let sub = await getWebSubscription()
+  const lookup = await getWebSubscription()
+  let sub = lookup.ok ? lookup.sub : null
   if (!sub) {
     try {
       sub = await reg.pushManager.subscribe({
@@ -299,7 +314,8 @@ export async function disablePushOnThisDevice(): Promise<void> {
     return
   }
 
-  const sub = await getWebSubscription()
+  const lookup = await getWebSubscription()
+  const sub = lookup.ok ? lookup.sub : null
   if (!sub) return
   const endpoint = sub.endpoint
   await sub.unsubscribe()

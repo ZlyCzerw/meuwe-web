@@ -20,6 +20,17 @@ export interface DevicePushState {
   permission: PushPermission
   /** A subscription (web) or FCM token (native) exists AND is stored for this user. */
   registered: boolean
+  /**
+   * Whether `registered` is an answer we actually got, rather than the safe
+   * default used when the question could not be put — FCM has produced no token
+   * yet, the lookup failed, the device was asked while the network was still
+   * coming up. A cold start is exactly that moment.
+   *
+   * A screen the user opened can treat "could not check" as "not registered"
+   * and offer a repair; that costs nothing. Anything that interrupts the user
+   * must not — see shouldOpenPushAsk in pushAsk.ts.
+   */
+  confirmed: boolean
 }
 
 export type PushUiState =

@@ -8,8 +8,10 @@ import {
   type PushPermission,
 } from './pushState'
 
+// resolvePushState does not read `confirmed` — it is the ask's business, not
+// the display's — so these all stand for a reading we actually got.
 const dev = (permission: PushPermission, registered = false): DevicePushState =>
-  ({ permission, registered })
+  ({ permission, registered, confirmed: true })
 
 describe('resolvePushState', () => {
   it('reports unsupported regardless of intent', () => {
