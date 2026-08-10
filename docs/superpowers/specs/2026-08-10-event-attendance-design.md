@@ -84,15 +84,44 @@ create policy "own attendance update" on public.event_attendance
 
 ### 3. Wykrywanie automatyczne
 
-Bez nowej funkcji edge. Wszystkie dane są w Postgresie, odległość liczy się w SQL, a `pg_cron` jest już w projekcie skonfigurowany ([20260805_cron_jobs.sql](../../../supabase/migrations/20260805_cron_jobs.sql)). Funkcja `security definer`, uruchamiana co 5 minut:
+Bez nowej funkcji edge. Wszystkie dane są w Postgresie, odległość liczy się w SQL, a `pg_cron` jest już w projekcie skonfigurowany ([20260805_cron_jobs.sql](../../../supabase/migrations/20260805_cron_jobs.sql)). Funkcja `security definer`, uruchamiana co 5 minut.
 
-- wydarzenia trwające teraz: od 30 minut przed `start_time` do `end_time`,
-- ich obserwujący z `event_follows`,
-- pozycja obserwującego z `profiles`, pod warunkiem że `last_seen_at` jest z ostatnich **15 minut**,
-- odległość haversine od pinu wydarzenia mniejsza lub równa **150 m**,
-- wstaw `attended = true, source = 'auto'`, `on conflict do nothing`.
+#### To jest próbkowanie, nie ciągły pomiar
 
-Warunek świeżości jest częścią reguły, nie optymalizacją. Bez niego ktoś, kto był pod tym adresem po południu i zamknął aplikację, zostałby policzony jako obecny na wieczornym wydarzeniu w tym samym miejscu.
+`profiles` trzyma jedną pozycję, ostatnią. Kto wyszedł z wydarzenia i wrócił do domu, ma w bazie dom - poprzednia wartość została nadpisana bezpowrotnie.
+
+Wykrywanie polega więc na tym, że sonda co 5 minut pyta „czy pozycja, którą trzymam w tej chwili, wskazuje na to wydarzenie". Jeśli w żadnym zajrzeniu nie wskazywała, dotarcia nie zobaczymy. Częstotliwość sondy jest z tego powodu częścią reguły, a nie szczegółem wdrożenia.
+
+#### Reguła
+
+`last_seen_at` nie oznacza „ostatniej aktywności użytkownika". Ta kolumna jest ustawiana przez `update_my_location` w jednym zapisie razem ze współrzędnymi, więc jest znacznikiem czasu **tej konkretnej pozycji**. Dlatego to do niej przywiązujemy warunek czasowy.
+
+```sql
+-- 1. które wydarzenia ogląda ten przebieg sondy
+where e.start_time - interval '30 minutes' <= now()
+  and e.end_time   >= now() - interval '15 minutes'
+
+-- 2. czy trzymana pozycja powstała w trakcie wydarzenia
+  and p.last_seen_at >= e.start_time - interval '30 minutes'
+  and p.last_seen_at <= e.end_time
+  and haversine(p.last_lat, p.last_lng, e.lat, e.lng) <= 150
+```
+
+Wstawiamy `attended = true, source = 'auto'`, `on conflict do nothing`.
+
+Te dwie pary robią różne rzeczy i nie wolno ich mylić. Pierwsza to **zakres przebiegu**, żeby nie przeglądać całej bazy wydarzeń co pięć minut. Druga to **właściwa reguła zaliczania**.
+
+Kwadrans w pierwszej parze to ogon dla sondy, nie warunek świeżości. Ostatnie próbkowanie przed końcem wydarzenia może wypaść nawet 5 minut przed nim, więc ktoś, kto dotrze 2 minuty przed końcem, nie zostałby zobaczony, dopóki wydarzenie formalnie trwa. Z ogonem przebieg o `koniec + 5 min` nadal ogląda to wydarzenie, widzi zapis z `koniec - 2 min`, mieszczący się w oknie, i zalicza dotarcie.
+
+#### Dlaczego okno wydarzenia, a nie „ostatnie 15 minut od teraz"
+
+Rozważaliśmy warunek „`last_seen_at` z ostatnich 15 minut", liczony od chwili przebiegu sondy. Odrzucony: przywiązuje regułę do tego, kiedy akurat zadziałał cron, a to jest przypadkowe, i gubi ludzi, którzy byli na miejscu, ale zamknęli aplikację między jednym a drugim przebiegiem.
+
+Okno wydarzenia załatwia ten sam przypadek fałszywego trafienia - ktoś był pod tym adresem po południu, pozycja zamarzła, wieczorem zaczyna się tam impreza - bo zapis z popołudnia leży poza oknem.
+
+Cena jest znana i zaakceptowana: ktoś, kto zapisał pozycję pod adresem 20 minut przed startem i zaraz odszedł, zostanie policzony. Wariant z 15 minutami tego nie eliminował, tylko zawężał okazję, bo sonda zobaczyłaby go przy najbliższym przebiegu. Pomyłkę koryguje modal następnego dnia, bo deklaracja użytkownika nadpisuje automat.
+
+Trzydzieści minut przed startem to decyzja produktowa, nie wyliczenie: na koncert przychodzi się wcześniej, na imprezę później. Sześćdziesiąt złapałoby więcej naprawdę przybyłych i więcej osób kręcących się w okolicy; piętnaście gubiłoby punktualnych.
 
 Wydarzenia prywatne obejmuje ta sama reguła - mają obserwujących i dotarcie znaczy dla nich to samo.
 
@@ -147,7 +176,18 @@ Nie pokazuje niczego organizatorowi. Nie zbiera historii pozycji - `profiles` tr
 
 ## Testy
 
-Czyste funkcje `shouldWriteLocation` i `pickAttendanceAsk` pokrywamy testami jednostkowymi - to w nich siedzą wszystkie decyzje. Funkcję SQL sprawdzamy na stagingu: wstawiamy profil z pozycją 100 m od pinu i drugi 500 m od pinu, uruchamiamy funkcję ręcznie, potwierdzamy jeden wiersz. Osobno test warunku świeżości: profil w promieniu, ale z `last_seen_at` sprzed godziny, nie może zostać policzony.
+Czyste funkcje `shouldWriteLocation` i `pickAttendanceAsk` pokrywamy testami jednostkowymi - to w nich siedzą wszystkie decyzje.
+
+Funkcję SQL sprawdzamy na stagingu, na czterech spreparowanych profilach wobec jednego trwającego wydarzenia:
+
+| profil | pozycja | `last_seen_at` | oczekiwanie |
+|---|---|---|---|
+| A | 100 m od pinu | w oknie | zaliczony |
+| B | 500 m od pinu | w oknie | pominięty, za daleko |
+| C | 100 m od pinu | 3 h przed startem | pominięty, zapis sprzed okna |
+| D | 100 m od pinu | 20 min przed startem | zaliczony, mieści się w 30-minutowym marginesie |
+
+Profil C jest tu najważniejszy: to on odróżnia „był tu wcześniej i pozycja zamarzła" od „jest tu teraz". Osobno sprawdzamy ogon sondy - zapis 2 minuty przed końcem wydarzenia ma zostać zaliczony przez przebieg uruchomiony po jego zakończeniu.
 
 ## Ryzyka
 
