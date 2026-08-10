@@ -3,7 +3,7 @@ import { SignJWT, importPKCS8 } from 'npm:jose@5'
 export interface FcmPayload {
   title: string
   body: string
-  type: 'new_event' | 'event_start' | 'update' | 'message' | 'digest'
+  type: 'new_event' | 'event_start' | 'update' | 'message' | 'digest' | 'interest'
   /** Event pushes carry the event; the digest carries a map spot instead. */
   eventId?: string
   lat?: number
