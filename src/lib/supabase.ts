@@ -2,6 +2,7 @@ import { createClient, type Session } from '@supabase/supabase-js'
 import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
 import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
+import { ASK_MAX_AGE_MS, type AskCandidate } from './attendanceAsk'
 import { markSignedOut, takeSignedOutFlag, googleOAuthOptions } from './authPrompt'
 import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
@@ -133,6 +134,61 @@ export const db = {
   },
   async updateProfileLanguage(uid: string, language: string) {
     return this.updateProfile({ id: uid, language })
+  },
+  /**
+   * Zakończone wydarzenia, które użytkownik obserwuje, wraz z informacją, czy
+   * już sam odpowiedział. Dwa zapytania zamiast joina: PostgREST nie zagnieżdża
+   * tabeli, do której filtr idzie po innym użytkowniku.
+   */
+  async getAttendanceCandidates(uid: string): Promise<AskCandidate[]> {
+    const since = new Date(Date.now() - ASK_MAX_AGE_MS).toISOString()
+    const { data: follows, error } = await supabase
+      .from('event_follows')
+      .select('event_id, events!inner(id, title, end_time)')
+      .eq('user_id', uid)
+      .gte('events.end_time', since)
+      .lte('events.end_time', new Date().toISOString())
+    if (error) { console.error('[attendance] follows query failed:', error); return [] }
+
+    const rows = (follows ?? []) as unknown as {
+      event_id: string
+      events: { title: string; end_time: string }
+    }[]
+    if (rows.length === 0) return []
+
+    const { data: answers } = await supabase
+      .from('event_attendance')
+      .select('event_id, source')
+      .eq('user_id', uid)
+      .in('event_id', rows.map(r => r.event_id))
+    const answered = new Set(
+      ((answers ?? []) as { event_id: string; source: string }[])
+        .filter(a => a.source === 'self')
+        .map(a => a.event_id),
+    )
+
+    return rows.map(r => ({
+      eventId: r.event_id,
+      title: r.events.title,
+      endTime: r.events.end_time,
+      answered: answered.has(r.event_id),
+    }))
+  },
+
+  /** Deklaracja użytkownika nadpisuje automat — on wie lepiej. */
+  async recordAttendance(eventId: string, attended: boolean) {
+    const sess = await this.getSession()
+    if (!sess) return { error: { message: 'not authenticated' } }
+    return supabase.from('event_attendance').upsert(
+      {
+        user_id: sess.user.id,
+        event_id: eventId,
+        attended,
+        source: 'self',
+        recorded_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,event_id' },
+    )
   },
   /**
    * Four coordinates per event and nothing else, for the week ahead.

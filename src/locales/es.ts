@@ -202,6 +202,12 @@ const es: Resources = {
     title: 'Entérate cuando algo empiece cerca',
     body: 'Te enviaremos una notificación cuando aparezca un evento nuevo dentro de tu radio. Nada más.',
   },
+  attendance: {
+    title: 'Esperamos que estuviera bien',
+    question: '¿Se pudo llegar a {{title}}?',
+    yes: 'Sí',
+    no: 'No',
+  },
   followNotify: {
     title: 'Te avisaremos',
     body: 'Enviaremos una notificación cuando quien organiza cambie los detalles, cuando el evento empiece y cuando alguien escriba en el chat.',

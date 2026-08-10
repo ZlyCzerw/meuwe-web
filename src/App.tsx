@@ -44,6 +44,8 @@ import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
 import { shouldWriteLocation, type WrittenLocation } from './lib/location'
+import AttendanceAskModal from './components/AttendanceAskModal'
+import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -155,6 +157,14 @@ export default function App() {
   // state that opened it, so it cannot drift as the device reconnects.
   const [pushAskMode, setPushAskMode] = useState<'ask' | 'repair'>('ask')
   const sessionCountedRef = useRef(false)
+
+  // ── Asking whether they made it ────────────────────────────────────────────
+  // Data and visibility are two separate things. If the overlay flag were
+  // derived from the candidate, isScreenClear() would report a busy screen the
+  // moment there is something to ask about, and the card would never open.
+  const [attendanceCandidate, setAttendanceCandidate] = useState<AskCandidate | null>(null)
+  const [attendanceAskOpen, setAttendanceAskOpen] = useState(false)
+  const attendanceFetchedRef = useRef(false)
   const updatePushAsk = (fn: (s: pushAsk.PushAskState) => pushAsk.PushAskState) => {
     const next = fn(pushAsk.readPushAskState())
     pushAsk.writePushAskState(next)
@@ -195,6 +205,7 @@ export default function App() {
     interestsModalOpen,
     inviteModalOpen,
     pushAskOpen,
+    attendanceAskOpen,
   }
   const screenIsClear = () => !!overlayRef.current && isScreenClear(overlayRef.current)
 
@@ -615,6 +626,25 @@ export default function App() {
     const id = setInterval(writeLocation, 60_000)
     return () => clearInterval(id)
   }, [writeLocation])
+
+  // Raz na uruchomienie: wybierz jedno zakończone wydarzenie z wczoraj.
+  useEffect(() => {
+    if (!session || screen !== 'map' || attendanceFetchedRef.current) return
+    attendanceFetchedRef.current = true
+    db.getAttendanceCandidates(session.user.id).then(candidates => {
+      setAttendanceCandidate(pickAttendanceAsk(candidates, new Date()))
+    })
+  }, [session?.user.id, screen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Czeka na wolny ekran, tym samym sondowaniem co pozostałe karty wchodzące
+  // bez zaproszenia.
+  useEffect(() => {
+    if (!attendanceCandidate || attendanceAskOpen) return
+    const id = setInterval(() => {
+      if (screenIsClear()) setAttendanceAskOpen(true)
+    }, 10_000)
+    return () => clearInterval(id)
+  }, [attendanceCandidate, attendanceAskOpen])
 
   // Persist the user's UI language so edge functions can localize push notifications.
   useEffect(() => {
@@ -1090,6 +1120,16 @@ export default function App() {
             // the repair. Without this reload the menu kept showing the state
             // from before the card was ever opened.
             reloadProfile()
+          }}
+        />
+      )}
+      {attendanceAskOpen && attendanceCandidate && session && (
+        <AttendanceAskModal
+          title={attendanceCandidate.title}
+          onAnswer={attended => {
+            db.recordAttendance(attendanceCandidate.eventId, attended)
+            setAttendanceAskOpen(false)
+            setAttendanceCandidate(null)
           }}
         />
       )}

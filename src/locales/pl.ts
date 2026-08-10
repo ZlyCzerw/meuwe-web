@@ -194,6 +194,12 @@ const pl = {
     title: 'Damy znać, gdy coś zacznie się obok',
     body: 'Wyślemy powiadomienie, gdy w Twoim promieniu pojawi się nowe wydarzenie. Nic poza tym.',
   },
+  attendance: {
+    title: 'Mamy nadzieję, że było fajnie',
+    question: 'Czy udało się dotrzeć na wydarzenie {{title}}?',
+    yes: 'Tak',
+    no: 'Nie',
+  },
   followNotify: {
     title: 'Damy Ci znać',
     body: 'Wyślemy powiadomienie, gdy organizator zmieni szczegóły, gdy wydarzenie się zacznie i gdy ktoś napisze na czacie.',

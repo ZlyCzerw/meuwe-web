@@ -28,6 +28,7 @@ export interface OverlayFlags {
   interestsModalOpen: boolean
   inviteModalOpen: boolean
   pushAskOpen: boolean
+  attendanceAskOpen: boolean
 }
 
 /** True only on a bare map, with nothing above it. */
@@ -46,4 +47,5 @@ export function isScreenClear(f: OverlayFlags): boolean {
     && !f.interestsModalOpen
     && !f.inviteModalOpen
     && !f.pushAskOpen
+    && !f.attendanceAskOpen
 }
