@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
@@ -43,6 +43,7 @@ import { resolvePushState } from './lib/pushState'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
+import { shouldWriteLocation, type WrittenLocation } from './lib/location'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -115,6 +116,9 @@ export default function App() {
   // the one captured when they were installed.
   const sessionRef = useRef(session)
   useEffect(() => { sessionRef.current = session }, [session])
+  const userPosRef = useRef<{ lat: number; lng: number } | null>(null)
+  useEffect(() => { userPosRef.current = userPos }, [userPos])
+  const lastWrittenPosRef = useRef<WrittenLocation | null>(null)
 
   // ── Native first run ───────────────────────────────────────────────────────
   // On the web the browser owns the permission prompt, so nothing is gated there.
@@ -584,17 +588,33 @@ export default function App() {
     return () => { cancelled = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Aktualizuj lokalizację w profilu co 5 minut gdy zalogowany
-  // (Edge Functions jej potrzebują do filtrowania "w okolicy")
+  // The server copy of the user's position — what the fan-out and the arrival
+  // detection measure from.
+  //
+  // This used to depend on `!!userPos`: a boolean that flips false→true once
+  // and never back, because setUserPos is never called with null. The effect
+  // therefore ran once and its interval kept rewriting the position from the
+  // first GPS fix for the rest of the session. Everything now goes through
+  // refs, so neither a new fix nor a timer tick can send a stale value.
+  const writeLocation = useCallback(() => {
+    const uid = sessionRef.current?.user.id
+    const next = userPosRef.current
+    if (!uid || !next) return
+    const now = Date.now()
+    if (!shouldWriteLocation({ next, last: lastWrittenPosRef.current, now })) return
+    lastWrittenPosRef.current = { lat: next.lat, lng: next.lng, at: now }
+    db.updateProfileLocation(uid, next.lat, next.lng)
+  }, [])
+
+  // A different account must not inherit the previous one's rate limit.
+  useEffect(() => { lastWrittenPosRef.current = null }, [session?.user.id])
+
+  // Two callers, one decision: a fresh fix, and a timer for standing still.
+  useEffect(() => { writeLocation() }, [userPos, session?.user.id, writeLocation])
   useEffect(() => {
-    if (!session || !userPos) return
-    // Zapisz natychmiast przy pierwszym GPS fix
-    db.updateProfileLocation(session.user.id, userPos.lat, userPos.lng)
-    const interval = setInterval(() => {
-      db.updateProfileLocation(session.user.id, userPos.lat, userPos.lng)
-    }, 5 * 60_000)
-    return () => clearInterval(interval)
-  }, [session?.user.id, !!userPos]) // eslint-disable-line react-hooks/exhaustive-deps
+    const id = setInterval(writeLocation, 60_000)
+    return () => clearInterval(id)
+  }, [writeLocation])
 
   // Persist the user's UI language so edge functions can localize push notifications.
   useEffect(() => {
