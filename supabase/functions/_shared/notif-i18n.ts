@@ -1,7 +1,7 @@
 // Static notification strings only. Dynamic parts (event title, author name,
 // message text) are never translated here.
 export type Lang = 'pl' | 'en' | 'es' | 'de' | 'sl'
-export type NotifType = 'new_event' | 'event_start' | 'update' | 'message'
+export type NotifType = 'new_event' | 'event_start' | 'update' | 'message' | 'interest'
 
 const SUPPORTED: readonly Lang[] = ['pl', 'en', 'es', 'de', 'sl']
 
@@ -48,6 +48,15 @@ export const NOTIF_TEXT: Record<NotifType, Partial<Record<'title' | 'body', Reco
       sl: 'Nekdo',
     },
   },
+  interest: {
+    title: {
+      pl: 'Ktoś wybiera się na Twoje wydarzenie',
+      en: 'Someone is coming to your event',
+      es: 'Alguien va a tu evento',
+      de: 'Jemand kommt zu deinem Event',
+      sl: 'Nekdo pride na tvoj dogodek',
+    },
+  },
 }
 
 export function groupSubsByLang<T extends { user_id: string }>(
@@ -62,4 +71,35 @@ export function groupSubsByLang<T extends { user_id: string }>(
     groups.set(lang, arr)
   }
   return groups
+}
+
+// Treść zawiera liczbę, więc nie mieści się w NOTIF_TEXT — ta tablica z
+// założenia trzyma wyłącznie napisy bez części zmiennych. Odmiana idzie per
+// język, bo kategorie liczby mnogiej się nie pokrywają: polski ma trzy formy,
+// słoweński cztery z liczbą podwójną, angielski dwie.
+
+function plPeople(n: number): string {
+  if (n === 1) return '1 osoba chce wziąć udział'
+  const mod10 = n % 10
+  const mod100 = n % 100
+  const few = mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)
+  return few ? `${n} osoby chcą wziąć udział` : `${n} osób chce wziąć udział`
+}
+
+function slPeople(n: number): string {
+  const mod100 = n % 100
+  if (mod100 === 1) return `${n} oseba se odpravlja`
+  if (mod100 === 2) return `${n} osebi se odpravljata`
+  if (mod100 === 3 || mod100 === 4) return `${n} osebe se odpravljajo`
+  return `${n} oseb se odpravlja`
+}
+
+export function interestBody(count: number, lang: Lang): string {
+  switch (lang) {
+    case 'pl': return plPeople(count)
+    case 'sl': return slPeople(count)
+    case 'de': return count === 1 ? '1 Person kommt' : `${count} Personen kommen`
+    case 'es': return count === 1 ? '1 persona va a asistir' : `${count} personas van a asistir`
+    default:  return count === 1 ? '1 person is coming' : `${count} people are coming`
+  }
 }
