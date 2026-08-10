@@ -1127,7 +1127,12 @@ export default function App() {
         <AttendanceAskModal
           title={attendanceCandidate.title}
           onAnswer={attended => {
-            db.recordAttendance(attendanceCandidate.eventId, attended)
+            // Karta znika od razu — pytanie zadaje się raz i nie ma go po co
+            // trzymać na ekranie. Ale nieudany zapis nie może zniknąć razem
+            // z nią: odpowiedź jest wtedy stracona i tylko log to pokazuje.
+            db.recordAttendance(attendanceCandidate.eventId, attended).then(res => {
+              if (res?.error) console.error('[attendance] answer not saved:', res.error)
+            })
             setAttendanceAskOpen(false)
             setAttendanceCandidate(null)
           }}
