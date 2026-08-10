@@ -174,6 +174,10 @@ const pl = {
     hint: 'Albo pobierz aplikację',
     soon: 'Wkrótce w',
     downloadTitle: 'Miej meuwe pod ręką',
+    // Napis nad nazwą sklepu na plakietce. Każdy sklep narzuca własne brzmienie
+    // w swoich wytycznych, więc to dwa osobne teksty, nie jeden.
+    applePre: 'Pobierz z',
+    googlePre: 'Pobierz z',
   },
   calendar: {
     add: 'Dodaj do kalendarza',
@@ -271,7 +275,6 @@ const pl = {
       cookies: 'Cookies',
       copyright: '© 2026 meuwe. Wszelkie prawa zastrzeżone.',
       madeIn: 'Zrobione z ♥ na Teneryfie',
-      storePre: 'Pobierz z',
     },
     f1Eyebrow: 'Mapa wydarzeń wokół ciebie',
     f1Title: 'Ekran główny\nto mapa\ndzisiejszych wydarzeń',

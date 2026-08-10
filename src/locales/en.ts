@@ -182,6 +182,10 @@ const en: Resources = {
     hint: 'Or get the app',
     soon: 'Soon on',
     downloadTitle: 'Keep meuwe at hand',
+    // The line above the store's name on a badge. Each store dictates its own
+    // wording in its brand guidelines, so these are two strings, not one.
+    applePre: 'Download on the',
+    googlePre: 'Get it on',
   },
   calendar: {
     add: 'Add to calendar',
@@ -273,7 +277,6 @@ const en: Resources = {
       cookies: 'Cookies',
       copyright: '© 2026 meuwe. All rights reserved.',
       madeIn: 'Made with ♥ in Tenerife',
-      storePre: 'Get it on',
     },
     f1Eyebrow: 'Events map around you',
     f1Title: 'Home screen\nis a map\nof today\'s events',

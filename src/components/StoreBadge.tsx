@@ -50,7 +50,7 @@ export default function StoreBadge({
       {os === 'ios' ? <AppleMark color={inactive ? C.inkSoft : '#fff'} /> : <PlayMark />}
       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
         <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.75 }}>
-          {inactive ? t('store.soon') : t('landing.footer.storePre')}
+          {inactive ? t('store.soon') : t(os === 'ios' ? 'store.applePre' : 'store.googlePre')}
         </span>
         <span style={{ fontFamily: F.display, fontSize: 15, fontWeight: 900 }}>{name}</span>
       </span>

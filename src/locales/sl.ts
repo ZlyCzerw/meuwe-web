@@ -182,6 +182,10 @@ const sl: Resources = {
     hint: 'Ali prenesi aplikacijo',
     soon: 'Kmalu v',
     downloadTitle: 'Imej meuwe pri roki',
+    // Napis nad imenom trgovine na znački. Vsaka trgovina v svojih smernicah
+    // predpisuje svoje besedilo, zato sta to dve besedili in ne eno.
+    applePre: 'Prenesi z',
+    googlePre: 'Prenesi z',
   },
   calendar: {
     add: 'Dodaj v koledar',
@@ -273,7 +277,6 @@ const sl: Resources = {
       cookies: 'Piškotki',
       copyright: '© 2026 meuwe. Vse pravice pridržane.',
       madeIn: 'Ustvarjeno s ♥ na Tenerifih',
-      storePre: 'Prenesi z',
     },
     f1Eyebrow: 'Zemljevid dogodkov okoli tebe',
     f1Title: 'Domači zaslon\nje zemljevid\ndanašnjih dogodkov',

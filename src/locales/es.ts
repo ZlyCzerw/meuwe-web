@@ -182,6 +182,10 @@ const es: Resources = {
     hint: 'O descarga la app',
     soon: 'Pronto en',
     downloadTitle: 'Ten meuwe a mano',
+    // El texto sobre el nombre de la tienda en la insignia. Cada tienda impone
+    // su propia fórmula en sus directrices, así que son dos textos, no uno.
+    applePre: 'Consíguelo en el',
+    googlePre: 'Disponible en',
   },
   calendar: {
     add: 'Añadir al calendario',
@@ -273,7 +277,6 @@ const es: Resources = {
       cookies: 'Cookies',
       copyright: '© 2026 meuwe. Todos los derechos reservados.',
       madeIn: 'Hecho con ♥ en Tenerife',
-      storePre: 'Disponible en',
     },
     f1Eyebrow: 'El mapa de eventos cerca de ti',
     f1Title: 'La pantalla\nprincipal es un mapa\nde eventos de hoy',

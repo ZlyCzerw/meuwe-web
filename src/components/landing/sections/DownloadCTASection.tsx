@@ -47,7 +47,7 @@ export function DownloadCTASection() {
         >
           <AppleIcon />
           <div>
-            <span className="lp-store-label-top">{IOS_STORE_URL ? t('landing.footer.storePre') : t('store.soon')}</span>
+            <span className="lp-store-label-top">{IOS_STORE_URL ? t('store.applePre') : t('store.soon')}</span>
             <span className="lp-store-label-main">App Store</span>
           </div>
         </a>
@@ -59,7 +59,7 @@ export function DownloadCTASection() {
         >
           <GoogleIcon />
           <div>
-            <span className="lp-store-label-top">{ANDROID_STORE_URL ? t('landing.footer.storePre') : t('store.soon')}</span>
+            <span className="lp-store-label-top">{ANDROID_STORE_URL ? t('store.googlePre') : t('store.soon')}</span>
             <span className="lp-store-label-main">Google Play</span>
           </div>
         </a>

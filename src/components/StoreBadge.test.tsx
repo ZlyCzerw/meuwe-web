@@ -5,10 +5,11 @@ import { deviceStoreOs, storeUrl } from '../lib/stores'
 
 vi.mock('../lib/supabase', () => ({ db: { trackClick: vi.fn() }, supabase: {} }))
 
-// appConfig ships IOS_STORE_URL empty while the App Store review is pending,
-// which is exactly the case these tests pin down.
+// Both listings are live. The opposite case — an empty URL, which must render
+// nothing rather than a link to nowhere — lives in StoreBadge.noListing.test.tsx,
+// because vi.mock is per file and the two cannot share one.
 vi.mock('../lib/appConfig', () => ({
-  IOS_STORE_URL: '',
+  IOS_STORE_URL: 'https://apps.apple.com/app/id6790770081',
   ANDROID_STORE_URL: 'https://play.google.com/store/apps/details?id=eu.meuwe',
 }))
 
@@ -29,10 +30,9 @@ describe('deviceStoreOs', () => {
     expect(deviceStoreOs()).toBeNull()
   })
 
-  it('is null on iOS while the App Store listing does not exist', () => {
+  it('is ios on an iPhone', () => {
     setAgent(IPHONE)
-    expect(storeUrl('ios')).toBe('')
-    expect(deviceStoreOs()).toBeNull()
+    expect(deviceStoreOs()).toBe('ios')
   })
 
   it('is android on an Android phone', () => {
@@ -42,8 +42,14 @@ describe('deviceStoreOs', () => {
 
   it('sees an iPad that claims to be a Mac', () => {
     setAgent(DESKTOP, 5)
-    // Recognised as iOS, but still no listing, so still nothing to show.
-    expect(deviceStoreOs()).toBeNull()
+    expect(deviceStoreOs()).toBe('ios')
+  })
+
+  it('points both stores at a country-free URL, so each storefront picks its own', () => {
+    // A /pl path or an ?l=pl query would hand a Polish page to someone in Tenerife.
+    expect(storeUrl('ios')).toBe('https://apps.apple.com/app/id6790770081')
+    expect(storeUrl('ios')).not.toMatch(/\/[a-z]{2}\/app\/|[?&]l=/)
+    expect(storeUrl('android')).not.toMatch(/[?&](hl|gl)=/)
   })
 })
 
@@ -54,10 +60,12 @@ describe('StoreHint', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders nothing on iOS rather than a link to nowhere', () => {
+  it('renders the App Store badge on an iPhone', () => {
     setAgent(IPHONE)
-    const { container } = render(<StoreHint />)
-    expect(container).toBeEmptyDOMElement()
+    render(<StoreHint />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', 'https://apps.apple.com/app/id6790770081')
+    expect(screen.getByText('App Store')).toBeInTheDocument()
   })
 
   it('renders the Play badge on Android', () => {
@@ -75,10 +83,21 @@ describe('StoreBadge', () => {
     expect(screen.getByRole('link')).toHaveAttribute('target', '_blank')
   })
 
-  it('is not a link at all when the URL is empty', () => {
+  it('is a real link for iOS too', () => {
     render(<StoreBadge os="ios" />)
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
-    expect(screen.getByText('App Store')).toBeInTheDocument()
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://apps.apple.com/app/id6790770081')
+  })
+
+  it('takes the line above the store name from a per-store key', () => {
+    // Apple's guidelines say "Download on the App Store", Google's say "Get it
+    // on Google Play", so one shared key cannot serve both. i18n is not started
+    // in tests and t() echoes the key back, which is what makes the two keys
+    // visible here — the wording itself is pinned by the locale files.
+    const { unmount } = render(<StoreBadge os="ios" />)
+    expect(screen.getByText('store.applePre')).toBeInTheDocument()
+    unmount()
+    render(<StoreBadge os="android" />)
+    expect(screen.getByText('store.googlePre')).toBeInTheDocument()
   })
 
   it('can be shown as a disabled "soon" badge on the landing page', () => {

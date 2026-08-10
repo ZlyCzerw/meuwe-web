@@ -1,9 +1,14 @@
 // Single source of truth for outbound links to the native app.
 //
 // An empty string means "we have no listing yet". Callers MUST treat it as
-// "render nothing" — never as a link that goes nowhere. Fill IOS_STORE_URL in
-// once the App Store review is done; no other file needs to change.
-export const IOS_STORE_URL = ''
+// "render nothing" — never as a link that goes nowhere. That contract is what
+// carried both listings through review, and it stays: a store that goes dark
+// again is one empty string away, with no other file to touch.
+//
+// Both URLs are deliberately country- and language-free. Apple and Google send
+// the visitor to their own storefront in their own language; pinning /pl or
+// ?l=pl would show a Polish page to someone in Tenerife.
+export const IOS_STORE_URL = 'https://apps.apple.com/app/id6790770081'
 export const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=eu.meuwe'
 
 /** Public web origin — used for share links and for the .ics event URL. */

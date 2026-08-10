@@ -182,6 +182,10 @@ const de: Resources = {
     hint: 'Oder hol dir die App',
     soon: 'Bald im',
     downloadTitle: 'Hab meuwe griffbereit',
+    // Die Zeile über dem Namen des Stores auf dem Badge. Jeder Store schreibt
+    // seinen eigenen Wortlaut vor, deshalb zwei Texte statt einem.
+    applePre: 'Laden im',
+    googlePre: 'Laden bei',
   },
   calendar: {
     add: 'Zum Kalender hinzufügen',
@@ -273,7 +277,6 @@ const de: Resources = {
       cookies: 'Cookies',
       copyright: '© 2026 meuwe. Alle Rechte vorbehalten.',
       madeIn: 'Gemacht mit ♥ auf Teneriffa',
-      storePre: 'Laden bei',
     },
     f1Eyebrow: 'Events-Karte um dich herum',
     f1Title: 'Der Startbildschirm\nist eine Karte\nder heutigen Events',
