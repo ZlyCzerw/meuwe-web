@@ -46,11 +46,16 @@ supabase login
 supabase functions deploy push-new-event --project-ref bcfhsbnbvsuxsiwmeway
 supabase functions deploy push-event-start --project-ref bcfhsbnbvsuxsiwmeway
 supabase functions deploy push-new-message --project-ref bcfhsbnbvsuxsiwmeway
+supabase functions deploy push-event-interest --project-ref bcfhsbnbvsuxsiwmeway
 ```
 
-## 5. Supabase — DB Webhooks (2 szt.)
+## 5. Supabase — DB Webhooks (3 szt.)
 
 Otwórz: **Supabase Dashboard → Database → Webhooks → Create new hook**
+
+Każda z tych funkcji odrzuca żądanie bez nagłówka `x-webhook-secret` zgodnego
+ze zmienną `WEBHOOK_SECRET` funkcji - samo `Authorization: Bearer` nie
+wystarczy i kończy się odpowiedzią 401.
 
 ### Webhook 1: Nowe eventy
 - Name: `on_new_event`
@@ -60,6 +65,7 @@ Otwórz: **Supabase Dashboard → Database → Webhooks → Create new hook**
 - HTTP Headers:
   - `Content-Type: application/json`
   - `Authorization: Bearer <service_role_key>`
+  - `x-webhook-secret: <WEBHOOK_SECRET>`
 
 ### Webhook 2: Nowe wiadomości
 - Name: `on_new_message`
@@ -69,6 +75,22 @@ Otwórz: **Supabase Dashboard → Database → Webhooks → Create new hook**
 - HTTP Headers:
   - `Content-Type: application/json`
   - `Authorization: Bearer <service_role_key>`
+  - `x-webhook-secret: <WEBHOOK_SECRET>`
+
+### Webhook 3: Zainteresowanie wydarzeniem
+- Name: `on_event_follow`
+- Table: `event_follows`
+- Events: ☑ INSERT
+- Webhook URL: `https://bcfhsbnbvsuxsiwmeway.supabase.co/functions/v1/push-event-interest`
+- HTTP Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer <service_role_key>`
+  - `x-webhook-secret: <WEBHOOK_SECRET>`
+
+Bez tego wpisu funkcja nigdy nie zostanie wywołana i nikt tego nie zauważy -
+konfiguracja webhooków żyje w panelu, poza migracjami i poza kontrolą wersji.
+
+Wymaga kolumny z `supabase/migrations/20260810_event_interest_counter.sql`.
 
 > `service_role_key` znajdziesz w: **Settings → API → service_role**
 
