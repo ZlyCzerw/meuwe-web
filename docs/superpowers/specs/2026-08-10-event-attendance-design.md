@@ -113,9 +113,37 @@ Treść, neutralna płciowo we wszystkich pięciu językach:
 
 Polskie sformułowanie jest bezosobowe celowo - „czy udało się dotrzeć" zamiast „czy dotarłeś/dotarłaś". To samo dotyczy pozostałych języków: żadnych form rodzajowych.
 
+## Skąd bierze się pokrycie
+
+Automat łapie tego, kto ma otwartą aplikację będąc na miejscu - bo tylko wtedy powstaje świeży zapis pozycji, na którym opiera się cron. Nie jest to tak wąskie, jak brzmi: powiadomienie o starcie wydarzenia trafia dokładnie do obserwujących i dokładnie w chwili, gdy zmierzają na miejsce, a jego dotknięcie otwiera aplikację. Ludzie, których chcemy policzyć, są więc systematycznie kierowani do otwarcia apki w okolicy pinu.
+
+Nie wymaga to żadnego dodatkowego kodu ponad to, co opisano wyżej. Poprawiony zapis pozycji wysyła pierwszy odczyt natychmiast po starcie aplikacji, więc nawet trzydziestosekundowe zajrzenie do meuwe zostawia ślad, który cron zobaczy w ciągu pięciu minut.
+
+Resztę domyka pytanie następnego dnia.
+
+### Co mierzymy, zanim dołożymy cokolwiek
+
+Po pierwszych tygodniach danych sprawdzamy dla zakończonych wydarzeń: jaki odsetek obserwujących ma wiersz obecności w ogóle, i jak dzieli się on na `auto` i `self`. Duża przewaga `self` nad `auto` znaczy, że automat nie łapie ludzi i warto sięgnąć po wariant odłożony niżej. Wysoki udział `auto` znaczy, że nie ma czego dokładać.
+
+## Odrzucone i odłożone
+
+**Cichy push po pozycję - odrzucone.** Rozważaliśmy wysłanie do obserwujących niewidocznego pinga (np. 15 minut po starcie), na który klient odesłałby swoją pozycję. Ping da się wysłać, ale klient nie odda z niego lokalizacji, z trzech niezależnych powodów:
+
+- na webie `navigator.geolocation` nie istnieje w service workerze, a push budzi właśnie jego - Geolocation API jest wystawione wyłącznie w kontekście okna, więc żadne uprawnienie tego nie zmieni;
+- na Androidzie odczyt lokalizacji poza pierwszym planem wymaga `ACCESS_BACKGROUND_LOCATION` (od Androida 10), a obudzenie pushem nie jest z tego zwolnieniem; przy zabitej aplikacji JS w ogóle się nie uruchomi, bo plugin podaje wiadomość do JS tylko przy żywej apce albo po dotknięciu powiadomienia;
+- na iOS silent push jest budżetowany i bywa opóźniony albo pominięty, a odczyt lokalizacji w tle wymaga autoryzacji „Always"; Apple odrzuca aplikacje używające cichych pushy do zbierania lokalizacji.
+
+Wszystkie trzy prowadzą do uprawnienia, którego ten projekt świadomie unika. Temat jest zamknięty i nie wymaga ponownej analizy.
+
+**Widoczny ping 15 minut po starcie - odłożone.** Powiadomienie „Jesteś na miejscu?", którego dotknięcie otwiera aplikację na pierwszym planie i pozwala odczytać pozycję na istniejącym uprawnieniu. Działa i jest dokładniejsze niż pytanie następnego dnia, bo opiera się na pozycji, a nie na pamięci sprzed doby.
+
+Nie wchodzi do pierwszej wersji, bo to drugie powiadomienie o tym samym wydarzeniu, kwadrans po „Wydarzenie zaraz się zaczyna" - przy trzech obserwowanych rzeczach jednego wieczoru robi się hałas. Dokładanie go, zanim wiemy, że obecny mechanizm nie wystarcza, to hałas na kredyt.
+
+Wracamy do niego, jeśli pomiar opisany wyżej pokaże, że automat łapie mniejszość obecnych.
+
 ## Czego ten projekt nie robi
 
-Nie pokazuje niczego organizatorowi. Nie zbiera historii pozycji - `profiles` trzyma jedną, ostatnią, tak jak dziś. Nie działa przy zamkniętej aplikacji. Nie dotyka powiadomień o zainteresowaniu wydarzeniem, które są osobnym projektem.
+Nie pokazuje niczego organizatorowi. Nie zbiera historii pozycji - `profiles` trzyma jedną, ostatnią, tak jak dziś. Nie działa przy zamkniętej aplikacji, i to jest cena za brak lokalizacji w tle, nie niedopatrzenie. Nie dotyka powiadomień o zainteresowaniu wydarzeniem, które są osobnym projektem.
 
 ## Testy
 
