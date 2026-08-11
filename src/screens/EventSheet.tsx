@@ -499,7 +499,7 @@ function EventSheet({
                         display: 'block', margin: '-4px 0 12px auto', padding: '6px 12px',
                         borderRadius: 999, background: 'transparent', border: `2px solid ${INK}22`,
                         fontSize: 12, fontWeight: 700, color: C.ink, cursor: 'pointer',
-                        animation: 'meuwe-fade-in 180ms ease',
+                        animation: 'fadeIn 180ms ease',
                       }}
                     >
                       {t('calendar.other')}
@@ -591,7 +591,7 @@ function EventSheet({
                 >
                   {/* Conversation header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.grass, animation: 'meuwe-breathe-sm 1.4s ease-in-out infinite' }} />
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.grass, animation: 'breathe-sm 1.4s ease-in-out infinite' }} />
                     <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{t('event.conversation')}</div>
                     <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600 }}>· {t('event.messageCount', { count: messages.length })}</div>
                   </div>
@@ -764,7 +764,7 @@ function EventSheet({
           background: C.ink, color: '#fff', borderRadius: 999,
           padding: '8px 18px', fontSize: 13, fontWeight: 700,
           whiteSpace: 'nowrap', zIndex: 10,
-          animation: 'meuwe-fade-in 180ms ease',
+          animation: 'fadeIn 180ms ease',
         }}>
           {toast}
         </div>

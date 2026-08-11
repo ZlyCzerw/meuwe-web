@@ -44,7 +44,7 @@ export default function EventChatPanel({
     <div style={{
       position: 'absolute', inset: 0, zIndex: 8, background: '#fff',
       display: 'flex', flexDirection: 'column',
-      animation: 'meuwe-fade-in 180ms ease',
+      animation: 'fadeIn 180ms ease',
     }}>
       <div
         data-testid="chat-header"

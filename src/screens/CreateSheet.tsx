@@ -377,7 +377,7 @@ function CreateSheet({
               width: 11, height: 11, borderRadius: '50%',
               background: C.primary, border: `2px solid #2D2B2A`,
               boxShadow: '0 2px 0 rgba(45,43,42,0.3)',
-              animation: 'meuwe-breathe-sm 2.5s ease-in-out infinite',
+              animation: 'breathe-sm 2.5s ease-in-out infinite',
             }}/>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
