@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { C, TAG_META } from '../lib/tokens';
+import { C, INK, TAG_META } from '../lib/tokens';
 import type { Category } from '../lib/tokens';
 
 export default function TagChip({
@@ -9,6 +9,7 @@ export default function TagChip({
   onClick,
   removable = false,
   onRemove,
+  outlined = false,
 }: {
   category: string;
   label?: string;
@@ -16,6 +17,8 @@ export default function TagChip({
   onClick?: () => void;
   removable?: boolean;
   onRemove?: () => void;
+  /** Obrys w kolorze ink — dla chipów kładzionych na zdjęciu. */
+  outlined?: boolean;
 }) {
   const { t } = useTranslation();
   const isKnown = category in TAG_META;
@@ -35,7 +38,8 @@ export default function TagChip({
         color: selected ? '#fff' : C.ink,
         fontSize: 13,
         fontWeight: 700,
-        border: '2px solid transparent',
+        border: outlined ? `2px solid ${INK}` : '2px solid transparent',
+        boxShadow: outlined ? `0 2px 0 ${INK}33` : 'none',
         transition: 'all 200ms cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
