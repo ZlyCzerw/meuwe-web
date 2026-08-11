@@ -59,6 +59,13 @@ const sl: Resources = {
     sendError: 'Pošiljanje sporočila ni uspelo',
     muteOn: 'Utišaj obvestila',
     muteOff: 'Vklopi obvestila',
+    attend: 'Se udeležim',
+    attending: 'Grem',
+    readMore: 'Preberi več',
+    readLess: 'Prikaži manj',
+    backToEvent: 'Nazaj na dogodek',
+    photoPrev: 'Prejšnja fotografija',
+    photoNext: 'Naslednja fotografija',
   },
   create: {
     title: 'Nov dogodek',

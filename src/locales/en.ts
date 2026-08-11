@@ -59,6 +59,13 @@ const en: Resources = {
     sendError: 'Failed to send message',
     muteOn: 'Mute notifications',
     muteOff: 'Unmute notifications',
+    attend: "I'll be there",
+    attending: 'Going',
+    readMore: 'Read more',
+    readLess: 'Show less',
+    backToEvent: 'Back to event',
+    photoPrev: 'Previous photo',
+    photoNext: 'Next photo',
   },
   create: {
     title: 'New event',

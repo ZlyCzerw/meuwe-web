@@ -59,6 +59,13 @@ const es: Resources = {
     sendError: 'No se pudo enviar el mensaje',
     muteOn: 'Silenciar notificaciones',
     muteOff: 'Reactivar notificaciones',
+    attend: 'Voy a ir',
+    attending: 'Voy',
+    readMore: 'Leer más',
+    readLess: 'Mostrar menos',
+    backToEvent: 'Volver al evento',
+    photoPrev: 'Foto anterior',
+    photoNext: 'Foto siguiente',
   },
   create: {
     title: 'Nuevo evento',

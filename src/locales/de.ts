@@ -59,6 +59,13 @@ const de: Resources = {
     sendError: 'Nachricht konnte nicht gesendet werden',
     muteOn: 'Stummschalten',
     muteOff: 'Stummschaltung aufheben',
+    attend: 'Ich komme',
+    attending: 'Ich bin dabei',
+    readMore: 'Mehr lesen',
+    readLess: 'Weniger anzeigen',
+    backToEvent: 'Zurück zum Event',
+    photoPrev: 'Vorheriges Foto',
+    photoNext: 'Nächstes Foto',
   },
   create: {
     title: 'Neues Event',

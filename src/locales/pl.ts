@@ -57,6 +57,13 @@ const pl = {
     sendError: 'Nie udało się wysłać wiadomości',
     muteOn: 'Wycisz powiadomienia',
     muteOff: 'Włącz powiadomienia',
+    attend: 'Wezmę udział',
+    attending: 'Biorę udział',
+    readMore: 'Czytaj więcej',
+    readLess: 'Zwiń',
+    backToEvent: 'Wróć do wydarzenia',
+    photoPrev: 'Poprzednie zdjęcie',
+    photoNext: 'Następne zdjęcie',
   },
   create: {
     title: 'Nowe wydarzenie',
