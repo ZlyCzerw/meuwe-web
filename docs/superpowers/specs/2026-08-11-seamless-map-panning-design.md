@@ -91,19 +91,24 @@ export function nextFetchView(covered: FetchView | null, viewport: FetchView): F
 `nextFetchView` returns the view to fetch, or `null` when `covered` already
 contains the viewport.
 
-- `need` = the viewport, its km capped at `MAX_FETCH_KM`. This is what must be
-  covered.
 - `want` = the viewport scaled by `FETCH_MARGIN`, capped at `MAX_FETCH_KM`. This
   is what gets fetched.
+- `need` = the viewport, but never more than `want` less the margin. This is
+  what must be covered.
 - If `covered` exists and `fetchBox(covered)` contains `fetchBox(need)` on all
   four sides, return `null`. Otherwise return `want`.
 
 Testing containment against `need` while fetching `want` is what creates the
 hysteresis: a 30% margin of panning in any direction costs nothing.
 
+Deriving `need` from `want` rather than capping both at `MAX_FETCH_KM`
+separately matters at the ceiling. Capped independently the two collapse into
+the same box, the fetch can never contain the viewport, and every `moveend`
+refetches - the opposite of the point. Shrinking the requirement with the fetch
+keeps the margin intact however far out the map is pulled.
+
 Boxes come from `bboxDeltas` (`geo.ts`), which already handles the
-longitude/latitude asymmetry. Capping at `MAX_FETCH_KM` on both `need` and
-`want` keeps an extreme pinch-out from refetching on every `moveend`.
+longitude/latitude asymmetry.
 
 `MAX_FETCH_KM = 300` is a safety ceiling only - roughly zoom 7 on a phone, the
 scale of a country. It is deliberately a separate constant from `MAX_MAP_KM`, so
@@ -186,6 +191,16 @@ enters the query, so the map is briefly bare but says nothing false.
 
 **`visibleEvents`** wrapped in `useMemo` on `[events, selectedFilters]`.
 
+**A `ResizeObserver` on the map container**, calling `invalidateSize` and
+re-adopting the view. Found while verifying: `map.getSize()` is `0x0` when the
+init effect runs, because the map mounts behind the landing screen, so the first
+fetch box is measured from a viewport of nothing. Leaflet only watches the
+window, so it never notices the container being laid out, and nothing corrected
+the box until the first drag. The same gap swallowed window resizes and phone
+rotations: a viewport that grew fired no `moveend`, so the fetch box never grew
+with it. This is what makes "every pin in the visible part of the map" true at
+startup rather than only after the user touches the map.
+
 **Marker diffing.** `pinsRef` becomes `Record<string, { marker: L.Marker; sig: string }>`,
 keyed by `ev.id` for private events and `rep.id` for public clusters.
 
@@ -240,10 +255,18 @@ pass under merge semantics). New:
 - a `null` answer leaves the events in place and clears `loading`
 - `ready` stays true across a query change; `loading` goes back to true
 
-Manual verification on the preview: pan repeatedly and confirm no overlay and no
-network request until the viewport leaves the fetched box; zoom 15 -> 10 and
-confirm pins are added, not replaced, past the old 50 km line; switch days and
-confirm no splash and no "nothing here" card before the pins land.
+Manual verification on the preview, over Rzeszow (6 events on the day tested),
+with `fetch` and a `MutationObserver` instrumented and every marker element
+branded with a `data-brand` attribute so reuse can be told from rebuilding:
+
+- small pan: 0 requests, 0 splash, all 7 marker nodes survive
+- pan out of the fetched box: exactly 1 request (8 km span, the margin applied),
+  0 splash, all 7 marker nodes still survive - the pins were carried across, not
+  refetched and rebuilt
+- zoom out one step: the fetch view widens 4 km -> 7 km, no splash
+- day change: 0 splash, and the empty-state card never appears while the pins
+  are in the air (observed `hasCard` false throughout); the event markers are
+  replaced, the "me" marker is kept
 
 ## Out of Scope
 
