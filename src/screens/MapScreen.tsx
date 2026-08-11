@@ -22,6 +22,7 @@ import TagPickerModal from '../components/TagPickerModal'
 import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 import EventPickerModal from '../components/EventPickerModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
+import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
@@ -85,7 +86,9 @@ function MapScreen({
   const mapRef = useRef<HTMLDivElement>(null)
   const leafRef = useRef<L.Map | null>(null)
   const meRef = useRef<L.Marker | null>(null)
-  const pinsRef = useRef<Record<string, L.Marker>>({})
+  // Markers by event id, each remembered with the look it was built for, so a
+  // pin whose look has not changed is left alone instead of rebuilt.
+  const pinsRef = useRef<Record<string, { marker: L.Marker; sig: string }>>({})
   const userPosRef = useRef<{ lat: number; lng: number } | null>(userPos)
   useEffect(() => { userPosRef.current = userPos }, [userPos])
   const onMapClickRef = useRef(onMapClick)
@@ -96,9 +99,15 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [dayIdx, setDayIdx] = useState(1)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
-  // How far out events are fetched, and the number the empty card quotes. Null
-  // until the map has been laid out and has a view to measure — see useEvents.
+  // How much of the world the user is looking at: the number the empty card
+  // quotes and the radius "notify me here" writes to the profile. Null until
+  // the map has been laid out and has a view to measure.
   const [mapRadiusKm, setMapRadiusKm] = useState<number | null>(null)
+  // What events are fetched for, which is a different question. It is capped by
+  // its own ceiling rather than by the notification radius, and it moves only
+  // when the viewport leaves what has already been fetched — see lib/mapView.
+  const [fetchView, setFetchView] = useState<FetchView | null>(null)
+  const fetchViewRef = useRef<FetchView | null>(null)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [pickerEvents, setPickerEvents] = useState<EventWithMeta[] | null>(null)
@@ -141,12 +150,23 @@ function MapScreen({
   function adoptView(map: L.Map, lat: number, lng: number, zoom: number) {
     const size = map.getSize()
     const corner = map.unproject(map.project([lat, lng], zoom).add([size.x / 2, -size.y / 2]), zoom)
-    // MAX_MAP_KM is the edge of what meuwe deals in at all — the fan-out, the
-    // probe and the startup framing all stop there. A viewport pulled wider
-    // than that (a landscape window, a pinch out) must not turn into a search
-    // meuwe cannot honour, nor into a card claiming a 99 km radius.
-    setMapRadiusKm(Math.min(Math.ceil(haversineKm(lat, lng, corner.lat, corner.lng)), MAX_MAP_KM))
+    const halfDiagonalKm = Math.ceil(haversineKm(lat, lng, corner.lat, corner.lng))
+    // MAX_MAP_KM is the edge of what the fan-out, the probe and the startup
+    // framing deal in. A viewport pulled wider than that (a landscape window, a
+    // pinch out) must not turn into a promise meuwe cannot honour, nor into a
+    // card claiming a 99 km radius.
+    setMapRadiusKm(Math.min(halfDiagonalKm, MAX_MAP_KM))
     setMapCenter({ lat, lng })
+    // What gets fetched is emphatically not that number. Tying the two together
+    // meant the user's notification radius decided how far out the map would
+    // still put pins on the screen, and from about zoom 10 the answer was "no
+    // further". This one moves only when the viewport leaves the box already in
+    // hand, so ordinary panning costs nothing at all.
+    const next = nextFetchView(fetchViewRef.current, { lat, lng, km: halfDiagonalKm })
+    if (next) {
+      fetchViewRef.current = next
+      setFetchView(next)
+    }
   }
 
   /** Flies to the point and adopts the destination as the fetch view now. */
@@ -168,11 +188,17 @@ function MapScreen({
   }
 
   const eventsPos = mapCenter || initialCenter || userPos || lastKnownPos || ipPos || WARSAW
-  const { events, loading } = useEvents(eventsPos, idxToOffset(dayIdx), eventsRefreshKey, mapRadiusKm)
+  const { events, loading, ready } = useEvents(fetchView, idxToOffset(dayIdx), eventsRefreshKey)
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
-  const visibleEvents = selectedFilters.length
-    ? events.filter(e => selectedFilters.some(f => e.category === f || (e.tags?.includes(f) ?? false)))
-    : events
+  // Memoised because the pins effect keys off it: an inline filter() is a new
+  // array every render, and on a phone the compass re-renders this screen
+  // dozens of times a second.
+  const visibleEvents = useMemo(
+    () => selectedFilters.length
+      ? events.filter(e => selectedFilters.some(f => e.category === f || (e.tags?.includes(f) ?? false)))
+      : events,
+    [events, selectedFilters],
+  )
 
   // Timeline drag — smooth dial/drum scroll, snap on release
   const MAX_TRANSLATE = 0
@@ -259,6 +285,19 @@ function MapScreen({
     // The state the map opens on is a view too — without this, a map that
     // starts at the right zoom and is never moved fetches for no view at all.
     adoptView(map, start.lat, start.lng, initialZoom)
+    // ...but at this point the container is often still 0x0 — the map mounts
+    // behind the landing screen — so what was just adopted is a view of
+    // nothing. Nor does Leaflet notice on its own that the box it was handed
+    // has since been laid out, or resized, or turned on its side; it only
+    // watches the window. Re-measuring on the container itself is what makes
+    // "every pin in the visible part of the map" true at startup and after a
+    // rotation, instead of only after the first drag.
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize(false)
+      const c = map.getCenter()
+      adoptView(map, c.lat, c.lng, map.getZoom())
+    })
+    ro.observe(mapRef.current)
     leafRef.current = map
     // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
     // add the me marker immediately using the always-current ref.
@@ -267,7 +306,10 @@ function MapScreen({
       meRef.current = L.marker([initialPos.lat, initialPos.lng], { icon, zIndexOffset: -1000 }).addTo(map)
       centeredRef.current = true  // started on real GPS — no need to re-center later
     }
-    return () => { meRef.current = null; map.remove(); leafRef.current = null }
+    // The markers belong to this map instance; leaving them in the ref would
+    // hand a StrictMode remount a set of pins attached to a destroyed map,
+    // which the diff would then happily try to reuse.
+    return () => { ro.disconnect(); meRef.current = null; pinsRef.current = {}; map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Me marker — update on userPos change; center map only on first GPS fix
@@ -388,21 +430,31 @@ function MapScreen({
   // Pins — update on events change. Private events render individually; public
   // events are grouped by 3x3 m zone: singletons open the half-sheet directly,
   // clusters (>= 2) show a count badge and open the event picker.
+  //
+  // What the map should show is worked out in full first, then diffed against
+  // what it already shows. Wiping every marker and building them all again was
+  // most of what "the pins arrive in batches" looked like — and with a filter
+  // selected it ran on every render, which on a phone means every compass
+  // reading.
   useEffect(() => {
     const map = leafRef.current
     if (!map) return
-    Object.values(pinsRef.current).forEach(m => m.remove())
-    pinsRef.current = {}
+
+    type Desired = {
+      sig: string; html: string; lat: number; lng: number
+      zIndexOffset: number; onClick: () => void
+    }
+    const desired: Record<string, Desired> = {}
 
     // Private events — one marker each, unchanged behaviour.
     visibleEvents.filter(e => e.is_private).forEach(ev => {
-      const icon = L.divIcon({
-        html: privateHTML(isCurrentlyLive(ev)),
-        className: 'meuwe-icon', iconSize: [44, 56], iconAnchor: [22, 56],
-      })
-      const m = L.marker([ev.lat, ev.lng], { icon }).addTo(map)
-      m.on('click', () => onOpenEvent(ev))
-      pinsRef.current[ev.id] = m
+      const live = isCurrentlyLive(ev)
+      desired[ev.id] = {
+        sig: `private|${live}|${ev.lat}|${ev.lng}`,
+        html: privateHTML(live),
+        lat: ev.lat, lng: ev.lng, zIndexOffset: 0,
+        onClick: () => onOpenEvent(ev),
+      }
     })
 
     // Public events — grouped by zone (clusterPublicEvents ignores private).
@@ -410,16 +462,50 @@ function MapScreen({
       const rep = group[0]
       const interactions = rep.interactionCount ?? 0
       const scale = 1 + Math.min(interactions, 100) / 100 * 0.5
-      const html = group.length >= 2
-        ? clusterHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, group.length)
-        : pinHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, scale)
-      const icon = L.divIcon({ html, className: 'meuwe-icon', iconSize: [44, 56], iconAnchor: [22, 56] })
-      const m = L.marker([rep.lat, rep.lng], { icon, zIndexOffset: interactions }).addTo(map)
-      m.on('click', () => {
-        if (group.length >= 2) setPickerEvents(group)
-        else onOpenEvent(rep)
-      })
-      pinsRef.current[rep.id] = m
+      const live = isCurrentlyLive(rep)
+      desired[rep.id] = {
+        // The blob index (ci) is deliberately not in here. It is decorative and
+        // it comes from the position in the array, so it changes whenever the
+        // set does — folding it in would rebuild every marker on every pan,
+        // which is the thing this diff exists to stop.
+        sig: `public|${rep.category}|${group.length}|${rep.status}|${live}|${scale.toFixed(3)}|${rep.lat}|${rep.lng}`,
+        html: group.length >= 2
+          ? clusterHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, group.length)
+          : pinHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, scale),
+        lat: rep.lat, lng: rep.lng, zIndexOffset: interactions,
+        onClick: () => {
+          if (group.length >= 2) setPickerEvents(group)
+          else onOpenEvent(rep)
+        },
+      }
+    })
+
+    const iconFor = (html: string) =>
+      L.divIcon({ html, className: 'meuwe-icon', iconSize: [44, 56], iconAnchor: [22, 56] })
+
+    Object.entries(pinsRef.current).forEach(([id, pin]) => {
+      if (desired[id]) return
+      pin.marker.remove()
+      delete pinsRef.current[id]
+    })
+
+    Object.entries(desired).forEach(([id, d]) => {
+      const pin = pinsRef.current[id]
+      if (pin) {
+        if (pin.sig !== d.sig) {
+          pin.marker.setIcon(iconFor(d.html))
+          pin.marker.setLatLng([d.lat, d.lng])
+          pin.sig = d.sig
+        }
+        // Cheap and always worth doing: the handler closes over this run's
+        // event objects, and the offset follows a count that moves on its own.
+        pin.marker.setZIndexOffset(d.zIndexOffset)
+        pin.marker.off('click').on('click', d.onClick)
+        return
+      }
+      const marker = L.marker([d.lat, d.lng], { icon: iconFor(d.html), zIndexOffset: d.zIndexOffset }).addTo(map)
+      marker.on('click', d.onClick)
+      pinsRef.current[id] = { marker, sig: d.sig }
     })
   }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -438,8 +524,10 @@ function MapScreen({
           Android, so this is a no-op there). */}
       <div ref={mapRef} style={{ position: 'fixed', inset: 0, zIndex: 0 }} />
 
-      {/* Loading overlay */}
-      {loading && (
+      {/* Cold-start splash. Hung off `ready` and not `loading`: `loading` is
+          true whenever any part of the map is waiting on an answer, which used
+          to mean this covered the screen on every pan and every day change. */}
+      {!ready && (
         <div style={{
           position: 'absolute', inset: 0, background: C.cream, zIndex: 100,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20,
