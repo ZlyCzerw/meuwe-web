@@ -285,13 +285,12 @@ function MapScreen({
     // The state the map opens on is a view too — without this, a map that
     // starts at the right zoom and is never moved fetches for no view at all.
     adoptView(map, start.lat, start.lng, initialZoom)
-    // ...but at this point the container is often still 0x0 — the map mounts
-    // behind the landing screen — so what was just adopted is a view of
-    // nothing. Nor does Leaflet notice on its own that the box it was handed
-    // has since been laid out, or resized, or turned on its side; it only
-    // watches the window. Re-measuring on the container itself is what makes
-    // "every pin in the visible part of the map" true at startup and after a
-    // rotation, instead of only after the first drag.
+    // ...but at this point the container can still be 0x0 — the map is mounted
+    // behind the landing screen — and then what was just adopted is a view of
+    // nothing, which stands until the first drag. Leaflet re-measures itself on
+    // a window resize but nothing else, so a container that changes size on its
+    // own goes unnoticed. Watching the element is what makes "every pin in the
+    // visible part of the map" true from the moment it is visible.
     const ro = new ResizeObserver(() => {
       map.invalidateSize(false)
       const c = map.getCenter()

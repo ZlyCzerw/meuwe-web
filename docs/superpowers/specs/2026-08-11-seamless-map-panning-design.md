@@ -192,14 +192,12 @@ enters the query, so the map is briefly bare but says nothing false.
 **`visibleEvents`** wrapped in `useMemo` on `[events, selectedFilters]`.
 
 **A `ResizeObserver` on the map container**, calling `invalidateSize` and
-re-adopting the view. Found while verifying: `map.getSize()` is `0x0` when the
-init effect runs, because the map mounts behind the landing screen, so the first
-fetch box is measured from a viewport of nothing. Leaflet only watches the
-window, so it never notices the container being laid out, and nothing corrected
-the box until the first drag. The same gap swallowed window resizes and phone
-rotations: a viewport that grew fired no `moveend`, so the fetch box never grew
-with it. This is what makes "every pin in the visible part of the map" true at
-startup rather than only after the user touches the map.
+re-adopting the view. Found while verifying: `map.getSize()` can be `0x0` when
+the init effect runs, because the map is mounted behind the landing screen, and
+then the first fetch box is measured from a viewport of nothing and stands until
+the first drag. Leaflet binds its own `window` resize handler, so window resizes
+and rotations already reach `moveend` and are not the gap here; a container that
+changes size without the window doing so is. Watching the element closes it.
 
 **Marker diffing.** `pinsRef` becomes `Record<string, { marker: L.Marker; sig: string }>`,
 keyed by `ev.id` for private events and `rep.id` for public clusters.
