@@ -42,6 +42,9 @@ function authRedirectTo(): string {
 // reguła nie rozłaziła się po pięciu zapytaniach.
 const PROFILE_PUBLIC = 'display_name:name_shown,avatar_color'
 
+/** Ceiling on rows one map query may return. See getEvents. */
+const MAP_EVENT_LIMIT = 1500
+
 export const db = {
   signInGoogle() {
     if (isNativePlatform()) {
@@ -217,7 +220,13 @@ export const db = {
     if (error) { console.error('[probeNearby]', error); return null }
     return (data ?? []) as ProbeEvent[]
   },
-  async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]> {
+  /**
+   * Returns null — not an empty array — when the query fails, the same
+   * convention probeNearby uses above and for the same reason: the map keeps
+   * the events it already has across a pan, and a failed request that looked
+   * like "there is nothing here" would delete perfectly good pins.
+   */
+  async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]|null> {
     const {dLat,dLng}=bboxDeltas(km,lat)
     // Compute the target day's start/end in local time, then convert to UTC.
     // This replicates the same semantics as the previous toDateString() comparison.
@@ -237,7 +246,11 @@ export const db = {
       .lte('start_time', dayEnd.toISOString())
       .gte('end_time',   endTimeFloor.toISOString())
       .order('created_at',{ascending:false})
-    if(error){console.error(error);return[]}
+      // The fetch radius is no longer capped at the notification radius, so one
+      // pinch-out over a dense city can address a very large box. Newest first,
+      // so what falls off the end is the oldest — invisible at that zoom.
+      .limit(MAP_EVENT_LIMIT)
+    if(error){console.error(error);return null}
     const events = (data||[]).map((e:any)=>{
       const dk=haversineKm(lat,lng,e.lat,e.lng)
       return {...e, tags:(e.event_tags||[]).map((t:any)=>t.tag),

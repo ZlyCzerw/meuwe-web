@@ -783,7 +783,7 @@ export default function App() {
     if (pos) {
       try {
         const nearby = await db.getEvents(pos.lat, pos.lng, MAX_ONBOARDING_RADIUS_KM, 0)
-        if (nearby.length > 0) {
+        if (nearby && nearby.length > 0) {
           nearestKm = nearby.reduce((a, b) => a.distKm < b.distKm ? a : b).distKm
         }
       } catch (err) {
