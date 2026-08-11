@@ -2,12 +2,15 @@
 export const DESCRIPTION_PREVIEW_CHARS = 350
 
 /**
- * Podgląd opisu do granicy słowa.
+ * Ile podglądu wolno oddać, żeby dociąć do granicy słowa.
  *
- * Cofamy się do ostatniej spacji tylko wtedy, gdy nie zjada to więcej niż 40%
- * podglądu. Inaczej pojedynczy długi ciąg bez spacji (wklejony link) zostawiłby
- * kilka znaków zamiast akapitu.
+ * Cofamy się do ostatniej spacji, dopóki nie kosztuje to więcej niż 40%
+ * podglądu. Powyżej tego progu pojedynczy długi ciąg bez spacji (wklejony
+ * link) zostawiłby kilka znaków zamiast akapitu — wtedy tniemy twardo.
  */
+const WORD_BOUNDARY_MIN_RATIO = 0.6
+
+/** Podgląd opisu do granicy słowa. */
 export function truncateDescription(
   text: string | null | undefined,
   limit = DESCRIPTION_PREVIEW_CHARS,
@@ -17,6 +20,6 @@ export function truncateDescription(
 
   const cut = full.slice(0, limit)
   const lastSpace = cut.lastIndexOf(' ')
-  const preview = lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut
+  const preview = lastSpace >= limit * WORD_BOUNDARY_MIN_RATIO ? cut.slice(0, lastSpace) : cut
   return { preview: preview.trimEnd(), truncated: true }
 }
