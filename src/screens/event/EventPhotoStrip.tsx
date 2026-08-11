@@ -145,8 +145,12 @@ export default function EventPhotoStrip({
           <button aria-label={t('event.photoNext')} onClick={() => goTo(idx + 1)}
             style={{ ...arrowStyle, right: 10, opacity: idx === list.length - 1 ? 0.4 : 1 }}>›</button>
           <div style={{ position: 'absolute', bottom: 46, left: 0, right: 0, zIndex: 3, display: 'flex', justifyContent: 'center', gap: 5 }}>
+            {/* Kropki są afordancją dla palca, nie dla klawiatury: strzałki obok
+                mają etykiety i wystarczą czytnikowi ekranu. tabIndex -1 trzyma je
+                poza kolejnością tabulacji, żeby aria-hidden nie ukrywało czegoś,
+                na czym i tak da się zatrzymać fokus. */}
             {list.map((_, i) => (
-              <button key={i} aria-hidden onClick={() => goTo(i)} style={{
+              <button key={i} aria-hidden tabIndex={-1} onClick={() => goTo(i)} style={{
                 width: i === idx ? 18 : 6, height: 6, borderRadius: 999,
                 background: i === idx ? '#fff' : 'rgba(255,255,255,0.55)',
                 transition: 'width 200ms cubic-bezier(0.34,1.56,0.64,1)',
@@ -165,6 +169,10 @@ export default function EventPhotoStrip({
             scrollbarWidth: 'none',
           }}
         >
+          {/* Opakowanie nie jest ozdobą: TagChip nie ustawia własnego flexShrink,
+              więc jako bezpośrednie dziecko flexa dałby się ścisnąć poniżej swojej
+              treści. nowrap chroni tekst przed łamaniem, ale nie pudełko przed
+              kurczeniem — bez tego chipy przycinałyby się zamiast przewijać. */}
           {tags.map(tag => (
             <div key={tag} style={{ flexShrink: 0 }}>
               <TagChip category={tag} selected outlined />

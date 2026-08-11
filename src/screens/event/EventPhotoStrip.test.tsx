@@ -69,4 +69,32 @@ describe('EventPhotoStrip', () => {
     render(<EventPhotoStrip {...base} photos={['a.jpg']} />)
     expect(screen.queryByLabelText(/Następne zdjęcie|Next photo/)).not.toBeInTheDocument()
   })
+
+  // Strzałka ma naprawdę przewijać, a nie tylko wyglądać na klikalną. O samo
+  // przesunięcie nie pytamy: w jsdom clientWidth to 0, więc każdy offset wyszedłby
+  // zerem i asercja na nim byłaby teatrem.
+  it('scrolls when the next arrow is used', () => {
+    const scrollTo = vi.spyOn(Element.prototype, 'scrollTo')
+    render(<EventPhotoStrip {...base} photos={['a.jpg', 'b.jpg']} />)
+    fireEvent.click(screen.getByLabelText('Next photo'))
+    expect(scrollTo).toHaveBeenCalled()
+    scrollTo.mockRestore()
+  })
+
+  // Na pierwszym zdjęciu nie ma dokąd się cofnąć — indeks musi zostać na 0, a nie
+  // zejść poniżej. Wyblakła strzałka jest tu dowodem: przy idx -1 rozjaśniłaby się.
+  it('does not run off the start of the list', () => {
+    render(<EventPhotoStrip {...base} photos={['a.jpg', 'b.jpg']} />)
+    fireEvent.click(screen.getByLabelText('Previous photo'))
+    fireEvent.click(screen.getByLabelText('Previous photo'))
+    expect(screen.getByLabelText('Previous photo')).toHaveStyle({ opacity: '0.4' })
+  })
+
+  // I to samo na drugim końcu: za ostatnim zdjęciem nie ma następnego.
+  it('does not run off the end of the list', () => {
+    render(<EventPhotoStrip {...base} photos={['a.jpg', 'b.jpg']} />)
+    fireEvent.click(screen.getByLabelText('Next photo'))
+    fireEvent.click(screen.getByLabelText('Next photo'))
+    expect(screen.getByLabelText('Next photo')).toHaveStyle({ opacity: '0.4' })
+  })
 })
