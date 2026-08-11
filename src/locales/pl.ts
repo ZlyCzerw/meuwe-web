@@ -64,6 +64,7 @@ const pl = {
     backToEvent: 'Wróć do wydarzenia',
     photoPrev: 'Poprzednie zdjęcie',
     photoNext: 'Następne zdjęcie',
+    sendMessage: 'Wyślij wiadomość',
   },
   create: {
     title: 'Nowe wydarzenie',

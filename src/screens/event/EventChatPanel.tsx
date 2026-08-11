@@ -142,7 +142,7 @@ export default function EventChatPanel({
           <button
             onClick={onSend}
             disabled={!canWrite || !input.trim()}
-            aria-label={t('event.writeMessage')}
+            aria-label={t('event.sendMessage')}
             style={{
               width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
               background: input.trim() && canWrite ? C.primary : '#E8DFD0',

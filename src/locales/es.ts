@@ -66,6 +66,7 @@ const es: Resources = {
     backToEvent: 'Volver al evento',
     photoPrev: 'Foto anterior',
     photoNext: 'Foto siguiente',
+    sendMessage: 'Enviar mensaje',
   },
   create: {
     title: 'Nuevo evento',

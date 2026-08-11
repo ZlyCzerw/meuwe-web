@@ -66,6 +66,7 @@ const sl: Resources = {
     backToEvent: 'Nazaj na dogodek',
     photoPrev: 'Prejšnja fotografija',
     photoNext: 'Naslednja fotografija',
+    sendMessage: 'Pošlji sporočilo',
   },
   create: {
     title: 'Nov dogodek',
