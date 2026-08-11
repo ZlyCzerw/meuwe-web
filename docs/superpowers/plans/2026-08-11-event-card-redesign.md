@@ -39,10 +39,18 @@ npm test
 ```
 
 ```bash
-npx tsc -b && npm run lint
+npx tsc -b
 ```
 
 > `tsc -b`, nie `--noEmit` — Cloudflare jest bardziej restrykcyjny i wyłapuje rzeczy, których `--noEmit` nie widzi.
+
+Lint uruchamiamy **na własnych plikach**, nie na całym repo:
+
+```bash
+npx eslint <ścieżki zmienione w tym zadaniu>
+```
+
+> Stan zastany na `4ce64b4`: `npm run lint` zgłasza 56 błędów i 7 ostrzeżeń w kodzie, którego to zadanie nie dotyka (`no-explicit-any` w `supabase.ts` i testach, puste bloki `catch` w `App.tsx`, ostrzeżenia reguł React Hooks). Do `4ce64b4` maskował je błąd parsowania: zostawiony worktree w `.claude/` miał własny `tsconfig`, przez co typescript-eslint nie umiał wybrać katalogu głównego i przestawał parsować każdy plik. Zielony wynik na całym repo nie jest więc miarą — miarą jest brak nowych uwag w plikach dotkniętych zadaniem.
 
 ---
 
@@ -1649,7 +1657,7 @@ Zastąp **cały** blok `{photoModal !== null && event?.photos && (…)}` (dziś 
 
 - [ ] **Step 11: Sprawdź typy i lint**
 
-Run: `npx tsc -b && npm run lint`
+Run: `npx tsc -b` oraz `npx eslint src/screens/EventSheet.tsx` (lint tylko własnych plików — patrz uwaga na początku planu)
 Expected: brak błędów. Jeśli `tsc` zgłasza nieużywany import (`TagChip`, `chatRef`, `HEIGHTS`) — usuń go.
 
 - [ ] **Step 12: Uruchom pełny zestaw testów**
@@ -1758,8 +1766,8 @@ Do **każdej** z trzech instancji `<EventSheet …>` (linie ~1018, ~1032, ~1046)
 
 - [ ] **Step 7: Sprawdź typy i lint**
 
-Run: `npx tsc -b && npm run lint`
-Expected: brak błędów
+Run: `npx tsc -b` oraz `npx eslint src/App.tsx` (lint tylko własnych plików — patrz uwaga na początku planu)
+Expected: `tsc` bez błędów. `eslint src/App.tsx` zgłasza 7 uwag zastanych (puste bloki `catch`, `_data`, ostrzeżenie o `setState` w efekcie przy linii 291) — nowych nie może przybyć.
 
 - [ ] **Step 8: Uruchom pełny zestaw testów**
 
