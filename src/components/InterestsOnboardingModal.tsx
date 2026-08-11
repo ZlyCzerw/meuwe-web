@@ -55,23 +55,53 @@ export default function InterestsOnboardingModal({
   async function handleDone() {
     if (!ready) return
     setBusy(true)
+
+    // The answer goes down first, in a write of its own, before anything raises
+    // a system dialog. It used to share a call with the notification wish, after
+    // it: enablePushOnThisDevice blocks until the OS prompt is answered, and if
+    // it threw — or the user walked away from that prompt and killed the app —
+    // the categories were never written at all. The step then looked done on
+    // this device and empty in the database, which is the state selectEventAudience
+    // reads as "notify nobody".
+    //
+    // interests_onboarded_at is what stops the card coming back on the next
+    // device. It is stamped here rather than by the caller because a failed
+    // write must leave it unstamped: no row change, no claim that the question
+    // was answered, and the step is offered again at the next launch.
     try {
-      // The card promises to let the user know when something happens nearby, so
-      // "Gotowe" has to be the moment that becomes true — saving the categories
-      // and leaving notifications off would make the promise something they only
-      // discover is empty weeks later, by never hearing anything.
-      //
-      // A refusal is not a failure of this step: the categories are still worth
-      // keeping, and 'denied' remains repairable from the profile. Only a
-      // platform that cannot deliver at all is left unclaimed.
-      const device = await enablePushOnThisDevice(userId)
-      const wish = device.permission === 'unsupported' ? {} : { push_enabled: true }
-      await db.updateProfile({ id: userId, interests: picked, radius_km: radiusKm, ...wish })
+      const res = await db.updateProfile({
+        id: userId,
+        interests: picked,
+        radius_km: radiusKm,
+        interests_onboarded_at: new Date().toISOString(),
+      })
+      // updateProfile resolves with the error rather than throwing it, so a
+      // permission or constraint failure looks exactly like success from here
+      // unless it is read.
+      if (res.error) console.error('[onboarding] saving interests failed:', res.error)
     } catch (err) {
       // Stated, not hidden — but the user is not held here over it. The profile
-      // panel can still set both fields.
+      // panel can still set both fields, and the step returns next launch.
       console.error('[onboarding] saving interests failed:', err)
     }
+
+    // The card promises to let the user know when something happens nearby, so
+    // "Gotowe" has to be the moment that becomes true — saving the categories
+    // and leaving notifications off would make the promise something they only
+    // discover is empty weeks later, by never hearing anything.
+    //
+    // A refusal is not a failure of this step: the categories are already kept,
+    // and 'denied' remains repairable from the profile. Only a platform that
+    // cannot deliver at all is left unclaimed.
+    try {
+      const device = await enablePushOnThisDevice(userId)
+      if (device.permission !== 'unsupported') {
+        await db.updateProfile({ id: userId, push_enabled: true })
+      }
+    } catch (err) {
+      console.error('[onboarding] enabling notifications failed:', err)
+    }
+
     setBusy(false)
     onDone()
   }

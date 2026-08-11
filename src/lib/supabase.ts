@@ -98,7 +98,7 @@ export const db = {
     // Explicit columns (not '*'): anon/authenticated lack SELECT on the location
     // columns (last_lat/last_lng/last_seen_at), so 'select=*' 403s. getProfile
     // never needs location — it's write-only from the client.
-    const {data}=await supabase.from('profiles').select('id,display_name,nickname,name_shown,avatar_color,radius_km,interests,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
+    const {data}=await supabase.from('profiles').select('id,display_name,nickname,name_shown,avatar_color,radius_km,interests,interests_onboarded_at,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
   },
   // UPDATE, never upsert. A profile row is created in exactly one place: the
   // handle_new_user trigger on auth.users (migration 20260729). An upsert here

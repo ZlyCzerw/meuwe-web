@@ -14,6 +14,12 @@ export interface Profile {
   avatar_color: string | null
   radius_km: number | null
   interests: string[] | null
+  /**
+   * Kiedy konto odpowiedziało na krok z zainteresowaniami; null = nigdy.
+   * Osobno od `interests`, bo wyczyszczenie tagów też jest odpowiedzią —
+   * patrz shouldAskInterests w lib/onboarding.
+   */
+  interests_onboarded_at: string | null
   last_lat: number | null
   last_lng: number | null
   last_seen_at: string | null

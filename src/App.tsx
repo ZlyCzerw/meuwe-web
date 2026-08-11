@@ -31,7 +31,7 @@ import InterestsOnboardingModal from './components/InterestsOnboardingModal'
 import InviteFriendsModal from './components/InviteFriendsModal'
 import {
   readOnboardingState, writeOnboardingState, locationPromptDelayMs, DEFAULT_DELAY_MS,
-  radiusFromNearest, MAX_ONBOARDING_RADIUS_KM,
+  radiusFromNearest, MAX_ONBOARDING_RADIUS_KM, shouldAskInterests,
 } from './lib/onboarding'
 import { startupZoom, kmToZoom, MAX_MAP_KM } from './lib/geo'
 import { summariseProbe } from './lib/emptyState'
@@ -39,7 +39,7 @@ import { isScreenClear, type OverlayFlags } from './lib/overlays'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown, markPromoDismissed } from './lib/appPromo'
 import PushAskModal from './components/PushAskModal'
 import * as pushAsk from './lib/pushAsk'
-import { resolvePushState } from './lib/pushState'
+import { resolvePushState, isRepairableInApp, type DevicePushState } from './lib/pushState'
 import { useUnreadEvents } from './hooks/useUnreadEvents'
 import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
@@ -132,6 +132,12 @@ export default function App() {
   const [interestsRadiusKm, setInterestsRadiusKm] = useState(MAX_ONBOARDING_RADIUS_KM)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const onboardingRef = useRef(readOnboardingState())
+  // Whether the interests card has already been put in front of this person
+  // since launch. Deliberately in memory and nowhere else: the lasting answer
+  // is profiles.interests_onboarded_at, and a save that failed must come back
+  // at the next launch rather than being written off on this device. See
+  // shouldAskInterests.
+  const interestsAskedRef = useRef(false)
 
   // ── "Get the app" nudge (mobile web only) ──────────────────────────────────
   // deviceStoreOs() is null on desktop, inside the app, and while that store has
@@ -157,6 +163,11 @@ export default function App() {
   // state that opened it, so it cannot drift as the device reconnects.
   const [pushAskMode, setPushAskMode] = useState<'ask' | 'repair'>('ask')
   const sessionCountedRef = useRef(false)
+  // What this device could do when the session started, kept from the startup
+  // reconcile below. Read only as the poll's cheap gate, so going stale costs at
+  // most one extra device query — never a card, since the tick re-reads the
+  // device for real before opening one.
+  const [startupDevice, setStartupDevice] = useState<DevicePushState | null>(null)
 
   // ── Asking whether they made it ────────────────────────────────────────────
   // Data and visibility are two separate things. If the overlay flag were
@@ -345,9 +356,17 @@ export default function App() {
     if (!session) return
     let cancelled = false
     const uid = session.user.id
+    // Someone who signs in on a new phone has already said yes to notifications
+    // — the account carries push_enabled — and this handset is simply not able
+    // to act on it yet. Making them open three events first before the question
+    // can even be raised gets the answer to a question they already answered.
+    // So the interest triggers are waived here, and only here; the three-ask
+    // budget and the fortnight after a refusal are not (see isPushAskDue).
+    const repairNeeded = startupDevice !== null
+      && isRepairableInApp(resolvePushState(!!profile?.push_enabled, startupDevice))
     const tick = async () => {
       if (cancelled || !screenIsClear()) return
-      if (!pushAsk.isPushAskDue(pushAsk.readPushAskState(), Date.now())) return
+      if (!pushAsk.isPushAskDue(pushAsk.readPushAskState(), Date.now(), { repairNeeded })) return
       const device = await getDevicePushState(uid)
       if (cancelled) return
       const state = resolvePushState(!!profile?.push_enabled, device)
@@ -367,8 +386,9 @@ export default function App() {
     return () => { cancelled = true; clearInterval(id) }
     // Same here: the layer list lives in the mirror, not in these deps.
     // Depends on the whole profile, not just the flag: "not loaded yet" is an
-    // input of its own now, and the tick has to see it change.
-  }, [session, profile])
+    // input of its own now, and the tick has to see it change. startupDevice
+    // arrives after the session for the same reason and decides repairNeeded.
+  }, [session, profile, startupDevice])
   useEffect(() => { if (createOpen) track.openCreate() }, [createOpen])
   useEffect(() => { if (session) track.login() }, [session])
 
@@ -402,15 +422,20 @@ export default function App() {
   // permission — in both cases finishLocationStep is never called, so without
   // this the step would reach nobody. Guests are skipped: the write needs an
   // account, and the effect re-runs when one appears.
+  //
+  // Whether the step is owed at all is the account's business, not this
+  // device's, so it is asked of the profile — which is also why `profile` is a
+  // dependency: on a cold start the session lands first and the answer arrives
+  // a moment later, and until it does shouldAskInterests holds its tongue.
   useEffect(() => {
     if (screen !== 'map' || !session) return
-    if (onboardingRef.current.interestsDone) return
+    if (!shouldAskInterests({ profile, askedThisSession: interestsAskedRef.current })) return
     // The location card is open or still pending — it hands over on its own.
     if (isNativePlatform() && !nativeGeoAllowed && !onboardingRef.current.locationDone) return
     if (locationModalOpen) return
 
     const timer = setTimeout(() => {
-      if (onboardingRef.current.interestsDone) return
+      if (!shouldAskInterests({ profile, askedThisSession: interestsAskedRef.current })) return
       const layers = navLayersRef.current
       const busy = layers.authModal || layers.selEvent || layers.myEventSelected
         || layers.followedEventSelected || layers.createOpen || layers.profileOpen
@@ -422,7 +447,7 @@ export default function App() {
     return () => clearTimeout(timer)
     // openInterestsStep is redefined every render; listing it would restart the
     // timer on each one and the card would never reach the end of its delay.
-  }, [screen, session, nativeGeoAllowed, locationModalOpen, pickingLocation, promoOpen, inviteModalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [screen, session, profile, nativeGeoAllowed, locationModalOpen, pickingLocation, promoOpen, inviteModalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start geo only after user enters the map (avoids permission prompt on landing page)
   useEffect(() => {
@@ -486,9 +511,19 @@ export default function App() {
   // A missing permission is left alone and surfaces in the profile toggle as a
   // repairable mismatch. On native this is also what registers the FCM token for
   // people who never touch the toggle; delivery still depends on push_enabled.
+  //
+  // Its answer used to be thrown away. It is kept now because it is the only
+  // free reading of this device there is: the ask poll needs to know whether
+  // this handset can deliver what the account already asked for, and asking
+  // getDevicePushState on every tick would mean a token lookup and a round trip
+  // to push_devices every ten seconds, forever.
   useEffect(() => {
     if (!session) return
+    let cancelled = false
     ensurePushRegistered(session.user.id)
+      .then(device => { if (!cancelled) setStartupDevice(device) })
+      .catch(err => console.error('[push] startup reconcile failed:', err))
+    return () => { cancelled = true }
   }, [session?.user.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Register native FCM tap handler — an event push opens the event, a digest
@@ -764,8 +799,10 @@ export default function App() {
     writeOnboardingState(onboardingRef.current)
     setLocationModalOpen(false)
     // The interests step needs an account to write to; a guest goes straight to
-    // the invite and is asked after signing in (see the effect below).
-    if (session && !onboardingRef.current.interestsDone) {
+    // the invite and is asked after signing in (see the effect below). Someone
+    // whose account has already answered goes straight there too — the location
+    // permission is a fact about this device, the interests are not.
+    if (session && shouldAskInterests({ profile, askedThisSession: interestsAskedRef.current })) {
       setTimeout(() => { void openInterestsStep() }, 900)
       return
     }
@@ -791,12 +828,18 @@ export default function App() {
       }
     }
     setInterestsRadiusKm(radiusFromNearest(nearestKm))
+    // Set before the card is on screen, not when it is answered: the poll comes
+    // round while it is open, and the profile it reads still says unanswered.
+    interestsAskedRef.current = true
     setInterestsModalOpen(true)
   }
 
+  // Nothing is recorded here. The card stamps interests_onboarded_at itself, in
+  // the same write as the answer, so a write that failed leaves the account
+  // unstamped and the step is offered again at the next launch — rather than
+  // this device deciding it is finished with a question the account never
+  // actually answered.
   function finishInterestsStep() {
-    onboardingRef.current = { ...onboardingRef.current, interestsDone: true }
-    writeOnboardingState(onboardingRef.current)
     setInterestsModalOpen(false)
     reloadProfile()
     offerInvite()

@@ -147,6 +147,53 @@ describe('canAskForPush and what the device can do', () => {
   })
 })
 
+// The triggers exist to answer "does this person want notifications at all".
+// An account holding push_enabled has already answered that; a device in
+// 'needsPermission' or 'needsRegistration' is a different question — the one
+// thing standing between a yes and delivery. Someone signing in on a new phone
+// should not have to browse three events to be let past it.
+describe('a device that cannot deliver what the account already asked for', () => {
+  const fresh = () => recordSessionStart(emptyPushAskState()) // first launch, no trigger
+
+  it('does not wait for a trigger', () => {
+    expect(isPushAskDue(fresh(), NOW)).toBe(false)
+    expect(isPushAskDue(fresh(), NOW, { repairNeeded: true })).toBe(true)
+    for (const pushState of ['needsPermission', 'needsRegistration'] as const) {
+      expect(canAskForPush(fresh(), { pushState, canOfferFallback: false }, NOW)).toBe(true)
+      expect(shouldOpenPushAsk(fresh(), {
+        intentKnown: true, pushState, deviceConfirmed: true, canOfferFallback: false,
+      }, NOW)).toBe(true)
+    }
+  })
+
+  // Skipping the trigger must not turn into nagging: the budget and the
+  // cooldown are the whole reason this never becomes three prompts a day.
+  it('still spends the same three asks, and still waits out a refusal', () => {
+    let state = fresh()
+    for (let i = 0; i < PUSH_ASK_MAX; i++) state = markAsked(state, NOW)
+    expect(isPushAskDue(state, NOW, { repairNeeded: true })).toBe(false)
+
+    const declined = markDeclined(markAsked(fresh(), NOW), NOW)
+    expect(isPushAskDue(declined, NOW + PUSH_ASK_COOLDOWN_MS - 1, { repairNeeded: true })).toBe(false)
+    expect(isPushAskDue(declined, NOW + PUSH_ASK_COOLDOWN_MS, { repairNeeded: true })).toBe(true)
+  })
+
+  // 'blocked' needs repairing too, but not by anything this card can do — only
+  // the system settings screen can. It stays on the old rules.
+  it('does not extend the waiver to a device no button can fix', () => {
+    expect(canAskForPush(fresh(), { pushState: 'blocked', canOfferFallback: true }, NOW)).toBe(false)
+    expect(canAskForPush(fresh(), { pushState: 'unsupported', canOfferFallback: true }, NOW)).toBe(false)
+  })
+
+  // An unread device reads exactly like an unregistered one at a cold start,
+  // and the waiver must not turn that ambiguity into a prompt.
+  it('holds off until the device reading is confirmed', () => {
+    expect(shouldOpenPushAsk(fresh(), {
+      intentKnown: true, pushState: 'needsRegistration', deviceConfirmed: false, canOfferFallback: false,
+    }, NOW)).toBe(false)
+  })
+})
+
 describe('shouldOpenPushAsk', () => {
   const triggered = () => recordFollow(emptyPushAskState())
   const ctx = (over: Partial<Parameters<typeof shouldOpenPushAsk>[1]>) => ({

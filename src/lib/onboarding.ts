@@ -15,17 +15,20 @@ export const DEEP_LINK_DELAY_MS = 60_000
 /** Otherwise just let the map paint before covering it. */
 export const DEFAULT_DELAY_MS = 3_000
 
+/**
+ * The two steps that really are about this device, and are therefore allowed to
+ * live in its localStorage. The interests step is not one of them: see
+ * shouldAskInterests.
+ */
 export interface OnboardingState {
   /** Set once the location step has been answered, either way. */
   locationDone: boolean
-  /** Set once the interests step has been answered, either way. */
-  interestsDone: boolean
   /** Set once the invite sheet has been offered, so it is offered only once. */
   inviteDone: boolean
 }
 
 export const emptyOnboardingState = (): OnboardingState =>
-  ({ locationDone: false, interestsDone: false, inviteDone: false })
+  ({ locationDone: false, inviteDone: false })
 
 export function parseOnboardingState(raw: string | null): OnboardingState {
   if (!raw) return emptyOnboardingState()
@@ -33,14 +36,41 @@ export function parseOnboardingState(raw: string | null): OnboardingState {
     const parsed = JSON.parse(raw) as Partial<OnboardingState>
     return {
       locationDone: parsed.locationDone === true,
-      // Missing field (anything stored before this step existed) reads as false,
-      // so an existing install is offered the step rather than skipping it.
-      interestsDone: parsed.interestsDone === true,
       inviteDone: parsed.inviteDone === true,
     }
   } catch {
     return emptyOnboardingState()
   }
+}
+
+/**
+ * Whether to put the interests step in front of this person.
+ *
+ * The answer belongs to the ACCOUNT, so it is read from the account:
+ * profiles.interests_onboarded_at, stamped the moment the card is answered.
+ * It used to be a flag in localStorage, which meant a new phone, a new browser,
+ * a reinstall — or Safari evicting the entry after seven quiet days — read as
+ * "never asked" and showed the card again to someone who had already filled it
+ * in. The same flag, being device-wide rather than account-wide, also silenced
+ * the step for a SECOND account signing in on that device, leaving it with no
+ * interests at all: selectEventAudience then drops it from every fan-out, so
+ * that half never showed up as a complaint.
+ *
+ * The stamp is a column of its own rather than `interests.length === 0` because
+ * emptying the list in the profile panel is an answer too. Someone who removes
+ * every tag has said what they want; the card must not come back and argue.
+ *
+ * `askedThisSession` is held in memory only, so a save that failed is asked
+ * about again at the next launch rather than being lost for good.
+ */
+export function shouldAskInterests(ctx: {
+  /** null while it is still loading — the one state that is not an answer. */
+  profile: { interests_onboarded_at: string | null } | null
+  askedThisSession: boolean
+}): boolean {
+  if (ctx.profile === null) return false
+  if (ctx.askedThisSession) return false
+  return ctx.profile.interests_onboarded_at === null
 }
 
 export function readOnboardingState(): OnboardingState {

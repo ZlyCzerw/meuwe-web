@@ -120,11 +120,24 @@ export function isPushAskTriggered(state: PushAskState): boolean {
  * fired, is there budget left, is the cooldown over. Callers check this before
  * asking the device what it can do, because that costs a round trip and would
  * otherwise run on every poll.
+ *
+ * `repairNeeded` stands in for the trigger, and only for the trigger. The
+ * triggers answer "does this person want notifications at all"; an account that
+ * already holds push_enabled has answered it, and a device that cannot deliver
+ * on that yes is the one thing left in the way. Someone signing in on a new
+ * phone should not have to open three events to be let past it.
+ *
+ * The budget and the cooldown are deliberately NOT waived. They are what keeps
+ * this from becoming a prompt on every launch of a device that stays unfixed.
  */
-export function isPushAskDue(state: PushAskState, now: number): boolean {
+export function isPushAskDue(
+  state: PushAskState,
+  now: number,
+  ctx: { repairNeeded?: boolean } = {},
+): boolean {
   if (state.askCount >= PUSH_ASK_MAX) return false
   if (state.declinedAt !== null && now - state.declinedAt < PUSH_ASK_COOLDOWN_MS) return false
-  return isPushAskTriggered(state)
+  return ctx.repairNeeded === true || isPushAskTriggered(state)
 }
 
 /**
@@ -141,7 +154,10 @@ export function canAskForPush(
 ): boolean {
   if (ctx.pushState === 'on') return false
   if ((ctx.pushState === 'blocked' || ctx.pushState === 'unsupported') && !ctx.canOfferFallback) return false
-  return isPushAskDue(state, now)
+  // isRepairableInApp, spelled out: 'blocked' is a repair too, but not one this
+  // card can carry out, so it keeps waiting for a trigger like everyone else.
+  const repairNeeded = ctx.pushState === 'needsPermission' || ctx.pushState === 'needsRegistration'
+  return isPushAskDue(state, now, { repairNeeded })
 }
 
 /**

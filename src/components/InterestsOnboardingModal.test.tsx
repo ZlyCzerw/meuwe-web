@@ -5,10 +5,11 @@ import { ALL_CATEGORIES } from '../lib/tokens'
 // Without this the translator returns raw keys and every assertion is meaningless.
 import '../lib/i18n'
 
-const updateProfile = vi.fn<() => Promise<unknown>>()
+// Typed with its argument: the stamp the card writes is read back off the call.
+const updateProfile = vi.fn<(p: Record<string, unknown>) => Promise<{ error: unknown }>>()
 const enablePushOnThisDevice = vi.fn<() => Promise<{ permission: string; registered: boolean }>>()
 vi.mock('../lib/supabase', () => ({
-  db: { updateProfile: (...a: unknown[]) => updateProfile(...(a as [])) },
+  db: { updateProfile: (p: Record<string, unknown>) => updateProfile(p) },
   supabase: {},
 }))
 vi.mock('../lib/push', () => ({ enablePushOnThisDevice: () => enablePushOnThisDevice() }))
@@ -73,8 +74,23 @@ describe('InterestsOnboardingModal', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(updateProfile).toHaveBeenCalledWith({
-      id: 'u1', interests: ['music', 'food'], radius_km: 17, push_enabled: true,
+      id: 'u1', interests: ['music', 'food'], radius_km: 17,
+      interests_onboarded_at: expect.any(String),
     })
+  })
+
+  // The whole point of the stamp: the next device asks the account, not its own
+  // localStorage, whether this question has already been put.
+  it('records that the question was answered, not just what the answer was', async () => {
+    const onDone = vi.fn()
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={onDone} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    const stamp = updateProfile.mock.calls[0][0].interests_onboarded_at as string
+    expect(Number.isNaN(Date.parse(stamp))).toBe(false)
   })
 
   // The card says "we'll let you know when something happens nearby". Saving the
@@ -87,9 +103,8 @@ describe('InterestsOnboardingModal', () => {
     fireEvent.click(doneButton())
 
     await waitFor(() => expect(enablePushOnThisDevice).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({
-      id: 'u1', interests: ['music'], radius_km: 17, push_enabled: true,
-    })
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', push_enabled: true }))
   })
 
   it('saves the interests even when the device refuses notifications', async () => {
@@ -101,9 +116,29 @@ describe('InterestsOnboardingModal', () => {
     fireEvent.click(doneButton())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    // Still recorded: 'denied' is repairable from the profile, so the wish is worth keeping.
     expect(updateProfile).toHaveBeenCalledWith({
-      id: 'u1', interests: ['music'], radius_km: 17, push_enabled: true,
+      id: 'u1', interests: ['music'], radius_km: 17,
+      interests_onboarded_at: expect.any(String),
+    })
+    // Still recorded: 'denied' is repairable from the profile, so the wish is worth keeping.
+    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', push_enabled: true })
+  })
+
+  // The failure this whole ordering exists for. requestPermissions blocks on a
+  // system dialog and can throw; when it shared a call with the categories, and
+  // came first, the answer the user had just given was never written at all.
+  it('keeps the answer when asking for notifications blows up', async () => {
+    enablePushOnThisDevice.mockRejectedValue(new Error('FCM unavailable'))
+    const onDone = vi.fn()
+    render(<InterestsOnboardingModal userId="u1" radiusKm={17} onDone={onDone} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /^music$/i }))
+    fireEvent.click(doneButton())
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    expect(updateProfile).toHaveBeenCalledWith({
+      id: 'u1', interests: ['music'], radius_km: 17,
+      interests_onboarded_at: expect.any(String),
     })
   })
 
@@ -118,7 +153,11 @@ describe('InterestsOnboardingModal', () => {
     fireEvent.click(doneButton())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(updateProfile).toHaveBeenCalledWith({ id: 'u1', interests: ['music'], radius_km: 17 })
+    expect(updateProfile).toHaveBeenCalledWith({
+      id: 'u1', interests: ['music'], radius_km: 17,
+      interests_onboarded_at: expect.any(String),
+    })
+    expect(updateProfile).not.toHaveBeenCalledWith({ id: 'u1', push_enabled: true })
   })
 
   it('still tells the user where to change this later', () => {
