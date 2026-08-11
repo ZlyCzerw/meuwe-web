@@ -12,6 +12,12 @@ export default defineConfig({
     // test imports https: URLs the Node ESM loader can't resolve) — run it via
     // `deno test` instead. Other _shared tests (e.g. notif-i18n) are plain TS and
     // still run here under vitest.
-    exclude: [...configDefaults.exclude, 'supabase/functions/_shared/fcm.test.ts'],
+    // .claude bywa gospodarzem worktree'ów — pełnych kopii repo. Bez tego
+    // vitest zbiera testy z cudzej gałęzi i przypisuje ich porażki tej.
+    exclude: [
+      ...configDefaults.exclude,
+      'supabase/functions/_shared/fcm.test.ts',
+      '.claude/**',
+    ],
   },
 })
