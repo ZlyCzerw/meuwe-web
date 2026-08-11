@@ -103,9 +103,9 @@ function MapScreen({
   // quotes and the radius "notify me here" writes to the profile. Null until
   // the map has been laid out and has a view to measure.
   const [mapRadiusKm, setMapRadiusKm] = useState<number | null>(null)
-  // What events are fetched for, which is a different question. It is capped by
-  // its own ceiling rather than by the notification radius, and it moves only
-  // when the viewport leaves what has already been fetched — see lib/mapView.
+  // What events are fetched for, which is a different question. Nothing caps
+  // it — the map fetches what it is showing — and it moves only when the
+  // viewport leaves what has already been fetched. See lib/mapView.
   const [fetchView, setFetchView] = useState<FetchView | null>(null)
   const fetchViewRef = useRef<FetchView | null>(null)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { nextFetchView, fetchBox, FETCH_MARGIN, MAX_FETCH_KM } from './mapView'
+import { nextFetchView, fetchBox, FETCH_MARGIN } from './mapView'
 
 // Warsaw-ish, where a degree of longitude is ~0.62 of a degree of latitude.
 const LAT = 52
@@ -60,19 +60,18 @@ describe('nextFetchView', () => {
     expect(nextFetchView(covered, { lat: 70.02, lng: 20, km: 3 })).not.toBeNull()
   })
 
-  it('never asks for more than the ceiling, however far the map is zoomed out', () => {
-    const next = nextFetchView(null, { lat: LAT, lng: LNG, km: 4000 })
-    expect(next!.km).toBe(MAX_FETCH_KM)
+  // No ceiling: what limits a pin from appearing must be the screen, never a
+  // number picked to keep queries small. The row cap in getEvents is the guard.
+  it('fetches whatever the map is showing, however far out that is', () => {
+    expect(nextFetchView(null, { lat: LAT, lng: LNG, km: 500 })!.km).toBe(650)
+    expect(nextFetchView(null, { lat: LAT, lng: LNG, km: 4000 })!.km).toBe(5200)
   })
 
-  // At the ceiling the fetched box cannot contain the viewport, so a
-  // requirement equal to the viewport would refetch on every single moveend.
-  // The requirement shrinks to the ceiling less the margin instead.
-  it('keeps its margin at the ceiling instead of refetching on every pan', () => {
+  it('keeps its margin at any scale', () => {
     const covered = nextFetchView(null, { lat: LAT, lng: LNG, km: 500 })!
-    expect(covered.km).toBe(MAX_FETCH_KM)
+    // A pan of a few kilometres at continental scale is nothing; it must not
+    // cost a round trip any more than a few metres does in a city.
     expect(nextFetchView(covered, { lat: LAT + 0.05, lng: LNG, km: 500 })).toBeNull()
-    // Far enough out and it does ask again.
-    expect(nextFetchView(covered, { lat: LAT + 1, lng: LNG, km: 500 })).not.toBeNull()
+    expect(nextFetchView(covered, { lat: LAT + 2, lng: LNG, km: 500 })).not.toBeNull()
   })
 })

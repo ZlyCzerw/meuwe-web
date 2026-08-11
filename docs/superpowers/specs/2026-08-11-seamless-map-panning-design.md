@@ -82,37 +82,28 @@ tied to how far the user wants to be notified.
 export type FetchView = { lat: number; lng: number; km: number }
 
 export const FETCH_MARGIN = 1.3
-export const MAX_FETCH_KM = 300
 
 export function fetchBox(v: FetchView): { minLat; maxLat; minLng; maxLng }
 export function nextFetchView(covered: FetchView | null, viewport: FetchView): FetchView | null
 ```
 
 `nextFetchView` returns the view to fetch, or `null` when `covered` already
-contains the viewport.
+contains the viewport. If `fetchBox(covered)` contains `fetchBox(viewport)` on
+all four sides, return `null`; otherwise return the viewport scaled by
+`FETCH_MARGIN`.
 
-- `want` = the viewport scaled by `FETCH_MARGIN`, capped at `MAX_FETCH_KM`. This
-  is what gets fetched.
-- `need` = the viewport, but never more than `want` less the margin. This is
-  what must be covered.
-- If `covered` exists and `fetchBox(covered)` contains `fetchBox(need)` on all
-  four sides, return `null`. Otherwise return `want`.
-
-Testing containment against `need` while fetching `want` is what creates the
-hysteresis: a 30% margin of panning in any direction costs nothing.
-
-Deriving `need` from `want` rather than capping both at `MAX_FETCH_KM`
-separately matters at the ceiling. Capped independently the two collapse into
-the same box, the fetch can never contain the viewport, and every `moveend`
-refetches - the opposite of the point. Shrinking the requirement with the fetch
-keeps the margin intact however far out the map is pulled.
+Fetching the scaled box while testing containment against the bare viewport is
+the whole of the hysteresis: a 30% margin of panning in any direction costs
+nothing.
 
 Boxes come from `bboxDeltas` (`geo.ts`), which already handles the
 longitude/latitude asymmetry.
 
-`MAX_FETCH_KM = 300` is a safety ceiling only - roughly zoom 7 on a phone, the
-scale of a country. It is deliberately a separate constant from `MAX_MAP_KM`, so
-that changing the notification radius never again changes what the map shows.
+**There is no ceiling on the fetch radius.** A ceiling here is a ceiling on
+which pins reach the screen, and the one that used to be here was `MAX_MAP_KM` -
+the push fan-out's radius, which had no business deciding what the map shows. It
+bit from about zoom 9. The row cap in `getEvents` is what keeps a single query
+bounded; `nextFetchView` only decides when to ask.
 
 ### `src/lib/eventCache.ts` (new, pure)
 
@@ -232,8 +223,8 @@ and `setLatLng`; create only genuinely new keys.
 - a viewport inside the covered box returns `null`
 - a viewport that escapes any one of the four sides returns a fetch view
 - the returned view is the viewport scaled by `FETCH_MARGIN`
-- a viewport wider than `MAX_FETCH_KM` caps both the requirement and the fetch,
-  and does not refetch on every small pan
+- a continental-scale viewport is fetched in full, with no ceiling applied
+- the margin holds at that scale too: a few kilometres of panning asks nothing
 - `null` covered always returns a fetch view
 - longitude containment is correct at a high latitude (asymmetric deltas)
 
