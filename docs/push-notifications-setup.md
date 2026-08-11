@@ -26,12 +26,36 @@ supabase/migrations/20260527_push_notifications.sql
 Otwórz: **Supabase Dashboard → Settings → Edge Functions → Secrets**
 
 Dodaj:
-| Nazwa | Wartość |
-|-------|---------|
-| `VAPID_PUBLIC_KEY` | klucz publiczny z kroku 1 |
-| `VAPID_PRIVATE_KEY` | klucz prywatny z kroku 1 |
-| `VAPID_SUBJECT` | `mailto:wiktor.marc@gmail.com` |
-| `CRON_SECRET` | dowolny losowy string, np. `openssl rand -hex 32` |
+| Nazwa | Wartość | Czego pilnuje |
+|-------|---------|---------------|
+| `VAPID_PUBLIC_KEY` | klucz publiczny z kroku 1 | podpis web push |
+| `VAPID_PRIVATE_KEY` | klucz prywatny z kroku 1 | podpis web push |
+| `VAPID_SUBJECT` | `mailto:wiktor.marc@gmail.com` | podpis web push |
+| `CRON_SECRET` | dowolny losowy string, np. `openssl rand -hex 32` | wywołania z pg_cron |
+| `WEBHOOK_SECRET` | dowolny losowy string, np. `openssl rand -hex 32` | wywołania z DB Webhooks |
+| `FCM_SERVICE_ACCOUNT_JSON` | całe konto serwisowe Firebase, jako jedna linia JSON | push natywny (Android, iOS) |
+
+`WEBHOOK_SECRET` i `CRON_SECRET` to dwie różne bramki i żadna nie zastępuje
+drugiej. Funkcje wołane webhookiem (`push-new-event`, `push-new-message`,
+`push-event-interest`) sprawdzają nagłówek `x-webhook-secret`; wołane cronem
+(`push-event-start`, `push-weekly-digest`) - `x-cron-secret`. Pusta wartość
+nie jest tym samym co brak sprawdzenia: kod czyta `Deno.env.get(...) ?? ''`,
+a pusty string zapada w warunku, więc **nieustawiony sekret oznacza 401 na
+każde wywołanie**, a nie przepuszczenie ruchu.
+
+Sekrety są per projekt, nie per funkcja - raz ustawione widzi każda funkcja
+tego środowiska. Sprawdzenie, czego brakuje:
+
+```bash
+supabase secrets list --project-ref <ref>
+```
+
+Bez `FCM_SERVICE_ACCOUNT_JSON` web push działa normalnie, a natywny cicho
+odpada z logiem `[fcm] FCM_SERVICE_ACCOUNT_JSON not set`.
+
+> Stan na 2026-08-11: staging (`ujzmivdgibnnncmoqoyb`) nie ma **żadnego** z
+> tych sekretów poza `CRON_SECRET`, więc powiadomienia nigdy tam nie
+> zadziałały. Co z tym zrobić: [runbook-push-event-interest.md](runbook-push-event-interest.md).
 
 ## 4. Supabase — Deploy Edge Functions
 
