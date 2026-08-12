@@ -9,6 +9,16 @@ import type { Category } from '../../lib/tokens'
 /** Ile awatarów obserwujących mieści się w rogu, zanim zaczną zasłaniać zdjęcie. */
 const MAX_FACES = 3
 
+/**
+ * Sufit wysokości kadru.
+ *
+ * Proporcja 16:9 rośnie razem z szerokością karty, więc bez tego na szerokim
+ * ekranie zdjęcie zjadało wszystko poniżej. Kolumna na desktopie ma ~440 px,
+ * czyli 248 px kadru — sufit nigdy tam nie zadziała i jest wyłącznie
+ * zabezpieczeniem na wypadek szerszej karty w przyszłości.
+ */
+const MAX_FRAME_H = 280
+
 export default function EventPhotoStrip({
   photos,
   category,
@@ -60,8 +70,8 @@ export default function EventPhotoStrip({
     <div
       data-testid="photo-frame"
       style={{
-        position: 'relative', aspectRatio: '16 / 9', borderRadius: 20,
-        overflow: 'hidden', marginBottom: 12,
+        position: 'relative', aspectRatio: '16 / 9', maxHeight: MAX_FRAME_H,
+        borderRadius: 20, overflow: 'hidden', marginBottom: 12,
         background: `linear-gradient(135deg, ${meta.color}, ${C.cream})`,
       }}
     >

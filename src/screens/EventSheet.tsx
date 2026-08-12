@@ -46,6 +46,16 @@ const HALF_MAX_VH = 78
 const HALF_CHROME = 29
 
 /**
+ * Wysokość na czas, zanim pomiar dotrze.
+ *
+ * Bez tego karta spadała na `HALF_MIN`, a że w trybie half treść jest przycięta
+ * (`overflow: hidden`) i nie ma czego przewijać, wszystko poniżej zdjęcia
+ * stawało się nieosiągalne. Na telefonie obserwator odpowiada od razu i nikt
+ * tego nie zobaczy — ale nie ma powodu, żeby ta jedna klatka była pułapką.
+ */
+const HALF_FALLBACK = '56%'
+
+/**
  * Próg, poniżej którego pomiar uznajemy za ten sam.
  *
  * Wysokość karty bierze się z pomiaru elementu leżącego w tej karcie, więc
@@ -371,6 +381,7 @@ function EventSheet({
   const sheetHeight =
     snap === 'peek' ? '130px'
       : snap === 'full' ? '93%'
+      : halfContentH === 0 ? HALF_FALLBACK
       : `clamp(${HALF_MIN}px, ${Math.round(halfContentH + HALF_CHROME)}px, ${HALF_MAX_VH}vh)`
 
   const startsAt = new Date(event.start_time)
@@ -378,10 +389,9 @@ function EventSheet({
   const hhmm = (d: Date) => d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div style={{
-      position: 'absolute', left: 0, right: 0, bottom: 0, height: sheetHeight,
-      background: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32,
-      boxShadow: '0 -8px 32px rgba(45,43,42,0.12)',
+    <div className="event-sheet" style={{
+      position: 'absolute', height: sheetHeight,
+      background: '#fff',
       transition: 'height 380ms cubic-bezier(0.32,1.4,0.4,1)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 40,
     }}>
