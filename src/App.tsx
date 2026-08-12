@@ -175,6 +175,9 @@ export default function App() {
   // moment there is something to ask about, and the card would never open.
   const [attendanceCandidate, setAttendanceCandidate] = useState<AskCandidate | null>(null)
   const [attendanceAskOpen, setAttendanceAskOpen] = useState(false)
+  // Czat wydarzenia jest warstwą, nie stanem karty — dzięki temu systemowy
+  // "wstecz" zamyka rozmowę, a nie całe wydarzenie pod nią.
+  const [eventChatOpen, setEventChatOpen] = useState(false)
   const attendanceFetchedRef = useRef(false)
   const updatePushAsk = (fn: (s: pushAsk.PushAskState) => pushAsk.PushAskState) => {
     const next = fn(pushAsk.readPushAskState())
@@ -188,6 +191,7 @@ export default function App() {
   const navRestoredRef = useRef(false)
   const navLayersRef = useRef({
     authModal,
+    eventChatOpen,
     selEvent,
     myEventSelected,
     followedEventSelected,
@@ -224,6 +228,7 @@ export default function App() {
     navStateRef.current = { screen, myEventSelected, followedEventSelected }
     navLayersRef.current = {
       authModal,
+      eventChatOpen,
       selEvent,
       myEventSelected,
       followedEventSelected,
@@ -232,13 +237,16 @@ export default function App() {
       profileOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModal, selEvent, createOpen, accountOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, eventChatOpen, selEvent, createOpen, accountOpen, profileOpen])
 
   useEffect(() => {
     function onPopState() {
       const s = navLayersRef.current
       // Zamknij najwyższą otwartą warstwę
       if (s.authModal) { setAuthModal(null); return }
+      // Logowanie otwiera się nad czatem, czat nad wydarzeniem — kolejność
+      // gałęzi jest tu jedyną definicją tego, co leży na czym.
+      if (s.eventChatOpen) { setEventChatOpen(false); return }
       if (s.selEvent || s.myEventSelected || s.followedEventSelected) {
         setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
         return
@@ -254,6 +262,16 @@ export default function App() {
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Zamknięcie karty w dowolny sposób kończy też rozmowę — inaczej stan
+  // przeciekłby na następne otwarte wydarzenie. Wydarzenie zerowane jest w
+  // sześciu miejscach, z czego cztery (klik w mapę, otwarcie profilu, tworzenie,
+  // edycja) omijają historię, więc jeden wniosek z obecnego stanu jest tu
+  // uczciwszy niż sześć powtórzeń tej samej linijki.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset warstwy, gdy karty już nie ma
+    if (!selEvent && !myEventSelected && !followedEventSelected) setEventChatOpen(false)
+  }, [selEvent, myEventSelected, followedEventSelected])
 
   useEffect(() => {
     function onVisibilityChange() {
@@ -596,7 +614,7 @@ export default function App() {
     let remove: (() => void) | undefined
     CapApp.addListener('backButton', () => {
       const s = navLayersRef.current
-      const layerOpen = !!(s.authModal || s.selEvent || s.myEventSelected || s.followedEventSelected ||
+      const layerOpen = !!(s.authModal || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
         s.createOpen || s.accountOpen || s.profileOpen ||
         s.screen === 'myEvents' || s.screen === 'followedEvents')
       if (layerOpen) { window.history.back(); return }
@@ -953,6 +971,21 @@ export default function App() {
   const isFollowedEvents = screen === 'followedEvents'
   const isOverlay = isMyEvents || isFollowedEvents
 
+  // Otwarcie dokłada wpis do historii, zamknięcie go zdejmuje przez back() —
+  // tak samo jak każda inna warstwa w tej aplikacji. Jeden obiekt na trzy
+  // instancje karty, bo trzy kopie rozjechałyby się przy pierwszej poprawce.
+  const eventChatProps = {
+    chatOpen: eventChatOpen,
+    onChatOpenChange: (open: boolean) => {
+      if (open) {
+        setEventChatOpen(true)
+        window.history.pushState({ layer: 'eventChat' }, '')
+      } else {
+        window.history.back()
+      }
+    },
+  }
+
   // Single MapScreen instance shared between 'map' and 'myEvents' to prevent remount on screen switch
   return (
     <>
@@ -1026,6 +1059,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          {...eventChatProps}
         />
       )}
       {isFollowedEvents && followedEventSelected && (
@@ -1040,6 +1074,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          {...eventChatProps}
         />
       )}
       {!isOverlay && selEvent && (
@@ -1054,6 +1089,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          {...eventChatProps}
         />
       )}
 
