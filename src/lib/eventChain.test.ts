@@ -181,6 +181,15 @@ describe('geoStrategy — later steps', () => {
     c = step(c, pool, 'west', geoStrategy)!
     expect(currentOf(c).id).toBe('a')
   })
+
+  // Otwarte wydarzenie mogło wypaść z filtrów, ale karta zostaje na ekranie —
+  // sznurek ma dalej działać, choć kotwicy nie ma już w puli.
+  it('still steps from an anchor that has left the pool', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const near = ev({ id: 'near', lng: 22.0 + KM })
+    const c = step(startChain(a), [near], 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('near')
+  })
 })
 
 import { listStrategy } from './eventChain'
