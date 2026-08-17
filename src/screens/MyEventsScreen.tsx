@@ -26,7 +26,8 @@ export default function MyEventsScreen({
 }: {
   session: Session | null
   onBack: () => void
-  onOpenEvent: (ev: EventWithMsgCount) => void
+  /** Lista w kolejności wyświetlania — po niej chodzi sznurek w tym ekranie. */
+  onOpenEvent: (ev: EventWithMsgCount, ordered: EventWithMsgCount[]) => void
   isUnread?: (id: string) => boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -60,6 +61,8 @@ export default function MyEventsScreen({
   const upcoming = events.filter(e => computeStatus(e) === 'upcoming')
   const ended    = events.filter(e => computeStatus(e) === 'ended')
 
+  const ordered = [...live, ...upcoming, ...ended]
+
   function formatDate(iso: string) {
     const d = new Date(iso)
     return d.toLocaleDateString(loc, { day: 'numeric', month: 'short' }) +
@@ -87,8 +90,8 @@ export default function MyEventsScreen({
                 key={ev.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => onOpenEvent(ev)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpenEvent(ev) }}
+                onClick={() => onOpenEvent(ev, ordered)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpenEvent(ev, ordered) }}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                   padding: 12, marginBottom: 10, borderRadius: 22,
