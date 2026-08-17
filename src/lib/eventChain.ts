@@ -92,3 +92,19 @@ export const geoStrategy: ChainStrategy = {
     })
   },
 }
+
+/**
+ * Sznurek po liście: „obok" znaczy sąsiedni wiersz, nie sąsiednie miejsce.
+ * Używany w Moich i Obserwowanych, gdzie użytkownik przegląda własną listę i
+ * geografia wyprowadziłaby go z niej w nieoczekiwane miejsce.
+ */
+export const listStrategy: ChainStrategy = {
+  extend(chain, pool, dir) {
+    const from = currentOf(chain)
+    const i = pool.findIndex(e => e.id === from.id)
+    if (i === -1) return null
+    const next = pool[dir === 'east' ? i + 1 : i - 1]
+    if (!next) return null
+    return chain.path.some(e => e.id === next.id) ? null : next
+  },
+}

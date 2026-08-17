@@ -182,3 +182,36 @@ describe('geoStrategy — later steps', () => {
     expect(currentOf(c).id).toBe('a')
   })
 })
+
+import { listStrategy } from './eventChain'
+
+describe('listStrategy', () => {
+  const a = ev({ id: 'a' }), b = ev({ id: 'b' }), c3 = ev({ id: 'c' })
+  const pool = [a, b, c3]
+
+  it('moves to the next row', () => {
+    const c = step(startChain(b), pool, 'east', listStrategy)!
+    expect(currentOf(c).id).toBe('c')
+  })
+
+  it('moves to the previous row', () => {
+    const c = step(startChain(b), pool, 'west', listStrategy)!
+    expect(currentOf(c).id).toBe('a')
+  })
+
+  it('stops at both ends of the list', () => {
+    expect(step(startChain(c3), pool, 'east', listStrategy)).toBeNull()
+    expect(step(startChain(a), pool, 'west', listStrategy)).toBeNull()
+  })
+
+  // Lista może się odświeżyć pod otwartą kartą; wtedy lepiej zatrzymać sznurek
+  // niż zaprowadzić go tam, gdzie już był.
+  it('stops rather than revisiting', () => {
+    const c = step(startChain(a), pool, 'east', listStrategy)!
+    expect(step(c, [a, b, a], 'east', listStrategy)).toBeNull()
+  })
+
+  it('stops when the current event has left the list', () => {
+    expect(step(startChain(ev({ id: 'gone' })), pool, 'east', listStrategy)).toBeNull()
+  })
+})
