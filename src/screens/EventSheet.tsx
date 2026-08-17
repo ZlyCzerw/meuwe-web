@@ -28,6 +28,9 @@ import {
   markAsked, markDeclined,
 } from '../lib/pushAsk'
 import FollowNotifyModal from '../components/FollowNotifyModal'
+import ChainArrow from '../components/ChainArrow'
+import { useCardDrag } from '../hooks/useCardDrag'
+import type { Dir } from '../lib/eventChain'
 import type { EventWithMeta, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
@@ -124,6 +127,8 @@ function EventSheet({
   onProfileChanged,
   chatOpen: chatOpenProp,
   onChatOpenChange,
+  onChainStep,
+  chainCanGo,
 }: {
   event: EventWithMeta
   onClose: () => void
@@ -139,6 +144,9 @@ function EventSheet({
   /** Czat jest warstwą historii — stanem zarządza App, żeby „wstecz" go zamykał. */
   chatOpen?: boolean
   onChatOpenChange?: (open: boolean) => void
+  /** Krok po sznurku wydarzeń. Brak = karta stoi sama, bez strzałek i swipe'u. */
+  onChainStep?: (dir: Dir) => void
+  chainCanGo?: (dir: Dir) => boolean
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -242,7 +250,6 @@ function EventSheet({
   const chanRef = useRef<ReturnType<typeof db.subscribeMessages> | null>(null)
   const followChanRef = useRef<ReturnType<typeof db.subscribeFollowers> | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
-  const touchStartY = useRef<number | null>(null)
   const lastSendRef = useRef<number>(0)
 
   // How the account signed in, which is how lib/calendarRoute knows whether the
@@ -253,6 +260,7 @@ function EventSheet({
 
   const isFull = snap === 'full'
   const isPeek = snap === 'peek'
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
   const meta = TAG_META[event.category as Category] || TAG_META.party
   const loc = LOC_MAP[i18n.language] || 'en-US'
 
@@ -321,6 +329,28 @@ function EventSheet({
     if (listRef.current && !isFull) listRef.current.scrollTop = 0
   }, [event?.id, isFull])
 
+  // App podaje onChainStep jako świeżo domkniętą funkcję przy każdym renderze.
+  // Przez ref nasłuch podpina się raz, zamiast odpinać i podpinać w kółko.
+  const chainStepRef = useRef(onChainStep)
+  useEffect(() => { chainStepRef.current = onChainStep }, [onChainStep])
+
+  // Strzałki klawiatury robią to samo, co daszki — ale nie wtedy, gdy ktoś
+  // pisze wiadomość albo patrzy na warstwę leżącą nad kartą.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const stepFn = chainStepRef.current
+      if (!stepFn) return
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (chatOpen || photoModal !== null || notifyReason || calendarChooser) return
+      e.preventDefault()
+      stepFn(e.key === 'ArrowLeft' ? 'east' : 'west')
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [chatOpen, photoModal, notifyReason, calendarChooser])
+
   async function send() {
     if (!input.trim() || !session) return
     const now = Date.now()
@@ -359,13 +389,7 @@ function EventSheet({
     onChatOpenChange?.(true)
   }
 
-  function onTS(e: React.TouchEvent) {
-    touchStartY.current = e.touches[0].clientY
-  }
-  function onTE(e: React.TouchEvent) {
-    if (touchStartY.current === null) return
-    const dy = e.changedTouches[0].clientY - touchStartY.current
-    touchStartY.current = null
+  function onVertical(dy: number) {
     if (dy > 80) {
       if (snap === 'full') setSnap('half')
       else if (snap === 'half') setSnap('peek')
@@ -375,6 +399,16 @@ function EventSheet({
       else if (snap === 'half') setSnap('full')
     }
   }
+
+  const drag = useCardDrag({
+    // Czat leży na całej karcie i ma własne przewijanie; sznurek pod nim
+    // milczy.
+    enabled: !!onChainStep && !chatOpen,
+    onCommitX: dir => onChainStep?.(dir),
+    // W trybie full lista przewija się natywnie i pionowy gest do niej należy —
+    // dokładnie jak przed sznurkiem.
+    onCommitY: dy => { if (!isFull) onVertical(dy) },
+  })
 
   if (!event) return null
 
@@ -391,11 +425,18 @@ function EventSheet({
   return (
     <div className="event-sheet" style={{
       position: 'absolute', height: sheetHeight,
-      background: '#fff',
       transition: 'height 380ms cubic-bezier(0.32,1.4,0.4,1)',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 40,
+      zIndex: 40,
     }}>
-      <div onTouchStart={onTS} onTouchEnd={onTE} style={{ flexShrink: 0, position: 'relative' }}>
+      <div className="event-sheet-card" style={{
+        height: '100%',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        // Treść jedzie za palcem; po puszczeniu wraca do zera niezależnie od
+        // tego, czy wydarzenie się zmieniło.
+        transform: `translateX(${drag.dx}px)`,
+        transition: drag.transition,
+      }}>
+      <div {...drag.bind} style={{ flexShrink: 0, position: 'relative' }}>
         <DragHandle />
         <button
           onClick={() => {
@@ -408,7 +449,7 @@ function EventSheet({
 
       {isPeek
         ? (
-          <div style={{ padding: '4px 20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div {...drag.bind} style={{ padding: '4px 20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <OrganicBlob size={42} color={meta.color} idx={0} face={<BlobFace size={28} />} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
@@ -436,8 +477,7 @@ function EventSheet({
               // W trybie half nie ma czego przewijać (karta jest dokładnie na
               // miarę treści), więc rozwinięcie musi wziąć się z gestu, nie ze
               // zdarzenia scroll, które nigdy nie padnie.
-              onTouchStart={!isFull ? onTS : undefined}
-              onTouchEnd={!isFull ? onTE : undefined}
+              {...drag.bind}
               onWheel={!isFull ? (e) => { if (e.deltaY > 0) setSnap('full') } : undefined}
               style={{ flex: 1, overflowY: isFull ? 'auto' : 'hidden', padding: '4px 20px 0' }}
             >
@@ -699,6 +739,26 @@ function EventSheet({
           onPicked={settleCalendar}
           onClose={() => setCalendarChooser(false)}
         />
+      )}
+      </div>
+
+      {isDesktop && onChainStep && (
+        <>
+          <div style={{ position: 'absolute', left: -44, top: '50%', transform: 'translateY(-50%)', zIndex: 41 }}>
+            <ChainArrow
+              dir="left" label={t('event.chainPrev')}
+              disabled={!chainCanGo?.('west')}
+              onClick={() => onChainStep('west')}
+            />
+          </div>
+          <div style={{ position: 'absolute', right: -44, top: '50%', transform: 'translateY(-50%)', zIndex: 41 }}>
+            <ChainArrow
+              dir="right" label={t('event.chainNext')}
+              disabled={!chainCanGo?.('east')}
+              onClick={() => onChainStep('east')}
+            />
+          </div>
+        </>
       )}
     </div>
   )
