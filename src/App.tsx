@@ -46,6 +46,8 @@ import { getIpLocation } from './lib/geo'
 import { shouldWriteLocation, type WrittenLocation } from './lib/location'
 import AttendanceAskModal from './components/AttendanceAskModal'
 import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
+import { useEventChain } from './hooks/useEventChain'
+import { geoStrategy, listStrategy } from './lib/eventChain'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -63,7 +65,13 @@ export default function App() {
     return null
   })
   const [ipPos, setIpPos] = useState<{ lat: number; lng: number } | null>(null)
-  const [selEvent, setSelEvent] = useState<EventWithMeta | null>(null)
+  // Pula sznurka mapowego przychodzi z MapScreen: to, co widać jako piny, po
+  // filtrach. `mapPoolKey` mówi, z czego jest zbudowana — jego zmiana kasuje
+  // przebytą trasę, zostawiając otwartą kartę jako nową kotwicę.
+  const [mapPool, setMapPool] = useState<EventWithMeta[]>([])
+  const [mapPoolKey, setMapPoolKey] = useState('')
+  const mapChain = useEventChain(mapPool, geoStrategy, mapPoolKey)
+  const selEvent = mapChain.current
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -73,8 +81,14 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   // Animated launch splash — native only (web has the landing page). Shows once per cold start.
   const [showSplash, setShowSplash] = useState(isNativePlatform())
-  const [myEventSelected, setMyEventSelected] = useState<EventWithMeta | null>(null)
-  const [followedEventSelected, setFollowedEventSelected] = useState<EventWithMeta | null>(null)
+  // Ekrany listowe mają własne pule i własną definicję „obok": sąsiedni wiersz,
+  // nie sąsiednie miejsce. Filtrów tam nie ma, więc klucz puli jest stały.
+  const [myPool, setMyPool] = useState<EventWithMeta[]>([])
+  const [followedPool, setFollowedPool] = useState<EventWithMeta[]>([])
+  const myChain = useEventChain(myPool, listStrategy, 'list')
+  const followedChain = useEventChain(followedPool, listStrategy, 'list')
+  const myEventSelected = myChain.current
+  const followedEventSelected = followedChain.current
   const [pickingLocation, setPickingLocation] = useState(false)
   const [createPos, setCreatePos] = useState<{ lat: number; lng: number } | null>(null)
   const [locationPicked, setLocationPicked] = useState(false)
@@ -248,7 +262,7 @@ export default function App() {
       // gałęzi jest tu jedyną definicją tego, co leży na czym.
       if (s.eventChatOpen) { setEventChatOpen(false); return }
       if (s.selEvent || s.myEventSelected || s.followedEventSelected) {
-        setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
+        mapChain.close(); myChain.close(); followedChain.close()
         return
       }
       if (s.createOpen) { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null); return }
@@ -306,7 +320,7 @@ export default function App() {
   // Open deep link event once map is ready
   useEffect(() => {
     if (screen !== 'map' || !deepLinkEvent) return
-    setSelEvent(deepLinkEvent)
+    mapChain.start(deepLinkEvent)
     window.history.pushState({ layer: 'event' }, '')
     setDeepLinkEvent(null)
     const ev = deepLinkEvent
@@ -506,7 +520,7 @@ export default function App() {
       navigator.serviceWorker.addEventListener('message', e => {
         const { type, eventId, lat, lng, km } = e.data || {}
         if (type === 'OPEN_EVENT' && eventId) {
-          db.getEventById(eventId).then(ev => { if (ev) setSelEvent(ev) })
+          db.getEventById(eventId).then(ev => { if (ev) mapChain.start(ev) })
         }
         // Tapnięcie w digest przy otwartej karcie: wycentruj mapę na punkcie,
         // dla którego policzono liczbę z powiadomienia.
@@ -725,9 +739,15 @@ export default function App() {
           if (Date.now() - saved.ts < NAV_TTL && (saved.screen === 'myEvents' || saved.screen === 'followedEvents')) {
             navRestoredRef.current = true
             if (saved.myEventId) {
-              db.getEventById(saved.myEventId).then(ev => { setMyEventSelected(ev || null); setScreen(saved.screen) })
+              db.getEventById(saved.myEventId).then(ev => {
+                if (ev) myChain.start(ev); else myChain.close()
+                setScreen(saved.screen)
+              })
             } else if (saved.followedEventId) {
-              db.getEventById(saved.followedEventId).then(ev => { setFollowedEventSelected(ev || null); setScreen(saved.screen) })
+              db.getEventById(saved.followedEventId).then(ev => {
+                if (ev) followedChain.start(ev); else followedChain.close()
+                setScreen(saved.screen)
+              })
             } else {
               setScreen(saved.screen)
             }
@@ -898,7 +918,7 @@ export default function App() {
   function handleAccountDeleted() {
     setAccountOpen(false)
     setProfileOpen(false)
-    setSelEvent(null)
+    mapChain.close()
     setScreen('welcome')
     window.history.replaceState({ layer: 'welcome' }, '')
     showToast(t('account.deleted'))
@@ -909,7 +929,7 @@ export default function App() {
     // overlays where CreateSheet is gated `!isOverlay`. Route every edit through
     // the map context so the single mounted CreateSheet is usable and we can
     // re-open the updated event afterward.
-    setSelEvent(null); setMyEventSelected(null); setFollowedEventSelected(null)
+    mapChain.close(); myChain.close(); followedChain.close()
     setProfileOpen(false)
     setScreen('map')
     setEditingEvent(ev)
@@ -992,25 +1012,26 @@ export default function App() {
       <MapScreen
         session={session}
         profile={profile}
-        onMapClick={() => { if (!isOverlay) { setSelEvent(null); setCreateOpen(false); setProfileOpen(false) } }}
+        onMapClick={() => { if (!isOverlay) { mapChain.close(); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
         onRegisterFlyToSpot={fn => { flySpotRef.current = fn }}
+        onPoolChange={(events, key) => { setMapPool(events); setMapPoolKey(key) }}
         onOpenProfile={() => {
           if (!isOverlay) {
-            setProfileOpen(true); setSelEvent(null); setCreateOpen(false)
+            setProfileOpen(true); mapChain.close(); setCreateOpen(false)
             window.history.pushState({ layer: 'profile' }, '')
           }
         }}
         unreadMenu={unread.hasAny}
         onOpenCreate={() => {
           if (!isOverlay) {
-            setSelEvent(null); setProfileOpen(false); setCreateOpen(true)
+            mapChain.close(); setProfileOpen(false); setCreateOpen(true)
             window.history.pushState({ layer: 'create' }, '')
           }
         }}
         onOpenEvent={ev => {
           if (!isOverlay) {
-            setSelEvent(ev); setCreateOpen(false); setProfileOpen(false)
+            mapChain.start(ev); setCreateOpen(false); setProfileOpen(false)
             window.history.pushState({ layer: 'event' }, '')
           }
         }}
@@ -1036,8 +1057,9 @@ export default function App() {
           <MyEventsScreen
             session={session}
             onBack={() => window.history.back()}
-            onOpenEvent={ev => {
-              setMyEventSelected({ ...ev, distKm: 0, distStr: '' })
+            onOpenEvent={(ev, ordered) => {
+              setMyPool(ordered.map(e => ({ ...e, distKm: 0, distStr: '' })))
+              myChain.start({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
               window.history.pushState({ layer: 'event' }, '')
             }}
@@ -1059,6 +1081,8 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          onChainStep={dir => { const next = myChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          chainCanGo={myChain.canGo}
           {...eventChatProps}
         />
       )}
@@ -1074,6 +1098,8 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          onChainStep={dir => { const next = followedChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          chainCanGo={followedChain.canGo}
           {...eventChatProps}
         />
       )}
@@ -1089,6 +1115,8 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
+          onChainStep={dir => { const next = mapChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          chainCanGo={mapChain.canGo}
           {...eventChatProps}
         />
       )}
@@ -1099,8 +1127,9 @@ export default function App() {
           <FollowedEventsScreen
             session={session}
             onBack={() => window.history.back()}
-            onOpenEvent={ev => {
-              setFollowedEventSelected({ ...ev, distKm: 0, distStr: '' })
+            onOpenEvent={(ev, ordered) => {
+              setFollowedPool(ordered.map(e => ({ ...e, distKm: 0, distStr: '' })))
+              followedChain.start({ ...ev, distKm: 0, distStr: '' })
               flyToFnRef.current?.(ev.lat, ev.lng)
               window.history.pushState({ layer: 'event' }, '')
             }}
@@ -1123,7 +1152,7 @@ export default function App() {
           setCreatePos(null)
           setLocationPicked(false)
           setEventsRefreshKey(k => k + 1)
-          setSelEvent(updated)
+          mapChain.replace(updated)
           flyToFnRef.current?.(updated.lat, updated.lng)
           showToast(t('edit.updated'))
           track.editEvent(updated.id)
