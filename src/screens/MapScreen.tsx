@@ -59,6 +59,7 @@ function MapScreen({
   onMapClick,
   onRegisterFlyTo,
   onRegisterFlyToSpot,
+  onPoolChange,
 }: {
   session: Session | null
   profile: Profile | null
@@ -78,6 +79,11 @@ function MapScreen({
   onMapClick?: () => void
   onRegisterFlyTo?: (fn: (lat: number, lng: number) => void) => void
   onRegisterFlyToSpot?: (fn: (lat: number, lng: number, zoom: number) => void) => void
+  /**
+   * Wydarzenia, po których może chodzić sznurek, razem z podpisem tego, z czego
+   * są zbudowane. Zmiana podpisu — inny filtr, inny dzień — resetuje sznurek.
+   */
+  onPoolChange?: (events: EventWithMeta[], poolKey: string) => void
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -199,6 +205,11 @@ function MapScreen({
       : events,
     [events, selectedFilters],
   )
+
+  const poolKey = `${[...selectedFilters].sort().join(',')}|${dayIdx}`
+  useEffect(() => {
+    onPoolChange?.(visibleEvents, poolKey)
+  }, [visibleEvents, poolKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Timeline drag — smooth dial/drum scroll, snap on release
   const MAX_TRANSLATE = 0
