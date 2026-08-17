@@ -47,6 +47,18 @@ describe('useEventChain', () => {
     expect(result.current.current?.id).toBe('a')
   })
 
+  // To canGo decyduje, czy daszek na desktopie jest żywy, czy wygaszony —
+  // więc musi zgasnąć dokładnie tam, gdzie gest przestaje mieć dokąd pójść.
+  it('goes dark exactly where the walk runs out', () => {
+    const { result } = renderHook(() => useEventChain([a, b], geoStrategy, 'k'))
+    act(() => { result.current.start(a) })
+    expect(result.current.canGo('east')).toBe(true)
+    expect(result.current.canGo('west')).toBe(false)
+    act(() => { result.current.go('east') })
+    expect(result.current.canGo('east')).toBe(false)
+    expect(result.current.canGo('west')).toBe(true)
+  })
+
   it('forgets everything when the card closes', () => {
     const { result } = renderHook(() => useEventChain(POOL, geoStrategy, 'k'))
     act(() => { result.current.start(a) })
