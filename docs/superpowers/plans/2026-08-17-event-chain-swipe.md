@@ -850,6 +850,14 @@ No test file: this hook is React glue over `cardDrag.ts`, which is already
 covered. The behaviour it adds — binding to touch events — is exercised through
 `EventSheet` in Task 10.
 
+> **Superseded after execution.** A code review found this version leaves the
+> card stranded off-centre on `touchcancel` and lets a second finger hijack the
+> gesture, and the release animation was later changed so the new card enters
+> from the side opposite the finger rather than springing back from it. The
+> current implementation and its tests live in `src/hooks/useCardDrag.ts` and
+> `src/hooks/useCardDrag.test.tsx`; `onCommitX` now returns a boolean. Read those
+> rather than the block below, which is kept as the record of what was planned.
+
 - [ ] **Step 1: Write the implementation**
 
 Create `src/hooks/useCardDrag.ts`:

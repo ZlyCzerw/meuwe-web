@@ -145,7 +145,8 @@ function EventSheet({
   chatOpen?: boolean
   onChatOpenChange?: (open: boolean) => void
   /** Krok po sznurku wydarzeń. Brak = karta stoi sama, bez strzałek i swipe'u. */
-  onChainStep?: (dir: Dir) => void
+  /** Zwraca, czy krok się udał; karta rysuje z tego dwie różne animacje. */
+  onChainStep?: (dir: Dir) => boolean
   chainCanGo?: (dir: Dir) => boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -408,7 +409,7 @@ function EventSheet({
     // Czat leży na całej karcie i ma własne przewijanie; sznurek pod nim
     // milczy.
     enabled: !!onChainStep && !chatOpen,
-    onCommitX: dir => onChainStep?.(dir),
+    onCommitX: dir => onChainStep?.(dir) ?? false,
     // W trybie full lista przewija się natywnie i pionowy gest do niej należy —
     // dokładnie jak przed sznurkiem.
     onCommitY: dy => { if (!isFull) onVertical(dy) },

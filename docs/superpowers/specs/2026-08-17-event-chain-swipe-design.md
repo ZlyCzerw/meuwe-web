@@ -131,14 +131,24 @@ peek/half/full snaps. It gains `touchmove` and an **axis lock**: after roughly
 or horizontal (chain), and does not change its mind before the finger lifts.
 
 The horizontal gesture **follows the finger**: the card content translates with
-the touch, one to one, with no transition while the finger is down. On release
-the offset animates back to zero either way - what differs is whether the event
-underneath changed. Past ~25% of the card width (minimum 70 px) the step
-commits, the map flies, and the new content fades in as the offset settles; short
-of that, or when the step is blocked (nothing within 50 km, nothing left in the
-pool), the same spring-back happens with the same event still there. That
-identical spring with nothing behind it is how the end of the chain announces
-itself.
+the touch, one to one, with no transition while the finger is down. What happens
+on release depends on whether the walk actually moved, so `onChainStep` reports
+that back as a boolean.
+
+**The step committed** (past ~25% of the card width, minimum 70 px, and the chain
+had somewhere to go): the new event is already underneath by the time the finger
+lifts, so there is nothing to slide out - but there is something to slide in. The
+card is placed a full width off-screen on the side **opposite** the finger's
+travel and released to zero: swipe left and the next card arrives from the right,
+the way the next slide of a carousel does. Two animation frames separate the
+placement from the release, because otherwise the browser folds both positions
+into one paint and the transition has nothing to move from.
+
+**The step was blocked or the throw was short**: the card springs back to zero
+from wherever the finger left it, with the same event still under it. That
+spring, with nothing new behind it, is how the end of the chain announces itself
+- and it must stay visibly different from the entry above, which is why the two
+cases animate from different places.
 
 Regions that already own the horizontal axis opt out via `data-no-hswipe`: the
 photo frame and the tag bar, both of which scroll horizontally today. The

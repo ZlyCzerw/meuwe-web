@@ -1081,7 +1081,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
-          onChainStep={dir => { const next = myChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          onChainStep={dir => { const next = myChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={myChain.canGo}
           {...eventChatProps}
         />
@@ -1098,7 +1098,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
-          onChainStep={dir => { const next = followedChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          onChainStep={dir => { const next = followedChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={followedChain.canGo}
           {...eventChatProps}
         />
@@ -1115,7 +1115,7 @@ export default function App() {
           onChatAuthNeeded={() => setAuthModal('chat')}
           onEdit={handleEdit}
           onProfileChanged={reloadProfile}
-          onChainStep={dir => { const next = mapChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng) }}
+          onChainStep={dir => { const next = mapChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={mapChain.canGo}
           {...eventChatProps}
         />

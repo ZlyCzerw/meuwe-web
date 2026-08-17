@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { resolveAxis, commitDir, type Axis } from '../lib/cardDrag'
 import type { Dir } from '../lib/eventChain'
 
@@ -10,6 +10,8 @@ import type { Dir } from '../lib/eventChain'
 type Locked = Axis | 'ignored'
 
 type Gesture = { id: number; x: number; y: number; axis: Locked; blocked: boolean }
+
+const GLIDE = 'transform 260ms cubic-bezier(0.32,1.2,0.4,1)'
 
 /**
  * Ten palec, który zaczął gest, a nie ten pod indeksem zero: TouchList
@@ -24,22 +26,55 @@ function findTouch(list: React.TouchList, id: number): React.Touch | null {
 export function useCardDrag({ enabled, onCommitX, onCommitY }: {
   /** Czy sznurek w ogóle działa w tym stanie karty (np. nie pod czatem). */
   enabled: boolean
-  onCommitX: (dir: Dir) => void
+  /** Zwraca, czy krok się udał — od tego zależy, czy karta wraca, czy wjeżdża. */
+  onCommitX: (dir: Dir) => boolean
   onCommitY: (dy: number) => void
 }) {
   const [dx, setDx] = useState(0)
+  /** Czy przesunięcie ma być animowane. W trakcie ciągnięcia nigdy. */
+  const [gliding, setGliding] = useState(false)
   const g = useRef<Gesture | null>(null)
+  const raf = useRef(0)
+
+  useEffect(() => () => cancelAnimationFrame(raf.current), [])
+
+  /** Sprężysty powrót z miejsca, w którym stanął palec. */
+  function settle() {
+    setGliding(true)
+    setDx(0)
+  }
+
+  /**
+   * Nowa treść siedzi pod spodem już w chwili puszczenia palca, więc nie ma
+   * czego wysuwać — jest za to co wsuwać. Stawiamy ją poza ekranem po stronie
+   * przeciwnej do ruchu palca i puszczamy do zera: palec w lewo, nowa karta
+   * nadchodzi z prawej, dokładnie jak kolejny slajd karuzeli.
+   *
+   * Dwie klatki, bo przeglądarka złożyłaby oba położenia w jedno malowanie i
+   * przejście nie miałoby od czego ruszyć.
+   */
+  function enterFrom(offset: number) {
+    setGliding(false)
+    setDx(offset)
+    raf.current = requestAnimationFrame(() => {
+      raf.current = requestAnimationFrame(settle)
+    })
+  }
 
   /** Porzuca gest bez rozstrzygania go i odstawia kartę na miejsce. */
   function abandon() {
+    cancelAnimationFrame(raf.current)
     g.current = null
-    setDx(0)
+    settle()
   }
 
   function onTouchStart(e: React.TouchEvent) {
     // Drugi palec nie zaczyna nowego gestu. Bez tego oparty kciuk podmieniałby
     // punkt odniesienia i karta skakała w połowie ciągnięcia.
     if (g.current) return
+    // Palec przerywa trwające wsuwanie i przejmuje kartę od zaraz.
+    cancelAnimationFrame(raf.current)
+    setGliding(false)
     const t = e.touches[0]
     const target = e.target as HTMLElement
     g.current = {
@@ -75,11 +110,11 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     if (s.axis !== 'horizontal') return
     const width = (e.currentTarget as HTMLElement).clientWidth || window.innerWidth
     const dir = commitDir(t.clientX - s.x, width)
-    if (dir) onCommitX(dir)
-    // Wraca do zera niezależnie od tego, czy krok się udał. Ten sam sprężysty
-    // powrót bez zmiany treści pod spodem jest jedynym sygnałem, że sznurek
-    // się skończył.
-    setDx(0)
+    // Krok bywa niemożliwy — koniec sznurka. Wtedy karta wraca stamtąd, gdzie
+    // stanął palec, i to ten sam powrót bez zmiany treści jest jedynym
+    // sygnałem, że dalej nic nie ma.
+    if (dir && onCommitX(dir)) enterFrom(dir === 'east' ? width : -width)
+    else settle()
   }
 
   return {
@@ -88,7 +123,6 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     // gest krawędziowy iOS. Bez niego karta zostawała przesunięta o tyle, ile
     // zdążył palec, z wyłączonym przejściem, i nic już jej nie sprowadzało.
     bind: { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: abandon },
-    /** Podczas ciągnięcia bez przejścia, po puszczeniu z przejściem do zera. */
-    transition: dx === 0 ? 'transform 220ms cubic-bezier(0.32,1.2,0.4,1)' : 'none',
+    transition: gliding ? GLIDE : 'none',
   }
 }
