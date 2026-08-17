@@ -66,6 +66,8 @@ const de: Resources = {
     backToEvent: 'Zurück zum Event',
     photoPrev: 'Vorheriges Foto',
     photoNext: 'Nächstes Foto',
+    chainPrev: 'Vorherige Veranstaltung in der Nähe',
+    chainNext: 'Nächste Veranstaltung in der Nähe',
     sendMessage: 'Nachricht senden',
   },
   create: {

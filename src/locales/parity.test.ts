@@ -8,6 +8,7 @@ import sl from './sl'
 const NEW_EVENT_KEYS = [
   'attend', 'attending', 'readMore', 'readLess',
   'backToEvent', 'photoPrev', 'photoNext', 'sendMessage',
+  'chainPrev', 'chainNext',
 ] as const
 
 const LOCALES = { pl, en, es, de, sl }

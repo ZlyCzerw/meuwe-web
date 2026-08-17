@@ -66,6 +66,8 @@ const en: Resources = {
     backToEvent: 'Back to event',
     photoPrev: 'Previous photo',
     photoNext: 'Next photo',
+    chainPrev: 'Previous event nearby',
+    chainNext: 'Next event nearby',
     sendMessage: 'Send message',
   },
   create: {

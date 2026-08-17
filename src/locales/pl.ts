@@ -64,6 +64,8 @@ const pl = {
     backToEvent: 'Wróć do wydarzenia',
     photoPrev: 'Poprzednie zdjęcie',
     photoNext: 'Następne zdjęcie',
+    chainPrev: 'Poprzednie wydarzenie obok',
+    chainNext: 'Następne wydarzenie obok',
     sendMessage: 'Wyślij wiadomość',
   },
   create: {
