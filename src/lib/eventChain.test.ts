@@ -118,3 +118,67 @@ describe('geoStrategy — the first step on a side', () => {
     expect(MAX_JUMP_KM).toBe(50)
   })
 })
+
+describe('geoStrategy — later steps', () => {
+  // Po pierwszym kroku sznurek przestaje pytać o kierunek świata: idzie tam,
+  // gdzie najbliżej, choćby to było z powrotem na zachód od kotwicy.
+  it('drops the half plane once a side has been walked', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const e1 = ev({ id: 'e1', lng: 22.0 + KM })
+    // Bliżej e1 niż cokolwiek na wschodzie, ale na zachód od kotwicy — więc
+    // pierwszy krok go nie tknął.
+    const behind = ev({ id: 'behind', lng: 22.0 - 0.2 * KM })
+    const e2 = ev({ id: 'e2', lng: 22.0 + 9 * KM })
+    const pool = [a, e1, behind, e2]
+    let c = step(startChain(a), pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('e1')
+    c = step(c, pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('behind')
+  })
+
+  it('never returns to an event already on the path', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const b = ev({ id: 'b', lng: 22.0 + KM })
+    const pool = [a, b]
+    const c = step(startChain(a), pool, 'east', geoStrategy)!
+    expect(step(c, pool, 'east', geoStrategy)).toBeNull()
+  })
+
+  // Wydarzenia w jednym lokalu leżą 0 km od siebie, więc wychodzą jako
+  // pierwsze — swipe przewija cały lokal, zanim ruszy dalej. To nie jest
+  // przypadek szczególny, tylko konsekwencja reguły odległości.
+  it('reads through co-located events before moving on', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const same1 = ev({ id: 's1', lng: 22.0 + 1e-7 })
+    const same2 = ev({ id: 's2', lng: 22.0 + 2e-7 })
+    const away = ev({ id: 'away', lng: 22.0 + 3 * KM })
+    const pool = [a, same1, same2, away]
+    let c = step(startChain(a), pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('s1')
+    c = step(c, pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('s2')
+    c = step(c, pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('away')
+  })
+
+  it('ends the chain rather than jumping further than the ceiling', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    // ~86 km na wschód przy 50. równoleżniku — ponad MAX_JUMP_KM.
+    const far = ev({ id: 'far', lng: 22.0 + 1.2 })
+    expect(step(startChain(a), [a, far], 'east', geoStrategy)).toBeNull()
+  })
+
+  it('retraces the exact events it walked, in order', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const b = ev({ id: 'b', lng: 22.0 + KM })
+    const c2 = ev({ id: 'c', lng: 22.0 + 2 * KM })
+    const pool = [a, b, c2]
+    let c = step(startChain(a), pool, 'east', geoStrategy)!
+    c = step(c, pool, 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('c')
+    c = step(c, pool, 'west', geoStrategy)!
+    expect(currentOf(c).id).toBe('b')
+    c = step(c, pool, 'west', geoStrategy)!
+    expect(currentOf(c).id).toBe('a')
+  })
+})
