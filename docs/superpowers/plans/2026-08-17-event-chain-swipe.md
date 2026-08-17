@@ -1358,7 +1358,11 @@ Add after the existing effects (after the scroll-reset effect at
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (chatOpen || photoModal !== null || notifyReason || calendarChooser) return
       e.preventDefault()
-      stepFn(e.key === 'ArrowLeft' ? 'east' : 'west')
+      // Klawisz idzie za daszkiem, nie za palcem. Swipe w lewo znaczy wschód,
+      // bo karta wyjeżdża w lewo i następna nadchodzi z prawej — ale przy
+      // klawiaturze nic nie jedzie. Widać dwa daszki, prawy podpisany
+      // „następne", więc strzałka w prawo musi robić dokładnie to samo.
+      stepFn(e.key === 'ArrowRight' ? 'east' : 'west')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

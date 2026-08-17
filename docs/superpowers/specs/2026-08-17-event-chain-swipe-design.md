@@ -162,8 +162,13 @@ position, size and height animation and stops clipping, and a new
 `.event-sheet-card` inside it takes the white background, the rounded corners and
 the overflow. The chevrons are siblings of that card inside the shell.
 
-The left and right arrow keys do the same thing, ignored when focus is in an
-`input` or `textarea` (the chat composer) or when a modal is open.
+The left and right arrow keys do the same thing as the chevron on their own side
+- right for the next event, left for the previous. That is deliberately **not**
+the swipe's mapping: a swipe left means east because the card leaves to the left
+and the next one arrives from the right, but a key press drags nothing, and what
+the user sees is two chevrons with the right one labelled "next". The keys follow
+the chevrons. They are ignored when focus is in an `input` or `textarea` (the
+chat composer) or when a modal is open.
 
 ## Components
 
