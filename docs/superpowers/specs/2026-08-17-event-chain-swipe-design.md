@@ -19,12 +19,17 @@ swipe walks back along exactly the path already taken.
 The state is a **path with an anchor, growing at both ends**:
 
 ```
-path   = [anchor]   // the event opened by tapping a pin
-cursor = 0          // where along the path we currently are
+path      = [anchor]   // the event opened by tapping a pin
+cursor    = 0          // where along the path we currently are
+anchorIdx = 0          // where the anchor sits, once the path has grown westward
 ```
 
 The anchor is the event the user opened by hand. The path grows east of it and
 west of it, and the cursor moves along whatever has already been walked.
+`anchorIdx` is carried because prepending to the path shifts every index: it is
+what lets the strategy tell "this is the first step on this side" from "we are
+extending a side that has already been walked", which is the difference between
+a compass step and a nearest-neighbour hop.
 
 | Situation | Result |
 |---|---|
@@ -44,9 +49,9 @@ Candidates are the pool minus everything already in `path`, within
 `MAX_JUMP_KM = 50` of the current tip of the path. Among those, the nearest by
 haversine wins; ties break on `id` so the walk is deterministic.
 
-One extra rule applies **only to the first step on each side**, i.e. when the
-path still holds nothing but the anchor: the candidates are restricted to a half
-plane - `east` keeps only `lng > anchor.lng`, `west` only `lng < anchor.lng`.
+One extra rule applies **only to the first step on each side** - east while
+`anchorIdx === path.length - 1`, west while `anchorIdx === 0`: the candidates are
+restricted to a half plane - `east` keeps only `lng > anchor.lng`, `west` only `lng < anchor.lng`.
 That is what makes the very first swipe mean a compass direction. Every step
 after it is a plain nearest-unvisited hop, so the walk follows the actual shape
 of the neighbourhood instead of marching in a straight line.
@@ -126,10 +131,14 @@ peek/half/full snaps. It gains `touchmove` and an **axis lock**: after roughly
 or horizontal (chain), and does not change its mind before the finger lifts.
 
 The horizontal gesture **follows the finger**: the card content translates with
-the touch and fades slightly. On release it commits past ~25% of the card width
-(minimum 70 px) and springs back otherwise. A blocked step - nothing within
-50 km, nothing left in the pool - springs back the same way, which is how the
-end of the chain announces itself.
+the touch, one to one, with no transition while the finger is down. On release
+the offset animates back to zero either way - what differs is whether the event
+underneath changed. Past ~25% of the card width (minimum 70 px) the step
+commits, the map flies, and the new content fades in as the offset settles; short
+of that, or when the step is blocked (nothing within 50 km, nothing left in the
+pool), the same spring-back happens with the same event still there. That
+identical spring with nothing behind it is how the end of the chain announces
+itself.
 
 Regions that already own the horizontal axis opt out via `data-no-hswipe`: the
 photo frame and the tag bar, both of which scroll horizontally today. The
@@ -147,6 +156,12 @@ left-hand chevron. The card moves to `left: 76px`. At the narrowest desktop
 width that is 76 + 320 + 44 = 440 px of a 768 px viewport, so the map stays
 visible on the right, where the zoom controls already are.
 
+The card element carries `overflow: hidden`, so a chevron placed beside it would
+be clipped. The sheet splits into two elements: `.event-sheet` keeps the
+position, size and height animation and stops clipping, and a new
+`.event-sheet-card` inside it takes the white background, the rounded corners and
+the overflow. The chevrons are siblings of that card inside the shell.
+
 The left and right arrow keys do the same thing, ignored when focus is in an
 `input` or `textarea` (the chat composer) or when a modal is open.
 
@@ -155,7 +170,7 @@ The left and right arrow keys do the same thing, ignored when focus is in an
 **`src/lib/eventChain.ts`** (new, pure)
 
 ```ts
-export type Chain = { path: EventWithMeta[]; cursor: number }
+export type Chain = { path: EventWithMeta[]; cursor: number; anchorIdx: number }
 export type Dir   = 'east' | 'west'        // 'east' is a swipe to the left
 
 export const MAX_JUMP_KM = 50
@@ -175,12 +190,18 @@ export function step(
 ```
 
 **`src/hooks/useEventChain.ts`** - holds the `Chain`, exposes
-`{ current, start(ev), close(), canGo(dir), go(dir) }`. `go` returns the new
-event or `null`, so the caller knows whether to fly the map or bounce the card.
-Takes a `poolKey`; when it changes, the path collapses to `[current]`.
+`{ current, start(ev), close(), replace(ev), canGo(dir), go(dir) }`. `go` returns
+the new event or `null`, so the caller knows whether to fly the map or bounce the
+card. `replace` swaps the event under the cursor without disturbing the path -
+that is what an edit saved from the card needs. Takes a `poolKey`; when it
+changes, the path collapses to `[current]`.
 
-**`src/hooks/useCardDrag.ts`** - the axis lock and the follow-the-finger offset,
-lifted out of `EventSheet` so the sheet is not carrying gesture arithmetic.
+**`src/lib/cardDrag.ts`** (new, pure) - the axis lock and the commit threshold as
+plain functions, following the `blobPhysics.ts` / `useBlobPhysics.ts` split the
+codebase already uses.
+
+**`src/hooks/useCardDrag.ts`** - the React glue around it, lifted out of
+`EventSheet` so the sheet is not carrying gesture arithmetic.
 
 **`src/components/ChainArrow.tsx`** - the chevron.
 
