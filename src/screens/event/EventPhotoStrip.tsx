@@ -69,6 +69,9 @@ export default function EventPhotoStrip({
   return (
     <div
       data-testid="photo-frame"
+      // Kadr i pasek tagów przewijają się w poziomie same. Sznurek wydarzeń
+      // trzyma się od nich z daleka; pionowe snapy działają tu jak wszędzie.
+      data-no-hswipe
       style={{
         position: 'relative', aspectRatio: '16 / 9', maxHeight: MAX_FRAME_H,
         borderRadius: 20, overflow: 'hidden', marginBottom: 12,
