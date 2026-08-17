@@ -1,4 +1,5 @@
 import type { EventWithMeta } from './types'
+import { haversineKm } from './geo'
 
 /** 'east' to swipe w lewo: karta wychodzi w lewo, następna nadchodzi z prawej. */
 export type Dir = 'east' | 'west'
@@ -51,4 +52,43 @@ export function step(
   const next = strategy.extend(chain, pool, dir)
   if (!next) return null
   return { path: [next, ...chain.path], cursor: 0, anchorIdx: chain.anchorIdx + 1 }
+}
+
+/**
+ * Najdłuższy skok, jaki sznurek wykona. Powyżej tego uznajemy, że w okolicy nic
+ * już nie ma — lepiej odbić kartę niż przerzucić kogoś na drugi koniec wyspy.
+ */
+export const MAX_JUMP_KM = 50
+
+/**
+ * Czy to pierwszy krok na tę stronę kotwicy. Tylko on ma znaczenie kierunkowe;
+ * każdy następny idzie po prostu do najbliższego nieodwiedzonego.
+ */
+function firstOnThisSide(chain: Chain, dir: Dir): boolean {
+  return dir === 'east'
+    ? chain.anchorIdx === chain.path.length - 1
+    : chain.anchorIdx === 0
+}
+
+export const geoStrategy: ChainStrategy = {
+  extend(chain, pool, dir) {
+    const from = currentOf(chain)
+    const visited = new Set(chain.path.map(e => e.id))
+    const candidates = pool.filter(e => {
+      if (visited.has(e.id)) return false
+      if (firstOnThisSide(chain, dir)) {
+        if (dir === 'east' && e.lng <= from.lng) return false
+        if (dir === 'west' && e.lng >= from.lng) return false
+      }
+      return haversineKm(from.lat, from.lng, e.lat, e.lng) <= MAX_JUMP_KM
+    })
+    if (candidates.length === 0) return null
+    // Remis rozstrzyga id, żeby ta sama okolica zawsze dawała tę samą trasę.
+    return candidates.reduce((best, e) => {
+      const db = haversineKm(from.lat, from.lng, best.lat, best.lng)
+      const de = haversineKm(from.lat, from.lng, e.lat, e.lng)
+      if (de !== db) return de < db ? e : best
+      return e.id < best.id ? e : best
+    })
+  },
 }

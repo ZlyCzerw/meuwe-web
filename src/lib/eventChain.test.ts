@@ -69,3 +69,52 @@ describe('step', () => {
     expect(step(c, [], 'west', s)).toBeNull()
   })
 })
+
+import { geoStrategy, MAX_JUMP_KM } from './eventChain'
+
+/** ~1 km na tej szerokości; wystarczy, by punkty były rozróżnialne. */
+const KM = 0.014
+
+describe('geoStrategy — the first step on a side', () => {
+  it('goes east to the nearest event with a greater longitude', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const nearWest = ev({ id: 'w', lng: 22.0 - KM })
+    const farEast = ev({ id: 'far', lng: 22.0 + 4 * KM })
+    const nearEast = ev({ id: 'near', lng: 22.0 + 2 * KM })
+    const c = step(startChain(a), [a, nearWest, farEast, nearEast], 'east', geoStrategy)!
+    expect(currentOf(c).id).toBe('near')
+  })
+
+  it('goes west to the nearest event with a smaller longitude', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const nearEast = ev({ id: 'e', lng: 22.0 + KM })
+    const nearWest = ev({ id: 'near', lng: 22.0 - 2 * KM })
+    const farWest = ev({ id: 'far', lng: 22.0 - 5 * KM })
+    const c = step(startChain(a), [a, nearEast, nearWest, farWest], 'west', geoStrategy)!
+    expect(currentOf(c).id).toBe('near')
+  })
+
+  it('reports the end of the chain when the half plane is empty', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const onlyWest = ev({ id: 'w', lng: 22.0 - KM })
+    expect(step(startChain(a), [a, onlyWest], 'east', geoStrategy)).toBeNull()
+  })
+
+  // Kotwica siedzi na wschodnim końcu ścieżki dopiero rozciągniętej na zachód,
+  // więc pierwszy krok na wschód nadal ma znaczenie kierunkowe.
+  it('still applies the half plane to the untouched side', () => {
+    const a = ev({ id: 'a', lng: 22.0 })
+    const w = ev({ id: 'w', lng: 22.0 - KM })
+    const e = ev({ id: 'e', lng: 22.0 + KM })
+    let c = step(startChain(a), [a, w, e], 'west', geoStrategy)!
+    expect(currentOf(c).id).toBe('w')
+    c = step(c, [a, w, e], 'east', geoStrategy)!     // wraca do kotwicy
+    expect(currentOf(c).id).toBe('a')
+    c = step(c, [a, w, e], 'east', geoStrategy)!     // pierwszy krok na wschód
+    expect(currentOf(c).id).toBe('e')
+  })
+
+  it('exposes the jump ceiling as a constant', () => {
+    expect(MAX_JUMP_KM).toBe(50)
+  })
+})
