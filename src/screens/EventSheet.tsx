@@ -620,7 +620,7 @@ function EventSheet({
 
               {desc.preview && (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                     {desc.truncated && !descOpen
                       ? <>{linkify(desc.preview)}…</>
                       : linkify((event.description ?? '').trim())}
