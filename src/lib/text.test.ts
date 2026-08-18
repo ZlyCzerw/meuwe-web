@@ -13,9 +13,10 @@ describe('truncateDescription', () => {
     expect(truncateDescription(undefined)).toEqual({ preview: '', truncated: false })
   })
 
-  // Granica jest po to, żeby karta się nie rozjechała — podgląd nie może jej
-  // przekroczyć nawet o znak.
-  it('never returns more than the limit', () => {
+  // Granica jest po to, żeby karta się nie rozjechała — podgląd tekstu bez
+  // adresów nie może jej przekroczyć nawet o znak. Jedyny wyjątek (adres
+  // przecięty granicą) ma własny test niżej.
+  it('never returns more than the limit for text without addresses', () => {
     const long = 'słowo '.repeat(200)
     const { preview, truncated } = truncateDescription(long)
     expect(truncated).toBe(true)
@@ -54,5 +55,28 @@ describe('truncateDescription', () => {
 
   it('trims surrounding whitespace', () => {
     expect(truncateDescription('   Piknik   ').preview).toBe('Piknik')
+  })
+
+  // Limit jest miekki wylacznie dla adresow: link do polowy adresu prowadzi
+  // donikad, wiec podglad woli urosnac, niz go przepolowic.
+  it('runs past the limit to finish an address', () => {
+    const lead = 'a'.repeat(20)
+    const url = 'https://teatr.pl/bilety/koncert-w-parku'
+    const { preview, truncated } = truncateDescription(`${lead} ${url} i tak dalej`, 30)
+    expect(preview).toBe(`${lead} ${url}`)
+    expect(truncated).toBe(true)
+  })
+
+  it('stops being truncated when the address ends the description', () => {
+    const text = `${'a'.repeat(20)} https://teatr.pl/bilety/koncert-w-parku`
+    expect(truncateDescription(text, 30)).toEqual({ preview: text, truncated: false })
+  })
+
+  // Link zaczynajacy sie za granica nie ma czego ratowac — obowiazuje
+  // dotychczasowa granica slowa.
+  it('leaves an address that starts past the limit alone', () => {
+    const { preview, truncated } = truncateDescription(`${'slowo '.repeat(10)}https://teatr.pl`, 30)
+    expect(preview).toBe('slowo slowo slowo slowo slowo')
+    expect(truncated).toBe(true)
   })
 })
