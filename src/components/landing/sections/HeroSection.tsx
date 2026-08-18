@@ -31,7 +31,15 @@ export function HeroSection({ onSignIn }: Props) {
 
   return (
     <section id="hero" style={{ height: '85dvh', position: 'relative' }}>
-      <h1 style={srOnly}>{t('welcome.tagline').replace('\n', ' ')}</h1>
+      {/* Celowo inna treść niż widoczny tagline tuż niżej, i celowo ukryta.
+          Tagline mieszka w <Welcome>, który renderuje też aplikacja natywna —
+          przepisanie go zmieniłoby ekran powitalny na iOS i Androidzie w pięciu
+          językach dla zysku wyłącznie webowego. H1 niesie więc słowa, po których
+          ludzie szukają ("mapa", "lokalne wydarzenia"), spójne z <title> danego
+          języka z scripts/seo-content.mjs. Nie wskazuj tego z powrotem na
+          welcome.tagline: strona miała wtedy tę samą treść dwa razy i ani razu
+          nie mówiła, czym jest. */}
+      <h1 style={srOnly}>{t('landing.h1')}</h1>
       <Welcome onSignIn={onSignIn} />
       <div ref={sentinelRef} style={{ position: 'absolute', bottom: 0, height: 1, width: '100%' }} />
       <div style={{

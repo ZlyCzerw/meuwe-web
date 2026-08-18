@@ -24,3 +24,18 @@ describe('locale parity', () => {
     }
   })
 })
+
+describe('landing headline', () => {
+  // H1 był kopią welcome.tagline, więc ta sama treść stała na stronie dwa razy
+  // i ani razu nie mówiła "mapa" ani "lokalne wydarzenia".
+  it.each(Object.entries(LOCALES))('%s defines landing.h1', (_name, dict) => {
+    const landing = (dict as { landing: Record<string, unknown> }).landing
+    expect(typeof landing.h1).toBe('string')
+    expect(landing.h1).not.toBe('')
+  })
+
+  it.each(Object.entries(LOCALES))('%s does not reuse the tagline as h1', (_name, dict) => {
+    const d = dict as { landing: Record<string, unknown>; welcome: Record<string, unknown> }
+    expect(d.landing.h1).not.toBe(d.welcome.tagline)
+  })
+})

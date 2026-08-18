@@ -248,6 +248,7 @@ const pl = {
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
   follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'obserwuje to', followThis: 'obserwują to', othersFollowOne: 'i {{count}} obserwuje to', othersFollowMany: 'i {{count}} obserwują to' },
   landing: {
+    h1: 'meuwe — mapa lokalnych wydarzeń w Twojej okolicy',
     problem: { title: 'Coś się dzieje. Tylko gdzie?' },
     problem_p1: 'Eventy na Facebooku wymagają konta, a wydarzenia gubią się w natłoku',
     problem_p2: 'Ogłoszenia na słupach nikt nie czyta',

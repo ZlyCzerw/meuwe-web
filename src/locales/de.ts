@@ -250,6 +250,7 @@ const de: Resources = {
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
   follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },
   landing: {
+    h1: 'meuwe — Karte lokaler Events in deiner Nähe',
     problem: { title: 'Etwas passiert. Aber wo?' },
     problem_p1: 'Facebook-Events erfordern ein Konto und gehen im Rauschen unter',
     problem_p2: 'Niemand liest Aushänge an Litfaßsäulen',

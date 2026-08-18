@@ -156,7 +156,7 @@
   color: rgba(255,246,236,0.3); letter-spacing: 0.3px;
 }
 .lp-footer-cols { display: flex; gap: 56px; flex: 1; justify-content: flex-end; }
-.lp-footer-col h4 {
+.lp-footer-col h3 {
   font-size: 10px; font-weight: 800; letter-spacing: 1.8px;
   text-transform: uppercase; color: rgba(255,246,236,0.25);
   margin: 0 0 18px;

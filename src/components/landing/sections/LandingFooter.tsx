@@ -20,7 +20,7 @@ export function LandingFooter() {
 
         <div className="lp-footer-cols">
           <div className="lp-footer-col">
-            <h4>{t('landing.footer.product')}</h4>
+            <h3>{t('landing.footer.product')}</h3>
             <ul>
               <li><a href="/#jak-dziala" onClick={e => { e.preventDefault(); document.getElementById('jak-dziala')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.howItWorks')}</a></li>
               <li><a href="/#wydarzenia" onClick={e => { e.preventDefault(); document.getElementById('wydarzenia')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('landing.nav.events')}</a></li>
@@ -29,7 +29,7 @@ export function LandingFooter() {
             </ul>
           </div>
           <div className="lp-footer-col">
-            <h4>{t('landing.footer.company')}</h4>
+            <h3>{t('landing.footer.company')}</h3>
             <ul>
               <li><a href="#">{t('landing.footer.about')}</a></li>
               <li><a href="/blog" onClick={e => { e.preventDefault(); navigate('/blog') }}>Blog</a></li>
@@ -37,7 +37,7 @@ export function LandingFooter() {
             </ul>
           </div>
           <div className="lp-footer-col">
-            <h4>{t('landing.footer.legal')}</h4>
+            <h3>{t('landing.footer.legal')}</h3>
             <ul>
               <li><a href="/terms.html">{t('landing.footer.terms')}</a></li>
               <li><a href="/privacy.html">{t('landing.footer.privacy')}</a></li>

@@ -250,6 +250,7 @@ const sl: Resources = {
   share: { share: 'Deli', linkCopied: 'Povezava kopirana!' },
   follow: { follow: 'Spremljaj', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'spremlja to', followThis: 'spremljaj to', othersFollowOne: 'in še {{count}} drug spremlja', othersFollowMany: 'in še {{count}} drugih spremlja' },
   landing: {
+    h1: 'meuwe — zemljevid lokalnih dogodkov v tvoji okolici',
     problem: { title: 'Nekaj se dogaja. Ampak kje?' },
     problem_p1: 'Facebook dogodki zahtevajo račun in algoritem jih zakoplje',
     problem_p2: 'Letakov na drogovih nihče ne bere',
