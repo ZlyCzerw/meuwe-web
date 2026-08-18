@@ -249,12 +249,12 @@ const pl = {
   follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'obserwuje to', followThis: 'obserwują to', othersFollowOne: 'i {{count}} obserwuje to', othersFollowMany: 'i {{count}} obserwują to' },
   landing: {
     problem: { title: 'Coś się dzieje. Tylko gdzie?' },
-    problem_p1: 'Eventy na Facebooku wymagają konta i algorytm je chowa',
+    problem_p1: 'Eventy na Facebooku wymagają konta, a wydarzenia gubią się w natłoku',
     problem_p2: 'Ogłoszenia na słupach nikt nie czyta',
     problem_p3: 'Nie wiesz co dzieje się 500 metrów od Ciebie',
     how: {
       title: 'Jak to działa?',
-      s1: { title: 'Otwórz mapę', desc: 'Pinezki w pobliżu pokazują co się dzieje — bez konta, bez algorytmu' },
+      s1: { title: 'Otwórz mapę', desc: 'Pinezki w pobliżu pokazują co się dzieje — bez konta' },
       s2: { title: 'Znajdź coś dla siebie', desc: 'Muzyka, sport, pikniki, targi — filtruj po kategorii lub przeglądaj wszystko' },
       s3: { title: 'Dołącz lub obserwuj', desc: 'Zaloguj się, żeby dodać własne wydarzenie lub śledzić inne' },
     },

@@ -256,7 +256,7 @@ const sl: Resources = {
     problem_p3: 'Ne veš, kaj se dogaja 500 metrov stran od tebe',
     how: {
       title: 'Kako deluje?',
-      s1: { title: 'Odpri zemljevid', desc: 'Bližnje oznake pokažejo, kaj se dogaja - brez računa, brez algoritma' },
+      s1: { title: 'Odpri zemljevid', desc: 'Bližnje oznake pokažejo, kaj se dogaja - brez računa' },
       s2: { title: 'Najdi nekaj zase', desc: 'Glasba, šport, pikniki, sejmi - filtriraj po kategoriji ali brskaj po vsem' },
       s3: { title: 'Pridruži se ali spremljaj', desc: 'Prijavi se, da dodaš svoj dogodek ali spremljaš druge' },
     },

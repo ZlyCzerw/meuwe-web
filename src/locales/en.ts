@@ -251,12 +251,12 @@ const en: Resources = {
   follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'follows this', followThis: 'follow this', othersFollowOne: 'and {{count}} other follows', othersFollowMany: 'and {{count}} others follow' },
   landing: {
     problem: { title: 'Something is happening. But where?' },
-    problem_p1: 'Facebook events require an account and the algorithm buries them',
+    problem_p1: 'Facebook events require an account and get lost in the noise',
     problem_p2: 'Nobody reads flyers on poles',
     problem_p3: "You don't know what's happening 500 metres from you",
     how: {
       title: 'How does it work?',
-      s1: { title: 'Open the map', desc: "Nearby pins show what's going on — no account, no algorithm" },
+      s1: { title: 'Open the map', desc: "Nearby pins show what's going on — no account needed" },
       s2: { title: 'Find something for you', desc: 'Music, sport, picnics, fairs — filter by category or browse everything' },
       s3: { title: 'Join or follow', desc: 'Sign in to add your own event or track others' },
     },

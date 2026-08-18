@@ -251,12 +251,12 @@ const de: Resources = {
   follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },
   landing: {
     problem: { title: 'Etwas passiert. Aber wo?' },
-    problem_p1: 'Facebook-Events erfordern ein Konto und der Algorithmus versteckt sie',
+    problem_p1: 'Facebook-Events erfordern ein Konto und gehen im Rauschen unter',
     problem_p2: 'Niemand liest Aushänge an Litfaßsäulen',
     problem_p3: 'Du weißt nicht, was 500 Meter von dir passiert',
     how: {
       title: 'Wie funktioniert es?',
-      s1: { title: 'Karte öffnen', desc: 'Pins in der Nähe zeigen, was los ist — kein Konto, kein Algorithmus' },
+      s1: { title: 'Karte öffnen', desc: 'Pins in der Nähe zeigen, was los ist — ohne Konto' },
       s2: { title: 'Etwas für dich finden', desc: 'Musik, Sport, Picknicks, Märkte — nach Kategorie filtern oder alles durchsuchen' },
       s3: { title: 'Mitmachen oder folgen', desc: 'Anmelden, um eigene Events hinzuzufügen oder andere zu verfolgen' },
     },

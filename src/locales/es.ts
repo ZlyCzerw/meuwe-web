@@ -251,12 +251,12 @@ const es: Resources = {
   follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir', followsThis: 'sigue esto', followThis: 'siguen esto', othersFollowOne: 'y {{count}} más sigue', othersFollowMany: 'y {{count}} más siguen' },
   landing: {
     problem: { title: 'Algo está pasando. ¿Pero dónde?' },
-    problem_p1: 'Los eventos de Facebook requieren cuenta y el algoritmo los oculta',
+    problem_p1: 'Los eventos de Facebook requieren cuenta y se pierden entre el ruido',
     problem_p2: 'Nadie lee los carteles en los postes',
     problem_p3: 'No sabes qué pasa a 500 metros de ti',
     how: {
       title: '¿Cómo funciona?',
-      s1: { title: 'Abre el mapa', desc: 'Los pins cercanos muestran qué está pasando — sin cuenta, sin algoritmo' },
+      s1: { title: 'Abre el mapa', desc: 'Los pins cercanos muestran qué está pasando — sin cuenta' },
       s2: { title: 'Encuentra algo para ti', desc: 'Música, deporte, picnics, mercados — filtra por categoría o explora todo' },
       s3: { title: 'Únete o sigue', desc: 'Inicia sesión para añadir tu propio evento o seguir otros' },
     },
