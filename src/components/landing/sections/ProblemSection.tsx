@@ -8,6 +8,7 @@ const MAP_SCREENSHOTS: Record<string, string> = {
   en: '/screenshots/map-en.png',
   de: '/screenshots/map-de.png',
   es: '/screenshots/map-es.png',
+  sl: '/screenshots/map-sl.png',
 }
 
 export function ProblemSection() {
@@ -28,13 +29,13 @@ export function ProblemSection() {
           <p className="lp-body lp-anim lp-slide-right lp-delay-3">{t('landing.f1Body')}</p>
           <div className="lp-chips lp-anim lp-slide-right lp-delay-4">
             {[
-              { label: 'impreza',  bg: '#E91E6328' },
-              { label: 'piknik',   bg: `${C.grass}28` },
-              { label: 'koncert',  bg: `${C.sky}28` },
-              { label: 'sport',    bg: `${C.primary}28` },
-              { label: 'rodzinne', bg: '#FFD54F28' },
+              { key: 'party',   bg: '#E91E6328' },
+              { key: 'outdoor', bg: `${C.grass}28` },
+              { key: 'music',   bg: `${C.sky}28` },
+              { key: 'sport',   bg: `${C.primary}28` },
+              { key: 'family',  bg: '#FFD54F28' },
             ].map(ch => (
-              <span key={ch.label} className="lp-chip" style={{ background: ch.bg }}>{ch.label}</span>
+              <span key={ch.key} className="lp-chip" style={{ background: ch.bg }}>{t(`tags.${ch.key}`)}</span>
             ))}
           </div>
         </div>

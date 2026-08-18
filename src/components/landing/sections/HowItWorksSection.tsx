@@ -8,6 +8,7 @@ const EVENT_SCREENSHOTS: Record<string, string> = {
   en: '/screenshots/event-en.png',
   de: '/screenshots/event-de.png',
   es: '/screenshots/event-es.png',
+  sl: '/screenshots/event-sl.png',
 }
 
 export function HowItWorksSection() {

@@ -8,6 +8,7 @@ const NEW_SCREENSHOTS: Record<string, string> = {
   en: '/screenshots/new-en.png',
   de: '/screenshots/new-de.png',
   es: '/screenshots/new-es.png',
+  sl: '/screenshots/new-sl.png',
 }
 
 export function FeaturesSection() {
