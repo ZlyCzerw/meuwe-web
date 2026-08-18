@@ -701,9 +701,21 @@ Open `https://staging.meuwe-web.pages.dev/sl/` and confirm the phone mockups sho
 
 - [ ] **Step 4: Check the Supabase redirect list before promoting to main**
 
-This is the one step that cannot be verified from the code. In the Supabase dashboard, open **Auth → URL Configuration** and confirm the Redirect URLs list carries a wildcard entry `https://meuwe.eu/**`. With only the exact `https://meuwe.eu/`, Supabase rejects the new target and throws users at the Site URL — a broken login in production.
+**Production is already confirmed** (checked 2026-08-18): the Redirect URLs list on
+project `bcfhsbnbvsuxsiwmeway` carries `https://meuwe.eu/**`, alongside `meuwe://`,
+`exp://192.168.1.35:8081/--/auth`, `http://localhost:5173` and `http://localhost:5175`.
+`**` spans separators, so it covers `https://meuwe.eu/de/`. Nothing to do there.
 
-Check **both** projects: staging is `ujzmivdgibnnncmoqoyb`, production is `bcfhsbnbvsuxsiwmeway`. A successful sign-in on staging says nothing about production's list.
+Still open: the **staging** project, `ujzmivdgibnnncmoqoyb`, is a separate project
+with its own list. Open its **Auth → URL Configuration** and confirm it carries a
+wildcard covering the staging origin. Without it Supabase rejects the target and
+falls back to Site URL, and the sign-in check in Step 5 fails for a reason that
+has nothing to do with this code.
+
+Note for local work: the two `localhost` entries have no `/**` suffix, so they
+match literally. Signing in from `http://localhost:5173/de/` will not match the
+list and will land on the Site URL — production. Add `http://localhost:5173/**`
+if you want to exercise this path in dev.
 
 - [ ] **Step 5: Test sign-in from a language path on staging**
 

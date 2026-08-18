@@ -145,8 +145,10 @@ login, in production, for everyone arriving from a language path.
 
 Staging and production are **different Supabase projects** —
 `ujzmivdgibnnncmoqoyb` and `bcfhsbnbvsuxsiwmeway`. A successful sign-in test on
-staging says nothing about production's list. Both dashboards must be checked
-before this reaches `main`.
+staging says nothing about production's list.
+
+Production was checked on 2026-08-18 and already carries `https://meuwe.eu/**`,
+so the risk is retired there. Staging remains unverified.
 
 **The chip copy change is visible.** Polish visitors who knew the row as
 *koncert* will read *muzyka*.
