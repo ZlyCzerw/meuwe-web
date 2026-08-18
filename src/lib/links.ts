@@ -18,7 +18,7 @@ export type LinkMatch = {
 }
 
 /** Znaki, które kończą zdanie, a nie adres. */
-const SENTENCE_TAIL = '.,;:!?'
+const SENTENCE_TAIL = '.,;:!?…'
 
 function count(text: string, char: string): number {
   let n = 0

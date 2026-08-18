@@ -27,6 +27,7 @@ describe('findLinks', () => {
     expect(findLinks('Zajrzyj na www.teatr.pl.')[0].text).toBe('www.teatr.pl')
     expect(findLinks('Zajrzyj na https://teatr.pl, potem wroc')[0].text).toBe('https://teatr.pl')
     expect(findLinks('Wiecej: https://teatr.pl...')[0].text).toBe('https://teatr.pl')
+    expect(findLinks('Wiecej: https://teatr.pl…')[0].text).toBe('https://teatr.pl')
   })
 
   // Nawias bez pary nalezy do zdania, nawias z para do adresu — URL-e z
