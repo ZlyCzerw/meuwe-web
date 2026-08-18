@@ -37,6 +37,14 @@ describe('findLinks', () => {
       .toBe('https://pl.wikipedia.org/wiki/Rzeszow_(miasto)')
   })
 
+  // Cudzysłów wokół adresu należy do zdania, nie do adresu — a polskie opisy
+  // wklejają linki w „…” równie chętnie, co w nawiasy.
+  it('drops a quote or bracket that closes around the address', () => {
+    expect(findLinks('Zobacz na „https://teatr.pl”.')[0].text).toBe('https://teatr.pl')
+    expect(findLinks('Link: "https://teatr.pl" super')[0].text).toBe('https://teatr.pl')
+    expect(findLinks('[https://teatr.pl]')[0].text).toBe('https://teatr.pl')
+  })
+
   it('ignores a javascript: scheme', () => {
     expect(findLinks('javascript:alert(1)')).toEqual([])
   })

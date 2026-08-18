@@ -26,18 +26,28 @@ function count(text: string, char: string): number {
   return n
 }
 
+/** Pary, w których znak zamykający różni się od otwierającego. */
+const CLOSING_PAIRS: Record<string, string> = { ')': '(', ']': '[', '}': '{', '”': '„', '»': '«' }
+
+/** Cudzysłowy, w których ten sam znak otwiera i zamyka. */
+const SYMMETRIC_QUOTES = '"\''
+
 /**
  * Adres kończy się tam, gdzie kończy się adres — nie tam, gdzie kończy się
- * zdanie. Kropka po "www.teatr.pl." należy do zdania, tak samo nawias
- * zamykający w "(szczegóły na https://teatr.pl)". Nawias, który ma parę w
- * samym adresie, zostaje: takie URL-e istnieją (Wikipedia).
+ * zdanie. Kropka po "www.teatr.pl." należy do zdania, tak samo nawias czy
+ * cudzysłów zamykający w "(szczegóły na https://teatr.pl)" albo
+ * „https://teatr.pl” — polskie opisy wklejają linki w cudzysłów równie
+ * chętnie, co w nawiasy. Znak, który ma parę w samym adresie, zostaje: takie
+ * URL-e istnieją (Wikipedia).
  */
 function trimSentenceTail(raw: string): string {
   let text = raw
   while (text.length > 0) {
     const last = text[text.length - 1]
     if (SENTENCE_TAIL.includes(last)) { text = text.slice(0, -1); continue }
-    if (last === ')' && count(text, ')') > count(text, '(')) { text = text.slice(0, -1); continue }
+    const opener = CLOSING_PAIRS[last]
+    if (opener && count(text, last) > count(text, opener)) { text = text.slice(0, -1); continue }
+    if (SYMMETRIC_QUOTES.includes(last) && count(text, last) % 2 === 1) { text = text.slice(0, -1); continue }
     break
   }
   return text
