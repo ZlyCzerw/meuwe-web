@@ -14,7 +14,11 @@ export const LANGS = ['en', 'pl', 'de', 'es', 'sl']
 // '' oznacza korzeń serwisu — angielski jest wariantem neutralnym dla reszty świata.
 export const PATHS = { en: '', pl: 'pl', de: 'de', es: 'es', sl: 'sl' }
 
-export const url = lang => (PATHS[lang] ? `${SITE}/${PATHS[lang]}` : `${SITE}/`)
+// Ukośnik na końcu nie jest kosmetyką: Cloudflare Pages serwuje /de/index.html
+// pod /de/ i odbija /de przez 308. Adres w canonical i hreflang musi być tym,
+// który zwraca 200 — inaczej Google dostaje canonical wskazujący na
+// przekierowanie i potrafi odrzucić całą adnotację hreflang.
+export const url = lang => (PATHS[lang] ? `${SITE}/${PATHS[lang]}/` : `${SITE}/`)
 
 export const SEO = {
   en: {
