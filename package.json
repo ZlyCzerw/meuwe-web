@@ -15,14 +15,6 @@
     "cap:sync": "npm run prep:native && npx cap sync",
     "cap:android": "npm run prep:native && npx cap sync android && npx cap open android"
   },
-  "reactSnap": {
-    "source": "dist",
-    "renderAfterDocumentEvent": "snap-ready",
-    "puppeteerArgs": [
-      "--no-sandbox"
-    ],
-    "minifyHtml": false
-  },
   "dependencies": {
     "@capacitor-firebase/authentication": "^6.3.1",
     "@capacitor-firebase/messaging": "^6.3.1",
@@ -66,7 +58,6 @@
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
-    "react-snap": "^1.23.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",

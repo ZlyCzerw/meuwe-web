@@ -579,9 +579,34 @@ Expected: no output.
 
 - [ ] **Step 3: Verify the surviving keys are intact**
 
-Run: `grep -c "downloadTitle\|f1Title\|privateTitle\|nav:\|footer:" src/locales/pl.ts src/locales/en.ts src/locales/de.ts src/locales/es.ts src/locales/sl.ts`
+List what actually survived in each `landing` block rather than counting grep hits —
+a count cannot tell a survivor from a lookalike elsewhere in the file. `store`
+carries its own `downloadTitle` ("Miej meuwe pod ręką" in Polish), unrelated to
+`landing.downloadTitle`, which is exactly the kind of collision a count hides.
 
-Expected: `5` for every file.
+```bash
+for l in pl en de es sl; do
+  printf "%s: " $l
+  node -e "
+const s=require('fs').readFileSync('src/locales/$l.ts','utf8');
+const m=s.match(/\n  landing: \{([\s\S]*?)\n  \},\n/);
+if(!m){console.log('NIE SPARSOWANO bloku landing');process.exit(1)}
+const keys=[...m[1].matchAll(/^    ([A-Za-z0-9_]+)\s*:/gm)].map(x=>x[1]);
+console.log(keys.join(' '));
+"
+done
+```
+
+Expected: all five print the same 22 keys, in this order:
+
+```
+h1 nav footer f1Eyebrow f1Title f1Body f2Eyebrow f2Title f2Body f3Eyebrow f3Title
+f3Body step1 step2 step3 privateEyebrow privateTitle privateBody downloadTitle
+downloadBody screenshotEventAlt screenshotCreateAlt
+```
+
+Any file printing a different list, or `NIE SPARSOWANO`, means a boundary was
+clipped — stop and restore rather than patching forward.
 
 - [ ] **Step 4: Verify nothing referenced them**
 
