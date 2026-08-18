@@ -19,6 +19,17 @@ function isInAppBrowser(): boolean {
     || !/safari|crios|fxios|edgios/i.test(ua)
 }
 
+/**
+ * Przyciski logowania równają do pary plakietek sklepowych pod nimi.
+ *
+ * Plakietka to 72px stałej konstrukcji (ramka, padding, ikona, odstęp) plus
+ * szerszy z dwóch napisów w środku. Nazwy sklepów się nie tłumaczą, więc para
+ * wychodzi 304px po polsku, niemiecku i słoweńsku; po angielsku i hiszpańsku
+ * jest o ~12px szersza, bo dłuższy podpis („Download on the") przebija nazwę.
+ * Trzymamy tę węższą wartość — różnica rozkłada się po 6px na stronę.
+ */
+const CTA_MAX_W = 304
+
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'apple' | 'skip') => void }) {
   const { t } = useTranslation()
   const blobs = useBlobPhysics(6)
@@ -146,7 +157,8 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         <button
           onClick={() => onSignIn('google')}
           style={{
-            width: '100%', padding: '16px 24px', borderRadius: 999,
+            width: '100%', maxWidth: CTA_MAX_W, margin: '0 auto',
+            padding: '16px 24px', borderRadius: 999,
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             fontSize: 16, fontWeight: 700, color: C.ink,
@@ -163,7 +175,8 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         <button
           onClick={() => onSignIn('apple')}
           style={{
-            marginTop: 12, width: '100%', padding: '16px 24px', borderRadius: 999,
+            width: '100%', maxWidth: CTA_MAX_W, margin: '12px auto 0',
+            padding: '16px 24px', borderRadius: 999,
             background: '#000', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             fontSize: 16, fontWeight: 700, color: '#fff',
