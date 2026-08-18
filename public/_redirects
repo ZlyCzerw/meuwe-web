@@ -1,3 +1,16 @@
 /robots.txt /robots.txt 200
 /sitemap.xml /sitemap.xml 200
+
+# Warianty językowe landingu muszą trafić we własny plik, zanim złapie je
+# katch-all SPA poniżej — inaczej /de dostałby angielski <head> z korzenia
+# i cała robota z hreflang byłaby bez znaczenia. Pierwsza pasująca reguła wygrywa.
+/pl /pl/index.html 200
+/pl/ /pl/index.html 200
+/de /de/index.html 200
+/de/ /de/index.html 200
+/es /es/index.html 200
+/es/ /es/index.html 200
+/sl /sl/index.html 200
+/sl/ /sl/index.html 200
+
 /* /index.html 200

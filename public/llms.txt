@@ -2,7 +2,7 @@
 
 ## About
 
-meuwe is a hyperlocal social map for discovering and sharing local events in real time. It shows events happening nearby on a map — no algorithm, no ads, no account required to browse.
+meuwe is a hyperlocal social map for discovering and sharing local events in real time. It shows events happening nearby on a map — no ads, no account required to browse.
 
 ## What it does
 
@@ -11,7 +11,7 @@ meuwe is a hyperlocal social map for discovering and sharing local events in rea
 - Supports private events visible only to people with an invite link
 - Push notifications for followed events
 - Works without creating an account (account needed only to add events, via Google or Apple sign-in)
-- Available in 4 languages: Polish, English, German, Spanish
+- Available in 5 languages: English, Polish, German, Spanish, Slovenian
 
 ## Who uses it
 
@@ -25,7 +25,7 @@ React 19, TypeScript, Supabase (PostgreSQL + Realtime + Auth), Leaflet maps, Clo
 
 ## Availability
 
-- Web app: https://meuwe.eu
+- Web app: https://meuwe.eu (English), https://meuwe.eu/pl, https://meuwe.eu/de, https://meuwe.eu/es, https://meuwe.eu/sl
 - iOS: App Store
 - Android: Google Play
 

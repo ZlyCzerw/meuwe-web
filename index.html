@@ -15,15 +15,26 @@
     <link rel="manifest" href="/manifest.json"/>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
     <link rel="apple-touch-icon" href="/favicon.svg"/>
-    <title>meuwe — lokalne wydarzenia na mapie</title>
-    <meta name="description" content="meuwe — odkrywaj lokalne wydarzenia na mapie. Pikniki, koncerty, sport, targi i spotkania sąsiedzkie w Twojej okolicy. Bez algorytmu, bez reklam, bez konta."/>
-    <meta name="keywords" content="lokalne wydarzenia, mapa wydarzeń, co się dzieje w okolicy, eventy, piknik, koncert, sport, Teneryfa, hyperlocal"/>
+
+    <!-- Wszystko między seo:start a seo:end podmienia scripts/build-seo-pages.mjs,
+         wypuszczając osobny plik dla /, /pl, /de, /es i /sl. Tu stoi wariant
+         angielski, bo to on jedzie z korzenia i jest x-default. Treść tłumaczeń
+         mieszka w scripts/seo-content.mjs — edytuj tam, nie tutaj. -->
+    <!-- seo:start -->
+    <title>meuwe — local events on a map</title>
+    <meta name="description" content="meuwe — discover local events on a map. Picnics, concerts, sports, markets and neighbourhood meetups near you. No ads, no account needed."/>
+    <meta name="keywords" content="local events, event map, what is on near me, events nearby, picnic, concert, sports, Tenerife, hyperlocal"/>
     <meta name="author" content="meuwe"/>
 
-    <meta property="og:title" content="meuwe — lokalne wydarzenia na mapie"/>
-    <meta property="og:description" content="Odkrywaj co się dzieje w pobliżu. Pikniki, koncerty, sport, targi. Bez algorytmu, bez reklam."/>
+    <meta property="og:title" content="meuwe — local events on a map"/>
+    <meta property="og:description" content="Discover what&#39;s happening nearby. Picnics, concerts, sports, markets. No ads."/>
     <meta property="og:type" content="website"/>
-    <meta property="og:url" content="https://meuwe.eu"/>
+    <meta property="og:url" content="https://meuwe.eu/"/>
+    <meta property="og:locale" content="en_US"/>
+    <meta property="og:locale:alternate" content="pl_PL"/>
+    <meta property="og:locale:alternate" content="de_DE"/>
+    <meta property="og:locale:alternate" content="es_ES"/>
+    <meta property="og:locale:alternate" content="sl_SI"/>
     <meta property="og:image" content="https://meuwe.eu/og-image.png"/>
     <meta property="og:image:secure_url" content="https://meuwe.eu/og-image.png"/>
     <meta property="og:image:width" content="1200"/>
@@ -32,11 +43,17 @@
     <meta property="og:site_name" content="meuwe"/>
 
     <meta name="twitter:card" content="summary_large_image"/>
-    <meta name="twitter:title" content="meuwe — lokalne wydarzenia na mapie"/>
-    <meta name="twitter:description" content="Odkrywaj co się dzieje w pobliżu. Pikniki, koncerty, sport, targi. Bez algorytmu, bez reklam."/>
+    <meta name="twitter:title" content="meuwe — local events on a map"/>
+    <meta name="twitter:description" content="Discover what&#39;s happening nearby. Picnics, concerts, sports, markets. No ads."/>
     <meta name="twitter:image" content="https://meuwe.eu/og-image.png"/>
 
-    <link rel="canonical" href="https://meuwe.eu"/>
+    <link rel="canonical" href="https://meuwe.eu/"/>
+    <link rel="alternate" hreflang="en" href="https://meuwe.eu/"/>
+    <link rel="alternate" hreflang="pl" href="https://meuwe.eu/pl"/>
+    <link rel="alternate" hreflang="de" href="https://meuwe.eu/de"/>
+    <link rel="alternate" hreflang="es" href="https://meuwe.eu/es"/>
+    <link rel="alternate" hreflang="sl" href="https://meuwe.eu/sl"/>
+    <link rel="alternate" hreflang="x-default" href="https://meuwe.eu/"/>
 
     <script type="application/ld+json">
     {
@@ -47,7 +64,7 @@
           "@id": "https://meuwe.eu/#organization",
           "name": "meuwe",
           "url": "https://meuwe.eu",
-          "description": "meuwe to hiperlokalana mapa wydarzeń. Odkrywaj co się dzieje w okolicy bez algorytmu i reklam.",
+          "description": "meuwe is a hyperlocal event map. Discover what is happening around you, with no ads.",
           "email": "wiktor.marc@gmail.com"
         },
         {
@@ -55,7 +72,17 @@
           "@id": "https://meuwe.eu/#website",
           "url": "https://meuwe.eu",
           "name": "meuwe",
+          "inLanguage": "en",
           "publisher": { "@id": "https://meuwe.eu/#organization" }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://meuwe.eu/#webpage",
+          "url": "https://meuwe.eu/",
+          "name": "meuwe — local events on a map",
+          "description": "meuwe — discover local events on a map. Picnics, concerts, sports, markets and neighbourhood meetups near you. No ads, no account needed.",
+          "inLanguage": "en",
+          "isPartOf": { "@id": "https://meuwe.eu/#website" }
         },
         {
           "@type": "SoftwareApplication",
@@ -63,53 +90,56 @@
           "name": "meuwe",
           "applicationCategory": "SocialNetworkingApplication",
           "operatingSystem": "Web, iOS, Android",
-          "description": "Hiperlokalana mapa wydarzeń — pikniki, koncerty, sport, targi i spotkania sąsiedzkie w Twojej okolicy. Bez algorytmu, bez reklam, bez wymogu konta.",
+          "description": "Hyperlocal event map — picnics, concerts, sports, markets and neighbourhood meetups near you. No ads, no account required.",
           "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
           "featureList": [
-            "Mapa wydarzeń na żywo w czasie rzeczywistym",
-            "Tworzenie eventu w 10 sekund",
-            "Prywatne wydarzenia z linkiem zaproszenia",
-            "Push notyfikacje dla obserwowanych eventów",
-            "Filtry kategorii: impreza, muzyka, sport, jedzenie, kultura i inne",
-            "Działa bez konta",
-            "4 języki: polski, angielski, niemiecki, hiszpański"
+            "Live event map updating in real time",
+            "Create an event in 10 seconds",
+            "Private events shared by invite link",
+            "Push notifications for events you follow",
+            "Category filters: party, music, sports, food, culture and more",
+            "Works without an account",
+            "5 languages: English, Polish, German, Spanish, Slovenian"
           ],
-          "inLanguage": ["pl", "en", "de", "es"],
+          "inLanguage": ["en", "pl", "de", "es", "sl"],
           "provider": { "@id": "https://meuwe.eu/#organization" }
         },
         {
           "@type": "FAQPage",
+          "@id": "https://meuwe.eu/#faq",
+          "inLanguage": "en",
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "Czym jest meuwe?",
-              "acceptedAnswer": { "@type": "Answer", "text": "meuwe to mapa lokalnych wydarzeń w czasie rzeczywistym. Otwierasz aplikację i od razu widzisz co się dzieje w okolicy — pikniki, koncerty, sporty, targi, spotkania. Bez konta, bez algorytmu, bez reklam." }
+              "name": "What is meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "meuwe is a real-time map of local events. Open the app and immediately see what is happening around you — picnics, concerts, sports, markets, meetups. No account, no ads." }
             },
             {
               "@type": "Question",
-              "name": "Czy meuwe jest bezpłatne?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Tak, meuwe jest całkowicie bezpłatne. Przeglądanie mapy nie wymaga nawet zakładania konta. Logowanie przez Google potrzebne jest tylko do dodawania własnych wydarzeń." }
+              "name": "Is meuwe free?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes, meuwe is completely free. Browsing the map does not even require an account. Signing in with Google is only needed to add your own events." }
             },
             {
               "@type": "Question",
-              "name": "Jak dodać wydarzenie na meuwe?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Dotknij przycisku + na mapie, wpisz tytuł i gotowe — wydarzenie pojawia się na mapie natychmiast. Tytuł to jedyne wymagane pole. Opis, zdjęcia i czas są opcjonalne." }
+              "name": "How do I add an event on meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Tap the + button on the map, type a title and you are done — the event appears on the map instantly. The title is the only required field. Description, photos and time are optional." }
             },
             {
               "@type": "Question",
-              "name": "Czym są wydarzenia prywatne w meuwe?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Wydarzenie prywatne jest widoczne tylko dla osób, którym udostępnisz link. Nie pojawia się na publicznej mapie. Na mapie wyróżnia się jako biały pin z maską — tylko zaproszeni wiedzą że istnieje." }
+              "name": "What are private events on meuwe?",
+              "acceptedAnswer": { "@type": "Answer", "text": "A private event is visible only to people you share the link with. It never appears on the public map. On the map it stands out as a white pin with a mask — only invited people know it exists." }
             },
             {
               "@type": "Question",
-              "name": "Na jakich urządzeniach działa meuwe?",
-              "acceptedAnswer": { "@type": "Answer", "text": "meuwe działa jako aplikacja webowa w przeglądarce na każdym urządzeniu. Aplikacja natywna na iOS i Android jest dostępna w App Store i Google Play." }
+              "name": "What devices does meuwe work on?",
+              "acceptedAnswer": { "@type": "Answer", "text": "meuwe runs as a web app in the browser on any device. Native apps for iOS and Android are available in the App Store and Google Play." }
             }
           ]
         }
       ]
     }
     </script>
+    <!-- seo:end -->
     <style>
       :root {
         --sat: env(safe-area-inset-top);
@@ -138,6 +168,23 @@
     </script>
   </head>
   <body>
+    <!-- Odpowiednik prerenderu dla robotów, które nie wykonują JS. React montuje
+         się do #root i nigdy tego nie dotyka, więc użytkownik tego nie zobaczy.
+         Podmieniane per język przez scripts/build-seo-pages.mjs. -->
+    <!-- seo-body:start -->
+    <noscript>
+      <h1>meuwe — local events on a map</h1>
+      <p>meuwe is a hyperlocal event map. Open it and immediately see what is happening around you — picnics, concerts, sports, markets and neighbourhood meetups. No ads, and no account is needed to browse.</p>
+      <h2>The home screen is a map of today’s events</h2>
+      <p>Every pin is a different event. Browse by date or filter the categories you care about.</p>
+      <h2>One tap to join</h2>
+      <p>Tap a pin to see the details — when, where and who is organising. Follow it, chat with the other attendees and stay up to date without leaving the map.</p>
+      <h2>An event in 10 seconds</h2>
+      <p>The title is the only required field. Everything else is optional. Your event shows up on the map instantly and anyone nearby can find it.</p>
+      <h2>Private events</h2>
+      <p>Invite only the people you choose — nobody else will even see that the event exists.</p>
+    </noscript>
+    <!-- seo-body:end -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

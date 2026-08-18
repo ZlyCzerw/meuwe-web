@@ -16,6 +16,14 @@ const app = (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<App />} />
+          {/* Warianty językowe landingu. Każdy jest osobnym plikiem HTML z własnym
+              <head> (scripts/build-seo-pages.mjs), więc Google indeksuje je jako
+              oddzielne adresy i hreflang rozstrzyga, komu który pokazać. Dla
+              Reacta to ta sama aplikacja — język ustawia detectInitialLang. */}
+          <Route path="/pl" element={<App />} />
+          <Route path="/de" element={<App />} />
+          <Route path="/es" element={<App />} />
+          <Route path="/sl" element={<App />} />
           <Route path="/blog" element={<Blog />} />
         </Routes>
       </BrowserRouter>
