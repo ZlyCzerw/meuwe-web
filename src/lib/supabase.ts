@@ -6,6 +6,7 @@ import { ASK_MAX_AGE_MS, type AskCandidate } from './attendanceAsk'
 import { markSignedOut, takeSignedOutFlag, googleOAuthOptions } from './authPrompt'
 import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
+import { langFromPath } from './i18n'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -33,7 +34,13 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 // meuwe.eu, który aplikacja przechwytuje (intent-filter w AndroidManifest), i
 // dokańczamy wymianę kodu w `appUrlOpen`.
 function authRedirectTo(): string {
-  return isNativePlatform() ? `${WEB_ORIGIN}/` : `${location.origin}/`
+  if (isNativePlatform()) return `${WEB_ORIGIN}/`
+  // Wejście z /de/ ma wrócić na /de/, inaczej adres przestaje być sobą: nie da
+  // się go udostępnić, a ktoś bez ręcznie wybranego języka dostaje po powrocie
+  // język przeglądarki. Prefiks czytamy tym samym langFromPath, którego używa
+  // detectInitialLang — dwa źródła prawdy rozjechałyby się przy pierwszej zmianie.
+  const lang = langFromPath(location.pathname)
+  return lang ? `${location.origin}/${lang}/` : `${location.origin}/`
 }
 
 // Nazwa pokazywana obok wydarzeń i wiadomości liczona jest w bazie

@@ -103,3 +103,50 @@ describe('db.signInApple', () => {
     expect(spy).toHaveBeenCalledWith({ provider: 'apple', options: { redirectTo: `${location.origin}/` } })
   })
 })
+
+describe('authRedirectTo language prefix', () => {
+  afterEach(() => {
+    (globalThis as any).__native = false
+    ;(globalThis as any).__ios = false
+    window.history.pushState({}, '', '/')
+  })
+
+  // Bez prefiksu ktoś, kto czytał /de/, wraca na / i — jeśli nie wybrał języka
+  // ręcznie — dostaje język przeglądarki zamiast tego, na którym był.
+  it('keeps the language prefix on web', async () => {
+    const spy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({ data: {}, error: null } as any)
+    window.history.pushState({}, '', '/de/')
+    await db.signInApple()
+    expect(spy).toHaveBeenCalledWith({
+      provider: 'apple',
+      options: { redirectTo: `${location.origin}/de/` },
+    })
+    spy.mockRestore()
+  })
+
+  it('returns to the root when the path carries no language', async () => {
+    const spy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({ data: {}, error: null } as any)
+    window.history.pushState({}, '', '/')
+    await db.signInApple()
+    expect(spy).toHaveBeenCalledWith({
+      provider: 'apple',
+      options: { redirectTo: `${location.origin}/` },
+    })
+    spy.mockRestore()
+  })
+
+  // Natywnie wracamy na App Link meuwe.eu, bo origin WebView jest nieosiągalny
+  // dla przeglądarki systemowej. Ścieżek językowych tam nie ma.
+  it('ignores the prefix on native', async () => {
+    const spy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({ data: {}, error: null } as any)
+    ;(globalThis as any).__native = true
+    ;(globalThis as any).__ios = false
+    window.history.pushState({}, '', '/de/')
+    await db.signInApple()
+    expect(spy).toHaveBeenCalledWith({
+      provider: 'apple',
+      options: { redirectTo: 'https://meuwe.eu/' },
+    })
+    spy.mockRestore()
+  })
+})
