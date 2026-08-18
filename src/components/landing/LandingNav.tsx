@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { C } from '../../lib/tokens'
 import { setLanguage } from '../../lib/i18n'
 import type { Lang } from '../../lib/types'
 import './landing.css'
+import { MeuweLogo } from '../MeuweLogo'
 
 const W = 22, H = 15, R = 2.5
 
@@ -131,6 +131,7 @@ export function LandingNav({ onSignIn }: NavProps) {
   const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const logoRef = useRef<HTMLAnchorElement>(null)
   const onBlog = location.pathname === '/blog'
 
   useEffect(() => {
@@ -138,6 +139,56 @@ export function LandingNav({ onSignIn }: NavProps) {
     window.addEventListener('scroll', h, { passive: true })
     return () => window.removeEventListener('scroll', h)
   }, [])
+
+  /**
+   * Logo w pasku wchodzi w miarę przewijania powitania i jest w pełni kryjące
+   * dokładnie wtedy, gdy hero zjedzie z ekranu. Poza landingiem (blog) nie ma
+   * czego przejeżdżać, więc logo stoi widoczne od początku.
+   *
+   * Krycie idzie prosto na węzeł przez ref, a nie przez stan — inaczej każda
+   * klatka przewijania przerenderowywałaby całą nawigację. Wysokość hero jest
+   * mierzona raz i przy zmianie rozmiaru okna, bo czytanie jej w trakcie
+   * przewijania wymuszałoby przeliczanie układu na każdą klatkę.
+   *
+   * Uwaga na kontener: landing i blog przestawiają `body` na `overflow: auto`
+   * (patrz pages/Landing.tsx), więc przewija się `body`, a nie okno —
+   * `window.scrollY` zostaje na zerze. Nasłuch idzie w fazie przechwytywania,
+   * bo zdarzenie scrolla nie bąbelkuje, a przechwytywanie łapie je niezależnie
+   * od tego, który element faktycznie się przewija. Sprawdzanie tego z góry nie
+   * zadziała: efekt dziecka biegnie przed efektem rodzica, więc w tym momencie
+   * `body` jeszcze nie ma ustawionego `overflow`.
+   */
+  useEffect(() => {
+    const offset = () =>
+      document.body.scrollTop || document.documentElement.scrollTop || window.scrollY
+
+    let heroH = 0
+    let frame = 0
+
+    const apply = () => {
+      frame = 0
+      const el = logoRef.current
+      if (!el) return
+      const o = heroH > 0 ? Math.min(1, Math.max(0, offset() / heroH)) : 1
+      el.style.opacity = String(o)
+      // Przezroczyste logo nie może łapać kliknięć w pasku.
+      el.style.pointerEvents = o < 0.05 ? 'none' : ''
+    }
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(apply) }
+    const onResize = () => {
+      heroH = document.getElementById('hero')?.offsetHeight ?? 0
+      apply()
+    }
+
+    onResize()
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.addEventListener('resize', onResize)
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll, { capture: true })
+      window.removeEventListener('resize', onResize)
+    }
+  }, [location.pathname])
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [location])
@@ -154,10 +205,16 @@ function handleAnchor(anchor: string) {
   return (
     <>
       <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-        <a className="lp-nav-logo" href="/#hero" onClick={e => { e.preventDefault(); handleAnchor('hero') }}>
-          <span style={{ color: C.primary }}>me</span>
-          <span style={{ color: C.sky }}>u</span>
-          <span style={{ color: C.grass }}>we</span>
+        <a
+          className="lp-nav-logo"
+          href="/#hero"
+          ref={logoRef}
+          // Wartość startowa na czas przed pierwszym przeliczeniem — bez niej
+          // logo mrugnęłoby na pełnym kryciu, zanim efekt zdąży je wygasić.
+          style={{ opacity: onBlog ? 1 : 0 }}
+          onClick={e => { e.preventDefault(); handleAnchor('hero') }}
+        >
+          <MeuweLogo height={26} />
         </a>
 
         <ul className="lp-nav-links">
