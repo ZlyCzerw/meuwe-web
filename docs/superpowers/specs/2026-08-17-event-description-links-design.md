@@ -55,7 +55,7 @@ Bez górnego sufitu na wydłużenie. Adres z długim ogonem parametrów śledzen
 
 `DESCRIPTION_PREVIEW_CHARS` przestaje być twardą granicą. Dziś komentarz w `text.ts` i test *„never returns more than the limit"* obiecują, że podgląd nie przekroczy limitu ani o znak. Po zmianie limit jest miękki: wolno go przekroczyć **wyłącznie** po to, żeby dokończyć adres. Komentarz przy stałej i przy `WORD_BOUNDARY_MIN_RATIO` mówi to wprost; istniejący test zostaje jako asercja dla tekstu bez linków, a nową swobodę pokrywa osobny test.
 
-Reguła `WORD_BOUNDARY_MIN_RATIO` zostaje bez zmian — jej komentarz wspomina wklejony link jako powód twardego cięcia, ale dotyczy to linków, które nie przecinają granicy (np. zaczynają się przed limitem i kończą przed nim, albo są w ogóle poza podglądem).
+Sama reguła `WORD_BOUNDARY_MIN_RATIO` zostaje bez zmian, ale z jej komentarza znika wklejony link jako przykład długiego ciągu bez spacji: link przecinający granicę nigdy już nie dochodzi do tej gałęzi, więc przykład wprowadzałby w błąd. Reszta komentarza zostaje.
 
 ## Wpięcie w kartę
 
