@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { C } from '../../../lib/tokens'
 import '../landing.css'
+import { MeuweLogo } from '../../MeuweLogo'
 
 export function LandingFooter() {
   const { t } = useTranslation()
@@ -11,11 +11,7 @@ export function LandingFooter() {
     <footer className="lp-footer">
       <div className="lp-footer-top">
         <div className="lp-footer-brand">
-          <div className="lp-footer-logo">
-            <span style={{ color: C.primary }}>me</span>
-            <span style={{ color: C.sky }}>u</span>
-            <span style={{ color: C.grass }}>we</span>
-          </div>
+          <MeuweLogo height={24} style={{ marginBottom: 10 }} />
         </div>
 
         <div className="lp-footer-cols">

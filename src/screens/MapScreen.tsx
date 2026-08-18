@@ -24,6 +24,7 @@ import EventPickerModal from '../components/EventPickerModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
+import { MeuweLogo } from '../components/MeuweLogo'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -542,14 +543,7 @@ function MapScreen({
           position: 'absolute', inset: 0, background: C.cream, zIndex: 100,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20,
         }}>
-          <div style={{
-            fontFamily: F.display, fontWeight: 900, fontSize: 56,
-            letterSpacing: -2, lineHeight: 1, display: 'flex',
-          }}>
-            <span style={{ color: C.primary }}>me</span>
-            <span style={{ color: C.sky }}>u</span>
-            <span style={{ color: C.grass }}>we</span>
-          </div>
+          <MeuweLogo height={40} />
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
             border: '3px solid rgba(255,122,69,0.25)', borderTopColor: C.primary,

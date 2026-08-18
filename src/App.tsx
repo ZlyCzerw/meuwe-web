@@ -48,6 +48,7 @@ import AttendanceAskModal from './components/AttendanceAskModal'
 import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
 import { useEventChain } from './hooks/useEventChain'
 import { geoStrategy, listStrategy } from './lib/eventChain'
+import { MeuweLogo } from './components/MeuweLogo'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
 
@@ -962,14 +963,7 @@ export default function App() {
       width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', background: C.cream, gap: 20,
     }}>
-      <div style={{
-        fontFamily: F.display, fontWeight: 900, fontSize: 56,
-        letterSpacing: -2, lineHeight: 1, display: 'flex',
-      }}>
-        <span style={{ color: C.primary }}>me</span>
-        <span style={{ color: C.sky }}>u</span>
-        <span style={{ color: C.grass }}>we</span>
-      </div>
+      <MeuweLogo height={40} />
       <div style={{
         width: 28, height: 28, borderRadius: '50%',
         border: '3px solid rgba(255,122,69,0.25)', borderTopColor: C.primary,
@@ -1267,11 +1261,7 @@ export default function App() {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 52, lineHeight: 1, display: 'flex', alignItems: 'baseline' }}>
-              <span style={{ color: C.primary }}>me</span>
-              <span style={{ color: C.sky }}>u</span>
-              <span style={{ color: C.grass }}>we</span>
-            </div>
+            <MeuweLogo height={37} />
             <p style={{ margin: 0, fontFamily: F.body, fontWeight: 600, fontSize: 16, color: C.ink, lineHeight: 1.5, maxWidth: 260 }}>
               {authModal === 'chat' ? t('auth.chatPrompt') : t('auth.createEventPrompt')}
             </p>

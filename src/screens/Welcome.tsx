@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
+import { MeuweLogo } from '../components/MeuweLogo'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
 import { db } from '../lib/supabase'
@@ -47,14 +48,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', padding: '0 28px',
       }}>
-        <div style={{
-          fontFamily: F.display, fontWeight: 900, fontSize: 52,
-          lineHeight: 0.95, letterSpacing: -2, display: 'flex', alignItems: 'baseline', marginBottom: 32,
-        }}>
-          <span style={{ color: C.primary }}>me</span>
-          <span style={{ color: C.sky }}>u</span>
-          <span style={{ color: C.grass }}>we</span>
-        </div>
+        <MeuweLogo height={37} style={{ marginBottom: 32 }} />
         <div style={{
           width: '100%', maxWidth: 380, background: '#fff',
           border: `2.5px solid ${INK}`, borderRadius: 28,
@@ -133,14 +127,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         alignItems: 'center', justifyContent: 'center',
         padding: '0 32px', position: 'relative', zIndex: 1,
       }}>
-        <div style={{
-          fontFamily: F.display, fontWeight: 900, fontSize: 88,
-          lineHeight: 0.95, letterSpacing: -3, display: 'flex', alignItems: 'baseline',
-        }}>
-          <span style={{ color: C.primary, animation: 'breathe-sm 3.2s 0s ease-in-out infinite', display: 'inline-block', transformOrigin: 'center bottom' }}>me</span>
-          <span style={{ color: C.sky,     animation: 'breathe-sm 3.2s 0.6s ease-in-out infinite', display: 'inline-block', transformOrigin: 'center bottom' }}>u</span>
-          <span style={{ color: C.grass,   animation: 'breathe-sm 3.2s 1.2s ease-in-out infinite', display: 'inline-block', transformOrigin: 'center bottom' }}>we</span>
-        </div>
+        <MeuweLogo height={62} animated />
         <div style={{
           marginTop: 16, fontFamily: F.body, fontSize: 22, fontWeight: 600,
           color: C.ink, opacity: 0.7, textAlign: 'center', maxWidth: 280, lineHeight: 1.4,

@@ -146,11 +146,6 @@
   gap: 80px; margin-bottom: 56px;
 }
 .lp-footer-brand { flex-shrink: 0; }
-.lp-footer-logo {
-  font-family: "Hanken Grotesk", system-ui, sans-serif;
-  font-weight: 900; font-size: 34px; letter-spacing: -1.8px;
-  line-height: 1; margin-bottom: 10px;
-}
 .lp-footer-tagline {
   font-size: 13px; font-weight: 600;
   color: rgba(255,246,236,0.3); letter-spacing: 0.3px;

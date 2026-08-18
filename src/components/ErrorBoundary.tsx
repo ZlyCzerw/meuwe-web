@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { MeuweLogo } from './MeuweLogo'
 
 interface Props {
   children: ReactNode
@@ -34,15 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
           background: '#FFF6EC', gap: 16, padding: 24,
           fontFamily: '"Nunito",ui-rounded,system-ui,sans-serif',
         }}>
-          <div style={{
-            fontSize: 48, fontWeight: 900,
-            fontFamily: '"Hanken Grotesk","Nunito",ui-rounded,system-ui,sans-serif',
-            letterSpacing: -2, display: 'flex',
-          }}>
-            <span style={{ color: '#FF7A45' }}>me</span>
-            <span style={{ color: '#4FC3F7' }}>u</span>
-            <span style={{ color: '#7DD87A' }}>we</span>
-          </div>
+          <MeuweLogo height={34} />
           <div style={{ fontSize: 15, fontWeight: 700, color: '#2D2B2A', textAlign: 'center' }}>
             Coś poszło nie tak
           </div>
