@@ -19,6 +19,7 @@ import { isNativePlatform } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
 import { authorLabel, authorInitial } from '../lib/authorLabel'
 import { truncateDescription } from '../lib/text'
+import { linkify } from '../lib/linkify'
 import { addToCalendar, type CalendarResult } from '../lib/calendar'
 import CalendarChooserModal from '../components/CalendarChooserModal'
 import { getDevicePushState } from '../lib/push'
@@ -620,7 +621,9 @@ function EventSheet({
               {desc.preview && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                    {desc.truncated && !descOpen ? `${desc.preview}…` : (event.description ?? '').trim()}
+                    {desc.truncated && !descOpen
+                      ? <>{linkify(desc.preview)}…</>
+                      : linkify((event.description ?? '').trim())}
                   </div>
                   {desc.truncated && (
                     <button
