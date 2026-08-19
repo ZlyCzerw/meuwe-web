@@ -427,6 +427,10 @@ function EventSheet({
   const startsAt = new Date(event.start_time)
   const endsAt = new Date(event.end_time)
   const hhmm = (d: Date) => d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+  const dayLabel = (d: Date) => d.toLocaleDateString(loc, { day: 'numeric', month: 'long', weekday: 'long' })
+  // Wydarzenie przez północ kończy się innego dnia, więc sama godzina końca
+  // kłamałaby — wtedy nad zakresem godzin stają obie daty.
+  const spansDays = startsAt.toDateString() !== endsAt.toDateString()
 
   return (
     <div className="event-sheet" style={{
@@ -519,7 +523,7 @@ function EventSheet({
                     </svg>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink, lineHeight: 1.3 }}>
-                        {startsAt.toLocaleDateString(loc, { day: 'numeric', month: 'long', weekday: 'long' })}
+                        {spansDays ? `${dayLabel(startsAt)} → ${dayLabel(endsAt)}` : dayLabel(startsAt)}
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: C.inkSoft, marginTop: 2 }}>
                         {hhmm(startsAt)} – {hhmm(endsAt)}
