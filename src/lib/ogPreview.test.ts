@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatEventDays } from './ogPreview'
+import { formatEventDays, excerpt, OG_DESCRIPTION_CHARS } from './ogPreview'
 
 // Boguchwała, lng ~21.94 → round(21.94/15) = +1h. A 14:00Z start is 15:00
 // local by that estimate, comfortably inside 19 August either way.
@@ -79,5 +79,39 @@ describe('formatEventDays', () => {
 
   it('returns an empty string for an unparseable date', () => {
     expect(formatEventDays('not-a-date', 'not-a-date', LNG_PL, NOW)).toBe('')
+  })
+})
+
+describe('excerpt', () => {
+  it('collapses newlines and runs of spaces into single spaces', () => {
+    expect(excerpt('Wydarzenie bezpłatne.\n\nKreatywna   Środa')).toBe('Wydarzenie bezpłatne. Kreatywna Środa')
+  })
+
+  it('returns an empty string for null', () => {
+    expect(excerpt(null)).toBe('')
+  })
+
+  it('leaves text at or under the limit untouched', () => {
+    const text = 'a'.repeat(OG_DESCRIPTION_CHARS)
+    expect(excerpt(text)).toBe(text)
+  })
+
+  it('cuts on a word boundary and marks the cut', () => {
+    const text = `${'ab '.repeat(120)}end`
+    const out = excerpt(text, 20)
+    expect(out).toBe('ab ab ab ab ab ab…')
+    expect(out.length).toBeLessThanOrEqual(21)
+  })
+
+  it('cuts hard when backing off to a space would eat most of the excerpt', () => {
+    // One long unbroken token: the only space sits at index 2, far below the
+    // 60% floor, so a word-boundary cut would leave almost nothing.
+    expect(excerpt(`ab ${'x'.repeat(100)}`, 20)).toBe('ab xxxxxxxxxxxxxxxxx…')
+  })
+
+  it('does not extend past the limit to finish a URL', () => {
+    // Unlike truncateDescription in text.ts, which deliberately does.
+    const out = excerpt(`start https://example.com/${'a'.repeat(200)}`, 30)
+    expect(out.length).toBeLessThanOrEqual(31)
   })
 })

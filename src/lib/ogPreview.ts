@@ -73,3 +73,29 @@ export function formatEventDays(
   if (start.m === end.m) return `${pad(start.d)}–${pad(end.d)}.${pad(start.m)}${tail}`
   return `${pad(start.d)}.${pad(start.m)}–${pad(end.d)}.${pad(end.m)}${tail}`
 }
+
+/** Ile opisu mieści się w podglądzie linku, zanim zetną go same serwisy. */
+export const OG_DESCRIPTION_CHARS = 200
+
+/**
+ * Poniżej tego udziału limitu cofanie się do spacji kosztuje za dużo — wtedy
+ * tniemy twardo. Ten sam próg co w `text.ts`, dla spójności podglądów.
+ */
+const WORD_BOUNDARY_MIN_RATIO = 0.6
+
+/**
+ * Opis zwinięty do jednej linii i przycięty do limitu.
+ *
+ * Świadomie nie używamy `truncateDescription` z `text.ts`: tamto przedłuża
+ * podgląd do końca adresu przeciętego granicą, co jest słuszne w karcie
+ * wydarzenia, ale tutaj 120-znakowy URL rozsadziłby cały opis.
+ */
+export function excerpt(text: string | null | undefined, limit = OG_DESCRIPTION_CHARS): string {
+  const flat = (text ?? '').replace(/\s+/g, ' ').trim()
+  if (flat.length <= limit) return flat
+
+  const cut = flat.slice(0, limit)
+  const lastSpace = cut.lastIndexOf(' ')
+  const body = lastSpace >= limit * WORD_BOUNDARY_MIN_RATIO ? cut.slice(0, lastSpace) : cut
+  return `${body.trimEnd()}…`
+}
