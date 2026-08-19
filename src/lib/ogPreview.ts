@@ -118,3 +118,53 @@ export function excerpt(text: string | null | undefined, limit = OG_DESCRIPTION_
     : dropTrailingHighSurrogate(cut)
   return `${body.trimEnd()}…`
 }
+
+/**
+ * Tylko te pola wydarzenia, których dotyka podgląd.
+ *
+ * Celowo nie `EventRow` z `types.ts`: ten moduł ma nie mieć importów, a węższy
+ * kształt pozwala testom budować przypadki bez wypełniania kolumn, które nic
+ * tu nie zmieniają.
+ */
+export type OgEvent = {
+  title: string
+  description: string | null
+  place_name: string | null
+  lng: number
+  start_time: string
+  end_time: string
+  photos: string[] | null
+}
+
+export type OgPreview = {
+  title: string
+  description: string
+  /** `null` znaczy: zostaw statyczny baner i jego deskryptory w spokoju. */
+  image: string | null
+  url: string
+}
+
+/** Nic poza absolutnym http(s) nie ma prawa wejść do `og:image`. */
+const ABSOLUTE_HTTP = /^https?:\/\//i
+
+function firstUsablePhoto(photos: string[] | null): string | null {
+  for (const photo of photos ?? []) {
+    const url = (photo ?? '').trim()
+    if (ABSOLUTE_HTTP.test(url)) return url
+  }
+  return null
+}
+
+export function buildOgPreview(event: OgEvent, url: string, now: Date = new Date()): OgPreview {
+  const head = [(event.place_name ?? '').trim(), formatEventDays(event.start_time, event.end_time, event.lng, now)]
+    .filter(Boolean)
+    .join(' · ')
+  const body = excerpt(event.description)
+
+  return {
+    title: event.title.trim() || 'meuwe',
+    description: [head, body].filter(Boolean).join(' — '),
+    image: firstUsablePhoto(event.photos),
+    url,
+  }
+}

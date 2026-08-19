@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatEventDays, excerpt, OG_DESCRIPTION_CHARS } from './ogPreview'
+import { formatEventDays, excerpt, OG_DESCRIPTION_CHARS, buildOgPreview, type OgEvent } from './ogPreview'
 
 // Boguchwała, lng ~21.94 → round(21.94/15) = +1h. A 14:00Z start is 15:00
 // local by that estimate, comfortably inside 19 August either way.
@@ -126,5 +126,58 @@ describe('excerpt', () => {
   it('collapses a real scraped description as the app will encounter it', () => {
     const text = 'Wydarzenie bezpłatne.\n\nKreatywna Środa z MCK - LETNIA DYSKOTEKA DLA DZIECI Wakacje trwają, więc czas na kolejną Kreatywną Środę z MCK! Tym razem zapraszamy wszystkie dzieci na Letnią Dyskotekę – będzie muzyka, taniec, mnóstwo ruchu i świetnej zabawy\n\nLink do wydarzenia: https://kultura.boguchwala.pl/3-miejskie-centrum-kultury-w-boguchwale/15-aktualnosci/1423-kreatywna-sroda-dyskoteka-dla-dzieci.html'
     expect(excerpt(text)).toBe('Wydarzenie bezpłatne. Kreatywna Środa z MCK - LETNIA DYSKOTEKA DLA DZIECI Wakacje trwają, więc czas na kolejną Kreatywną Środę z MCK! Tym razem zapraszamy wszystkie dzieci na Letnią Dyskotekę –…')
+  })
+})
+
+const BASE: OgEvent = {
+  title: 'Kreatywna Środa-DYSKOTEKA DLA DZIECI',
+  description: 'Wydarzenie bezpłatne.\n\nKreatywna Środa z MCK.',
+  place_name: 'MCK Boguchwala, Boguchwala',
+  lng: 21.94,
+  start_time: '2026-08-19T14:00:00Z',
+  end_time: '2026-08-19T21:59:00Z',
+  photos: ['https://example.com/a.jpg'],
+}
+const URL_ = 'https://meuwe.eu/?event=380a9df3-d10a-4e17-b307-427bb9828a0c'
+const NOW_ = new Date('2026-08-19T10:00:00Z')
+
+describe('buildOgPreview', () => {
+  it('uses the event title and the first photo', () => {
+    const og = buildOgPreview(BASE, URL_, NOW_)
+    expect(og.title).toBe('Kreatywna Środa-DYSKOTEKA DLA DZIECI')
+    expect(og.image).toBe('https://example.com/a.jpg')
+    expect(og.url).toBe(URL_)
+  })
+
+  it('joins place, day and description', () => {
+    expect(buildOgPreview(BASE, URL_, NOW_).description)
+      .toBe('MCK Boguchwala, Boguchwala · 19.08 — Wydarzenie bezpłatne. Kreatywna Środa z MCK.')
+  })
+
+  it('drops the place when the event has none', () => {
+    expect(buildOgPreview({ ...BASE, place_name: null }, URL_, NOW_).description)
+      .toBe('19.08 — Wydarzenie bezpłatne. Kreatywna Środa z MCK.')
+  })
+
+  it('drops the dash when the event has no description', () => {
+    expect(buildOgPreview({ ...BASE, description: null }, URL_, NOW_).description)
+      .toBe('MCK Boguchwala, Boguchwala · 19.08')
+  })
+
+  it('reports no image when photos is null, so the static banner survives', () => {
+    expect(buildOgPreview({ ...BASE, photos: null }, URL_, NOW_).image).toBeNull()
+  })
+
+  it('reports no image when photos is empty', () => {
+    expect(buildOgPreview({ ...BASE, photos: [] }, URL_, NOW_).image).toBeNull()
+  })
+
+  it('skips photo entries that are not absolute http(s) URLs', () => {
+    expect(buildOgPreview({ ...BASE, photos: ['javascript:alert(1)', 'https://ok.example/b.jpg'] }, URL_, NOW_).image)
+      .toBe('https://ok.example/b.jpg')
+  })
+
+  it('falls back to the site name when the title is blank', () => {
+    expect(buildOgPreview({ ...BASE, title: '   ' }, URL_, NOW_).title).toBe('meuwe')
   })
 })
