@@ -103,6 +103,7 @@ export default function App() {
   // calculation away a second after it was made.
   const startupZoomRef = useRef<number | null>(null)
   const flyToFnRef = useRef<((lat: number, lng: number) => void) | null>(null)
+  const showDayFnRef = useRef<((d: Date) => void) | null>(null)
   // Captured at render time, before the mount effect strips ?event= from the URL.
   const deepLinkIdRef = useRef<string | null>(
     new URLSearchParams(window.location.search).get('event')
@@ -333,8 +334,12 @@ export default function App() {
       })
     }
     const tryFly = () => {
-      if (flyToFnRef.current) flyToFnRef.current(ev.lat, ev.lng)
-      else setTimeout(tryFly, 150)
+      if (flyToFnRef.current) {
+        flyToFnRef.current(ev.lat, ev.lng)
+        // Mapa dostaje nie tylko miejsce, ale i dzień wydarzenia — inaczej
+        // pinezka lądowałaby pod osią czasu upierającą się przy „dziś".
+        showDayFnRef.current?.(new Date(ev.start_time))
+      } else setTimeout(tryFly, 150)
     }
     setTimeout(tryFly, 100)
   }, [screen, deepLinkEvent]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1009,6 +1014,7 @@ export default function App() {
         onMapClick={() => { if (!isOverlay) { mapChain.close(); setCreateOpen(false); setProfileOpen(false) } }}
         onRegisterFlyTo={fn => { flyToFnRef.current = fn }}
         onRegisterFlyToSpot={fn => { flySpotRef.current = fn }}
+        onRegisterShowDay={fn => { showDayFnRef.current = fn }}
         onPoolChange={(events, key) => { setMapPool(events); setMapPoolKey(key) }}
         onOpenProfile={() => {
           if (!isOverlay) {

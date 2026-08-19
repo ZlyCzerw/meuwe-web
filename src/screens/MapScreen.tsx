@@ -25,21 +25,12 @@ import { clusterPublicEvents } from '../lib/eventClusters'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
+import { DAYS_COUNT, TODAY_IDX, idxToOffset, idxToDate, dateToIdx } from '../lib/timeline'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
 
-const DAYS_COUNT = 15         // yesterday + today + 13 future days (2 weeks forward)
-const TODAY_IDX  = 1          // index 1 = today
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
-
-function idxToOffset(idx: number) { return idx - TODAY_IDX }  // 0→-1, 1→0, 2→+1 …
-
-function idxToDate(idx: number): Date {
-  const d = new Date()
-  d.setDate(d.getDate() + idxToOffset(idx))
-  return d
-}
 
 function MapScreen({
   session,
@@ -60,6 +51,7 @@ function MapScreen({
   onMapClick,
   onRegisterFlyTo,
   onRegisterFlyToSpot,
+  onRegisterShowDay,
   onPoolChange,
 }: {
   session: Session | null
@@ -80,6 +72,12 @@ function MapScreen({
   onMapClick?: () => void
   onRegisterFlyTo?: (fn: (lat: number, lng: number) => void) => void
   onRegisterFlyToSpot?: (fn: (lat: number, lng: number, zoom: number) => void) => void
+  /**
+   * Przestawienie osi dni na konkretną datę. Wydarzenie otwarte z linku żyje
+   * w swoim dniu, a nie w dzisiejszym — bez tego mapa mówiłaby „dziś" pod
+   * kartą sierpniowego wydarzenia.
+   */
+  onRegisterShowDay?: (fn: (d: Date) => void) => void
   /**
    * Wydarzenia, po których może chodzić sznurek, razem z podpisem tego, z czego
    * są zbudowane. Zmiana podpisu — inny filtr, inny dzień — resetuje sznurek.
@@ -280,6 +278,7 @@ function MapScreen({
     onRegisterFlyToSpot?.((lat, lng, zoom) => {
       flyAdopting(map, lat, lng, Math.min(zoom, 19), 0.7)
     })
+    onRegisterShowDay?.(d => setDayIdx(dateToIdx(d)))
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
