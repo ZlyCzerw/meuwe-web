@@ -34,8 +34,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 /** Deskryptory statycznego banera. Zostają, dopóki baner zostaje. */
 const IMAGE_DESCRIPTORS = ['og:image:width', 'og:image:height', 'og:image:type']
 
+// `next()` to udokumentowane API trybu katalogu `functions/` i to ono
+// przechodzi przez pipeline assetów, który dokłada `public/_headers`
+// (CSP, X-Frame-Options, itd.) do KAŻDEJ odpowiedzi, także tej strony. `env.ASSETS`
+// jest udokumentowane dla trybu `_worker.js`, a to, czy Cloudflare je tu w
+// ogóle wstrzykuje, jest tylko przypuszczeniem — stąd jako fallback, nie
+// jako pierwszy wybór.
 const servePage = (ctx: Ctx): Promise<Response> =>
-  ctx.env.ASSETS ? ctx.env.ASSETS.fetch(ctx.request) : ctx.next()
+  ctx.next ? ctx.next() : (ctx.env.ASSETS?.fetch(ctx.request) ?? ctx.next())
 
 /**
  * `get_event_by_id` to SECURITY DEFINER nadany roli `anon` — sam klucz
@@ -53,6 +59,11 @@ async function fetchEvent(env: Env, id: string): Promise<OgEvent | null> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ p_event_id: id }),
+      // Bez limitu zawieszone Supabase zawiesza każdy udostępniony link aż do
+      // 524 Cloudflare. `AbortSignal.timeout` to wbudowane w Workers, nie
+      // zależność — a `catch` niżej już zamienia przerwanie w `null`, czyli
+      // degradację do statycznego banera.
+      signal: AbortSignal.timeout(2000),
     })
     if (!res.ok) return null
     const rows = (await res.json()) as OgEvent[]
@@ -72,9 +83,22 @@ function rewrite(page: Response, og: OgPreview): Response {
     // zostawienie tu gołego `https://meuwe.eu/` zapisałoby pierwsze
     // zescrapowane wydarzenie pod adresem serwisu i podałoby ten sam podgląd
     // dla wszystkich pozostałych linków.
+    //
+    // `<link rel="canonical">` celowo NIE idzie tym samym torem i zostaje
+    // przy `https://meuwe.eu/` — to decyzja specyfikacji, nie przeoczenie.
+    // LinkedIn historycznie potrafił deduplikować po canonicalu zamiast po
+    // `og:url`, ale przepisanie go na adres wydarzenia zaprosiłoby Google do
+    // indeksowania tysięcy efemerycznych URL-i wydarzeń. `og:url` wystarcza
+    // nowoczesnym konsumentom; LinkedIn jest tu świadomym kompromisem.
     'og:url': og.url,
   }
   const byName: Record<string, string> = {
+    // Gdy `og.description` jest puste (dni, miejsce i opis wydarzenia
+    // wszystkie brakujące — rzadkie, ale możliwe), `if (value)` niżej po
+    // prostu zostawia statyczny angielski opis marketingowy z HTML-a. To
+    // celowe, nie przeoczenie: pusty `<meta name="description">` zaprasza
+    // scrapery do zgadywania z treści strony, co dałoby gorszy podgląd niż
+    // ogólny opis serwisu.
     description: og.description,
     'twitter:title': og.title,
     'twitter:description': og.description,
@@ -82,12 +106,29 @@ function rewrite(page: Response, og: OgPreview): Response {
 
   if (og.image) {
     byProperty['og:image'] = og.image
-    byProperty['og:image:secure_url'] = og.image
     byName['twitter:image'] = og.image
   }
+  // `og:image:secure_url` deklaruje konsumentom "to jest wersja HTTPS" —
+  // `imageSecure` jest `null` zarówno gdy nie ma zdjęcia, jak i gdy zdjęcie
+  // jest tylko `http://`; oba przypadki mają usunąć tag, nie wysłać do niego
+  // pusty/mieszany adres.
+  if (og.imageSecure) {
+    byProperty['og:image:secure_url'] = og.imageSecure
+  }
+
+  // Odpowiedź z `next()`/`ASSETS.fetch()` niesie `etag` i `last-modified`
+  // niezmienionego `index.html`. Ten walidator opisuje plik, nie wydarzenie —
+  // więc po edycji tytułu przez organizatora odświeżający klient mógłby
+  // dostać 304 i zatrzymać stary podgląd aż do następnego deployu. Nagłówki
+  // na odpowiedzi z fetcha są w Workers niemutowalne, stąd kopia przez
+  // `new Response`, zanim cokolwiek na niej zmienimy. To usunięcie
+  // walidatora, który przestał opisywać treść — nie dodanie cache'owania.
+  const fresh = new Response(page.body, page)
+  fresh.headers.delete('etag')
+  fresh.headers.delete('last-modified')
 
   return new HTMLRewriter()
-    .on('title', {
+    .on('head title', {
       element(el) {
         el.setInnerContent(og.title)
       },
@@ -103,6 +144,10 @@ function rewrite(page: Response, og: OgPreview): Response {
             el.remove()
             return
           }
+          if (property === 'og:image:secure_url' && og.image && !og.imageSecure) {
+            el.remove()
+            return
+          }
           const value = byProperty[property]
           if (value) el.setAttribute('content', value)
           return
@@ -113,7 +158,7 @@ function rewrite(page: Response, og: OgPreview): Response {
         if (value) el.setAttribute('content', value)
       },
     })
-    .transform(page)
+    .transform(fresh)
 }
 
 export const onRequestGet = async (ctx: Ctx): Promise<Response> => {
@@ -121,10 +166,21 @@ export const onRequestGet = async (ctx: Ctx): Promise<Response> => {
   const id = url.searchParams.get('event') ?? ''
   if (!UUID.test(id)) return servePage(ctx)
 
-  // Równolegle, żeby opóźnienie Supabase schowało się za pobraniem strony,
-  // zamiast doklejać się do niego.
+  // Pobranie strony to pojedyncze milisekundy, Supabase to 100–500ms — więc
+  // ten `Promise.all` nie chowa jednego opóźnienia za drugim, całość i tak
+  // trwa mniej więcej tyle, ile sam Supabase. To, co daje, to unikanie sumy:
+  // bez równoległości czekalibyśmy na obie operacje po kolei.
   const [page, event] = await Promise.all([servePage(ctx), fetchEvent(ctx.env, id)])
   if (!event) return page
 
-  return rewrite(page, buildOgPreview(event, `${url.origin}/?event=${id}`))
+  // `fetchEvent` ma swój try/catch właśnie po to, żeby strona główna nie
+  // mogła się wywrócić przez podgląd linku. Ta sama zasada musi obowiązywać
+  // tutaj — `buildOgPreview`/`rewrite` dostają dane wprost z PostgREST, a
+  // nieoczekiwany ich kształt (np. `photos` nie będące tablicą) nie może
+  // zamienić strony w Cloudflare 500.
+  try {
+    return rewrite(page, buildOgPreview(event, `${url.origin}/?event=${id.toLowerCase()}`))
+  } catch {
+    return page
+  }
 }

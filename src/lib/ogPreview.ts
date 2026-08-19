@@ -141,6 +141,14 @@ export type OgPreview = {
   description: string
   /** `null` znaczy: zostaw statyczny baner i jego deskryptory w spokoju. */
   image: string | null
+  /**
+   * To samo zdjęcie co `image`, ale tylko gdy jest `https://` — `og:image:secure_url`
+   * to dla Facebooka i LinkedIn deklaracja "to jest wersja HTTPS", więc wsadzenie
+   * tam adresu `http://` to mixed content i ryzyko, że obrazek w ogóle odrzucą.
+   * `image` samo zostaje z `http://`, bo część zeskrapowanych stron gminnych nie
+   * ma innej wersji, a `og:image` je toleruje.
+   */
+  imageSecure: string | null
   url: string
 }
 
@@ -180,6 +188,8 @@ export function buildOgPreview(event: OgEvent, url: string, now: Date = new Date
     .join(' · ')
   const body = excerpt(event.description)
 
+  const image = firstUsablePhoto(event.photos)
+
   return {
     // `event.title` jest `NOT NULL` w bazie, ale bez CHECK-a na niepustość, a
     // scraper nie przechodzi przez klientowy guard z `CreateSheet.tsx` — więc
@@ -187,7 +197,8 @@ export function buildOgPreview(event: OgEvent, url: string, now: Date = new Date
     // tłumaczenia, a moduł i tak nie może zaimportować `t`.
     title: event.title.replace(/\s+/g, ' ').trim() || 'meuwe',
     description: [head, body].filter(Boolean).join(' — '),
-    image: firstUsablePhoto(event.photos),
+    image,
+    imageSecure: image != null && image.startsWith('https://') ? image : null,
     url,
   }
 }

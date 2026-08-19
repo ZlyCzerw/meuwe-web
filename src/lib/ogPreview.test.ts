@@ -196,6 +196,15 @@ describe('buildOgPreview', () => {
       .toBe('http://example.com/a.jpg')
   })
 
+  it('reports the https photo as imageSecure too', () => {
+    expect(buildOgPreview(BASE, URL_, NOW_).imageSecure).toBe('https://example.com/a.jpg')
+  })
+
+  it('reports no imageSecure for a plain http photo, since it would be mixed content', () => {
+    expect(buildOgPreview({ ...BASE, photos: ['http://example.com/a.jpg'] }, URL_, NOW_).imageSecure)
+      .toBeNull()
+  })
+
   it('falls back to the site name when the title is blank', () => {
     expect(buildOgPreview({ ...BASE, title: '   ' }, URL_, NOW_).title).toBe('meuwe')
   })
