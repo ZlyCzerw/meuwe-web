@@ -32,6 +32,14 @@ function localParts(iso: string, lng: number): { y: number; m: number; d: number
 const pad = (n: number): string => String(n).padStart(2, '0')
 
 /**
+ * Rok w ogonku tylko wtedy, gdy różni się od bieżącego — porównanie po UTC,
+ * spójnie z resztą modułu, która nigdzie nie sięga po strefę hosta.
+ */
+function yearSuffix(year: number, now: Date): string {
+  return year === now.getUTCFullYear() ? '' : `.${year}`
+}
+
+/**
  * Dzień albo zakres dni, zapisem liczbowym — celowo bez nazw miesięcy i bez
  * godzin. Liczby nie wymagają tłumaczenia, a godziny wymagałyby strefy,
  * której nie mamy.
@@ -44,19 +52,24 @@ export function formatEventDays(
 ): string {
   const start = localParts(startIso, lng)
   if (!start) return ''
-  const end = localParts(endIso, lng) ?? start
+
+  // Zeskrobane wydarzenia czasem mają zepsuty koniec wcześniejszy niż
+  // początek. To zła dana, nie prawdziwy zakres — ufamy tylko początkowi,
+  // który jest wiarygodnym końcem tej pary, i pokazujemy pojedynczy dzień.
+  const endMs = Date.parse(endIso)
+  const backwards = Number.isFinite(endMs) && endMs < Date.parse(startIso)
+  const end = backwards ? start : (localParts(endIso, lng) ?? start)
 
   const sameDay = start.y === end.y && start.m === end.m && start.d === end.d
   if (sameDay) {
-    const tail = start.y === now.getFullYear() ? '' : `.${start.y}`
-    return `${pad(start.d)}.${pad(start.m)}${tail}`
+    return `${pad(start.d)}.${pad(start.m)}${yearSuffix(start.y, now)}`
   }
 
   if (start.y !== end.y) {
     return `${pad(start.d)}.${pad(start.m)}.${start.y}–${pad(end.d)}.${pad(end.m)}.${end.y}`
   }
 
-  const tail = start.y === now.getFullYear() ? '' : `.${start.y}`
+  const tail = yearSuffix(start.y, now)
   if (start.m === end.m) return `${pad(start.d)}–${pad(end.d)}.${pad(start.m)}${tail}`
   return `${pad(start.d)}.${pad(start.m)}–${pad(end.d)}.${pad(end.m)}${tail}`
 }
