@@ -22,6 +22,7 @@ import TagPickerModal from '../components/TagPickerModal'
 import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 import EventPickerModal from '../components/EventPickerModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
+import { overlapChainInView } from '../lib/pinOverlap'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
@@ -437,6 +438,55 @@ function MapScreen({
     setNotifyDone(true)
   }
 
+  /**
+   * A tap on a pin buried under its neighbours spreads them out instead of
+   * opening anything: centre on the tapped pin, fly to the closest zoom that
+   * still frames its whole overlap chain, and let the user tap again once the
+   * pins have separated.
+   *
+   * `open` is the fall-through for every case where zooming would not help -
+   * nothing overlaps, or the map is already as close as it goes. Without it a
+   * pin that no zoom can separate (two private events at one address share
+   * exact coordinates, and private events never go through clusterPublicEvents)
+   * would be permanently unopenable.
+   *
+   * The zoom comes from getBoundsZoom, which frames the chain rather than
+   * measuring the gaps inside it - see the spec for why that trade was taken.
+   */
+  function spreadOrOpen(
+    id: string,
+    all: Record<string, { lat: number; lng: number }>,
+    open: () => void,
+  ) {
+    const map = leafRef.current
+    if (!map) { open(); return }
+    const ids = Object.keys(all)
+    const clickedIdx = ids.indexOf(id)
+    if (clickedIdx < 0) { open(); return }
+
+    const points = ids.map(k => {
+      const p = map.latLngToContainerPoint([all[k].lat, all[k].lng])
+      return { x: p.x, y: p.y }
+    })
+    const size = map.getSize()
+    const chain = overlapChainInView(points, clickedIdx, { x: size.x, y: size.y })
+    if (chain.length < 2) { open(); return }
+
+    // Mirrored about the tapped pin: the map centres on it, so the frame has to
+    // reach as far on the empty side as on the crowded one.
+    const origin = all[id]
+    const bounds = L.latLngBounds([[origin.lat, origin.lng]])
+    chain.forEach(i => {
+      const q = all[ids[i]]
+      bounds.extend([q.lat, q.lng])
+      bounds.extend([2 * origin.lat - q.lat, 2 * origin.lng - q.lng])
+    })
+
+    const target = map.getBoundsZoom(bounds, false, L.point(40, 40))
+    if (target <= map.getZoom()) { open(); return }
+    flyAdopting(map, origin.lat, origin.lng, target, 0.7)
+  }
+
   // Pins — update on events change. Private events render individually; public
   // events are grouped by 3x3 m zone: singletons open the half-sheet directly,
   // clusters (>= 2) show a count badge and open the event picker.
@@ -463,7 +513,7 @@ function MapScreen({
         sig: `private|${live}|${ev.lat}|${ev.lng}`,
         html: privateHTML(live),
         lat: ev.lat, lng: ev.lng, zIndexOffset: 0,
-        onClick: () => onOpenEvent(ev),
+        onClick: () => spreadOrOpen(ev.id, desired, () => onOpenEvent(ev)),
       }
     })
 
@@ -483,10 +533,10 @@ function MapScreen({
           ? clusterHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, group.length)
           : pinHTML(rep.category, ci, rep.status, rep.start_time, rep.end_time, scale),
         lat: rep.lat, lng: rep.lng, zIndexOffset: interactions,
-        onClick: () => {
+        onClick: () => spreadOrOpen(rep.id, desired, () => {
           if (group.length >= 2) setPickerEvents(group)
           else onOpenEvent(rep)
-        },
+        }),
       }
     })
 
