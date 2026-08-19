@@ -13,8 +13,11 @@ export const MAX_EDGE = 1600
 /** Próg, powyżej którego WhatsApp przestaje pokazywać obrazek. */
 export const TARGET_BYTES = 300 * 1024
 
-const FIRST_QUALITY = 0.82
-const RETRY_QUALITY = 0.65
+// Drabinka jakości JPEG. Zmierzone na libjpeg przy 1600x1200: zwykłe zdjęcie
+// z eventu schodzi 317 kB -> 179 kB już na drugim kroku, ale wieczorne ujęcie
+// tłumu czy liści (szum matrycy) potrafi zejść tylko 539 kB -> 305 kB po
+// jednym docięciu — wciąż nad progiem WhatsAppa. Stąd trzy kroki, nie jeden.
+const QUALITY_STEPS = [0.82, 0.65, 0.5] as const
 
 /** Wymiary zmieszczone w kwadracie `maxEdge`, z zachowaniem proporcji. */
 export function fitWithin(
@@ -50,24 +53,42 @@ export async function downscaleImage(file: File): Promise<File> {
 
   try {
     // `imageOrientation` musi tu być: bez odczytu EXIF-a zdjęcia z telefonu
-    // wgrywałyby się obrócone.
+    // wgrywałyby się obrócone. Dwa milczące przypadki brzegowe, na wszelki
+    // wypadek zapisane: animowany GIF spłaszcza się do pierwszej klatki, a
+    // HEIC dekoduje się tylko w Safari — gdzie indziej `createImageBitmap`
+    // odrzuca obietnicę i leci `catch` niżej, więc oryginał wychodzi
+    // nieskompresowany.
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    const { width, height } = fitWithin(bitmap.width, bitmap.height)
+    try {
+      const { width, height } = fitWithin(bitmap.width, bitmap.height)
 
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const ctx = canvas.getContext('2d')
-    if (!ctx) { bitmap.close(); return file }
-    ctx.drawImage(bitmap, 0, 0, width, height)
-    bitmap.close()
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return file
 
-    let blob = await encode(canvas, FIRST_QUALITY)
-    if (blob && blob.size > TARGET_BYTES) blob = (await encode(canvas, RETRY_QUALITY)) ?? blob
-    if (!blob || blob.size >= file.size) return file
+      // JPEG nie ma kanału alfa. Bez białego tła przezroczyste piksele
+      // (plakat czy ulotka wgrywana jako PNG z przezroczystością) wychodzą
+      // z canvasu jako czarne — sprawdzone w prawdziwej przeglądarce.
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, width, height)
+      ctx.drawImage(bitmap, 0, 0, width, height)
 
-    const name = file.name.replace(/\.[^.]+$/, '') || 'photo'
-    return new File([blob], `${name}.jpg`, { type: 'image/jpeg' })
+      let best: Blob | null = null
+      for (const quality of QUALITY_STEPS) {
+        const blob = await encode(canvas, quality)
+        if (!blob) continue
+        if (!best || blob.size < best.size) best = blob
+        if (blob.size <= TARGET_BYTES) break
+      }
+      if (!best || best.size >= file.size) return file
+
+      const name = file.name.replace(/\.[^.]+$/, '') || 'photo'
+      return new File([best], `${name}.jpg`, { type: 'image/jpeg' })
+    } finally {
+      bitmap.close()
+    }
   } catch {
     return file
   }
