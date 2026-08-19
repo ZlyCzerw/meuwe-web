@@ -105,7 +105,7 @@ burn the free 100k/day allowance many times over for identical behaviour.
 | `og:title`, `twitter:title` | event title |
 | `og:description`, `twitter:description`, `meta[name=description]` | `<place> - <date> - <description excerpt>` |
 | `og:image`, `og:image:secure_url`, `twitter:image` | `photos[0]` |
-| `og:url` | `https://meuwe.eu/?event=<id>` |
+| `og:url` | `<request origin>/?event=<id>` |
 | `og:image:width`, `og:image:height`, `og:image:type` | **removed** |
 
 Two of these are non-obvious and the feature is broken without them:
@@ -114,6 +114,17 @@ Two of these are non-obvious and the feature is broken without them:
 today (`index.html`). Facebook deduplicates previews by `og:url`, so leaving it
 would file the first scraped event's preview under `meuwe.eu/` and serve that
 same preview for every subsequent event link.
+
+**`og:url` is built from the request's own origin, not a hardcoded
+`meuwe.eu`.** `functions/index.ts` reads `url.origin` off the incoming request,
+so a crawler hitting a `*.pages.dev` preview deployment gets an `og:url`
+pointing at that preview host, not at production. This is deliberate, not an
+oversight the spec failed to catch: if the domain were hardcoded, scraping a
+preview deployment's `?event=` link would still write into Facebook's cache
+under the production `meuwe.eu` URL, letting a preview build - possibly
+mid-review, possibly broken - poison the cached preview that real users see
+for the real link. Keying `og:url` to the request's actual origin keeps each
+deployment's cache entries separate.
 
 **The three image descriptors must go.** They are declared `1200`/`630`/
 `image/png` for the static banner. An event photo has neither those dimensions
@@ -161,10 +172,17 @@ preview on its own side regardless.
 
 `src/lib/imageResize.ts`: `createImageBitmap(file, { imageOrientation: 'from-image' })`
 - EXIF orientation must be honoured or phone photos upload rotated - then canvas
-to at most 1600 px on the long edge, JPEG q0.82, retried once at q0.65 if the
-result exceeds 300 kB and accepted either way after that. Wired into both photo paths in `CreateSheet.tsx`
-(`takePhotoNative` and the file picker). The existing 6 MB guard stays as an
-input check.
+to at most 1600 px on the long edge, JPEG quality stepped down a ladder -
+0.82, then 0.65, then 0.5 - stopping as soon as a step lands under 300 kB and
+otherwise keeping the smallest result. One retry was tried first and measured
+short: a busy or low-light photo (sensor noise) could shrink from 539 kB to
+only 305 kB on a single q0.65 retry, still over WhatsApp's ceiling. The third
+step exists because that measurement did.
+
+Wired into `db.uploadEventPhoto` (`src/lib/supabase.ts`) rather than into
+`CreateSheet.tsx`: that method is the only place a photo reaches storage, so one
+call site covers the camera path and both file inputs, and any future caller.
+The existing 6 MB guard in `CreateSheet.tsx` stays as an input check.
 
 Applies to new uploads only. Already-stored photos are left alone.
 
