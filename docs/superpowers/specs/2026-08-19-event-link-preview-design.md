@@ -74,11 +74,11 @@ the function file is a thin shell.
 
 | File | Role | Status |
 |---|---|---|
-| `src/lib/ogPreview.ts` | `buildOgPreview(event, url)` -> `{ title, description, image }`. Pure, no I/O. | new |
+| `src/lib/ogPreview.ts` | `buildOgPreview(event, url, now?)` -> `{ title, description, image, imageSecure, url }`. Pure, no I/O. | new |
 | `src/lib/ogPreview.test.ts` | Unit tests for all of the above | new |
 | `functions/index.ts` | Routing, Supabase fetch, HTMLRewriter. Hand-rolled types, following `geo.ts`. | new |
 | `src/lib/imageResize.ts` (+ test) | Downscale a photo before upload | new |
-| `src/screens/CreateSheet.tsx` | Call the resizer on both photo paths | modified |
+| `src/lib/supabase.ts` | Call the resizer in `uploadEventPhoto`, the single upload choke point | modified |
 
 `index.html` and `scripts/seo-content.mjs` are **not** touched. HTMLRewriter acts
 on the tags already there; no source markers are needed.
@@ -103,11 +103,11 @@ burn the free 100k/day allowance many times over for identical behaviour.
 |---|---|
 | `<title>` | event title |
 | `og:title`, `twitter:title` | event title |
-| `og:description`, `twitter:description`, `meta[name=description]` | `<place> - <date> - <description excerpt>` |
+| `og:description`, `twitter:description`, `meta[name=description]` | `<place> · <date> — <description excerpt>` |
 | `og:image`, `twitter:image` | `photos[0]` |
-| `og:image:secure_url` | `photos[0]` when it is https, otherwise **removed** |
+| `og:image:secure_url` | `photos[0]` when it is https; **removed** when the replacing photo is http |
 | `og:url` | `<request origin>/?event=<id>` |
-| `og:image:width`, `og:image:height`, `og:image:type` | **removed** |
+| `og:image:width`, `og:image:height`, `og:image:type` | **removed**, but only when a photo actually replaces the banner |
 
 Two of these are non-obvious and the feature is broken without them:
 
@@ -153,6 +153,25 @@ The existing `truncateDescription` (`src/lib/text.ts`) is deliberately **not**
 reused. It extends the preview to the end of any URL straddling the limit -
 correct inside an event card, wrong here, where a 120-character address would
 blow out the description.
+
+Four further rules came out of review and are pinned by tests:
+
+- `place_name` is capped at 80 characters (`OG_PLACE_CHARS`) before it enters the
+  head. No migration constrains that column's length and only the scraper and
+  geocoder write it, so without a cap one bad row would push the whole
+  description past the limit and hand the cut back to the platform.
+- A blank title falls back to the literal `meuwe`. `events.title` is `NOT NULL`
+  but has no non-empty CHECK, and the scraper does not pass through the
+  client-side guard in `CreateSheet.tsx`, so blank titles are reachable. It is a
+  brand name rather than translatable copy, which is why it does not go through
+  i18n - and this module cannot import `t` in any case.
+- An `end_time` earlier than `start_time` collapses to the single-day format.
+  That is bad data, not a real range, and a preview reading `20-19.08` is worse
+  than one reading `20.08`.
+- The hard-cut branch drops a trailing lone high surrogate. Cutting UTF-16 units
+  can sever an emoji, and the orphan encodes to a visible replacement character.
+  The word-boundary branch is immune on its own, since it slices back past the
+  break.
 
 Date formatting uses a calendar day derived from an offset approximated from the
 event's `lng` (`round(lng / 15)` hours). Hour-level precision is not needed to
