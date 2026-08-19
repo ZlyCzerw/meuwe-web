@@ -20,7 +20,6 @@ interface Env {
   /** Ustawiane w Cloudflare Pages → Settings → Environment variables. */
   SUPABASE_URL?: string
   SUPABASE_ANON_KEY?: string
-  ASSETS?: { fetch: (request: Request) => Promise<Response> }
 }
 
 interface Ctx {
@@ -34,14 +33,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 /** Deskryptory statycznego banera. Zostają, dopóki baner zostaje. */
 const IMAGE_DESCRIPTORS = ['og:image:width', 'og:image:height', 'og:image:type']
 
-// `next()` to udokumentowane API trybu katalogu `functions/` i to ono
-// przechodzi przez pipeline assetów, który dokłada `public/_headers`
-// (CSP, X-Frame-Options, itd.) do KAŻDEJ odpowiedzi, także tej strony. `env.ASSETS`
-// jest udokumentowane dla trybu `_worker.js`, a to, czy Cloudflare je tu w
-// ogóle wstrzykuje, jest tylko przypuszczeniem — stąd jako fallback, nie
-// jako pierwszy wybór.
-const servePage = (ctx: Ctx): Promise<Response> =>
-  ctx.next ? ctx.next() : (ctx.env.ASSETS?.fetch(ctx.request) ?? ctx.next())
+// `next()` to udokumentowane, gwarantowane API trybu katalogu `functions/` —
+// dostaje je każdy handler, nie tylko middleware. Z poziomu route handlera
+// przechodzi dalej do serwowania assetów, więc nie ma ryzyka rekursji do tego
+// samego pliku. To ono przechodzi przez pipeline, który dokłada
+// `public/_headers` (CSP, X-Frame-Options, itd.) do KAŻDEJ odpowiedzi, także
+// tej strony — odpowiedź złożona z pominięciem `next()` ryzykowałaby utratę
+// tych nagłówków dla wszystkich odwiedzających, nie tylko udostępnionych linków.
+const servePage = (ctx: Ctx): Promise<Response> => ctx.next()
 
 /**
  * `get_event_by_id` to SECURITY DEFINER nadany roli `anon` — sam klucz
