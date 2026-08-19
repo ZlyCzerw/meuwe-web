@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatEventDays, excerpt, OG_DESCRIPTION_CHARS, buildOgPreview, type OgEvent } from './ogPreview'
+import { formatEventDays, excerpt, OG_DESCRIPTION_CHARS, buildOgPreview, OG_PLACE_CHARS, type OgEvent } from './ogPreview'
 
 // Boguchwała, lng ~21.94 → round(21.94/15) = +1h. A 14:00Z start is 15:00
 // local by that estimate, comfortably inside 19 August either way.
@@ -177,7 +177,45 @@ describe('buildOgPreview', () => {
       .toBe('https://ok.example/b.jpg')
   })
 
+  it('accepts a real production photo URL with encoded spaces and unicode', () => {
+    const photo = 'https://kultura.boguchwala.pl/static/img/k01/MCK%20zdj%C4%99cia%20Edyta/min/Dyskoteka.jpg'
+    expect(buildOgPreview({ ...BASE, photos: [photo] }, URL_, NOW_).image).toBe(photo)
+  })
+
+  it('skips a scheme-only entry in favour of a later real photo', () => {
+    expect(buildOgPreview({ ...BASE, photos: ['https://', 'https://ok.example/b.jpg'] }, URL_, NOW_).image)
+      .toBe('https://ok.example/b.jpg')
+  })
+
+  it('reports no image when the only entry is scheme-only', () => {
+    expect(buildOgPreview({ ...BASE, photos: ['https://'] }, URL_, NOW_).image).toBeNull()
+  })
+
+  it('accepts a plain http photo, since scraped municipal sites are often http-only', () => {
+    expect(buildOgPreview({ ...BASE, photos: ['http://example.com/a.jpg'] }, URL_, NOW_).image)
+      .toBe('http://example.com/a.jpg')
+  })
+
   it('falls back to the site name when the title is blank', () => {
     expect(buildOgPreview({ ...BASE, title: '   ' }, URL_, NOW_).title).toBe('meuwe')
+  })
+
+  it('collapses newlines in the title, same as the description', () => {
+    expect(buildOgPreview({ ...BASE, title: 'Line one\nLine two' }, URL_, NOW_).title)
+      .toBe('Line one Line two')
+  })
+
+  it('caps an oversized place name so it cannot blow the description past the OG bound', () => {
+    const place_name = 'M '.repeat(200).trim() // 399 chars, far past any reasonable head
+    const og = buildOgPreview({ ...BASE, place_name }, URL_, NOW_)
+    // Loose enough not to pin the exact composition, tight enough that an
+    // unbounded place_name (which alone would add 399 chars) fails it.
+    expect(og.description.length).toBeLessThanOrEqual(OG_PLACE_CHARS + OG_DESCRIPTION_CHARS)
+    expect(og.description.startsWith('M M M')).toBe(true)
+  })
+
+  it('yields an empty description when dates, place and description are all missing, as a deliberate choice', () => {
+    expect(buildOgPreview({ ...BASE, start_time: 'not-a-date', end_time: 'not-a-date', place_name: null, description: null }, URL_, NOW_).description)
+      .toBe('')
   })
 })

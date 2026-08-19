@@ -144,8 +144,18 @@ export type OgPreview = {
   url: string
 }
 
-/** Nic poza absolutnym http(s) nie ma prawa wejść do `og:image`. */
-const ABSOLUTE_HTTP = /^https?:\/\//i
+/**
+ * Nic poza absolutnym http(s) z hostem nie ma prawa wejść do `og:image`.
+ * Sam schemat to za mało — `"https://"` też pasowałby do `/^https?:\/\//`
+ * i wygrałby z prawdziwym zdjęciem dalej na liście, bo szukamy pierwszego
+ * dopasowania. Wymuszamy więc niepusty segment hosta po `//`.
+ *
+ * Zwykłe `http://` też przechodzi — celowo: skrapowane strony gminne bywają
+ * tylko-http, a odrzucenie ich oznaczałoby brak zdjęcia w ogóle. Część
+ * konsumentów (np. LinkedIn) może i tak odmówić renderowania takiego obrazka
+ * — to akceptowalny kompromis, nie błąd.
+ */
+const ABSOLUTE_HTTP = /^https?:\/\/[^\s/]+/i
 
 function firstUsablePhoto(photos: string[] | null): string | null {
   for (const photo of photos ?? []) {
@@ -155,14 +165,27 @@ function firstUsablePhoto(photos: string[] | null): string | null {
   return null
 }
 
+/**
+ * `place_name` piszą tylko scraper i geokoder, nigdy UI — żadna migracja nie
+ * ogranicza jego długości. Bez własnego limitu jedno rozjechane pole
+ * wysadziłoby cały `og:description` ponad `OG_DESCRIPTION_CHARS`, oddając
+ * miejsce cięcia platformie zamiast nam.
+ */
+export const OG_PLACE_CHARS = 80
+
 export function buildOgPreview(event: OgEvent, url: string, now: Date = new Date()): OgPreview {
-  const head = [(event.place_name ?? '').trim(), formatEventDays(event.start_time, event.end_time, event.lng, now)]
+  const place = excerpt(event.place_name, OG_PLACE_CHARS)
+  const head = [place, formatEventDays(event.start_time, event.end_time, event.lng, now)]
     .filter(Boolean)
     .join(' · ')
   const body = excerpt(event.description)
 
   return {
-    title: event.title.trim() || 'meuwe',
+    // `event.title` jest `NOT NULL` w bazie, ale bez CHECK-a na niepustość, a
+    // scraper nie przechodzi przez klientowy guard z `CreateSheet.tsx` — więc
+    // pusty tytuł realnie się zdarza. 'meuwe' to nazwa marki, nie tekst do
+    // tłumaczenia, a moduł i tak nie może zaimportować `t`.
+    title: event.title.replace(/\s+/g, ' ').trim() || 'meuwe',
     description: [head, body].filter(Boolean).join(' — '),
     image: firstUsablePhoto(event.photos),
     url,
