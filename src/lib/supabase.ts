@@ -7,6 +7,7 @@ import { markSignedOut, takeSignedOutFlag, googleOAuthOptions } from './authProm
 import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
 import { langFromPath } from './i18n'
+import { downscaleImage } from './imageResize'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -275,11 +276,15 @@ export const db = {
     }
     return events.map((e:any) => ({ ...e, interactionCount: interactionMap[e.id] ?? 0 }))
   },
+  // Jedyne miejsce, w którym zdjęcie trafia do bucketa — aparat i oba
+  // `input[type=file]` schodzą się tutaj. Dlatego zbijanie rozmiaru siedzi w
+  // tym miejscu, a nie w trzech miejscach w `CreateSheet`.
   async uploadEventPhoto(file:File):Promise<string> {
     const sess=await this.getSession(); if(!sess) throw new Error('not authenticated')
-    const ext=file.name.split('.').pop()||'jpg'
+    const photo=await downscaleImage(file)
+    const ext=photo.name.split('.').pop()||'jpg'
     const path=`${sess.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const {error}=await supabase.storage.from('event-photos').upload(path,file,{contentType:file.type})
+    const {error}=await supabase.storage.from('event-photos').upload(path,photo,{contentType:photo.type})
     if(error) throw error
     const {data}=supabase.storage.from('event-photos').getPublicUrl(path)
     return data.publicUrl
