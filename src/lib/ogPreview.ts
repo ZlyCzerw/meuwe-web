@@ -84,11 +84,28 @@ export const OG_DESCRIPTION_CHARS = 200
 const WORD_BOUNDARY_MIN_RATIO = 0.6
 
 /**
+ * `flat.slice(0, limit)` tnie po jednostkach UTF-16, więc granica cięcia może
+ * paść w środku pary surogatów (np. emoji) i zostawić samotny surogat wysoki
+ * na końcu. Taki znak koduje się do nieprawidłowego UTF-8 (`�`) w podglądzie
+ * linku. Gałąź cięcia po spacji jest na to odporna sama z siebie — cofa się
+ * przed spację i odcina sierotę razem z resztą słowa — więc to dotyczy tylko
+ * cięcia twardego.
+ */
+function dropTrailingHighSurrogate(s: string): string {
+  const last = s.charCodeAt(s.length - 1)
+  return last >= 0xd800 && last <= 0xdbff ? s.slice(0, -1) : s
+}
+
+/**
  * Opis zwinięty do jednej linii i przycięty do limitu.
  *
  * Świadomie nie używamy `truncateDescription` z `text.ts`: tamto przedłuża
  * podgląd do końca adresu przeciętego granicą, co jest słuszne w karcie
  * wydarzenia, ale tutaj 120-znakowy URL rozsadziłby cały opis.
+ *
+ * Wynik może mieć `limit + 1` znaków — elipsa dochodzi już po przycięciu do
+ * limitu. To nie błąd: `og:description` to miękki limit, więc jeden znak
+ * ponad niego nie ma znaczenia.
  */
 export function excerpt(text: string | null | undefined, limit = OG_DESCRIPTION_CHARS): string {
   const flat = (text ?? '').replace(/\s+/g, ' ').trim()
@@ -96,6 +113,8 @@ export function excerpt(text: string | null | undefined, limit = OG_DESCRIPTION_
 
   const cut = flat.slice(0, limit)
   const lastSpace = cut.lastIndexOf(' ')
-  const body = lastSpace >= limit * WORD_BOUNDARY_MIN_RATIO ? cut.slice(0, lastSpace) : cut
+  const body = lastSpace >= limit * WORD_BOUNDARY_MIN_RATIO
+    ? cut.slice(0, lastSpace)
+    : dropTrailingHighSurrogate(cut)
   return `${body.trimEnd()}…`
 }

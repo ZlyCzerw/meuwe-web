@@ -114,4 +114,17 @@ describe('excerpt', () => {
     const out = excerpt(`start https://example.com/${'a'.repeat(200)}`, 30)
     expect(out.length).toBeLessThanOrEqual(31)
   })
+
+  it('does not split a surrogate pair when cutting hard', () => {
+    // The hard-cut branch: 'ab ' + 16 x's puts the limit right on the emoji's
+    // leading surrogate, which a plain slice(0, limit) would sever.
+    const out = excerpt(`ab ${'x'.repeat(16)}🎉${'y'.repeat(50)}`, 20)
+    expect(out).toBe('ab xxxxxxxxxxxxxxxx…')
+    expect(out).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/)
+  })
+
+  it('collapses a real scraped description as the app will encounter it', () => {
+    const text = 'Wydarzenie bezpłatne.\n\nKreatywna Środa z MCK - LETNIA DYSKOTEKA DLA DZIECI Wakacje trwają, więc czas na kolejną Kreatywną Środę z MCK! Tym razem zapraszamy wszystkie dzieci na Letnią Dyskotekę – będzie muzyka, taniec, mnóstwo ruchu i świetnej zabawy\n\nLink do wydarzenia: https://kultura.boguchwala.pl/3-miejskie-centrum-kultury-w-boguchwale/15-aktualnosci/1423-kreatywna-sroda-dyskoteka-dla-dzieci.html'
+    expect(excerpt(text)).toBe('Wydarzenie bezpłatne. Kreatywna Środa z MCK - LETNIA DYSKOTEKA DLA DZIECI Wakacje trwają, więc czas na kolejną Kreatywną Środę z MCK! Tym razem zapraszamy wszystkie dzieci na Letnią Dyskotekę –…')
+  })
 })
