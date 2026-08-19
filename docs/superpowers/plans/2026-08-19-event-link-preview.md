@@ -427,6 +427,16 @@ git commit -m "Assemble the Open Graph preview an event link should carry"
 
 ### Task 4: The Cloudflare Pages Function
 
+> **Superseded — read `functions/index.ts` instead.** The code listing below is
+> what was planned, not what shipped. Review added six changes to it: a 2 s
+> `AbortSignal` timeout on the Supabase call, a `try`/`catch` around composing
+> and rewriting, the `imageSecure` branch for `og:image:secure_url`, stripping
+> `etag`/`last-modified` inside the rewrite, `head title` in place of `title`,
+> and lowercasing the id in `og:url`. The `env.ASSETS` fallback shown here was
+> removed entirely - `ctx.next()` is the documented API for this mode and the
+> one that applies `public/_headers`. Re-running this listing verbatim would
+> regress all of it.
+
 No unit test — `wrangler` is not installed, so nothing runs Pages Functions locally (the same is already true of `/api/geo`). The logic it wraps is covered by Tasks 1–3; this file is verified by lint here and by a real deploy in Task 9.
 
 **Files:**
@@ -914,7 +924,17 @@ curl -sA "facebookexternalhit/1.1" 'https://meuwe.eu/?event=380a9df3-d10a-4e17-b
 
 Expected: `<title>` and `og:title` carry `Kreatywna Środa-DYSKOTEKA DLA DZIECI`; `og:image` is `https://kultura.boguchwala.pl/static/img/k01/…/Dyskoteka.jpg`; `og:url` ends in `?event=380a9df3-…`; no `og:image:width` line.
 
-**If `og:` values are still the static ones:** the environment variables are missing (Step 1), or `env.ASSETS` and `ctx.next()` both failed to serve the asset. Check the Pages function logs before changing code.
+**If `og:` values are still the static ones, check in this order before touching any code:**
+
+1. Were the environment variables added (Step 1)? **Cloudflare Pages does not
+   apply new environment variables to deployments that already exist** - adding
+   them requires a fresh deployment before they take effect. This is the most
+   likely cause and it looks exactly like a code bug.
+2. Is the link one that was shared somewhere before this deploy? Facebook caches
+   per `og:url` for around 30 days and WhatsApp effectively forever, so an old
+   link keeps its old preview. Test with a freshly generated link, or force
+   "Scrape Again" in the Sharing Debugger.
+3. Only then read the Pages function logs.
 
 - [ ] **Step 4: Confirm the plain site is untouched**
 
