@@ -43,3 +43,6 @@ build/
 store-assets/_build/
 build-ios-*/
 build-android-*/
+
+# Cache Supabase CLI z numerem najnowszej wersji narzędzia
+supabase/.temp/cli-latest
