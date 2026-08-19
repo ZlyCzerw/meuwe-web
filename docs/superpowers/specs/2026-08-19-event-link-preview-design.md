@@ -104,7 +104,8 @@ burn the free 100k/day allowance many times over for identical behaviour.
 | `<title>` | event title |
 | `og:title`, `twitter:title` | event title |
 | `og:description`, `twitter:description`, `meta[name=description]` | `<place> - <date> - <description excerpt>` |
-| `og:image`, `og:image:secure_url`, `twitter:image` | `photos[0]` |
+| `og:image`, `twitter:image` | `photos[0]` |
+| `og:image:secure_url` | `photos[0]` when it is https, otherwise **removed** |
 | `og:url` | `<request origin>/?event=<id>` |
 | `og:image:width`, `og:image:height`, `og:image:type` | **removed** |
 
@@ -125,6 +126,14 @@ under the production `meuwe.eu` URL, letting a preview build - possibly
 mid-review, possibly broken - poison the cached preview that real users see
 for the real link. Keying `og:url` to the request's actual origin keeps each
 deployment's cache entries separate.
+
+**`og:image:secure_url` only ever carries https.** `photos[0]` is deliberately
+allowed to be plain http, because the municipal sites we scrape are often
+http-only and rejecting them would mean no photo at all. But `secure_url` means
+"this is the HTTPS version", and Facebook and LinkedIn treat it as
+authoritative - handing them an http URL there is mixed content and can make
+them drop the image entirely, which is worse than not setting the tag. So when
+the chosen photo is not https, that one tag is removed rather than filled.
 
 **The three image descriptors must go.** They are declared `1200`/`630`/
 `image/png` for the static banner. An event photo has neither those dimensions
@@ -158,6 +167,15 @@ Event missing, Supabase unreachable, environment variables absent, `photos`
 empty - all fall through and serve the page unchanged with the static banner. No
 error path may break `/`; it is the site's front door.
 
+The Supabase call carries `AbortSignal.timeout(2000)`. Without a bound, a slow
+or hanging database would stall every shared link until Cloudflare gave up with
+a 524 - and a shared link is a first impression. The abort lands in the same
+`catch` as any other failure, so it degrades to the static banner.
+
+Composing and rewriting are wrapped too, not just the fetch. `buildOgPreview`
+and the rewriter receive whatever PostgREST returned, and an unexpected shape
+there must not turn the homepage into a Cloudflare 500.
+
 **Event with no photo:** title and description are still substituted, the image
 stays the static banner.
 
@@ -167,6 +185,13 @@ None added. Caching the rewritten HTML would save RPC calls but would outlive th
 next deploy and hand users a page referencing JS bundles that no longer exist.
 One RPC per link open is cheaper than that class of bug, and Facebook caches the
 preview on its own side regardless.
+
+One header does come off, and it is the opposite of caching: the rewritten
+response inherits `index.html`'s `etag` and `last-modified`, which describe the
+file rather than the event. Left in place, a revalidating client could be told
+304 and keep showing a preview from before the organiser edited the title.
+Both are stripped inside the rewrite path only, so a plain `/` request keeps its
+validator and its 304s.
 
 ## Photo Downscaling On Upload
 
@@ -183,6 +208,11 @@ Wired into `db.uploadEventPhoto` (`src/lib/supabase.ts`) rather than into
 `CreateSheet.tsx`: that method is the only place a photo reaches storage, so one
 call site covers the camera path and both file inputs, and any future caller.
 The existing 6 MB guard in `CreateSheet.tsx` stays as an input check.
+
+The canvas is painted white before the photo is drawn onto it. JPEG has no
+alpha channel, and a transparent PNG - a poster or flyer, which event organisers
+do upload - otherwise encodes its transparent pixels as solid black. Confirmed
+in a real browser, not inferred.
 
 Applies to new uploads only. Already-stored photos are left alone.
 
