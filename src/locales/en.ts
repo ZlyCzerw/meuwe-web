@@ -248,7 +248,7 @@ const en: Resources = {
   auth: { createEventPrompt: 'Only logged-in users can add events', chatPrompt: 'Only logged-in users can write messages' , signInFailed: 'Sign-in failed, please try again'},
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
-  follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'follows this', followThis: 'follow this', othersFollowOne: 'and {{count}} other follows', othersFollowMany: 'and {{count}} others follow' },
+  follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'is going', followThis: 'are going', othersFollowOne: 'and {{count}} other is going', othersFollowMany: 'and {{count}} others are going' },
   landing: {
     h1: 'meuwe — a map of local events happening near you',
     nav: {

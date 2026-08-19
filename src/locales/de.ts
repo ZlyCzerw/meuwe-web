@@ -248,7 +248,7 @@ const de: Resources = {
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen', chatPrompt: 'Nur angemeldete Nutzer können Nachrichten schreiben' , signInFailed: 'Anmeldung fehlgeschlagen, bitte erneut versuchen'},
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
-  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'folgt dem', followThis: 'folgen dem', othersFollowOne: 'und {{count}} weiterer folgt', othersFollowMany: 'und {{count}} weitere folgen' },
+  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'ist dabei', followThis: 'sind dabei', othersFollowOne: 'und {{count}} weiterer ist dabei', othersFollowMany: 'und {{count}} weitere sind dabei' },
   landing: {
     h1: 'meuwe — Karte lokaler Events in deiner Nähe',
     nav: {

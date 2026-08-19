@@ -9,7 +9,7 @@ const SYS_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 const manifest = JSON.parse(readFileSync(`${ROOT}/_build/manifest.json`, 'utf8'))
 
 async function launch() {
-  const base = { headless: 'new', args: ['--allow-file-access-from-files'] }
+  const base = { headless: true, args: ['--allow-file-access-from-files'] }
   try { return await puppeteer.launch(base) }
   catch (e) {
     if (!existsSync(SYS_CHROME)) throw e

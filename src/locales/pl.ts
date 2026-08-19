@@ -246,7 +246,7 @@ const pl = {
   auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia', chatPrompt: 'Tylko zalogowani użytkownicy mogą pisać wiadomości' , signInFailed: 'Nie udało się zalogować, spróbuj ponownie'},
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
-  follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'obserwuje to', followThis: 'obserwują to', othersFollowOne: 'i {{count}} obserwuje to', othersFollowMany: 'i {{count}} obserwują to' },
+  follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'weźmie udział', followThis: 'wezmą udział', othersFollowOne: 'i {{count}} weźmie udział', othersFollowMany: 'i {{count}} innych weźmie udział' },
   landing: {
     h1: 'meuwe — mapa lokalnych wydarzeń w Twojej okolicy',
     nav: {

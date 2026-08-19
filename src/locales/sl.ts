@@ -248,7 +248,7 @@ const sl: Resources = {
   auth: { createEventPrompt: 'Dogodke lahko dodajajo samo prijavljeni uporabniki', chatPrompt: 'Sporočila lahko pišejo samo prijavljeni uporabniki' , signInFailed: 'Prijava ni uspela, poskusite znova'},
   status: { live: 'V živo', upcoming: 'Kmalu', extended: 'Še aktivno', ended: 'Končano' },
   share: { share: 'Deli', linkCopied: 'Povezava kopirana!' },
-  follow: { follow: 'Spremljaj', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'spremlja to', followThis: 'spremljaj to', othersFollowOne: 'in še {{count}} drug spremlja', othersFollowMany: 'in še {{count}} drugih spremlja' },
+  follow: { follow: 'Spremljaj', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'gre zraven', followThis: 'gredo zraven', othersFollowOne: 'in še {{count}} drug gre zraven', othersFollowMany: 'in še {{count}} drugih gre zraven' },
   landing: {
     h1: 'meuwe — zemljevid lokalnih dogodkov v tvoji okolici',
     nav: {
