@@ -21,3 +21,41 @@ const PIN_H = 56
 export function pinsOverlap(a: PinPoint, b: PinPoint): boolean {
   return Math.abs(a.x - b.x) < PIN_W && Math.abs(a.y - b.y) < PIN_H
 }
+
+/**
+ * The transitive overlap chain containing `clickedIdx`, restricted to pins that
+ * fall inside the viewport once it is centred on the clicked pin.
+ *
+ * Points are container pixels at the CURRENT zoom, so the clipping rectangle is
+ * the frame as it would look after centring but before flying. Clipping at the
+ * destination zoom would be circular: the destination is what the chain is being
+ * computed to determine.
+ *
+ * Breadth-first from the clicked pin, so a pin joins only if something already
+ * in the chain overlaps it. Returns indices into `points`, clicked pin first.
+ */
+export function overlapChainInView(
+  points: PinPoint[],
+  clickedIdx: number,
+  viewSize: { x: number; y: number },
+): number[] {
+  const origin = points[clickedIdx]
+  const halfW = viewSize.x / 2
+  const halfH = viewSize.y / 2
+  const inView = (p: PinPoint) =>
+    Math.abs(p.x - origin.x) <= halfW && Math.abs(p.y - origin.y) <= halfH
+
+  const chain = [clickedIdx]
+  const seen = new Set([clickedIdx])
+  for (let head = 0; head < chain.length; head++) {
+    const cur = points[chain[head]]
+    for (let i = 0; i < points.length; i++) {
+      if (seen.has(i)) continue
+      if (!inView(points[i])) continue
+      if (!pinsOverlap(cur, points[i])) continue
+      seen.add(i)
+      chain.push(i)
+    }
+  }
+  return chain
+}
