@@ -1,0 +1,110 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { useState } from 'react'
+import DayTimeline, { type TimelineMode } from './DayTimeline'
+import { TODAY_IDX, type DayRange } from '../lib/timeline'
+// Bez tego tłumacz zwraca surowe klucze i asercje na napisach nic nie znaczą.
+import '../lib/i18n'
+
+// jsdom nie zna przechwytywania wskaźnika, a komponent woła je na każdym
+// wciśnięciu — bez atrapy każdy test wywraca się na TypeError.
+beforeEach(() => {
+  Element.prototype.setPointerCapture = vi.fn()
+  Element.prototype.releasePointerCapture = vi.fn()
+})
+
+/** Pasek z prawdziwym stanem, tak jak trzyma go MapScreen. */
+function Harness({ onRange }: { onRange?: (r: DayRange) => void }) {
+  const [range, setRange] = useState<DayRange>({ startIdx: TODAY_IDX, endIdx: TODAY_IDX })
+  const [mode, setMode] = useState<TimelineMode>('day')
+  const [open, setOpen] = useState(true)
+  return (
+    <DayTimeline
+      open={open}
+      onOpenChange={setOpen}
+      mode={mode}
+      onModeChange={setMode}
+      range={range}
+      onRangeChange={r => { setRange(r); onRange?.(r) }}
+    />
+  )
+}
+
+const tile = (idx: number) => screen.getByTestId(`day-${idx}`)
+const toRange = () => fireEvent.click(screen.getByRole('button', { name: 'Date range' }))
+
+describe('tryb dnia', () => {
+  it('dotknięcie kafelka wybiera jeden dzień', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    fireEvent.click(tile(5))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 5 })
+  })
+})
+
+describe('tryb zakresu', () => {
+  it('dwa dotknięcia składają zakres', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    fireEvent.click(tile(5))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 5 })
+    fireEvent.click(tile(8))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 8 })
+  })
+
+  it('drugie dotknięcie we wcześniejszą datę zaznacza wstecz', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    fireEvent.click(tile(5))
+    fireEvent.click(tile(1))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 1, endIdx: 5 })
+  })
+
+  it('trzecie dotknięcie zaczyna nowy zakres', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    fireEvent.click(tile(5))
+    fireEvent.click(tile(8))
+    fireEvent.click(tile(2))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 2, endIdx: 2 })
+  })
+
+  it('powrót na tryb dnia zrównuje koniec z początkiem', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    fireEvent.click(tile(5))
+    fireEvent.click(tile(8))
+    fireEvent.click(screen.getByRole('button', { name: 'Day' }))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 5 })
+  })
+
+  // Kotwica nie ma swojego wyglądu — kafelek z niedomkniętym zakresem wygląda
+  // jak zwykły wybrany dzień. Gdyby przetrwała zwinięcie paska, dotknięcie po
+  // ponownym otwarciu domknęłoby zakres od daty, której nikt już nie widzi.
+  it('zwinięcie paska porzuca niedomknięty zakres', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    fireEvent.click(tile(5))
+    fireEvent.click(screen.getByLabelText('close-timeline'))
+    // Zwinięty pasek to jeden guzik — pigułka, która otwiera go z powrotem.
+    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(tile(9))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 9, endIdx: 9 })
+  })
+
+  it('przeciągnięcie przewija pasek i niczego nie zaznacza', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    const strip = screen.getByTestId('day-strip')
+    fireEvent.pointerDown(strip, { clientX: 200, pointerId: 1 })
+    fireEvent.pointerMove(strip, { clientX: 120, pointerId: 1 })
+    fireEvent.pointerUp(strip, { clientX: 120, pointerId: 1 })
+    expect(onRange).not.toHaveBeenCalled()
+  })
+})

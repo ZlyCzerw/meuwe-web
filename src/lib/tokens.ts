@@ -1,5 +1,8 @@
 export const C = {
   primary: '#FF7A45', primaryPress: '#E85A2A', primarySoft: '#FFD4C0',
+  // Ćwierć drogi z primarySoft do primary: dni w środku zakresu mają być
+  // ciemniejsze od podpowiedzi pod kursorem, a jaśniejsze od jego krańców.
+  primaryRange: '#FFBEA1',
   sky: '#4FC3F7', grass: '#7DD87A', sunshine: '#FFD54F',
   berry: '#FF8FA3', cream: '#FFF6EC', cloud: '#FFFFFF',
   ink: '#2D2B2A', inkSoft: '#8A8580',

@@ -27,7 +27,7 @@ import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
 import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, type DayRange } from '../lib/timeline'
-import DayTimeline from '../components/DayTimeline'
+import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -105,6 +105,7 @@ function MapScreen({
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [range, setRange] = useState<DayRange>({ startIdx: TODAY_IDX, endIdx: TODAY_IDX })
+  const [timelineMode, setTimelineMode] = useState<TimelineMode>('day')
   const dayIdx = range.startIdx
   const setDayIdx = (next: number | ((prev: number) => number)) => {
     setRange(prev => {
@@ -654,6 +655,8 @@ function MapScreen({
         <DayTimeline
           open={timelineOpen}
           onOpenChange={setTimelineOpen}
+          mode={timelineMode}
+          onModeChange={setTimelineMode}
           range={range}
           onRangeChange={setRange}
         />
