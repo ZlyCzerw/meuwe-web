@@ -26,7 +26,7 @@ import { overlapChainInView } from '../lib/pinOverlap'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
-import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, type DayRange } from '../lib/timeline'
+import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, isInRange, type DayRange } from '../lib/timeline'
 import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
@@ -379,6 +379,13 @@ function MapScreen({
     () => probe?.key === probeKey ? pickEmptyStateVariant(probe.result) : { kind: 'unknown' },
     [probe, probeKey],
   )
+
+  // The card offers a day the probe found, and the probe knows neither the
+  // selected range nor the filters. In range mode that day is often already
+  // inside the range - the button would then have nothing left to widen, and
+  // the user gets only one such invitation, so a dead one costs them all of it.
+  const nextDayOfferIsMoot = emptyVariant.kind === 'nextDay'
+    && isInRange(TODAY_IDX + emptyVariant.dayOffset, range)
 
   // Nothing in view but something on today within reach: widen to it instead of
   // saying a word about it. Once per mount, so a user who deliberately zoomed
@@ -785,7 +792,7 @@ function MapScreen({
             boxShadow: '0 8px 32px rgba(45,43,42,0.08)',
             fontFamily: F.display, color: C.ink, textAlign: 'center',
           }}>
-            {emptyVariant.kind === 'nextDay' && (
+            {emptyVariant.kind === 'nextDay' && !nextDayOfferIsMoot && (
               <>
                 <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
                   {/* The card only exists because nothing today is within
@@ -816,7 +823,7 @@ function MapScreen({
               </>
             )}
 
-            {(emptyVariant.kind === 'nothing' || emptyVariant.kind === 'unknown') && (
+            {(emptyVariant.kind === 'nothing' || emptyVariant.kind === 'unknown' || nextDayOfferIsMoot) && (
               <div style={{ fontSize: 15, fontWeight: 800 }}>
                 {t('map.empty')}<br />
                 <span style={{ color: C.primary }}>{t('map.emptyCta')}</span>
