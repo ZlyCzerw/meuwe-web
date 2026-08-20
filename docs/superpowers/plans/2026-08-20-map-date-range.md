@@ -1100,6 +1100,29 @@ na:
   }
 ```
 
+Zamień gałąź przeciągnięcia w `onPointerUp`, żeby w trybie zakresu tylko przewijała:
+
+```tsx
+    if (drag.current.moved && liveTranslate !== null) {
+      const snapped = translateToIdx(liveTranslate)
+      setFocusIdx(snapped)
+      onRangeChange({ startIdx: snapped, endIdx: snapped })
+    }
+```
+
+na:
+
+```tsx
+    if (drag.current.moved && liveTranslate !== null) {
+      const snapped = translateToIdx(liveTranslate)
+      setFocusIdx(snapped)
+      // W trybie dnia puszczenie paska wybiera dzień, na którym się zatrzymał —
+      // tak działał od zawsze. W trybie zakresu przeciąganie ma tylko przewijać,
+      // bo zaznaczanie należy do dotknięć.
+      if (mode === 'day') onRangeChange({ startIdx: snapped, endIdx: snapped })
+    }
+```
+
 Zamień funkcję `step`, żeby w trybie zakresu tylko przewijała:
 
 ```tsx
