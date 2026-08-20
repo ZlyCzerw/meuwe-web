@@ -11,6 +11,10 @@ import '../lib/i18n'
 beforeEach(() => {
   Element.prototype.setPointerCapture = vi.fn()
   Element.prototype.releasePointerCapture = vi.fn()
+  // jsdom nie umie też trafiać w punkt, a to tą drogą pasek odnajduje kafelek
+  // pod palcem. Domyślnie pod wskaźnikiem nie leży nic; test dotknięcia
+  // podstawia sobie kafelek, w który chce trafić.
+  document.elementFromPoint = () => null
 })
 
 /** Pasek z prawdziwym stanem, tak jak trzyma go MapScreen. */
@@ -39,6 +43,22 @@ describe('tryb dnia', () => {
     render(<Harness onRange={onRange} />)
     fireEvent.click(tile(5))
     expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 5 })
+  })
+
+  // Zachowanie z db86eb1: przeciągnięcie przewija pasek, a puszczenie wybiera
+  // dzień, na którym się zatrzymał. W trybie zakresu ten sam gest tylko
+  // przewija — patrz test niżej, który sprawdza to od drugiej strony.
+  it('puszczenie przeciągniętego paska wybiera dzień, na którym stanął', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    const strip = screen.getByTestId('day-strip')
+    fireEvent.pointerDown(strip, { clientX: 200, pointerId: 1 })
+    fireEvent.pointerMove(strip, { clientX: 120, pointerId: 1 })
+    fireEvent.pointerUp(strip, { clientX: 120, pointerId: 1 })
+    // Pasek stoi na dziś, czyli z przesunięciem 107 px, a kafelek z przerwą
+    // zajmuje 60 px. Przeciągnięcie o 80 px w lewo wypada więc na indeksie 3.
+    expect(onRange).toHaveBeenCalledTimes(1)
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 3, endIdx: 3 })
   })
 })
 
@@ -95,6 +115,31 @@ describe('tryb zakresu', () => {
     fireEvent.click(screen.getByRole('button'))
     fireEvent.click(tile(9))
     expect(onRange).toHaveBeenLastCalledWith({ startIdx: 9, endIdx: 9 })
+  })
+
+  // Palec nie chodzi drogą `click`: dotknięcie wraca przez `pointerup` na
+  // pasku, bo przechwycony wskaźnik zabiera klikowi jego cel. Przeglądarka
+  // dosyła po nim własny `click` i ten jeden musi przepaść — inaczej jedno
+  // dotknięcie policzyłoby się dwa razy i od razu domknęło zakres na jednym dniu.
+  it('dotknięcie wskaźnikiem liczy się raz, mimo dosłanego kliknięcia', () => {
+    const onRange = vi.fn()
+    render(<Harness onRange={onRange} />)
+    toRange()
+    document.elementFromPoint = () => tile(5)
+    const strip = screen.getByTestId('day-strip')
+    fireEvent.pointerDown(strip, { clientX: 200, clientY: 40, pointerId: 1 })
+    fireEvent.pointerUp(strip, { clientX: 200, clientY: 40, pointerId: 1 })
+    expect(onRange).toHaveBeenCalledTimes(1)
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 5 })
+
+    // Echo przeglądarki — kafelek dostaje `click`, którego nikt nie wykonał.
+    fireEvent.click(tile(5))
+    expect(onRange).toHaveBeenCalledTimes(1)
+
+    // Kotwica została otwarta, więc dopiero kolejne dotknięcie domyka zakres.
+    // Gdyby echo się policzyło, ten tap zaczynałby nowy zakres na dniu 8.
+    fireEvent.click(tile(8))
+    expect(onRange).toHaveBeenLastCalledWith({ startIdx: 5, endIdx: 8 })
   })
 
   it('przeciągnięcie przewija pasek i niczego nie zaznacza', () => {
