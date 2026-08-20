@@ -26,7 +26,8 @@ import { overlapChainInView } from '../lib/pinOverlap'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
-import { DAYS_COUNT, TODAY_IDX, idxToOffset, idxToDate, dateToIdx } from '../lib/timeline'
+import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, type DayRange } from '../lib/timeline'
+import DayTimeline from '../components/DayTimeline'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -103,7 +104,14 @@ function MapScreen({
 
   const [recenter, setRecenter] = useState(false)
   const [timelineOpen, setTimelineOpen] = useState(false)
-  const [dayIdx, setDayIdx] = useState(1)
+  const [range, setRange] = useState<DayRange>({ startIdx: TODAY_IDX, endIdx: TODAY_IDX })
+  const dayIdx = range.startIdx
+  const setDayIdx = (next: number | ((prev: number) => number)) => {
+    setRange(prev => {
+      const idx = typeof next === 'function' ? next(prev.startIdx) : next
+      return { startIdx: idx, endIdx: idx }
+    })
+  }
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
   // How much of the world the user is looking at: the number the empty card
   // quotes and the radius "notify me here" writes to the profile. Null until
@@ -210,49 +218,6 @@ function MapScreen({
   useEffect(() => {
     onPoolChange?.(visibleEvents, poolKey)
   }, [visibleEvents, poolKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Timeline drag — smooth dial/drum scroll, snap on release
-  const MAX_TRANSLATE = 0
-  const MIN_TRANSLATE = -(DAYS_COUNT * 56 + (DAYS_COUNT - 1) * 4 - 270)
-  function idxToTranslate(idx: number) {
-    return Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, 107 - idx * 60))
-  }
-  function translateToIdx(tx: number) {
-    return Math.max(0, Math.min(DAYS_COUNT - 1, Math.round((107 - tx) / 60)))
-  }
-
-  const [liveTranslate, setLiveTranslate] = useState<number | null>(null)
-  const tlDrag = useRef({ startX: 0, baseTranslate: 0, on: false, moved: false })
-
-  function tlPD(e: React.PointerEvent<HTMLDivElement>) {
-    e.currentTarget.setPointerCapture(e.pointerId)
-    tlDrag.current = { startX: e.clientX, baseTranslate: idxToTranslate(dayIdx), on: true, moved: false }
-  }
-  function tlPM(e: React.PointerEvent<HTMLDivElement>) {
-    if (!tlDrag.current.on) return
-    const delta = e.clientX - tlDrag.current.startX
-    if (Math.abs(delta) > 8) tlDrag.current.moved = true
-    if (!tlDrag.current.moved) return
-    const raw = tlDrag.current.baseTranslate + delta
-    setLiveTranslate(Math.max(MIN_TRANSLATE, Math.min(MAX_TRANSLATE, raw)))
-  }
-  function tlPU(e: React.PointerEvent<HTMLDivElement>) {
-    if (!tlDrag.current.on) return
-    tlDrag.current.on = false
-    if (tlDrag.current.moved && liveTranslate !== null) {
-      setDayIdx(translateToIdx(liveTranslate))
-    } else if (!tlDrag.current.moved) {
-      // tap (not drag) — select the day under the pointer
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-      const dayEl = el?.closest('[data-day-idx]') as HTMLElement | null
-      if (dayEl?.dataset.dayIdx != null) setDayIdx(Number(dayEl.dataset.dayIdx))
-    }
-    setLiveTranslate(null)
-  }
-  function tlCancel() {
-    tlDrag.current.on = false
-    setLiveTranslate(null)
-  }
 
   // Leaflet init — runs once
   useEffect(() => {
@@ -686,111 +651,12 @@ function MapScreen({
 
       {/* Timeline */}
       {!pickingLocation && <div style={{ position: 'absolute', bottom: 168, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
-        {!timelineOpen ? (
-          <button onClick={() => setTimelineOpen(true)} style={{
-            padding: '10px 20px', borderRadius: 999,
-            background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
-            fontSize: 13, fontWeight: 800, color: INK,
-            display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'auto',
-          }}>
-            <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.primary, border: `1.5px solid ${INK}` }} />
-            {(() => {
-              const d = idxToDate(dayIdx)
-              const offset = idxToOffset(dayIdx)
-              const dayLabel = offset === 0 ? t('map.today')
-                : offset === -1 ? t('map.yesterday')
-                : d.toLocaleDateString(loc, { weekday: 'long' })
-              const dateLabel = d.toLocaleDateString(loc, { day: 'numeric', month: 'short' })
-              return `${dayLabel} · ${dateLabel}`
-            })()}
-          </button>
-        ) : (
-          <div
-            onPointerDown={tlPD}
-            onPointerMove={tlPM}
-            onPointerUp={tlPU}
-            onPointerCancel={tlCancel}
-            style={{
-              padding: '6px 8px', borderRadius: 999, background: '#fff',
-              border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
-              display: 'flex', alignItems: 'center', gap: 4,
-              touchAction: 'none', cursor: 'grab', userSelect: 'none', pointerEvents: 'auto',
-            }}
-          >
-            {/* Left arrow */}
-            <button
-              onPointerDown={e => e.stopPropagation()}
-              onClick={() => setDayIdx(i => Math.max(0, i - 1))}
-              style={{
-                flexShrink: 0, width: 20, background: 'none', border: 'none', padding: 0,
-                color: INK, opacity: dayIdx > 0 ? 0.7 : 0.2,
-                fontWeight: 900, fontSize: 18, cursor: dayIdx > 0 ? 'pointer' : 'default',
-              }}
-            >‹</button>
-
-            {/* Date track — fixed width, clipped */}
-            <div style={{ width: 270, flexShrink: 0, overflow: 'hidden' }}>
-              <div style={{
-                display: 'flex', gap: 4,
-                transition: liveTranslate !== null ? 'none' : 'transform 300ms cubic-bezier(0.32,1.2,0.4,1)',
-                transform: `translateX(${liveTranslate !== null ? liveTranslate : idxToTranslate(dayIdx)}px)`,
-              }}>
-                {Array.from({ length: DAYS_COUNT }, (_, i) => {
-                  const d = idxToDate(i)
-                  const offset = idxToOffset(i)
-                  const isToday = offset === 0
-                  const active = dayIdx === i
-                  return (
-                    <button
-                      key={i}
-                      data-day-idx={i}
-                      onClick={() => setDayIdx(i)}
-                      style={{
-                        flexShrink: 0, width: 56, borderRadius: 14,
-                        padding: '6px 0', display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', gap: 1,
-                        background: active ? C.primary : isToday ? C.primarySoft : 'transparent',
-                        color: active ? '#fff' : C.ink,
-                        border: active ? `2px solid ${INK}` : '2px solid transparent',
-                        fontSize: 11, fontWeight: 800,
-                        transition: 'all 200ms ease',
-                      }}
-                    >
-                      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.75 }}>
-                        {isToday ? t('map.today').slice(0, 3)
-                          : d.toLocaleDateString(loc, { weekday: 'short' }).replace('.', '')}
-                      </span>
-                      <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1.1 }}>
-                        {d.getDate()}
-                      </span>
-                      <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.7 }}>
-                        {d.toLocaleDateString(loc, { month: 'short' }).replace('.', '')}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Right arrow */}
-            <button
-              onPointerDown={e => e.stopPropagation()}
-              onClick={() => setDayIdx(i => Math.min(DAYS_COUNT - 1, i + 1))}
-              style={{
-                flexShrink: 0, width: 20, background: 'none', border: 'none', padding: 0,
-                color: INK, opacity: dayIdx < DAYS_COUNT - 1 ? 0.7 : 0.2,
-                fontWeight: 900, fontSize: 18, cursor: dayIdx < DAYS_COUNT - 1 ? 'pointer' : 'default',
-              }}
-            >›</button>
-
-            {/* Close */}
-            <button
-              onPointerDown={e => e.stopPropagation()}
-              onClick={() => setTimelineOpen(false)}
-              style={{ flexShrink: 0, width: 24, color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16, background: 'transparent', border: 'none', cursor: 'pointer' }}
-            >×</button>
-          </div>
-        )}
+        <DayTimeline
+          open={timelineOpen}
+          onOpenChange={setTimelineOpen}
+          range={range}
+          onRangeChange={setRange}
+        />
       </div>}
 
       {/* ADD button */}
