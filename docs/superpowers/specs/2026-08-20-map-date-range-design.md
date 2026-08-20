@@ -83,6 +83,12 @@ obejmuje 19–23. Podgląd na hover rysuje się w obie strony tak samo.
 Zakres dłuższy niż jeden dzień: `24 sie – 30 sie`, bez nazwy dnia tygodnia —
 nie zmieściłaby się. Zakres jednodniowy bez zmian: `Dziś · 24 sie`.
 
+### Strzałki po bokach paska
+
+W trybie „Dzień" przesuwają wybrany dzień, tak jak dotychczas. W trybie „Zakres
+dat" przewijają wyłącznie okno paska, nie ruszając zaznaczenia — inaczej nie
+dałoby się dojechać do odległej daty końcowej bez skasowania początku.
+
 ### Powrót na „Dzień"
 
 Koniec zakresu zrównuje się z początkiem. Na mapie zostaje dzień, od którego
@@ -97,7 +103,8 @@ funkcje:
 
 - `normalizeRange(a, b)` — porządkuje daty, obsługuje zaznaczanie wstecz,
 - `isInRange(idx, range)`,
-- `rangeDays(range)`,
+- `tapRange(sel, idx)` — maszyna dotknięć: nowy początek → koniec → nowy początek,
+- `tileState(idx, range, preview)` — jak wygląda kafelek: kraniec, środek, podgląd, nic,
 - `rangeWindow(startOffset, endOffset, now)` → `{ dayStart, dayEnd, endTimeFloor }`.
 
 `rangeWindow` wyprowadza z `getEvents` jedyny fragment zapytania, w którym jest
