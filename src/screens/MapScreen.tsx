@@ -194,7 +194,7 @@ function MapScreen({
   }
 
   const eventsPos = mapCenter || initialCenter || userPos || lastKnownPos || ipPos || WARSAW
-  const { events, loading, ready } = useEvents(fetchView, idxToOffset(dayIdx), eventsRefreshKey)
+  const { events, loading, ready } = useEvents(fetchView, idxToOffset(dayIdx), idxToOffset(dayIdx), eventsRefreshKey)
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
   // Memoised because the pins effect keys off it: an inline filter() is a new
   // array every render, and on a phone the compass re-renders this screen
