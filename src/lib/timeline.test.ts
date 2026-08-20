@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   dateToIdx, idxToDate, idxToOffset, DAYS_COUNT, TODAY_IDX,
-  normalizeRange, isInRange, tapRange, tileState,
+  normalizeRange, isInRange, tapRange, tileState, rangeWindow,
 } from './timeline'
 
 // Południe, żeby dodawanie dni nie ocierało się o zmianę czasu.
@@ -123,5 +123,33 @@ describe('tileState', () => {
     expect(tileState(6, range, preview)).toBe('preview')
     expect(tileState(3, range, preview)).toBe('preview')
     expect(tileState(9, range, preview)).toBe('idle')
+  })
+})
+
+describe('rangeWindow', () => {
+  it('zakres jednodniowy na dziś obejmuje całą dzisiejszą dobę', () => {
+    const w = rangeWindow(0, 0, now)
+    expect(w.dayStart).toEqual(new Date(2026, 7, 19, 0, 0, 0, 0))
+    expect(w.dayEnd).toEqual(new Date(2026, 7, 19, 23, 59, 59, 999))
+  })
+
+  it('zakres wielodniowy kończy się o północy ostatniego dnia', () => {
+    const w = rangeWindow(0, 4, now)
+    expect(w.dayStart).toEqual(new Date(2026, 7, 19, 0, 0, 0, 0))
+    expect(w.dayEnd).toEqual(new Date(2026, 7, 23, 23, 59, 59, 999))
+  })
+
+  it('zakres zaczynający się dziś chowa wydarzenia już zakończone', () => {
+    expect(rangeWindow(0, 4, now).endTimeFloor).toEqual(now)
+  })
+
+  it('zakres zaczynający się wczoraj pokazuje wczorajsze zakończone', () => {
+    const w = rangeWindow(-1, 4, now)
+    expect(w.endTimeFloor).toEqual(new Date(2026, 7, 18, 0, 0, 0, 0))
+  })
+
+  it('zakres w całości w przyszłości liczy się od swojej pierwszej północy', () => {
+    const w = rangeWindow(3, 5, now)
+    expect(w.endTimeFloor).toEqual(new Date(2026, 7, 22, 0, 0, 0, 0))
   })
 })

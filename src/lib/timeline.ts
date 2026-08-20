@@ -75,3 +75,20 @@ export function tileState(
   if (idx === range.startIdx || idx === range.endIdx) return 'edge'
   return isInRange(idx, range) ? 'inside' : 'idle'
 }
+
+/**
+ * Okno czasu, o które pyta zapytanie o wydarzenia. Wydarzenie trafia na mapę,
+ * jeśli nachodzi na nie choćby częściowo.
+ *
+ * `endTimeFloor` to jedyna decyzja w całym zapytaniu: zakres zaczynający się
+ * dziś chowa to, co już się skończyło, a każdy inny liczy się od swojej
+ * pierwszej północy — dlatego wybranie wczoraj nadal pokazuje wczorajsze
+ * zakończone wydarzenia.
+ */
+export function rangeWindow(startOffset: number, endOffset: number, now: Date = new Date()) {
+  const s = new Date(now); s.setDate(s.getDate() + startOffset)
+  const e = new Date(now); e.setDate(e.getDate() + endOffset)
+  const dayStart = new Date(s.getFullYear(), s.getMonth(), s.getDate(), 0, 0, 0, 0)
+  const dayEnd = new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 59, 59, 999)
+  return { dayStart, dayEnd, endTimeFloor: startOffset === 0 ? now : dayStart }
+}
