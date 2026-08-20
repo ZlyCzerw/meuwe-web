@@ -16,10 +16,29 @@
 
 import { buildOgPreview, type OgEvent, type OgPreview } from '../src/lib/ogPreview'
 
+/**
+ * Zmienne z Cloudflare Pages → Settings → Environment variables.
+ *
+ * Warianty z `VITE_` nie są pomyłką. Projekt ma tam już `VITE_SUPABASE_URL` i
+ * `VITE_SUPABASE_ANON_KEY`, bo tych samych nazw potrzebuje Vite przy buildzie
+ * do wstrzyknięcia ich w bundle przeglądarki — a Pages wystawia ten sam zestaw
+ * także runtime'owi funkcji, gdzie prefiks jest już tylko częścią nazwy.
+ * Czytanie ich wprost oszczędza duplikatu w panelu, a duplikat to realna
+ * pułapka: przy rotacji klucza łatwo poprawić jedno miejsce i zostawić drugie,
+ * co ucisza podgląd linków bez żadnego błędu.
+ *
+ * Nazwy bez prefiksu mają pierwszeństwo — gdyby okazało się, że ten projekt
+ * jednak nie podaje zmiennych buildowych funkcjom, wystarczy dodać je w panelu
+ * i nic tutaj nie wymaga zmiany.
+ *
+ * Klucz `anon` i tak jest publiczny (jedzie w bundlu do każdej przeglądarki),
+ * więc nie ma tu nic, co wyciekałoby przez wpisanie go jako `Text`.
+ */
 interface Env {
-  /** Ustawiane w Cloudflare Pages → Settings → Environment variables. */
   SUPABASE_URL?: string
   SUPABASE_ANON_KEY?: string
+  VITE_SUPABASE_URL?: string
+  VITE_SUPABASE_ANON_KEY?: string
 }
 
 interface Ctx {
@@ -48,13 +67,15 @@ const servePage = (ctx: Ctx): Promise<Response> => ctx.next()
  * się `null`, bo strona główna nie może się wywrócić przez podgląd linku.
  */
 async function fetchEvent(env: Env, id: string): Promise<OgEvent | null> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null
+  const base = env.SUPABASE_URL ?? env.VITE_SUPABASE_URL
+  const key = env.SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY
+  if (!base || !key) return null
   try {
-    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/get_event_by_id`, {
+    const res = await fetch(`${base}/rest/v1/rpc/get_event_by_id`, {
       method: 'POST',
       headers: {
-        apikey: env.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+        apikey: key,
+        Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ p_event_id: id }),

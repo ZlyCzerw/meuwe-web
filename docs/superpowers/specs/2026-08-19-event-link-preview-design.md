@@ -250,13 +250,23 @@ Then the Facebook Sharing Debugger to force a cache refresh.
 
 ## Manual Step Outside The Code
 
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are inlined into the bundle at
-build time and do not exist in the function's runtime. Two variables -
-`SUPABASE_URL` and `SUPABASE_ANON_KEY` - must be added in Cloudflare Pages ->
-Settings -> Environment variables, for Production and Preview.
+The project already defines `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in
+Cloudflare Pages -> Settings -> Environment variables, because Vite needs those
+names at build time to inline them into the browser bundle. Pages exposes the
+same set to the Functions runtime, where the prefix is just part of the name, so
+the function reads them directly and **nothing new has to be added**.
 
-Until they are set, the function passes the page through unchanged. Nothing
-breaks; the preview simply stays as it is today.
+It accepts `SUPABASE_URL` / `SUPABASE_ANON_KEY` first and falls back to the
+prefixed pair. That ordering is the escape hatch: if a project turns out not to
+pass build variables through to Functions, adding the unprefixed names fixes it
+with no code change. Duplicating the values by default was rejected - two copies
+of an anon key drift the moment it is rotated, and the failure is silent.
+
+The anon key is public regardless: it ships inside the browser bundle to every
+visitor, so storing it as a `Text` variable rather than a secret leaks nothing.
+
+If neither pair resolves, the function passes the page through unchanged.
+Nothing breaks; the preview simply stays as it is today.
 
 ## Out Of Scope
 

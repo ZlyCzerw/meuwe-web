@@ -907,12 +907,9 @@ Nothing before this proves the function actually runs — `wrangler` is not inst
 
 - [ ] **Step 1: Set the environment variables**
 
-**This step is the repo owner's, not the implementer's.** In Cloudflare Pages → the meuwe project → Settings → Environment variables, add for both Production and Preview:
+**Nothing to add.** The project already defines `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Cloudflare Pages → Settings → Environment variables, and the function reads those directly — Pages exposes the same variables to the Functions runtime, where the `VITE_` prefix is just part of the name.
 
-- `SUPABASE_URL` — same value as `VITE_SUPABASE_URL` in `.env`
-- `SUPABASE_ANON_KEY` — same value as `VITE_SUPABASE_ANON_KEY` in `.env`
-
-They are needed because `VITE_*` variables are inlined into the bundle at build time and do not exist in the function's runtime. Until they are set the function passes the page through unchanged — nothing breaks, the preview just stays as it is today.
+The function prefers unprefixed `SUPABASE_URL` / `SUPABASE_ANON_KEY` and falls back to the prefixed pair. So if it turns out this project does not pass build variables to Functions, adding the unprefixed names in the dashboard fixes it without a code change. That is the only circumstance in which anything needs adding here.
 
 - [ ] **Step 2: Deploy the branch and wait for the Pages build**
 
@@ -926,10 +923,12 @@ Expected: `<title>` and `og:title` carry `Kreatywna Środa-DYSKOTEKA DLA DZIECI`
 
 **If `og:` values are still the static ones, check in this order before touching any code:**
 
-1. Were the environment variables added (Step 1)? **Cloudflare Pages does not
-   apply new environment variables to deployments that already exist** - adding
-   them requires a fresh deployment before they take effect. This is the most
-   likely cause and it looks exactly like a code bug.
+1. Does this project expose build variables to the Functions runtime? If not,
+   add `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the dashboard (Step 1) — the
+   function prefers those names. **Cloudflare Pages does not apply new
+   environment variables to deployments that already exist**, so adding them
+   requires a fresh deployment before they take effect. This looks exactly like
+   a code bug and is not one.
 2. Is the link one that was shared somewhere before this deploy? Facebook caches
    per `og:url` for around 30 days and WhatsApp effectively forever, so an old
    link keeps its old preview. Test with a freshly generated link, or force
