@@ -14,7 +14,12 @@ import type { EventWithMeta } from '../lib/types'
  * only when the viewport leaves what was last fetched (see lib/mapView), so
  * ordinary panning asks nothing of the network at all.
  */
-export function useEvents(view: FetchView | null, dayOffset: number, refreshKey = 0) {
+export function useEvents(
+  view: FetchView | null,
+  startOffset: number,
+  endOffset: number = startOffset,
+  refreshKey = 0,
+) {
   const [events, setEvents] = useState<EventWithMeta[]>([])
   const loadIdRef = useRef(0)
 
@@ -30,16 +35,17 @@ export function useEvents(view: FetchView | null, dayOffset: number, refreshKey 
   // "we asked and there is nothing" apart from "the answer is still on its way".
   // Refetches that don't change the question (the 5-minute refresh, realtime)
   // leave `answered` matching, so they never blink the UI.
-  const query = `${lat},${lng},${km},${dayOffset}`
+  const query = `${lat},${lng},${km},${startOffset},${endOffset}`
   const [answered, setAnswered] = useState<string | null>(null)
 
-  // A different day is a different set of events, not more of the same one, so
-  // the cache cannot carry across it. Cleared during the render that brings the
-  // new day in rather than in an effect afterwards: an effect would leave one
-  // painted frame showing yesterday's pins under today's question.
-  const [dayInState, setDayInState] = useState(dayOffset)
-  if (dayInState !== dayOffset) {
-    setDayInState(dayOffset)
+  // A different range is a different set of events, not more of the same one,
+  // so the cache cannot carry across it. Cleared during the render that brings
+  // the new range in rather than in an effect afterwards: an effect would leave
+  // one painted frame showing the old range's pins under the new question.
+  const rangeKey = `${startOffset},${endOffset}`
+  const [rangeInState, setRangeInState] = useState(rangeKey)
+  if (rangeInState !== rangeKey) {
+    setRangeInState(rangeKey)
     setEvents([])
   }
 
@@ -47,14 +53,14 @@ export function useEvents(view: FetchView | null, dayOffset: number, refreshKey 
     if (lat === null || lng === null || km === null) return
     const id = ++loadIdRef.current
     const box = { lat, lng, km }
-    const data = await db.getEvents(lat, lng, km, dayOffset)
+    const data = await db.getEvents(lat, lng, km, startOffset, endOffset)
     if (id !== loadIdRef.current) return // a newer question is out; this answer is stale
     // null means the query failed, which is not a statement about what is out
     // there. Keeping the events is the difference between a hiccup nobody
     // notices and a map that empties itself.
     if (data !== null) setEvents(prev => mergeEvents(prev, data, box))
     setAnswered(query)
-  }, [lat, lng, km, dayOffset, query])
+  }, [lat, lng, km, startOffset, endOffset, query])
 
   // reload whenever load changes OR refreshKey bumps.
   // set-state-in-effect cannot see through the await: everything `load` runs

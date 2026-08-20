@@ -50,7 +50,7 @@ describe('useEvents', () => {
 
     rerender({ view: HERE })
     expect(getEvents).toHaveBeenCalledTimes(1)
-    expect(getEvents).toHaveBeenCalledWith(HERE.lat, HERE.lng, HERE.km, 0)
+    expect(getEvents).toHaveBeenCalledWith(HERE.lat, HERE.lng, HERE.km, 0, 0)
 
     await act(async () => { answer.resolve([here('near')]) })
     expect(result.current.loading).toBe(false)
@@ -146,7 +146,7 @@ describe('useEvents', () => {
     getEvents.mockReturnValueOnce(first.promise).mockReturnValueOnce(failed.promise)
 
     const { result, rerender } = renderHook(
-      ({ key }) => useEvents(HERE, 0, key),
+      ({ key }) => useEvents(HERE, 0, 0, key),
       { initialProps: { key: 0 } },
     )
     await act(async () => { first.resolve([here('near')]) })
@@ -156,6 +156,33 @@ describe('useEvents', () => {
     // A request that failed said nothing about what is out there.
     expect(ids(result.current.events)).toEqual(['near'])
     // ...but it is no longer in flight, so the map must stop saying it is.
+    expect(result.current.loading).toBe(false)
+  })
+})
+
+describe('zakres dni', () => {
+  it('rozszerzenie zakresu czyści piny i pyta o nową parę offsetów', async () => {
+    const first = pendingEvents()
+    getEvents.mockReturnValueOnce(first.promise)
+    const { result, rerender } = renderHook(
+      ({ end }) => useEvents(HERE, 0, end),
+      { initialProps: { end: 0 } },
+    )
+    await act(async () => { first.resolve([here('a')]) })
+    await waitFor(() => expect(result.current.events).toHaveLength(1))
+
+    const second = pendingEvents()
+    getEvents.mockReturnValueOnce(second.promise)
+    rerender({ end: 3 })
+
+    // Piny znikają w tym samym renderze, w którym zmienia się pytanie — bez
+    // tego jedna klatka pokazywałaby wydarzenia spoza nowego zakresu.
+    expect(result.current.events).toHaveLength(0)
+    expect(result.current.loading).toBe(true)
+    expect(getEvents).toHaveBeenLastCalledWith(HERE.lat, HERE.lng, HERE.km, 0, 3)
+
+    await act(async () => { second.resolve([here('a'), here('b')]) })
+    await waitFor(() => expect(result.current.events).toHaveLength(2))
     expect(result.current.loading).toBe(false)
   })
 })
