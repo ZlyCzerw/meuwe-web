@@ -106,13 +106,6 @@ function MapScreen({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [range, setRange] = useState<DayRange>({ startIdx: TODAY_IDX, endIdx: TODAY_IDX })
   const [timelineMode, setTimelineMode] = useState<TimelineMode>('day')
-  const dayIdx = range.startIdx
-  const setDayIdx = (next: number | ((prev: number) => number)) => {
-    setRange(prev => {
-      const idx = typeof next === 'function' ? next(prev.startIdx) : next
-      return { startIdx: idx, endIdx: idx }
-    })
-  }
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
   // How much of the world the user is looking at: the number the empty card
   // quotes and the radius "notify me here" writes to the profile. Null until
@@ -203,7 +196,9 @@ function MapScreen({
   }
 
   const eventsPos = mapCenter || initialCenter || userPos || lastKnownPos || ipPos || WARSAW
-  const { events, loading, ready } = useEvents(fetchView, idxToOffset(dayIdx), idxToOffset(dayIdx), eventsRefreshKey)
+  const { events, loading, ready } = useEvents(
+    fetchView, idxToOffset(range.startIdx), idxToOffset(range.endIdx), eventsRefreshKey,
+  )
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
   // Memoised because the pins effect keys off it: an inline filter() is a new
   // array every render, and on a phone the compass re-renders this screen
@@ -215,7 +210,7 @@ function MapScreen({
     [events, selectedFilters],
   )
 
-  const poolKey = `${[...selectedFilters].sort().join(',')}|${dayIdx}`
+  const poolKey = `${[...selectedFilters].sort().join(',')}|${range.startIdx}-${range.endIdx}`
   useEffect(() => {
     onPoolChange?.(visibleEvents, poolKey)
   }, [visibleEvents, poolKey]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -245,7 +240,13 @@ function MapScreen({
     onRegisterFlyToSpot?.((lat, lng, zoom) => {
       flyAdopting(map, lat, lng, Math.min(zoom, 19), 0.7)
     })
-    onRegisterShowDay?.(d => setDayIdx(dateToIdx(d)))
+    // Link prowadzi do konkretnego wydarzenia, więc pokazuje jego dzień —
+    // zakres z poprzedniego oglądania mapy tylko by go rozmył.
+    onRegisterShowDay?.(d => {
+      const idx = dateToIdx(d)
+      setTimelineMode('day')
+      setRange({ startIdx: idx, endIdx: idx })
+    })
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
@@ -797,7 +798,13 @@ function MapScreen({
                     // Acted on, so it has said its piece — a user who lands on
                     // another empty day is not told the same thing again.
                     offeredWayOutRef.current = true
-                    setDayIdx(TODAY_IDX + emptyVariant.dayOffset)
+                    const target = TODAY_IDX + emptyVariant.dayOffset
+                    // W trybie zakresu przycisk dokłada ten dzień do zakresu
+                    // zamiast go zastępować — obietnica „zobacz: sobota (3)”
+                    // zostaje dotrzymana bez wyrzucania z trybu, który user wybrał.
+                    setRange(prev => timelineMode === 'range'
+                      ? { startIdx: Math.min(prev.startIdx, target), endIdx: Math.max(prev.endIdx, target) }
+                      : { startIdx: target, endIdx: target })
                   }}
                   style={emptyCtaStyle}
                 >
