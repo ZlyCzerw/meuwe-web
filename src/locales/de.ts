@@ -129,7 +129,7 @@ const de: Resources = {
     pushBlockedWeb: 'Klicke auf das Symbol neben der Adressleiste und erlaube Benachrichtigungen für diese Seite.',
   },
   tags: {
-    party: 'Party', outdoor: 'Outdoor', family: 'Familie', culture: 'Kultur', sport: 'Sport', food: 'Essen',
+    party: 'Party', festival: 'Festival', outdoor: 'Outdoor', family: 'Familie', culture: 'Kultur', sport: 'Sport', food: 'Essen',
     music: 'Musik', art: 'Kunst', film: 'Film', gaming: 'Gaming', tech: 'Tech', nature: 'Natur',
     travel: 'Reisen', yoga: 'Yoga', dance: 'Tanzen', comedy: 'Comedy', kids: 'Kinder', pets: 'Haustiere',
     volunteering: 'Ehrenamt', workshop: 'Workshop', alert: 'Alarm',

@@ -129,7 +129,7 @@ const en: Resources = {
     pushBlockedWeb: 'Click the icon next to the address bar and allow notifications for this site.',
   },
   tags: {
-    party: 'party', outdoor: 'outdoor', family: 'family', culture: 'culture', sport: 'sport', food: 'food',
+    party: 'party', festival: 'festival', outdoor: 'outdoor', family: 'family', culture: 'culture', sport: 'sport', food: 'food',
     music: 'music', art: 'art', film: 'film', gaming: 'gaming', tech: 'tech', nature: 'nature',
     travel: 'travel', yoga: 'yoga', dance: 'dance', comedy: 'comedy', kids: 'kids', pets: 'pets',
     volunteering: 'volunteering', workshop: 'workshop', alert: 'alert',

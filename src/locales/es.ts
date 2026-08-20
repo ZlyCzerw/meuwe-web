@@ -129,7 +129,7 @@ const es: Resources = {
     pushBlockedWeb: 'Haz clic en el icono junto a la barra de direcciones y permite las notificaciones de este sitio.',
   },
   tags: {
-    party: 'fiesta', outdoor: 'aire libre', family: 'familiar', culture: 'cultura', sport: 'deporte', food: 'comida',
+    party: 'fiesta', festival: 'festival', outdoor: 'aire libre', family: 'familiar', culture: 'cultura', sport: 'deporte', food: 'comida',
     music: 'música', art: 'arte', film: 'cine', gaming: 'gaming', tech: 'tech', nature: 'naturaleza',
     travel: 'viajes', yoga: 'yoga', dance: 'baile', comedy: 'comedia', kids: 'niños', pets: 'mascotas',
     volunteering: 'voluntariado', workshop: 'taller', alert: 'alerta',

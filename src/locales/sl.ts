@@ -129,7 +129,7 @@ const sl: Resources = {
     pushBlockedWeb: 'Klikni ikono ob naslovni vrstici in dovoli obvestila za to stran.',
   },
   tags: {
-    party: 'zabava', outdoor: 'na prostem', family: 'družina', culture: 'kultura', sport: 'šport', food: 'hrana',
+    party: 'zabava', festival: 'festival', outdoor: 'na prostem', family: 'družina', culture: 'kultura', sport: 'šport', food: 'hrana',
     music: 'glasba', art: 'umetnost', film: 'film', gaming: 'igre', tech: 'tehnologija', nature: 'narava',
     travel: 'potovanja', yoga: 'joga', dance: 'ples', comedy: 'komedija', kids: 'otroci', pets: 'hišni ljubljenčki',
     volunteering: 'prostovoljstvo', workshop: 'delavnica', alert: 'opozorilo',

@@ -13,13 +13,17 @@ export function pinHTML(category: string, idx: number, _dbStatus?: string, start
     <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
   ` : ''
   const scaleStyle = scale !== 1 ? `transform:scale(${scale.toFixed(3)});transform-origin:bottom center;` : ''
+  // The glyph box is inset:0 rather than a top offset: it has to be the full
+  // 44x44 for the glyph to land on the blob's centre. Sized to its own line box
+  // instead, it sat 3px high in every pin. All three BLOBS centre within 0.4px
+  // of that box's centre, so one rule covers them.
   return `<div style="position:relative;width:44px;height:56px;">
     <div style="position:absolute;top:0;left:0;width:44px;height:44px;${scaleStyle}">
       ${halos}
       <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
         <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
       </svg>
-      <div style="position:absolute;top:10px;left:0;width:44px;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none">${meta.glyph}</div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none">${meta.glyph}</div>
     </div>
     <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${meta.color};border:2.5px solid #2D2B2A"></div>
   </div>`
@@ -61,7 +65,7 @@ export function privateHTML(isLive = false): string {
       <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A44)">
         <path d="${path}" fill="white" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
       </svg>
-      <div style="position:absolute;top:12px;left:0;width:44px;display:flex;align-items:center;justify-content:center;pointer-events:none">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
         <svg width="30" height="25" viewBox="0 0 26 22" fill="none">
           <ellipse cx="7.5" cy="7" rx="6" ry="5" fill="#2D2B2A"/>
           <ellipse cx="18.5" cy="7" rx="6" ry="5" fill="#2D2B2A"/>
