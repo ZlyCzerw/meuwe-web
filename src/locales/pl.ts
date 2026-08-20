@@ -26,6 +26,7 @@ const pl = {
     emptyNotify: 'Powiadom mnie, gdy coś się tu pojawi',
     emptyNotifyDone: 'Damy znać, gdy coś się pojawi',
     today: 'Dziś', yesterday: 'Wczoraj',
+    modeDay: 'Dzień', modeRange: 'Zakres dat',
     pickLocation: 'Wybierz miejsce',
     pickLocationHint: 'Przesuń mapę, aby wybrać lokalizację',
     pickLocationHintAlt: 'lub przesuń mapę, aby wybrać lokalizację',

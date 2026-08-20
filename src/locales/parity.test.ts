@@ -11,6 +11,8 @@ const NEW_EVENT_KEYS = [
   'chainPrev', 'chainNext',
 ] as const
 
+const MAP_MODE_KEYS = ['modeDay', 'modeRange'] as const
+
 const LOCALES = { pl, en, es, de, sl }
 
 describe('locale parity', () => {
@@ -37,5 +39,15 @@ describe('landing headline', () => {
   it.each(Object.entries(LOCALES))('%s does not reuse the tagline as h1', (_name, dict) => {
     const d = dict as { landing: Record<string, unknown>; welcome: Record<string, unknown> }
     expect(d.landing.h1).not.toBe(d.welcome.tagline)
+  })
+})
+
+describe('timeline mode switch', () => {
+  it.each(Object.entries(LOCALES))('%s names both timeline modes', (_name, dict) => {
+    const map = (dict as { map: Record<string, unknown> }).map
+    for (const key of MAP_MODE_KEYS) {
+      expect(typeof map[key]).toBe('string')
+      expect(map[key]).not.toBe('')
+    }
   })
 })

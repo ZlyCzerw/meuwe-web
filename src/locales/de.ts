@@ -28,6 +28,7 @@ const de: Resources = {
     emptyNotify: 'Sag Bescheid, wenn hier etwas auftaucht',
     emptyNotifyDone: 'Wir sagen Bescheid, wenn etwas auftaucht',
     today: 'Heute', yesterday: 'Gestern',
+    modeDay: 'Tag', modeRange: 'Zeitraum',
     pickLocation: 'Ort auswählen',
     pickLocationHint: 'Karte verschieben, um Standort zu wählen',
     pickLocationHintAlt: 'oder Karte verschieben, um Standort zu wählen',
