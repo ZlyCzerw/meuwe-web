@@ -8,6 +8,7 @@ import { isNativePlatform, isIOS } from './platform'
 import { WEB_ORIGIN } from './appConfig'
 import { langFromPath } from './i18n'
 import { downscaleImage } from './imageResize'
+import { rangeWindow } from './timeline'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -234,18 +235,13 @@ export const db = {
    * the events it already has across a pan, and a failed request that looked
    * like "there is nothing here" would delete perfectly good pins.
    */
-  async getEvents(lat:number,lng:number,km=15,dayOffset=0):Promise<EventWithMeta[]|null> {
+  /**
+   * `dayOffsetEnd` domyślnie równa się początkowi, więc wywołanie jednodniowe
+   * pyta dokładnie o to samo, co przed wprowadzeniem zakresów.
+   */
+  async getEvents(lat:number,lng:number,km=15,dayOffsetStart=0,dayOffsetEnd=dayOffsetStart):Promise<EventWithMeta[]|null> {
     const {dLat,dLng}=bboxDeltas(km,lat)
-    // Compute the target day's start/end in local time, then convert to UTC.
-    // This replicates the same semantics as the previous toDateString() comparison.
-    const now    = new Date()
-    const target = new Date()
-    target.setDate(target.getDate() + dayOffset)
-    const dayStart = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0)
-    const dayEnd   = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999)
-    // For today: hide events whose end_time has already passed.
-    // For future days: show all events that overlap that day.
-    const endTimeFloor = dayOffset === 0 ? now : dayStart
+    const { dayEnd, endTimeFloor } = rangeWindow(dayOffsetStart, dayOffsetEnd)
 
     const {data,error}=await supabase.from('events')
       .select(`*,profiles(${PROFILE_PUBLIC}),event_tags(tag)`)
