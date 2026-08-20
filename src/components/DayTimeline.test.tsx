@@ -110,7 +110,7 @@ describe('tryb zakresu', () => {
     render(<Harness onRange={onRange} />)
     toRange()
     fireEvent.click(tile(5))
-    fireEvent.click(screen.getByLabelText('close-timeline'))
+    fireEvent.click(screen.getByLabelText('Close date strip'))
     // Zwinięty pasek to jeden guzik — pigułka, która otwiera go z powrotem.
     fireEvent.click(screen.getByRole('button'))
     fireEvent.click(tile(9))

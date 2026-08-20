@@ -303,7 +303,7 @@ export default function DayTimeline({
         <button
           onPointerDown={e => e.stopPropagation()}
           onClick={() => onOpenChange(false)}
-          aria-label="close-timeline"
+          aria-label={t('map.closeTimeline')}
           style={{
             flexShrink: 0, width: 24, color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16,
             background: 'transparent', border: 'none', cursor: 'pointer',

@@ -29,6 +29,7 @@ const de: Resources = {
     emptyNotifyDone: 'Wir sagen Bescheid, wenn etwas auftaucht',
     today: 'Heute', yesterday: 'Gestern',
     modeDay: 'Tag', modeRange: 'Zeitraum',
+    closeTimeline: 'Datumsleiste schließen',
     pickLocation: 'Ort auswählen',
     pickLocationHint: 'Karte verschieben, um Standort zu wählen',
     pickLocationHintAlt: 'oder Karte verschieben, um Standort zu wählen',

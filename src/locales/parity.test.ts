@@ -11,7 +11,7 @@ const NEW_EVENT_KEYS = [
   'chainPrev', 'chainNext',
 ] as const
 
-const MAP_MODE_KEYS = ['modeDay', 'modeRange'] as const
+const MAP_TIMELINE_KEYS = ['modeDay', 'modeRange', 'closeTimeline'] as const
 
 const LOCALES = { pl, en, es, de, sl }
 
@@ -42,10 +42,10 @@ describe('landing headline', () => {
   })
 })
 
-describe('timeline mode switch', () => {
-  it.each(Object.entries(LOCALES))('%s names both timeline modes', (_name, dict) => {
+describe('timeline strip labels', () => {
+  it.each(Object.entries(LOCALES))('%s names both modes and the close button', (_name, dict) => {
     const map = (dict as { map: Record<string, unknown> }).map
-    for (const key of MAP_MODE_KEYS) {
+    for (const key of MAP_TIMELINE_KEYS) {
       expect(typeof map[key]).toBe('string')
       expect(map[key]).not.toBe('')
     }

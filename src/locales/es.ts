@@ -29,6 +29,7 @@ const es: Resources = {
     emptyNotifyDone: 'Te avisamos cuando aparezca algo',
     today: 'Hoy', yesterday: 'Ayer',
     modeDay: 'Día', modeRange: 'Rango de fechas',
+    closeTimeline: 'Cerrar la barra de fechas',
     pickLocation: 'Elige un lugar',
     pickLocationHint: 'Mueve el mapa para elegir la ubicación',
     pickLocationHintAlt: 'o mueve el mapa para elegir la ubicación',

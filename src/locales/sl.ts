@@ -29,6 +29,7 @@ const sl: Resources = {
     emptyNotifyDone: 'Sporočili ti bomo, ko se kaj pojavi',
     today: 'Danes', yesterday: 'Včeraj',
     modeDay: 'Dan', modeRange: 'Obdobje',
+    closeTimeline: 'Zapri vrstico z datumi',
     pickLocation: 'Izberi lokacijo',
     pickLocationHint: 'Premakni zemljevid za izbiro lokacije',
     pickLocationHintAlt: 'ali premakni zemljevid za izbiro lokacije',
