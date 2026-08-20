@@ -1499,3 +1499,49 @@ Sprawdź po kolei:
 git add -A
 git commit -m "Poprawki po przejściu przez zakres dat w aplikacji"
 ```
+
+---
+
+## Czego plan nie przewidział
+
+Spisane po wykonaniu, żeby czytający plan nie sugerował się kodem, który nie
+wszedł w tej postaci.
+
+1. **`refreshKey` przesunął się na czwartą pozycję `useEvents`.** Plan twierdził,
+   że dotychczasowe trzyargumentowe wywołanie w `MapScreen` zachowa się jak
+   wcześniej. Kompiluje się, ale `eventsRefreshKey` trafiał wtedy na miejsce
+   końca zakresu. Poprawione osobnym commitem `c0b260a`.
+
+2. **`onPointerDown={e => e.stopPropagation()}` na kafelkach dni psuje
+   przeciąganie.** Kontener nigdy nie przechwytuje wskaźnika, a kafelki
+   zajmują cały pasek, więc nie ma czego chwycić. Kafelki zostały bez tego
+   handlera — tak jak w kodzie sprzed refaktoru. Fragmenty planu, które go
+   pokazują (Task 6 i Task 7), są w tym miejscu nieaktualne.
+
+3. **Puszczenie przeciągniętego paska wybiera dzień.** Plan gubił to przy
+   wydzielaniu komponentu. Zachowanie przywrócone i w trybie dnia obwarowane
+   warunkiem, w trybie zakresu przeciąganie tylko przewija.
+
+4. **`focusIdx` musi nadążać za zakresem ustawionym z zewnątrz.** Bez efektu
+   synchronizującego deep link i przycisk pustej karty podświetlały kafelek
+   poza widocznym oknem paska.
+
+5. **Strażnik 400 ms w `select` zjadał drugie dotknięcie zakresu.** Zastąpiony
+   jednorazowym znacznikiem `pointerTapAt`, zapalanym wyłącznie przez drogę
+   wskaźnika. Dwa prawdziwe dotknięcia pod rząd składają zakres, echo `click`
+   po dotknięciu nie liczy się drugi raz, klawiatura liczy się zawsze.
+
+6. **Kotwica musi ginąć przy zwijaniu paska.** Niedomknięty zakres wygląda jak
+   zwykły wybrany dzień, więc po ponownym otwarciu następne dotknięcie
+   domykałoby zakres od daty, której nikt już nie widzi.
+
+7. **`switchMode` dosuwa okno paska do początku zakresu.** Inaczej po powrocie
+   na „Dzień" zaznaczony dzień potrafił zostać poza ekranem.
+
+8. **`aria-label` przycisku zamykającego przechodzi przez `t()`** — plan miał
+   tam wpisany na sztywno `close-timeline`.
+
+9. **Przycisk pustej karty nie proponuje dnia, który już jest w zakresie.**
+   Sonda nie zna ani zakresu, ani filtrów, więc potrafiła zaproponować dzień
+   leżący w środku zaznaczenia — kliknięcie nie zmieniało wtedy niczego,
+   a użytkownik dostaje tylko jedno takie zaproszenie.
