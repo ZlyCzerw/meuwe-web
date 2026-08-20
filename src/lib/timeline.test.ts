@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { dateToIdx, idxToDate, idxToOffset, DAYS_COUNT, TODAY_IDX } from './timeline'
+import {
+  dateToIdx, idxToDate, idxToOffset, DAYS_COUNT, TODAY_IDX,
+  normalizeRange, isInRange, tapRange, tileState,
+} from './timeline'
 
 // Południe, żeby dodawanie dni nie ocierało się o zmianę czasu.
 const now = new Date(2026, 7, 19, 12, 0, 0) // 19 sierpnia 2026
@@ -37,5 +40,88 @@ describe('idxToOffset', () => {
     expect(idxToOffset(0)).toBe(-1)
     expect(idxToOffset(TODAY_IDX)).toBe(0)
     expect(idxToOffset(DAYS_COUNT - 1)).toBe(13)
+  })
+})
+
+describe('normalizeRange', () => {
+  it('zostawia zakres wybrany od najwcześniejszej daty', () => {
+    expect(normalizeRange(2, 6)).toEqual({ startIdx: 2, endIdx: 6 })
+  })
+
+  it('zamienia daty, gdy zakres zaznaczono wstecz', () => {
+    // Tap na niedzielę 23.08 (idx 5), potem na środę 19.08 (idx 1).
+    expect(normalizeRange(5, 1)).toEqual({ startIdx: 1, endIdx: 5 })
+  })
+
+  it('ta sama data z obu stron to zakres jednodniowy', () => {
+    expect(normalizeRange(3, 3)).toEqual({ startIdx: 3, endIdx: 3 })
+  })
+})
+
+describe('isInRange', () => {
+  const range = { startIdx: 2, endIdx: 5 }
+
+  it('obejmuje oba końce', () => {
+    expect(isInRange(2, range)).toBe(true)
+    expect(isInRange(5, range)).toBe(true)
+  })
+
+  it('obejmuje środek', () => {
+    expect(isInRange(4, range)).toBe(true)
+  })
+
+  it('nie obejmuje dni poza zakresem', () => {
+    expect(isInRange(1, range)).toBe(false)
+    expect(isInRange(6, range)).toBe(false)
+  })
+})
+
+describe('tapRange', () => {
+  const start = { range: { startIdx: 1, endIdx: 1 }, anchorIdx: null }
+
+  it('pierwsze dotknięcie zwija zakres do jednego dnia i zapamiętuje początek', () => {
+    expect(tapRange(start, 5)).toEqual({
+      range: { startIdx: 5, endIdx: 5 }, anchorIdx: 5,
+    })
+  })
+
+  it('drugie dotknięcie dopina koniec i zwalnia kotwicę', () => {
+    const afterFirst = tapRange(start, 5)
+    expect(tapRange(afterFirst, 8)).toEqual({
+      range: { startIdx: 5, endIdx: 8 }, anchorIdx: null,
+    })
+  })
+
+  it('drugie dotknięcie we wcześniejszą datę zaznacza wstecz', () => {
+    const afterFirst = tapRange(start, 5)
+    expect(tapRange(afterFirst, 1)).toEqual({
+      range: { startIdx: 1, endIdx: 5 }, anchorIdx: null,
+    })
+  })
+
+  it('trzecie dotknięcie zaczyna nowy zakres', () => {
+    const complete = tapRange(tapRange(start, 5), 8)
+    expect(tapRange(complete, 2)).toEqual({
+      range: { startIdx: 2, endIdx: 2 }, anchorIdx: 2,
+    })
+  })
+})
+
+describe('tileState', () => {
+  const range = { startIdx: 2, endIdx: 5 }
+
+  it('bez podglądu maluje końce, środek i resztę osobno', () => {
+    expect(tileState(2, range, null)).toBe('edge')
+    expect(tileState(5, range, null)).toBe('edge')
+    expect(tileState(3, range, null)).toBe('inside')
+    expect(tileState(9, range, null)).toBe('idle')
+  })
+
+  it('podgląd zastępuje zaznaczenie, a kotwica zostaje końcem', () => {
+    const preview = { anchorIdx: 2, range: { startIdx: 2, endIdx: 7 } }
+    expect(tileState(2, range, preview)).toBe('edge')
+    expect(tileState(6, range, preview)).toBe('preview')
+    expect(tileState(3, range, preview)).toBe('preview')
+    expect(tileState(9, range, preview)).toBe('idle')
   })
 })
