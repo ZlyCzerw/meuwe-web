@@ -245,6 +245,8 @@ const en: Resources = {
     body: "Google doesn't allow sign-in from Messenger or other apps.\nOpen meuwe in Safari or Chrome.",
     copyLink: 'Copy link',
     copied: 'Copied!',
+    openBrowser: 'Open in browser',
+    close: 'Close',
     hint: 'Paste the link in the Safari address bar',
   },
   auth: { createEventPrompt: 'Only logged-in users can add events', chatPrompt: 'Only logged-in users can write messages' , signInFailed: 'Sign-in failed, please try again'},

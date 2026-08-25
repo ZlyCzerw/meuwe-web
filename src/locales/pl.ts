@@ -243,6 +243,8 @@ const pl = {
     body: 'Google nie pozwala na logowanie w Messengerze ani innych aplikacjach.\nOtwórz meuwe w Safari lub Chrome.',
     copyLink: 'Skopiuj link',
     copied: 'Skopiowano!',
+    openBrowser: 'Otwórz w przeglądarce',
+    close: 'Zamknij',
     hint: 'Wklej link w pasku adresu Safari',
   },
   auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia', chatPrompt: 'Tylko zalogowani użytkownicy mogą pisać wiadomości' , signInFailed: 'Nie udało się zalogować, spróbuj ponownie'},

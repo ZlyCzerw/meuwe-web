@@ -8,15 +8,18 @@ import { useBlobPhysics } from '../hooks/useBlobPhysics'
 import { db } from '../lib/supabase'
 import { isNativePlatform, mobileOS } from '../lib/platform'
 import StoreBadge from '../components/StoreBadge'
+import InAppBrowserModal from '../components/InAppBrowserModal'
+import { isInAppBrowser } from '../lib/inAppBrowser'
 
-function isInAppBrowser(): boolean {
-  if (isNativePlatform()) return false
-  const ua = navigator.userAgent
-  // Android apps use Chrome Custom Tabs → Google accepts them → no block
-  if (!/iphone|ipad|ipod/i.test(ua)) return false
-  // iOS: known in-app browser strings OR missing standalone browser identifier
-  return /FBAN|FBAV|FB_IAB|FBIOS|Messenger/i.test(ua)
-    || !/safari|crios|fxios|edgios/i.test(ua)
+// Raz zamknięta informacja o WebView nie wraca do końca sesji — kto już
+// wie, że logowanie tu nie zadziała, nie musi tego słyszeć przy każdym powrocie
+// na ekran powitalny. Nowa karta w Messengerze to nowa sesja, więc ktoś, kto
+// przyszedł z innego linku, dostanie ją ponownie.
+const NOTICE_KEY = 'meuwe_webview_notice_dismissed'
+
+function noticeDismissed(): boolean {
+  try { return sessionStorage.getItem(NOTICE_KEY) === '1' }
+  catch { return false }
 }
 
 /**
@@ -33,76 +36,14 @@ const CTA_MAX_W = 304
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'apple' | 'skip') => void }) {
   const { t } = useTranslation()
   const blobs = useBlobPhysics(6)
-  const [copied, setCopied] = useState(false)
+  // Wbudowana przeglądarka Facebooka i spółki: sprawdzone raz, przy montowaniu,
+  // bo user agent nie zmienia się w trakcie życia ekranu.
+  const [webviewNotice, setWebviewNotice] = useState(() => isInAppBrowser() && !noticeDismissed())
   // On native the WebView is full-screen and body has safe-area padding, which would
   // leave cream bands above/below this screen. Break the gradient out to fill the whole
   // viewport (position:fixed) so it reaches under the notch and home indicator. On web
   // this component is a hero section inside the scrollable landing, so keep it in flow.
   const native = isNativePlatform()
-
-  if (isInAppBrowser()) {
-    const url = window.location.href
-    function copyLink() {
-      navigator.clipboard.writeText(url).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }).catch(() => {
-        // clipboard unavailable — show hint regardless
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
-    }
-    return (
-      <div style={{
-        width: '100%', height: '100%', position: 'relative',
-        background: `linear-gradient(180deg,${C.cream} 0%,#FFF1E0 40%,#FFE8DC 75%,#FFE0E8 100%)`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: '0 28px',
-      }}>
-        <MeuweLogo height={37} style={{ marginBottom: 32 }} />
-        <div style={{
-          width: '100%', maxWidth: 380, background: '#fff',
-          border: `2.5px solid ${INK}`, borderRadius: 28,
-          boxShadow: `0 6px 0 ${INK}22`, padding: '28px 24px 24px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
-        }}>
-          <div style={{ fontSize: 40 }}>🔒</div>
-          <div style={{ fontFamily: F.display, fontWeight: 900, fontSize: 22, color: C.ink, textAlign: 'center' }}>
-            {t('webview.title')}
-          </div>
-          <div style={{
-            fontSize: 14, color: C.inkSoft, fontWeight: 600, lineHeight: 1.55,
-            textAlign: 'center', whiteSpace: 'pre-line',
-          }}>
-            {t('webview.body')}
-          </div>
-          <div style={{
-            width: '100%', padding: '10px 14px', borderRadius: 12,
-            background: C.cream, border: `1.5px solid ${INK}22`,
-            fontSize: 12, color: C.ink, fontWeight: 700,
-            wordBreak: 'break-all', textAlign: 'center', lineHeight: 1.5,
-          }}>
-            {url}
-          </div>
-          <button
-            onClick={copyLink}
-            style={{
-              width: '100%', padding: '16px', borderRadius: 999,
-              background: copied ? C.grass : C.primary,
-              border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
-              fontSize: 16, fontWeight: 800, color: '#fff', cursor: 'pointer',
-              transition: 'background 200ms ease',
-            }}
-          >
-            {copied ? t('webview.copied') : t('webview.copyLink')}
-          </button>
-          <div style={{ fontSize: 12, color: C.inkSoft, fontWeight: 600, textAlign: 'center' }}>
-            {t('webview.hint')}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div style={{
@@ -222,6 +163,13 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
           )
         })()}
       </div>
+
+      {webviewNotice && (
+        <InAppBrowserModal onClose={() => {
+          try { sessionStorage.setItem(NOTICE_KEY, '1') } catch { /* prywatne okno — trudno */ }
+          setWebviewNotice(false)
+        }} />
+      )}
     </div>
   )
 }

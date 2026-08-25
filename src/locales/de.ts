@@ -245,6 +245,8 @@ const de: Resources = {
     body: 'Google erlaubt keine Anmeldung über Messenger oder andere Apps.\nÖffne meuwe in Safari oder Chrome.',
     copyLink: 'Link kopieren',
     copied: 'Kopiert!',
+    openBrowser: 'Im Browser öffnen',
+    close: 'Schließen',
     hint: 'Füge den Link in die Safari-Adressleiste ein',
   },
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen', chatPrompt: 'Nur angemeldete Nutzer können Nachrichten schreiben' , signInFailed: 'Anmeldung fehlgeschlagen, bitte erneut versuchen'},

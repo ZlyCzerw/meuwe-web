@@ -245,6 +245,8 @@ const sl: Resources = {
     body: 'Google ne dovoli prijave iz Messengerja ali drugih aplikacij.\nOdpri meuwe v Safariju ali Chromu.',
     copyLink: 'Kopiraj povezavo',
     copied: 'Kopirano!',
+    openBrowser: 'Odpri v brskalniku',
+    close: 'Zapri',
     hint: 'Prilepi povezavo v naslovno vrstico Safarija',
   },
   auth: { createEventPrompt: 'Dogodke lahko dodajajo samo prijavljeni uporabniki', chatPrompt: 'Sporočila lahko pišejo samo prijavljeni uporabniki' , signInFailed: 'Prijava ni uspela, poskusite znova'},

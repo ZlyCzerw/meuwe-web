@@ -245,6 +245,8 @@ const es: Resources = {
     body: 'Google no permite iniciar sesión desde Messenger u otras apps.\nAbre meuwe en Safari o Chrome.',
     copyLink: 'Copiar enlace',
     copied: '¡Copiado!',
+    openBrowser: 'Abrir en el navegador',
+    close: 'Cerrar',
     hint: 'Pega el enlace en la barra de direcciones de Safari',
   },
   auth: { createEventPrompt: 'Solo los usuarios registrados pueden añadir eventos', chatPrompt: 'Solo los usuarios registrados pueden escribir mensajes' , signInFailed: 'No se pudo iniciar sesión, inténtalo de nuevo'},
