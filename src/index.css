@@ -4,7 +4,20 @@ html,body{width:100%;height:100%;font-family:"Nunito",sans-serif;background:#FFF
 
 /* Leaflet — raw CARTO Voyager tones (no warm filter) for crisper detail */
 .leaflet-container{background:#FFF6EC !important}
-.leaflet-control-zoom,.leaflet-control-attribution{display:none !important}
+.leaflet-control-zoom{display:none !important}
+/* Atrybucja CARTO/OSM jest warunkiem darmowego klucza do kafelków, więc zostaje
+   widoczna — ale zdjęta z domyślnej białej plakietki Leafletu i wtopiona w kremowe
+   tło mapy. env() trzyma ją nad home indicatorem: mapa jest position:fixed inset:0,
+   więc sięga pod safe areę, a kontrolki Leafletu nie dostają paddingu body. */
+.leaflet-control-attribution{
+  background:rgba(255,246,236,.72) !important;
+  color:rgba(45,43,42,.6);
+  font-size:9px;line-height:1.35;
+  padding:2px 6px;border-radius:8px;
+  max-width:48vw;
+  margin:0 0 calc(6px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left)) !important;
+}
+.leaflet-control-attribution a{color:rgba(45,43,42,.75);text-decoration:none}
 .meuwe-icon{background:transparent !important;border:none !important}
 
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}

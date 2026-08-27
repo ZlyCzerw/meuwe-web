@@ -32,6 +32,18 @@ import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
 
+// CARTO wymaga klucza do kafelków rastrowych — bez niego wracają ze znakiem
+// wodnym „API key required” na całej mapie. Klucz jedzie w URL-u kafelka, więc
+// z natury jest publiczny; VITE_ w bundlu jest tu w porządku. Brak klucza
+// (np. świeży klon bez .env) nie wysypuje mapy — po prostu wraca znak wodny.
+const CARTO_KEY = import.meta.env.VITE_CARTO_KEY as string | undefined
+const TILE_URL = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png${CARTO_KEY ? `?key=${CARTO_KEY}` : ''}`
+// Warunek darmowego limitu CARTO: atrybucja CARTO i OpenStreetMap musi zostać
+// widoczna na mapie. Bez niej klucz może zostać zablokowany.
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' +
+  ' &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 function MapScreen({
@@ -222,10 +234,14 @@ function MapScreen({
     const start = initialPos || lastKnownPos || ipPos || WARSAW
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
       .setView([start.lat, start.lng], initialZoom)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(TILE_URL, {
+      attribution: TILE_ATTRIBUTION,
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map)
+    // Lewy dolny róg to jedyny wolny narożnik mapy: awatar siedzi w lewym
+    // górnym, przyciski recenter w prawym dolnym, ADD na środku dołu.
+    L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map)
     map.on('click', () => onMapClickRef.current?.())
     onRegisterFlyTo?.((lat, lng) => {
       // Offset center downward so the pin appears in the visible area above the event sheet.
