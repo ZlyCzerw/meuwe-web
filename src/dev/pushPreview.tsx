@@ -6,6 +6,8 @@
 //   /push-preview.html?modal=ask        → the follow notification card
 //   /push-preview.html?modal=blocked    → ...after a system block
 //   /push-preview.html?promo=android    → the mobile web "get the app" sheet
+//   /push-preview.html?update=optional  → the in-app "new version" nudge
+//   /push-preview.html?update=blocking  → ...once the backend has dropped it
 //   /push-preview.html?step=location    → native first-run location card
 //   /push-preview.html?step=invite      → invite friends card
 //   /push-preview.html?step=profile     → the profile panel (fake session)
@@ -19,6 +21,7 @@ import i18n from '../lib/i18n'
 import NotificationSetting from '../screens/NotificationSetting'
 import FollowNotifyModal from '../components/FollowNotifyModal'
 import AppPromoSheet from '../components/AppPromoSheet'
+import UpdateSheet from '../components/UpdateSheet'
 import LocationOnboardingModal from '../components/LocationOnboardingModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
 import ProfilePanel from '../screens/ProfilePanel'
@@ -55,6 +58,7 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
+const update = params.get('update') as 'optional' | 'blocking' | null
 const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | 'nickname' | null
 
 const root = createRoot(document.getElementById('root')!)
@@ -90,6 +94,16 @@ root.render(
     <LocationOnboardingModal onAllow={async () => {}} onSkip={() => {}} />
   ) : step === 'invite' ? (
     <InviteFriendsModal onClose={() => {}} />
+  ) : update ? (
+    // Both modes are position:fixed, so on a desktop they would stretch across
+    // the whole window. The transform makes this box their containing block,
+    // which is what shows them at the width a phone actually gives them.
+    <div style={{
+      width: 390, height: 844, position: 'relative', overflow: 'hidden',
+      transform: 'translateZ(0)', background: C.cream,
+    }}>
+      <UpdateSheet mode={update} onUpdate={() => {}} onDismiss={() => {}} />
+    </div>
   ) : promo ? (
     <AppPromoSheet os={promo} onClose={() => {}} />
   ) : modal ? (

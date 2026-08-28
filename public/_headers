@@ -4,6 +4,14 @@
 /.well-known/apple-app-site-association
   Content-Type: application/json
 
+# Read by the native app on every cold start (src/lib/appUpdate.ts). The app's
+# webview is its own origin (capacitor://localhost), so this is a cross-origin
+# fetch and needs to say so; no-store keeps a raised support floor from sitting
+# in a cache while people stare at a broken app.
+/app-support.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-store
+
 # GA4 collects through a regional host that rotates per visitor location
 # (region1.analytics.google.com for the EU, and it moved off the older
 # *.google-analytics.com naming), so connect-src takes both domains as

@@ -185,6 +185,14 @@ const de: Resources = {
     failed: 'Teilen konnte nicht geöffnet und der Link nicht kopiert werden.',
     message: 'Schau auf meuwe, was in deiner Nähe los ist:',
   },
+  appUpdate: {
+    title: 'Es gibt eine neue meuwe-Version',
+    body: 'Im Store wartet eine neuere Version — Verbesserungen und Neues.',
+    action: 'Aktualisieren',
+    later: 'Später',
+    blockedTitle: 'Aktualisiere meuwe, um weiterzumachen',
+    blockedBody: 'Diese Version der App wird nicht mehr unterstützt. Die neue wartet im Store und ist schnell installiert.',
+  },
   appPromo: {
     title: 'meuwe läuft besser in der App',
     body: 'Benachrichtigungen zu Events in deiner Nähe, eine schnellere Karte und ein Symbol auf dem Startbildschirm.',

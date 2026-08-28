@@ -185,6 +185,14 @@ const en: Resources = {
     failed: 'Could not open sharing or copy the link.',
     message: 'See what is happening around you on meuwe:',
   },
+  appUpdate: {
+    title: 'A new version of meuwe',
+    body: 'A newer version is waiting in the store — fixes and new things.',
+    action: 'Update',
+    later: 'Not now',
+    blockedTitle: 'Update meuwe to keep going',
+    blockedBody: 'This version of the app is no longer supported. A new one is waiting in the store and installs in a moment.',
+  },
   appPromo: {
     title: 'meuwe works better in the app',
     body: 'Notifications about events near you, a faster map and a shortcut on your home screen.',

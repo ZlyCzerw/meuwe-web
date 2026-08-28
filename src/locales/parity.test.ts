@@ -13,6 +13,10 @@ const NEW_EVENT_KEYS = [
 
 const MAP_TIMELINE_KEYS = ['modeDay', 'modeRange', 'closeTimeline'] as const
 
+const APP_UPDATE_KEYS = [
+  'title', 'body', 'action', 'later', 'blockedTitle', 'blockedBody',
+] as const
+
 const LOCALES = { pl, en, es, de, sl }
 
 describe('locale parity', () => {
@@ -48,6 +52,18 @@ describe('timeline strip labels', () => {
     for (const key of MAP_TIMELINE_KEYS) {
       expect(typeof map[key]).toBe('string')
       expect(map[key]).not.toBe('')
+    }
+  })
+})
+
+describe('update prompts', () => {
+  // The blocking screen is the one text nobody can dismiss their way past, and
+  // it reaches people precisely when the app is already failing them.
+  it.each(Object.entries(LOCALES))('%s carries every update key', (_name, dict) => {
+    const appUpdate = (dict as { appUpdate: Record<string, unknown> }).appUpdate
+    for (const key of APP_UPDATE_KEYS) {
+      expect(typeof appUpdate[key]).toBe('string')
+      expect(appUpdate[key]).not.toBe('')
     }
   })
 })

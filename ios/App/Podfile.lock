@@ -36,6 +36,8 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (6.0.3):
     - Capacitor
+  - CapawesomeCapacitorAppUpdate (6.1.0):
+    - Capacitor
   - EbarooniCapacitorCalendar (6.7.2):
     - Capacitor
   - FirebaseAppCheckInterop (11.15.0)
@@ -127,6 +129,7 @@ DEPENDENCIES:
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
+  - "CapawesomeCapacitorAppUpdate (from `../../node_modules/@capawesome/capacitor-app-update`)"
   - "EbarooniCapacitorCalendar (from `../../node_modules/@ebarooni/capacitor-calendar`)"
   - GTMSessionFetcher/Core (~> 3.4)
 
@@ -173,6 +176,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/splash-screen"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
+  CapawesomeCapacitorAppUpdate:
+    :path: "../../node_modules/@capawesome/capacitor-app-update"
   EbarooniCapacitorCalendar:
     :path: "../../node_modules/@ebarooni/capacitor-calendar"
 
@@ -189,6 +194,7 @@ SPEC CHECKSUMS:
   CapacitorShare: 77ff779e3b7c6ae9fb5461e52cf7ef805d429491
   CapacitorSplashScreen: ef140a8b1ea7244e0c245ce2dd4ce5251e7ab86a
   CapacitorStatusBar: 149cde8f1328ec3aa6cbdd872a55137ae3f98b16
+  CapawesomeCapacitorAppUpdate: 385ad62a9f529cdedaca5df3599b9b7f6d03e880
   EbarooniCapacitorCalendar: fe76a0820c1a8273bf2d5bda343b61a6cb1c324f
   FirebaseAppCheckInterop: 06fe5a3799278ae4667e6c432edd86b1030fa3df
   FirebaseAuth: a6575e5fbf46b046c58dc211a28a5fbdd8d4c83b
@@ -207,6 +213,6 @@ SPEC CHECKSUMS:
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
 
-PODFILE CHECKSUM: dea57f969ab34cfaf52f5bb84e22910614847b7c
+PODFILE CHECKSUM: c392489543d594d42abba0702d3245cb6b06470d
 
 COCOAPODS: 1.17.0

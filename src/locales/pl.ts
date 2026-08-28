@@ -177,6 +177,14 @@ const pl = {
     failed: 'Nie udało się otworzyć udostępniania ani skopiować linku.',
     message: 'Zobacz co dzieje się w okolicy na meuwe:',
   },
+  appUpdate: {
+    title: 'Jest nowa wersja meuwe',
+    body: 'W sklepie czeka nowsza wersja — poprawki i nowości.',
+    action: 'Aktualizuj',
+    later: 'Nie teraz',
+    blockedTitle: 'Zaktualizuj meuwe, żeby korzystać dalej',
+    blockedBody: 'Ta wersja aplikacji nie jest już obsługiwana. Nowa czeka w sklepie i instaluje się w chwilę.',
+  },
   appPromo: {
     title: 'meuwe działa lepiej w aplikacji',
     body: 'Powiadomienia o wydarzeniach obok Ciebie, szybsza mapa i skrót na ekranie głównym.',

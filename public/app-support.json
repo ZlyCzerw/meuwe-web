@@ -1,0 +1,5 @@
+{
+  "_readme": "Oldest app version the backend still serves, per platform. Raising a value shows a blocking update screen to everyone below it — only ever raise it to a version already published in that store, or people will be sent to a download that is not there. Read by src/lib/appUpdate.ts.",
+  "ios": { "minSupported": "1.0.0" },
+  "android": { "minSupported": "1.0.0" }
+}

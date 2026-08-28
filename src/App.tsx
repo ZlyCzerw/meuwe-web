@@ -26,6 +26,7 @@ import FollowedEventsScreen from './screens/FollowedEventsScreen'
 import { StoreHint } from './components/StoreBadge'
 import { deviceStoreOs } from './lib/stores'
 import AppPromoSheet from './components/AppPromoSheet'
+import UpdateSheet from './components/UpdateSheet'
 import LocationOnboardingModal from './components/LocationOnboardingModal'
 import InterestsOnboardingModal from './components/InterestsOnboardingModal'
 import InviteFriendsModal from './components/InviteFriendsModal'
@@ -37,6 +38,8 @@ import { startupZoom, kmToZoom, MAX_MAP_KM } from './lib/geo'
 import { summariseProbe } from './lib/emptyState'
 import { isScreenClear, type OverlayFlags } from './lib/overlays'
 import { readPromoState, writePromoState, recordEventView, canShowPromo, markPromoShown, markPromoDismissed } from './lib/appPromo'
+import { writeDismissedVersion } from './lib/appUpdate'
+import { checkForUpdate, startUpdate, type PendingUpdate } from './lib/appUpdateNative'
 import PushAskModal from './components/PushAskModal'
 import * as pushAsk from './lib/pushAsk'
 import { resolvePushState, isRepairableInApp, type DevicePushState } from './lib/pushState'
@@ -170,6 +173,17 @@ export default function App() {
     setPromoOpen(false)
   }
 
+  // ── "There is a new version" (in the app only) ─────────────────────────────
+  // checkForUpdate() answers null on the web, on a phone with no signal, and on
+  // every failure in between, so nothing here needs a guard of its own.
+  const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null)
+  // Dismissing remembers the build, not the moment: the same one stays quiet
+  // for good, the next one is announced.
+  const dismissUpdate = () => {
+    if (pendingUpdate) writeDismissedVersion(pendingUpdate.key)
+    setPendingUpdate(null)
+  }
+
   // ── Asking for notifications ───────────────────────────────────────────────
   // EventSheet writes to the same ledger when someone follows, so every change
   // here is a read-modify-write against storage rather than a long-lived copy
@@ -237,6 +251,7 @@ export default function App() {
     inviteModalOpen,
     pushAskOpen,
     attendanceAskOpen,
+    updateOpen: !!pendingUpdate,
   }
   const screenIsClear = () => !!overlayRef.current && isScreenClear(overlayRef.current)
 
@@ -620,6 +635,24 @@ export default function App() {
     }).then(handle => { remove = () => handle.remove() })
     return () => { remove?.() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Asked at boot and again on every return from the background: an iPhone can
+  // keep this app alive for weeks, so a cold start is not something we get to
+  // wait for. A verdict already on screen is never overwritten — least of all a
+  // blocking one, which nothing but an update may take down.
+  useEffect(() => {
+    if (!isNativePlatform()) return
+    let live = true
+    let remove: (() => void) | undefined
+    const check = () => {
+      void checkForUpdate().then(found => {
+        if (live && found) setPendingUpdate(current => current ?? found)
+      })
+    }
+    check()
+    CapApp.addListener('resume', check).then(handle => { remove = () => handle.remove() })
+    return () => { live = false; remove?.() }
+  }, [])
 
   // Systemowy przycisk/gest wstecz (Android). Rejestracja listenera odbiera
   // Capacitorowi domyślną obsługę — i dobrze, bo od API 36 (predictive back)
@@ -1184,6 +1217,15 @@ export default function App() {
       <ConfettiBurst visible={showConfetti} />
       {promoOpen && promoOs && (
         <AppPromoSheet os={promoOs} onClose={dismissPromo} />
+      )}
+      {/* A nudge waits for a clear screen the way the other cards do; a block
+          waits for nothing, because behind it the app does not work. */}
+      {pendingUpdate && (pendingUpdate.verdict === 'blocking' || screenIsClear()) && (
+        <UpdateSheet
+          mode={pendingUpdate.verdict}
+          onUpdate={() => { void startUpdate(pendingUpdate.verdict) }}
+          onDismiss={pendingUpdate.verdict === 'blocking' ? undefined : dismissUpdate}
+        />
       )}
       <AccountPanel
         open={accountOpen && !isOverlay}

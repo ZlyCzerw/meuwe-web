@@ -185,6 +185,14 @@ const es: Resources = {
     failed: 'No se pudo abrir el menú de compartir ni copiar el enlace.',
     message: 'Mira lo que pasa cerca de ti en meuwe:',
   },
+  appUpdate: {
+    title: 'Hay una nueva versión de meuwe',
+    body: 'Te espera una versión más reciente en la tienda: mejoras y novedades.',
+    action: 'Actualizar',
+    later: 'Ahora no',
+    blockedTitle: 'Actualiza meuwe para seguir',
+    blockedBody: 'Esta versión de la aplicación ya no funciona. La nueva te espera en la tienda y se instala en un momento.',
+  },
   appPromo: {
     title: 'meuwe va mejor en la app',
     body: 'Notificaciones de eventos cerca de ti, un mapa más rápido y un acceso directo en tu pantalla de inicio.',

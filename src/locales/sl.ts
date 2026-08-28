@@ -185,6 +185,14 @@ const sl: Resources = {
     failed: 'Deljenja ni bilo mogoče odpreti in povezave ne kopirati.',
     message: 'Poglej, kaj se dogaja v tvoji okolici na meuwe:',
   },
+  appUpdate: {
+    title: 'Na voljo je nova različica meuwe',
+    body: 'V trgovini te čaka novejša različica — popravki in novosti.',
+    action: 'Posodobi',
+    later: 'Ne zdaj',
+    blockedTitle: 'Posodobi meuwe za nadaljevanje',
+    blockedBody: 'Ta različica aplikacije ni več podprta. Nova te čaka v trgovini in se namesti v hipu.',
+  },
   appPromo: {
     title: 'meuwe deluje bolje v aplikaciji',
     body: 'Obvestila o dogodkih blizu tebe, hitrejši zemljevid in bližnjica na začetnem zaslonu.',

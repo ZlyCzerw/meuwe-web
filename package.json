@@ -26,6 +26,7 @@
     "@capacitor/share": "^6.0.4",
     "@capacitor/splash-screen": "^6.0.4",
     "@capacitor/status-bar": "^6.0.3",
+    "@capawesome/capacitor-app-update": "^6.1.0",
     "@ebarooni/capacitor-calendar": "^6.7.2",
     "@supabase/supabase-js": "^2.106.1",
     "firebase": "^11.10.0",
