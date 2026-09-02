@@ -4,7 +4,7 @@
 // miejscowości w Moich danych, żeby oba wyglądały identycznie. Wartość istnieje
 // tylko po wyborze z listy: samo wpisanie tekstu niczego nie wybiera.
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { searchPlaces, photonLang, type PlaceResult } from '../lib/placeSearch'
 import { C, INK } from '../lib/tokens'
@@ -35,7 +35,12 @@ export default function PlaceSearchInput({
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { setQuery(initialQuery) }, [initialQuery])
+  // stan pochodny z propsa liczony w renderze, nie w efekcie - patrz lint set-state-in-effect
+  const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery)
+  if (initialQuery !== prevInitialQuery) {
+    setPrevInitialQuery(initialQuery)
+    setQuery(initialQuery)
+  }
 
   async function search(val: string) {
     abortRef.current?.abort()
