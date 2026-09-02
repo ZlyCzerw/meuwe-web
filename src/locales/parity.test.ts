@@ -17,6 +17,21 @@ const APP_UPDATE_KEYS = [
   'title', 'body', 'action', 'later', 'blockedTitle', 'blockedBody',
 ] as const
 
+const MY_DATA_KEYS = [
+  'title', 'back', 'avatarColor', 'name', 'namePlaceholder',
+  'aboutMe', 'aboutMeHint', 'bio', 'bioPlaceholder', 'home', 'homePlaceholder',
+  'creatorKind', 'creatorKind_person', 'creatorKind_organizer', 'creatorKind_venue', 'creatorKind_community',
+  'link', 'linkPlaceholder',
+  'aboutYou', 'aboutYouHint', 'birthYear', 'birthYearPlaceholder',
+  'gender', 'gender_female', 'gender_male', 'gender_other',
+  'residence', 'residence_local', 'residence_newcomer', 'residence_visitor',
+  'occupation', 'occupation_student', 'occupation_working', 'occupation_other',
+  'university', 'fieldOfStudy',
+  'foundVia', 'foundVia_friend', 'foundVia_poster', 'foundVia_social', 'foundVia_store', 'foundVia_university', 'foundVia_other',
+  'save', 'saved', 'saveFailed',
+  'error_tooLong', 'error_invalidUrl', 'error_outOfRange',
+] as const
+
 const LOCALES = { pl, en, es, de, sl }
 
 describe('locale parity', () => {
@@ -65,5 +80,16 @@ describe('update prompts', () => {
       expect(typeof appUpdate[key]).toBe('string')
       expect(appUpdate[key]).not.toBe('')
     }
+  })
+})
+
+describe('my data panel', () => {
+  it.each(Object.entries(LOCALES))('%s carries every myData key and the account entry', (_name, dict) => {
+    const d = dict as { myData: Record<string, unknown>; account: Record<string, unknown> }
+    for (const key of MY_DATA_KEYS) {
+      expect(typeof d.myData[key]).toBe('string')
+      expect(d.myData[key]).not.toBe('')
+    }
+    expect(typeof d.account.myData).toBe('string')
   })
 })
