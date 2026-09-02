@@ -27,7 +27,9 @@ const session = { user: { id: 'u1', email: 'a@b.c' } } as unknown as Session
 function profile(pushEnabled: boolean): Profile {
   return {
     id: 'u1', display_name: 'Ala', nickname: null, name_shown: 'Ala',
-    avatar_color: null, radius_km: 10,
+    avatar_color: null,
+    bio: null, home_name: null, creator_kind: null, link_url: null,
+    radius_km: 10,
     interests: [], interests_onboarded_at: null,
     last_lat: null, last_lng: null, last_seen_at: null,
     created_at: '', push_enabled: pushEnabled, language: 'en',

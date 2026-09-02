@@ -1,4 +1,6 @@
 import type { Category } from './tokens'
+import type { CreatorKind, Gender, ResidenceStatus, Occupation, FoundVia } from './profileFields'
+import type { SignupPlatform, SignupProvider, SignupSource } from './signupContext'
 
 export type Lang = 'pl' | 'en' | 'es' | 'de' | 'sl'
 export type EventStatus = 'live' | 'upcoming' | 'extended' | 'ended'
@@ -12,6 +14,14 @@ export interface Profile {
   /** Nazwa do pokazania. Liczona w bazie: nickname, a w jego braku display_name. */
   name_shown: string | null
   avatar_color: string | null
+  /** Jedno zdanie o sobie, ≤ 160 znaków. Publiczne. */
+  bio: string | null
+  /** Miejscowość wybrana z listy; współrzędne leżą w profiles_private. Publiczne. */
+  home_name: string | null
+  /** Osoba prywatna / organizator / lokal / społeczność. Publiczne. */
+  creator_kind: CreatorKind | null
+  /** Jedna strona lub profil w social mediach. Publiczne. */
+  link_url: string | null
   radius_km: number | null
   interests: string[] | null
   /**
@@ -26,6 +36,35 @@ export interface Profile {
   created_at: string
   push_enabled: boolean | null
   language: string | null
+}
+
+/**
+ * Dane, które widzi tylko właściciel (RLS auth.uid() = id) - to, co podał w
+ * „O Tobie”, i to, co aplikacja zapisała sama przy rejestracji. Wiersz powstaje
+ * leniwie, przy pierwszym zapisie, więc może go nie być.
+ */
+export interface ProfilePrivate {
+  id: string
+  birth_year: number | null
+  gender: Gender | null
+  residence_status: ResidenceStatus | null
+  occupation: Occupation | null
+  university: string | null
+  field_of_study: string | null
+  found_via: FoundVia | null
+  home_lat: number | null
+  home_lng: number | null
+  signup_ip_lat: number | null
+  signup_ip_lng: number | null
+  signup_country: string | null
+  signup_gps_lat: number | null
+  signup_gps_lng: number | null
+  signup_platform: SignupPlatform | null
+  signup_app_version: string | null
+  signup_provider: SignupProvider | null
+  signup_source: SignupSource | null
+  signup_recorded_at: string | null
+  updated_at: string
 }
 
 // Push state lives in pushState.ts: one flag for the user's intent

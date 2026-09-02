@@ -1,5 +1,6 @@
 import { createClient, type Session } from '@supabase/supabase-js'
-import type { EventWithMeta, EventWithMsgCount, Message, Profile } from './types'
+import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate } from './types'
+import type { SignupContext } from './signupContext'
 import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
 import { ASK_MAX_AGE_MS, type AskCandidate } from './attendanceAsk'
@@ -107,7 +108,7 @@ export const db = {
     // Explicit columns (not '*'): anon/authenticated lack SELECT on the location
     // columns (last_lat/last_lng/last_seen_at), so 'select=*' 403s. getProfile
     // never needs location — it's write-only from the client.
-    const {data}=await supabase.from('profiles').select('id,display_name,nickname,name_shown,avatar_color,radius_km,interests,interests_onboarded_at,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
+    const {data}=await supabase.from('profiles').select('id,display_name,nickname,name_shown,avatar_color,bio,home_name,creator_kind,link_url,radius_km,interests,interests_onboarded_at,created_at,push_enabled,language').eq('id',uid).single(); return data as Profile|null
   },
   // UPDATE, never upsert. A profile row is created in exactly one place: the
   // handle_new_user trigger on auth.users (migration 20260729). An upsert here
@@ -146,6 +147,28 @@ export const db = {
   },
   async updateProfileLanguage(uid: string, language: string) {
     return this.updateProfile({ id: uid, language })
+  },
+  // profiles_private: tylko własny wiersz (RLS), wszystkie kolumny czytelne dla
+  // właściciela - stąd '*' jest tu bezpieczne, inaczej niż w getProfile.
+  // maybeSingle, bo wiersz powstaje leniwie i może go jeszcze nie być.
+  async getProfilePrivate(uid: string): Promise<ProfilePrivate | null> {
+    const { data, error } = await supabase.from('profiles_private').select('*').eq('id', uid).maybeSingle()
+    if (error) { console.error('[getProfilePrivate]', error); return null }
+    return (data as ProfilePrivate | null) ?? null
+  },
+  // Jedyna tabela profilu, w której upsert jest właściwy: nie ma triggera, który
+  // zakładałby wiersz przy rejestracji, więc pierwszy zapis musi go stworzyć.
+  async upsertProfilePrivate(p: Partial<ProfilePrivate> & { id: string }) {
+    return supabase.from('profiles_private').upsert(p, { onConflict: 'id' }).select('id')
+  },
+  // RPC „wypełnij tylko puste” - patrz migracja 20260902_profile_fields.
+  async recordSignupContext(ctx: SignupContext) {
+    return supabase.rpc('record_signup_context', {
+      p_ip_lat: ctx.ipLat, p_ip_lng: ctx.ipLng, p_country: ctx.country,
+      p_gps_lat: ctx.gpsLat, p_gps_lng: ctx.gpsLng,
+      p_platform: ctx.platform, p_app_version: ctx.appVersion,
+      p_provider: ctx.provider, p_source: ctx.source,
+    })
   },
   /**
    * Zakończone wydarzenia, które użytkownik obserwuje, wraz z informacją, czy
@@ -507,7 +530,7 @@ export const db = {
     | 'follow_push_enable' | 'follow_calendar' | 'follow_calendar_google'
     | 'push_ask_enable' | 'digest_open'
     | 'event_calendar' | 'store_ios' | 'store_android'
-    | 'invite_friends' | 'delete_account' | 'nickname_save'
+    | 'invite_friends' | 'delete_account' | 'nickname_save' | 'profile_save'
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})

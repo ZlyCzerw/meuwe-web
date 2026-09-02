@@ -73,7 +73,9 @@ root.render(
         // Konto założone przez Apple z ukrytym adresem, właściciel nadał sobie
         // nazwę — panel ma pokazać "Ala", a nie "k7f3x9mn2p".
         id: 'demo', display_name: 'k7f3x9mn2p', nickname: 'Ala', name_shown: 'Ala',
-        avatar_color: null, radius_km: 10,
+        avatar_color: null,
+        bio: null, home_name: null, creator_kind: null, link_url: null,
+        radius_km: 10,
         interests: [], interests_onboarded_at: null,
         last_lat: null, last_lng: null, last_seen_at: null,
         created_at: '', push_enabled: false, language: 'pl',
