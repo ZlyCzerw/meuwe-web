@@ -138,12 +138,6 @@ const sl: Resources = {
   },
   account: {
     myData: 'Moji podatki',
-    nickname: 'Uporabniško ime',
-    nicknameTitle: 'Uporabniško ime',
-    nicknameCurrent: 'Tvoje ime',
-    nicknameNew: 'Novo ime',
-    nicknameSave: 'Shrani',
-    nicknameSaved: 'Ime spremenjeno',
     nicknameHint: 'Med 2 in 30 znaki',
     nicknameFailed: 'Shranjevanje ni uspelo, poskusite znova',
     nickname_empty: 'Vnesite ime',

@@ -48,6 +48,7 @@ function renderPanel(pushEnabled: boolean) {
       onOpenMyEvents={() => {}}
       onOpenFollowedEvents={() => {}}
       onOpenAccount={() => {}}
+      onOpenMyData={() => {}}
     />
   )
 }
@@ -135,7 +136,7 @@ describe('ProfilePanel notifications', () => {
         open onClose={() => {}} session={session} profile={profile(true)}
         onSignOut={() => {}} reloadProfile={() => {}}
         onOpenMyEvents={() => {}} onOpenFollowedEvents={() => {}}
-        onOpenAccount={() => {}}
+        onOpenAccount={() => {}} onOpenMyData={() => {}}
       />
     )
     expect(await screen.findByText('Notifications blocked by the system')).toBeInTheDocument()
@@ -156,6 +157,7 @@ describe('ProfilePanel identity', () => {
         onOpenMyEvents={() => {}}
         onOpenFollowedEvents={() => {}}
         onOpenAccount={() => {}}
+        onOpenMyData={() => {}}
       />
     )
     expect(await screen.findByText('Ala')).toBeInTheDocument()

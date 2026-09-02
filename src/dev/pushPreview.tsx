@@ -13,7 +13,7 @@
 //   /push-preview.html?step=profile     → the profile panel (fake session)
 //   /push-preview.html?step=account     → the account and data sub-screen
 //   /push-preview.html?step=delete      → the delete confirmation
-//   /push-preview.html?step=nickname    → the username modal
+//   /push-preview.html?step=myData      → the "Moje dane" panel
 //   /push-preview.html?lang=en          → any of the five languages
 import { createRoot } from 'react-dom/client'
 import '../index.css'
@@ -26,8 +26,8 @@ import LocationOnboardingModal from '../components/LocationOnboardingModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
 import ProfilePanel from '../screens/ProfilePanel'
 import AccountPanel from '../screens/AccountPanel'
+import MyDataPanel from '../screens/MyDataPanel'
 import DeleteAccountModal from '../components/DeleteAccountModal'
-import NicknameModal from '../components/NicknameModal'
 import { C, F } from '../lib/tokens'
 import type { PushUiState } from '../lib/pushState'
 
@@ -59,37 +59,41 @@ const CASES: { state: PushUiState | null; intent: boolean; error: boolean; label
 const modal = params.get('modal') as 'ask' | 'blocked' | 'unsupported' | null
 const promo = params.get('promo') as 'ios' | 'android' | null
 const update = params.get('update') as 'optional' | 'blocking' | null
-const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | 'nickname' | null
+const step = params.get('step') as 'location' | 'invite' | 'account' | 'delete' | 'profile' | 'myData' | null
 
 const root = createRoot(document.getElementById('root')!)
+
+// Konto założone przez Apple z ukrytym adresem, właściciel nadał sobie
+// nazwę — panel ma pokazać "Ala", a nie "k7f3x9mn2p".
+const DEMO_PROFILE = {
+  id: 'demo', display_name: 'k7f3x9mn2p', nickname: 'Ala', name_shown: 'Ala',
+  avatar_color: null,
+  bio: null, home_name: null, creator_kind: null, link_url: null,
+  radius_km: 10,
+  interests: [], interests_onboarded_at: null,
+  last_lat: null, last_lng: null, last_seen_at: null,
+  created_at: '', push_enabled: false, language: 'pl',
+}
+const DEMO_SESSION = { user: { id: 'demo', email: 'demo@meuwe.eu' } } as never
 
 root.render(
   step === 'profile' ? (
     <ProfilePanel
       open
       onClose={() => {}}
-      session={{ user: { id: 'demo', email: 'demo@meuwe.eu' } } as never}
-      profile={{
-        // Konto założone przez Apple z ukrytym adresem, właściciel nadał sobie
-        // nazwę — panel ma pokazać "Ala", a nie "k7f3x9mn2p".
-        id: 'demo', display_name: 'k7f3x9mn2p', nickname: 'Ala', name_shown: 'Ala',
-        avatar_color: null,
-        bio: null, home_name: null, creator_kind: null, link_url: null,
-        radius_km: 10,
-        interests: [], interests_onboarded_at: null,
-        last_lat: null, last_lng: null, last_seen_at: null,
-        created_at: '', push_enabled: false, language: 'pl',
-      }}
+      session={DEMO_SESSION}
+      profile={DEMO_PROFILE}
       onSignOut={() => {}}
       reloadProfile={() => {}}
       onOpenMyEvents={() => {}}
       onOpenFollowedEvents={() => {}}
       onOpenAccount={() => {}}
+      onOpenMyData={() => {}}
     />
   ) : step === 'account' ? (
-    <AccountPanel open onClose={() => {}} onDeleted={() => {}} currentName="Ala" onNicknameSaved={() => {}} />
-  ) : step === 'nickname' ? (
-    <NicknameModal currentName="k7f3x9mn2p" onSaved={() => {}} onClose={() => {}} />
+    <AccountPanel open onClose={() => {}} onDeleted={() => {}} currentName="Ala" onOpenMyData={() => {}} />
+  ) : step === 'myData' ? (
+    <MyDataPanel open onClose={() => {}} session={DEMO_SESSION} profile={DEMO_PROFILE} onSaved={() => {}} />
   ) : step === 'delete' ? (
     <DeleteAccountModal onDeleted={() => {}} onClose={() => {}} />
   ) : step === 'location' ? (

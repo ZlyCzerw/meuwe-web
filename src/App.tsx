@@ -20,6 +20,7 @@ import CreateSheet from './screens/CreateSheet'
 import Toast from './components/Toast'
 import ProfilePanel from './screens/ProfilePanel'
 import AccountPanel from './screens/AccountPanel'
+import MyDataPanel from './screens/MyDataPanel'
 import ConfettiBurst from './components/ConfettiBurst'
 import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
@@ -80,6 +81,7 @@ export default function App() {
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [myDataOpen, setMyDataOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const backExitRef = useRef(createBackExitGate())
@@ -228,6 +230,7 @@ export default function App() {
     followedEventSelected,
     createOpen,
     accountOpen,
+    myDataOpen,
     profileOpen,
     screen,
   })
@@ -245,6 +248,7 @@ export default function App() {
     createOpen,
     profileOpen,
     accountOpen,
+    myDataOpen,
     pickingLocation,
     promoOpen,
     locationModalOpen,
@@ -266,10 +270,11 @@ export default function App() {
       followedEventSelected,
       createOpen,
       accountOpen,
+      myDataOpen,
       profileOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModal, eventChatOpen, selEvent, createOpen, accountOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, eventChatOpen, selEvent, createOpen, accountOpen, myDataOpen, profileOpen])
 
   useEffect(() => {
     function onPopState() {
@@ -284,6 +289,7 @@ export default function App() {
         return
       }
       if (s.createOpen) { setCreateOpen(false); setCreatePos(null); setLocationPicked(false); setEditingEvent(null); return }
+      if (s.myDataOpen) { setMyDataOpen(false); return }
       if (s.accountOpen) { setAccountOpen(false); return }
       if (s.profileOpen) { setProfileOpen(false); return }
       if (s.screen === 'myEvents') { setScreen('map'); return }
@@ -493,7 +499,7 @@ export default function App() {
       const layers = navLayersRef.current
       const busy = layers.authModal || layers.selEvent || layers.myEventSelected
         || layers.followedEventSelected || layers.createOpen || layers.profileOpen
-        || layers.accountOpen || layers.screen !== 'map'
+        || layers.accountOpen || layers.myDataOpen || layers.screen !== 'map'
         || pickingLocation || promoOpen || inviteModalOpen
       if (busy) return
       void openInterestsStep()
@@ -669,7 +675,7 @@ export default function App() {
     CapApp.addListener('backButton', () => {
       const s = navLayersRef.current
       const layerOpen = !!(s.authModal || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
-        s.createOpen || s.accountOpen || s.profileOpen ||
+        s.createOpen || s.accountOpen || s.myDataOpen || s.profileOpen ||
         s.screen === 'myEvents' || s.screen === 'followedEvents')
       if (layerOpen) { window.history.back(); return }
       if (backExitRef.current.press()) { CapApp.minimizeApp(); return }
@@ -957,6 +963,7 @@ export default function App() {
   // belongs.
   function handleAccountDeleted() {
     setAccountOpen(false)
+    setMyDataOpen(false)
     setProfileOpen(false)
     mapChain.close()
     setScreen('welcome')
@@ -1204,6 +1211,10 @@ export default function App() {
           setAccountOpen(true)
           window.history.pushState({ layer: 'account' }, '')
         }}
+        onOpenMyData={() => {
+          setMyDataOpen(true)
+          window.history.pushState({ layer: 'myData' }, '')
+        }}
         onOpenMyEvents={() => {
           setProfileOpen(false); setScreen('myEvents')
           window.history.pushState({ layer: 'myEvents' }, '')
@@ -1233,7 +1244,17 @@ export default function App() {
         onClose={() => window.history.back()}
         onDeleted={handleAccountDeleted}
         currentName={shownName(profile, session?.user.email)}
-        onNicknameSaved={() => { reloadProfile(); showToast(t('account.nicknameSaved')) }}
+        onOpenMyData={() => {
+          setMyDataOpen(true)
+          window.history.pushState({ layer: 'myData' }, '')
+        }}
+      />
+      <MyDataPanel
+        open={myDataOpen && !isOverlay}
+        onClose={() => window.history.back()}
+        session={session}
+        profile={profile}
+        onSaved={() => { reloadProfile(); showToast(t('myData.saved')); window.history.back() }}
       />
       {locationModalOpen && (
         <LocationOnboardingModal onAllow={handleAllowLocation} onSkip={finishLocationStep} />

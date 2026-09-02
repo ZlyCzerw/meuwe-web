@@ -27,6 +27,7 @@ function ProfilePanel({
   onOpenMyEvents,
   onOpenFollowedEvents,
   onOpenAccount,
+  onOpenMyData,
   myEventsUnread = false,
   followedUnread = false,
 }: {
@@ -39,6 +40,7 @@ function ProfilePanel({
   onOpenMyEvents: () => void
   onOpenFollowedEvents: () => void
   onOpenAccount: () => void
+  onOpenMyData: () => void
   myEventsUnread?: boolean
   followedUnread?: boolean
 }) {
@@ -200,52 +202,62 @@ function ProfilePanel({
             position: 'relative',
           }}
         >
-          {/* Avatar circle */}
-          <div
+          <button
+            onClick={session ? onOpenMyData : undefined}
+            aria-label={t('myData.title')}
+            disabled={!session}
             style={{
-              width: 96,
-              height: 96,
-              borderRadius: '50%',
-              background: avatarColor(profile),
-              border: `3px solid ${INK}`,
-              boxShadow: `0 4px 0 ${INK}33`,
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: F.display,
-              fontWeight: 900,
-              fontSize: 38,
-              color: INK,
-              animation: 'breathe-sm 4s ease-in-out infinite',
+              display: 'block', textAlign: 'left', background: 'none', border: 'none', padding: 0,
+              cursor: session ? 'pointer' : 'default', width: '100%',
             }}
           >
-            {initials}
-          </div>
-
-          {/* Name */}
-          <div
-            style={{
-              fontFamily: F.display,
-              fontSize: 28,
-              fontWeight: 800,
-              color: C.ink,
-            }}
-          >
-            {displayName}
-          </div>
-          {session && (
+            {/* Avatar circle */}
             <div
               style={{
-                fontSize: 13,
-                color: C.inkSoft,
-                fontWeight: 600,
-                marginTop: 2,
+                width: 96,
+                height: 96,
+                borderRadius: '50%',
+                background: avatarColor(profile),
+                border: `3px solid ${INK}`,
+                boxShadow: `0 4px 0 ${INK}33`,
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: F.display,
+                fontWeight: 900,
+                fontSize: 38,
+                color: INK,
+                animation: 'breathe-sm 4s ease-in-out infinite',
               }}
             >
-              {session.user.email}
+              {initials}
             </div>
-          )}
+
+            {/* Name */}
+            <div
+              style={{
+                fontFamily: F.display,
+                fontSize: 28,
+                fontWeight: 800,
+                color: C.ink,
+              }}
+            >
+              {displayName}
+            </div>
+            {session && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: C.inkSoft,
+                  fontWeight: 600,
+                  marginTop: 2,
+                }}
+              >
+                {session.user.email}
+              </div>
+            )}
+          </button>
 
           {/* Content — always visible; grayed out for guests except language */}
           <div style={{ opacity: session ? 1 : 0.4, pointerEvents: session ? 'auto' : 'none' }}>

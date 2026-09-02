@@ -10,6 +10,7 @@ const clear: OverlayFlags = {
   createOpen: false,
   profileOpen: false,
   accountOpen: false,
+  myDataOpen: false,
   pickingLocation: false,
   promoOpen: false,
   locationModalOpen: false,
@@ -34,7 +35,7 @@ describe('isScreenClear', () => {
   // type and quietly left out of the check.
   it('is not clear while any single layer is open', () => {
     const layers = Object.keys(clear).filter(k => k !== 'screen') as (keyof OverlayFlags)[]
-    expect(layers.length).toBe(15)
+    expect(layers.length).toBe(16)
     for (const layer of layers) {
       expect(isScreenClear({ ...clear, [layer]: true })).toBe(false)
     }

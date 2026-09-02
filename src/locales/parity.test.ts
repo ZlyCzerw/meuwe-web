@@ -91,5 +91,7 @@ describe('my data panel', () => {
       expect(d.myData[key]).not.toBe('')
     }
     expect(typeof d.account.myData).toBe('string')
+    // Modal nazwy zniknął; jego klucze nie mają prawa zostać jako martwe.
+    expect(d.account.nicknameTitle).toBeUndefined()
   })
 })

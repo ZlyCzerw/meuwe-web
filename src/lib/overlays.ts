@@ -22,6 +22,7 @@ export interface OverlayFlags {
   createOpen: boolean
   profileOpen: boolean
   accountOpen: boolean
+  myDataOpen: boolean
   pickingLocation: boolean
   promoOpen: boolean
   locationModalOpen: boolean
@@ -43,6 +44,7 @@ export function isScreenClear(f: OverlayFlags): boolean {
     && !f.createOpen
     && !f.profileOpen
     && !f.accountOpen
+    && !f.myDataOpen
     && !f.pickingLocation
     && !f.promoOpen
     && !f.locationModalOpen

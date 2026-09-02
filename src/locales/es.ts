@@ -138,12 +138,6 @@ const es: Resources = {
   },
   account: {
     myData: 'Mis datos',
-    nickname: 'Nombre de usuario',
-    nicknameTitle: 'Nombre de usuario',
-    nicknameCurrent: 'Tu nombre',
-    nicknameNew: 'Nuevo nombre',
-    nicknameSave: 'Guardar',
-    nicknameSaved: 'Nombre cambiado',
     nicknameHint: 'Entre 2 y 30 caracteres',
     nicknameFailed: 'No se pudo guardar, inténtalo de nuevo',
     nickname_empty: 'Escribe un nombre',

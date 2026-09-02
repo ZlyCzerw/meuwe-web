@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { C, INK, F } from '../lib/tokens'
 import { isNativePlatform } from '../lib/platform'
 import DeleteAccountModal from '../components/DeleteAccountModal'
-import NicknameModal from '../components/NicknameModal'
 
 // "Account and data", one level below the profile. Deliberately quiet: it is
 // reachable in three taps from the map, which is what App Review asks for, but
@@ -17,18 +16,17 @@ export default function AccountPanel({
   onClose,
   onDeleted,
   currentName,
-  onNicknameSaved,
+  onOpenMyData,
 }: {
   open: boolean
   onClose: () => void
   onDeleted: () => void
   /** Nazwa pokazywana dziś — nickname, a w jego braku ta od dostawcy logowania. */
   currentName: string
-  onNicknameSaved: () => void
+  onOpenMyData: () => void
 }) {
   const { t } = useTranslation()
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [nicknameOpen, setNicknameOpen] = useState(false)
 
   // On native "/privacy.html" resolves to capacitor://localhost/... which the
   // system browser cannot open, so point at the hosted page (same as Welcome).
@@ -100,14 +98,15 @@ export default function AccountPanel({
           <div style={{ height: 1, background: `${INK}18`, margin: '28px 0 20px' }} />
 
           <button
-            onClick={() => setNicknameOpen(true)}
+            onClick={onOpenMyData}
             style={{
-              display: 'block', textAlign: 'left', padding: '12px 0',
-              background: 'none', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
+              textAlign: 'left', padding: '12px 0', background: 'none', border: 'none',
               fontSize: 14, fontWeight: 700, color: C.ink, cursor: 'pointer',
             }}
           >
-            {t('account.nickname')}
+            {t('account.myData')}
+            <span style={{ fontSize: 20, fontWeight: 900 }}>›</span>
           </button>
           <div style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, lineHeight: 1.5, marginBottom: 4 }}>
             {currentName}
@@ -129,14 +128,6 @@ export default function AccountPanel({
           </div>
         </div>
       </div>
-
-      {nicknameOpen && (
-        <NicknameModal
-          currentName={currentName}
-          onSaved={() => { setNicknameOpen(false); onNicknameSaved() }}
-          onClose={() => setNicknameOpen(false)}
-        />
-      )}
 
       {confirmOpen && (
         <DeleteAccountModal

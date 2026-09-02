@@ -130,12 +130,6 @@ const pl = {
   },
   account: {
     myData: 'Moje dane',
-    nickname: 'Nazwa użytkownika',
-    nicknameTitle: 'Nazwa użytkownika',
-    nicknameCurrent: 'Twoja nazwa',
-    nicknameNew: 'Nowa nazwa',
-    nicknameSave: 'Zapisz',
-    nicknameSaved: 'Nazwa zmieniona',
     nicknameHint: 'Od 2 do 30 znaków',
     nicknameFailed: 'Nie udało się zapisać, spróbuj ponownie',
     nickname_empty: 'Wpisz nazwę',
