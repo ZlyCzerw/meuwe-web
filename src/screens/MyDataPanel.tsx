@@ -41,11 +41,15 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
   // co użytkownik właśnie wpisuje, zjadając pierwszy znak.
   const [homeInitial, setHomeInitial] = useState('')
   // Najnowszy profile z propsów, czytany wewnątrz efektu otwarcia - patrz niżej
-  // (jak overlayRef w App.tsx: odświeżany na każdym renderze, żeby efekt nie
+  // (jak userPosRef w App.tsx: odświeżany po każdym renderze, żeby efekt nie
   // musiał zależeć od `profile` i nie resetował edycji przy jego zmianie).
   const profileRef = useRef(profile)
-  // eslint-disable-next-line react-hooks/refs -- celowe odświeżanie "najnowszej wartości" na renderze, czytane tylko w efekcie, nigdy w trakcie renderu
-  profileRef.current = profile
+  useEffect(() => { profileRef.current = profile }, [profile])
+  // Ile razy panel był otwierany - klucz na PlaceSearchInput (patrz JSX pola
+  // "Miejscowość"), żeby porzucona (nie zapisana) treść pola nie przeżyła
+  // zamknięcia panelu: bez tego panel zostaje na stałe zamontowany i
+  // wewnętrzny stan pola przetrwałby do następnego otwarcia.
+  const [openCount, setOpenCount] = useState(0)
   // Czy wiersz w profiles_private już istnieje: wtedy zapis idzie zawsze, bo
   // wyczyszczenie pola też jest zmianą do zapisania.
   const [privateExists, setPrivateExists] = useState(false)
@@ -54,13 +58,19 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
   const [errors, setErrors] = useState<ProfileFieldError[]>([])
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const uid = session?.user.id
+
   // Stan formularza odświeża się przy każdym otwarciu, nie przy montowaniu:
   // panel jest zamontowany na stałe, jak AccountPanel. Zależy tylko od [open,
-  // session]: gdyby zależał też od profile, odświeżenie profilu przez rodzica
-  // (np. po zapisie gdzie indziej) kasowałoby to, co użytkownik właśnie pisze
-  // w otwartym panelu. Aktualny profil czytamy z profileRef.
+  // uid] - prymitywu, nie obiektu session: useSession stawia nowy obiekt
+  // Session przy każdym onAuthChange (także TOKEN_REFRESHED), a od obiektu
+  // efekt odpalałby się i kasował to, co użytkownik właśnie pisze w otwartym
+  // panelu. Gdyby zależał też od profile, to samo zrobiłoby odświeżenie
+  // profilu przez rodzica. Aktualny profil czytamy z profileRef.
   useEffect(() => {
-    if (!open || !session) return
+    if (!open || !uid) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset formularza tylko na otwarciu, celowo
+    setOpenCount(c => c + 1)
     const p = profileRef.current
     setNickname(p?.nickname ?? '')
     setColor(avatarColor(p))
@@ -75,7 +85,7 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
     setForm(base)
     setPrivateExists(false)
     let cancelled = false
-    db.getProfilePrivate(session.user.id).then(priv => {
+    db.getProfilePrivate(uid).then(priv => {
       if (cancelled) return
       setPrivateExists(!!priv)
       setForm(f => ({
@@ -93,7 +103,7 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
       }))
     })
     return () => { cancelled = true }
-  }, [open, session])
+  }, [open, uid])
 
   const set = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
     setForm(f => ({ ...f, [key]: value }))
@@ -203,13 +213,16 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
             >
               {initialLetter}
             </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.inkSoft }}>
+              {t('myData.avatarColor')}
+            </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
               {AVATAR_COLORS.map(c => {
                 const active = c === color
                 return (
                   <button
                     key={c}
-                    aria-label={`colour ${c}`}
+                    aria-label={`${t('myData.avatarColor')} ${c}`}
                     aria-pressed={active}
                     onClick={() => setColor(c)}
                     style={{
@@ -248,6 +261,8 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
 
           <Field id="md-home" label={t('myData.home')}>
             <PlaceSearchInput
+              key={openCount}
+              id="md-home"
               placeholder={t('myData.homePlaceholder')}
               near={null}
               settlementsOnly

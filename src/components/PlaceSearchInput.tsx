@@ -21,13 +21,15 @@ interface Props {
   /** Każda ręczna zmiana tekstu, także wyczyszczenie. */
   onQueryChange?: (q: string) => void
   dropdownZIndex?: number
+  /** Id na samym `<input>` - żeby `<label htmlFor>` z zewnątrz miało cel. */
+  id?: string
 }
 
 export default function PlaceSearchInput({
   placeholder, near, onSelect, settlementsOnly = false, initialQuery = '',
-  labelFor = r => r.primary, onQueryChange, dropdownZIndex = 20,
+  labelFor = r => r.primary, onQueryChange, dropdownZIndex = 20, id,
 }: Props) {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<PlaceResult[]>([])
   const [focused, setFocused] = useState(false)
@@ -107,6 +109,7 @@ export default function PlaceSearchInput({
         </svg>
 
         <input
+          id={id}
           ref={inputRef}
           value={query}
           onChange={handleChange}
@@ -124,7 +127,7 @@ export default function PlaceSearchInput({
 
         {query.length > 0 && !loading && (
           <button
-            aria-label="clear"
+            aria-label={t('common.clear')}
             onMouseDown={e => { e.preventDefault(); handleClear() }}
             style={{
               flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer',

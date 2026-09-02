@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { Session } from '@supabase/supabase-js'
@@ -26,11 +27,16 @@ vi.mock('../lib/supabase', () => ({
 // zewnątrz sprawdzić, że MyDataPanel nie przelicza tego propa z form.home
 // przy każdej zmianie (patrz test o zjadanym pierwszym znaku).
 const capturedInitialQueries: (string | undefined)[] = []
+// Log 'mount' from an effect with [] deps: the only outside-observable proof
+// that MyDataPanel remounts the field (via `key={openCount}`) rather than
+// reusing the same instance across a close/reopen - see the openCount test.
+const mountLog: string[] = []
 vi.mock('../components/PlaceSearchInput', () => ({
-  default: ({ onSelect, onQueryChange, initialQuery }: {
+  default: function MockPlaceSearchInput({ onSelect, onQueryChange, initialQuery }: {
     onSelect: (r: PlaceResult) => void; onQueryChange?: (q: string) => void; initialQuery?: string
-  }) => {
+  }) {
     capturedInitialQueries.push(initialQuery)
+    useEffect(() => { mountLog.push('mount') }, [])
     return (
       <div>
         <span data-testid="home-query">{initialQuery}</span>
@@ -62,6 +68,7 @@ function renderPanel(p: Profile = profile(), onSaved = vi.fn()) {
 beforeEach(() => {
   vi.clearAllMocks()
   capturedInitialQueries.length = 0
+  mountLog.length = 0
   updateProfile.mockResolvedValue({ data: [{ id: 'u1' }], error: null })
   upsertProfilePrivate.mockResolvedValue({ data: [{ id: 'u1' }], error: null })
   getProfilePrivate.mockResolvedValue(null)
@@ -98,7 +105,7 @@ describe('MyDataPanel', () => {
   it('previews a colour on the avatar before saving', async () => {
     renderPanel()
     await screen.findByLabelText('Name')
-    fireEvent.click(screen.getByLabelText('colour #4FC3F7'))
+    fireEvent.click(screen.getByLabelText('Avatar colour #4FC3F7'))
     expect(screen.getByTestId('avatar-preview')).toHaveStyle({ background: '#4FC3F7' })
     expect(updateProfile).not.toHaveBeenCalled()
   })
@@ -107,7 +114,7 @@ describe('MyDataPanel', () => {
     const onSaved = renderPanel()
     await screen.findByLabelText('Name')
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: '  Ala  Nowa ' } })
-    fireEvent.click(screen.getByLabelText('colour #4FC3F7'))
+    fireEvent.click(screen.getByLabelText('Avatar colour #4FC3F7'))
     fireEvent.change(screen.getByLabelText('Bio'), { target: { value: ' koncerty w piwnicy ' } })
     fireEvent.click(screen.getByText('pick'))
     fireEvent.click(screen.getByText('A venue'))
@@ -124,10 +131,13 @@ describe('MyDataPanel', () => {
       bio: 'koncerty w piwnicy', home_name: 'Rzeszów, Podkarpackie, Polska',
       creator_kind: 'venue', link_url: 'https://instagram.com/klub',
     })
-    expect(upsertProfilePrivate).toHaveBeenCalledWith({
+    // objectContaining, nie równość: db.upsertProfilePrivate jest tu atrapą, więc
+    // MyDataPanel woła ją z dokładnie tymi polami - updated_at dokleja dopiero
+    // prawdziwa implementacja w lib/supabase.ts, poza zasięgiem tej atrapy.
+    expect(upsertProfilePrivate).toHaveBeenCalledWith(expect.objectContaining({
       id: 'u1', birth_year: 1998, gender: null, residence_status: null, occupation: 'student',
       university: 'PRz', field_of_study: null, found_via: 'poster', home_lat: 50.04, home_lng: 22.0,
-    })
+    }))
     expect(trackClick).toHaveBeenCalledWith('profile_save')
   })
 
@@ -225,6 +235,36 @@ describe('MyDataPanel', () => {
     rerender(<MyDataPanel open onClose={() => {}} session={session} profile={p2} onSaved={() => {}} />)
 
     expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('w trakcie pisania')
+  })
+
+  it('keeps in-progress edits when useSession hands in a fresh Session object (e.g. TOKEN_REFRESHED)', async () => {
+    const s1 = { user: { id: 'u1', email: 'a@b.c' } } as unknown as Session
+    const { rerender } = render(<MyDataPanel open onClose={() => {}} session={s1} profile={profile()} onSaved={() => {}} />)
+    await screen.findByLabelText('Name')
+    fireEvent.change(screen.getByLabelText('Bio'), { target: { value: 'w trakcie pisania' } })
+
+    // Nowy obiekt Session, ten sam user.id - dokładnie to, co useSession stawia
+    // po odświeżeniu tokena. Gdyby efekt resetujący zależał od `session`
+    // (obiektu), a nie od `uid` (prymitywu), to przerenderowałby formularz.
+    const s2 = { user: { id: 'u1', email: 'a@b.c' } } as unknown as Session
+    rerender(<MyDataPanel open onClose={() => {}} session={s2} profile={profile()} onSaved={() => {}} />)
+
+    expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('w trakcie pisania')
+  })
+
+  it('remounts the town field on every open, so abandoned text does not survive a close/reopen', async () => {
+    const { rerender } = render(<MyDataPanel open onClose={() => {}} session={session} profile={profile()} onSaved={() => {}} />)
+    await screen.findByLabelText('Name')
+    // openCount incrementing on the very first open already bumps the key once
+    // (0 → 1), so the field mounts twice before things settle. What matters is
+    // that a close/reopen mounts it again - not the exact baseline count.
+    await waitFor(() => expect(mountLog.length).toBeGreaterThan(0))
+    const baseline = mountLog.length
+
+    rerender(<MyDataPanel open={false} onClose={() => {}} session={session} profile={profile()} onSaved={() => {}} />)
+    expect(mountLog.length).toBe(baseline) // closing alone mounts nothing new
+    rerender(<MyDataPanel open onClose={() => {}} session={session} profile={profile()} onSaved={() => {}} />)
+    await waitFor(() => expect(mountLog.length).toBe(baseline + 1))
   })
 
   it('resets to the new profile only after a close/reopen, not on a bare profile change', async () => {
