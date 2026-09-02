@@ -2944,3 +2944,15 @@ git commit -m "Odnotuj w planie, co przy wykonaniu wyszło inaczej"
 ```
 
 Kolejność: PR `user_profile` → `staging` (Cloudflare buduje staging) → test → migracja na PROD → merge do `main`. Migracja **zawsze** przed klientem.
+
+## Co wyszło inaczej
+
+- Test regresji buga #7 jest na `ProfilePanel` (`ProfilePanel.push.test.tsx`, describe `ProfilePanel identity`) i na czystej funkcji `initial()`, nie na `MapScreen` — Leaflet w jsdom nie jest tego wart.
+- Task 3 dodał ten test bez propa `onOpenMyData`; prop dopisał dopiero Task 9 — dzięki temu `tsc -b` był zielony po każdym zadaniu, zamiast czerwony między Task 3 a 9.
+- Task 7 zostawił sześć starych kluczy `account.nickname*`; usunął je Task 9 razem z `NicknameModal` (i przeniósł tam asercję, że `nicknameTitle` jest undefined, w teście parytetu) — z tego samego powodu co wyżej.
+- `profileFields.normalizeUrl` odrzuca dodatkowo userinfo (`user@host`) i schematy inne niż http(s) (`mailto:`, `ftp:`) — recenzja znalazła, że wersja z planu przepuszczała `facebook.com@phishing-site.co`.
+- `PlaceSearchInput` liczy stan z propsa `initialQuery` w renderze (`prevInitialQuery`), nie w `useEffect` — wymóg lintu `react-hooks/set-state-in-effect`. Dodatkowo input ma `minWidth: 0`, a `×` ma `aria-label="clear"` (nie było w starym `SearchBar`).
+- `MyDataPanel`: tekst startowy pola miejscowości trzyma osobny stan `homeInitial` ustawiany tylko przy otwarciu panelu (wersja z planu gubiła pierwszy znak przy nadpisywaniu wybranej miejscowości), a efekt resetujący formularz zależy od `[open, session]` i czyta profil przez `profileRef` (wersja z planu kasowała edycję przy każdym `reloadProfile`). Efekt ma `eslint-disable`, jak pięć innych miejsc w kodzie.
+- Task 9 musiał też poprawić `src/dev/pushPreview.tsx` (importował usunięty `NicknameModal`) i trzeci render `ProfilePanel` w teście.
+- Fallback koloru avatara gościa zmienił się z `C.berry` na `DEFAULT_AVATAR_COLOR` (`C.primary`) — jeden domyślny kolor zamiast dwóch; dotyczy tylko avatara „?” bez sesji.
+- Kroki wymagające Supabase Dashboard i przeglądarki (migracja na staging, przejście ręczne, sprawdzenie `profiles_private` po rejestracji) NIE zostały wykonane w tej sesji — zostają dla właściciela przed merge.
