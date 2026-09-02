@@ -14,7 +14,11 @@
 |------|--------------|---------------------|-----|
 | Email, Google ID | Google OAuth | Supabase `auth.users` | Identyfikacja użytkownika |
 | Imię/pseudonim (`display_name`) | Użytkownik podaje | `profiles` | Wyświetlanie w UI |
-| Kolor avatara | Generowany losowo | `profiles` | UI |
+| Kolor avatara | Użytkownik wybiera z palety | `profiles` | UI |
+| Pola profilu (`bio`, `home_name`, `creator_kind`, `link_url`) | Użytkownik podaje opcjonalnie | `profiles` | Wyświetlanie w UI, karta twórcy |
+| Dane o użytkowniku (`birth_year`, `gender`, `residence_status`, `occupation`, `university`, `field_of_study`, `found_via`) | Użytkownik podaje opcjonalnie | `profiles_private` (RLS: tylko właściciel) | Personalizacja, analiza. **Do badań naukowych dopiero po dodaniu osobnej zgody** (`research_consent_at`, art. 6 ust. 1 lit. a z art. 89 RODO) |
+| Współrzędne miejscowości (`home_lat/lng`) | Pochodna wyboru miejscowości | `profiles_private` | Ranking twórców per widok mapy, analiza |
+| Kontekst rejestracji (`signup_*`) | Aplikacja zapisuje raz | `profiles_private` | Analiza korzystania |
 | GPS — bieżąca pozycja | `navigator.geolocation` | RAM (nie zapisywana trwale) | Centrowanie mapy, filtr eventów |
 | GPS — ostatnia znana pozycja | `navigator.geolocation` | `localStorage` + `profiles.last_lat/last_lng` | Fallback pozycji, powiadomienia push "w okolicy" |
 | `last_seen_at` | Automatycznie | `profiles` | Filtr aktywnych użytkowników dla push |

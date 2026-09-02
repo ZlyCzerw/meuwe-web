@@ -4,7 +4,7 @@
 
 ## 🇵🇱 POLITYKA PRYWATNOŚCI
 
-**Wersja:** 1.0 | **Data:** 2026-06-01
+**Wersja:** 1.1 | **Data:** 2026-09-02
 
 **Administrator danych:** Wiktor Marc, meuwe@gmail.com
 
@@ -13,7 +13,10 @@
 | Dane | Cel | Podstawa prawna |
 |------|-----|-----------------|
 | Adres e-mail, identyfikator Google | Logowanie i identyfikacja konta | Zgoda (art. 6 ust. 1 lit. a RODO) |
-| Pseudonim, kolor avatara | Wyświetlanie w aplikacji | Zgoda |
+| Pseudonim, kolor avatara (wybrany przez Ciebie) | Wyświetlanie w aplikacji | Zgoda |
+| Opcjonalne pola profilu: opis, miejscowość, rodzaj konta, link | Wyświetlanie w aplikacji | Zgoda |
+| Opcjonalne dane o Tobie: rok urodzenia, płeć, status zamieszkania, zajęcie, uczelnia, kierunek, skąd znasz aplikację | Personalizacja i analiza korzystania z aplikacji; widoczne tylko dla Ciebie | Zgoda |
+| Kontekst rejestracji: przybliżona lokalizacja z adresu IP, pozycja GPS (jeśli wyraziłeś zgodę), platforma, wersja aplikacji, dostawca logowania, źródło wejścia | Analiza korzystania z aplikacji | Uzasadniony interes (art. 6 ust. 1 lit. f RODO) |
 | Ostatnia znana lokalizacja GPS | Filtrowanie powiadomień o wydarzeniach w okolicy | Zgoda |
 | Subskrypcja push (endpoint urządzenia) | Wysyłanie powiadomień | Zgoda |
 | Treść wydarzeń i wiadomości na czacie | Funkcja główna aplikacji | Zgoda |
@@ -44,7 +47,7 @@ Aplikacja nie używa plików cookie. Używa localStorage urządzenia wyłącznie
 
 ## 🇬🇧 PRIVACY POLICY
 
-**Version:** 1.0 | **Date:** 2026-06-01
+**Version:** 1.1 | **Date:** 2026-09-02
 
 **Data controller:** Wiktor Marc, meuwe@gmail.com
 
@@ -53,7 +56,10 @@ Aplikacja nie używa plików cookie. Używa localStorage urządzenia wyłącznie
 | Data | Purpose | Legal basis |
 |------|---------|-------------|
 | Email address, Google ID | Login and account identification | Consent (Art. 6(1)(a) GDPR) |
-| Display name, avatar colour | Display within the app | Consent |
+| Nickname, avatar colour (chosen by you) | Display in the app | Consent |
+| Optional profile fields: bio, town, account type, link | Display in the app | Consent |
+| Optional details about you: year of birth, gender, residence status, occupation, university, field of study, how you found the app | Personalisation and usage analysis; visible only to you | Consent |
+| Sign-up context: approximate location from IP address, GPS position (if you allowed it), platform, app version, sign-in provider, entry source | Usage analysis | Legitimate interest (Art. 6(1)(f) GDPR) |
 | Last known GPS location | Filtering nearby event notifications | Consent |
 | Push subscription (device endpoint) | Sending push notifications | Consent |
 | Event content and chat messages | Core app functionality | Consent |
@@ -84,7 +90,7 @@ The app does not use cookies. It uses device localStorage solely to store your l
 
 ## 🇩🇪 DATENSCHUTZERKLÄRUNG
 
-**Version:** 1.0 | **Datum:** 2026-06-01
+**Version:** 1.1 | **Datum:** 2026-09-02
 
 **Verantwortlicher:** Wiktor Marc, meuwe@gmail.com
 
@@ -93,7 +99,10 @@ The app does not use cookies. It uses device localStorage solely to store your l
 | Daten | Zweck | Rechtsgrundlage |
 |-------|-------|-----------------|
 | E-Mail-Adresse, Google-ID | Anmeldung und Kontoidentifikation | Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) |
-| Anzeigename, Avatar-Farbe | Anzeige in der App | Einwilligung |
+| Nickname, Avatarfarbe (von dir gewählt) | Anzeige in der App | Einwilligung |
+| Optionale Profilfelder: Bio, Ort, Kontotyp, Link | Anzeige in der App | Einwilligung |
+| Optionale Angaben über dich: Geburtsjahr, Geschlecht, Wohnstatus, Beschäftigung, Hochschule, Studiengang, wie du die App gefunden hast | Personalisierung und Nutzungsanalyse; nur für dich sichtbar | Einwilligung |
+| Registrierungskontext: ungefährer Standort aus der IP-Adresse, GPS-Position (falls erlaubt), Plattform, App-Version, Anmeldeanbieter, Einstiegsquelle | Nutzungsanalyse | Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO) |
 | Letzter bekannter GPS-Standort | Filterung von Benachrichtigungen über nahegelegene Veranstaltungen | Einwilligung |
 | Push-Abonnement (Geräte-Endpoint) | Versand von Push-Benachrichtigungen | Einwilligung |
 | Veranstaltungsinhalte und Chat-Nachrichten | Kernfunktion der App | Einwilligung |
@@ -124,7 +133,7 @@ Die App verwendet keine Cookies. Sie nutzt den localStorage des Geräts ausschli
 
 ## 🇪🇸 POLÍTICA DE PRIVACIDAD
 
-**Versión:** 1.0 | **Fecha:** 2026-06-01
+**Versión:** 1.1 | **Fecha:** 2026-09-02
 
 **Responsable del tratamiento:** Wiktor Marc, meuwe@gmail.com
 
@@ -133,7 +142,10 @@ Die App verwendet keine Cookies. Sie nutzt den localStorage des Geräts ausschli
 | Datos | Finalidad | Base jurídica |
 |-------|-----------|---------------|
 | Correo electrónico, ID de Google | Inicio de sesión e identificación de cuenta | Consentimiento (Art. 6.1.a RGPD) |
-| Nombre de usuario, color de avatar | Visualización en la app | Consentimiento |
+| Apodo, color del avatar (elegido por ti) | Mostrar en la aplicación | Consentimiento |
+| Campos opcionales del perfil: bio, localidad, tipo de cuenta, enlace | Mostrar en la aplicación | Consentimiento |
+| Datos opcionales sobre ti: año de nacimiento, género, situación de residencia, ocupación, universidad, carrera, cómo conociste la app | Personalización y análisis de uso; visibles solo para ti | Consentimiento |
+| Contexto de registro: ubicación aproximada por dirección IP, posición GPS (si la autorizaste), plataforma, versión de la app, proveedor de inicio de sesión, origen de entrada | Análisis de uso | Interés legítimo (art. 6.1.f RGPD) |
 | Última ubicación GPS conocida | Filtrado de notificaciones de eventos cercanos | Consentimiento |
 | Suscripción push (endpoint del dispositivo) | Envío de notificaciones push | Consentimiento |
 | Contenido de eventos y mensajes de chat | Funcionalidad principal de la app | Consentimiento |
