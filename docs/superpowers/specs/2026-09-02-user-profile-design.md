@@ -35,7 +35,7 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 | Lista pól | Grupy A/B/C poniżej. Odrzucone: ikona zamiast litery, linki społecznościowe ×3, „moje miejsce”, języki wydarzeń, weryfikacja, handle - do rozważenia osobno. |
 | Wejście do edycji | Dwa: `AccountPanel` → „Moje dane” (zastępuje „Nazwa użytkownika”) oraz tap na avatar w menu. Oba prowadzą w to samo miejsce. Edycja nazwy mieszka w „Moich danych”. |
 | Kolor avatara | Paleta 8 kolorów z tokenów aplikacji, nie dowolny picker. |
-| Miejscowość | Wybierana z listy jak w wyszukiwaniu na mapie (Photon), ograniczona do miejscowości. Zastępuje wolnotekstowe „gdzie działam”. Nazwa publiczna, współrzędne prywatne. |
+| Miejscowość | Wybierana z listy jak w wyszukiwaniu na mapie (Photon), ograniczona do miejscowości. Zastępuje wolnotekstowe „gdzie działam”. Nazwa publiczna; współrzędne to informacja wewnętrzna, niewidoczna dla użytkownika. |
 
 ## Pola
 
@@ -60,7 +60,6 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 | `university` | text, ≤ 80 | tylko przy `student`; UI pokazuje warunkowo |
 | `field_of_study` | text, ≤ 80 | jw. |
 | `found_via` | `friend` / `poster` / `social` / `store` / `university` / `other` | kanał pozyskania - marketing i badania |
-| `home_lat`, `home_lng` | float8 | współrzędne wybranej miejscowości (centroid z Photon). Prywatne, jak każda lokalizacja w tym projekcie; ranking i analiza czytają je przez `service_role`. Zapisywane i czyszczone razem z `home_name` - nigdy jedno bez drugiego |
 
 ### C. Automatyczne - `profiles_private`, zapisuje aplikacja, nieedytowalne
 
@@ -73,6 +72,7 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 | `signup_provider` | `google` / `apple` z `session.user.app_metadata.provider` |
 | `signup_source` | `event_link` (`?event=`), `digest` (`?src=digest`), `invite` (`?src=invite`), inaczej `direct` |
 | `signup_recorded_at` | `now()` przy pierwszym zapisie |
+| `home_lat`, `home_lng` | centroid miejscowości wybranej w polu „Miejscowość” (z wyniku Photon). Informacja wewnętrzna dla rankingu i analizy - to ta sama treść co `home_name`, tylko jako punkt, więc UI nigdzie jej nie pokazuje ani nie wspomina. Zapisywane i czyszczone razem z `home_name`, nigdy jedno bez drugiego |
 
 Celowo pominięte: pełna data urodzenia, imię i nazwisko, telefon, zdjęcie profilowe (moderacja, storage, RODO - osobny temat), publiczny e-mail.
 
@@ -273,7 +273,7 @@ Granice muszą się zgadzać z constraintami w migracji; baza zostaje ostatnią 
 5. **Sekcja „O Tobie”** z podpisem *„Widzisz tylko Ty”* (ikona kłódki nie jest potrzebna - wystarczy tekst w `C.inkSoft`): rok urodzenia (input numeryczny, `inputMode="numeric"`), płeć (chipy), „Mieszkam tu” (chipy: od lat / od niedawna / przejazdem), zajęcie (chipy) - przy „student” rozwijają się pod spodem „Uczelnia” i „Kierunek” (animacja `fadeIn`), „Skąd wiesz o meuwe” (chipy).
 6. **Sticky dół**: „Zapisz” (pełna szerokość, `C.primary`, obrys `2.5px INK`, cień `0 6px 16px rgba(232,90,42,0.28)` - identyczny z przyciskiem w `NicknameModal`) i pod nim tekstowy „Anuluj”. Pasek ma tło `C.cream` i `padding-bottom: env(safe-area-inset-bottom)`.
 
-**Zapis:** jeden handler. Walidacja `validateNickname` + `validateProfileForm`; błędy pod polami. Następnie dwa żądania: `updateProfile` (nickname, avatar_color, bio, home_name, creator_kind, link_url) i `upsertProfilePrivate` (pola B + `home_lat/lng`). Miejscowość zapisuje się w obu tabelach naraz: nazwa do `profiles`, współrzędne do `profiles_private`; wyczyszczenie pola zeruje wszystkie trzy. Zapis `profiles_private` idzie tylko wtedy, gdy któreś pole B (lub współrzędne miejscowości) ma wartość albo wiersz już istnieje - kto nic z „O Tobie” nie wypełnił, nie dostaje pustego wiersza. Błąd = komunikat pod przyciskiem, panel zostaje otwarty (zasada z `NicknameModal`: nie udawać sukcesu). Sukces = `db.trackClick('profile_save')`, toast „Zapisano” (klucz `account.profileSaved`), `reloadProfile`, `history.back()`.
+**Zapis:** jeden handler. Walidacja `validateNickname` + `validateProfileForm`; błędy pod polami. Następnie dwa żądania: `updateProfile` (nickname, avatar_color, bio, home_name, creator_kind, link_url) i `upsertProfilePrivate` (pola B + `home_lat/lng`). Miejscowość zapisuje się w obu tabelach naraz: nazwa do `profiles`, współrzędne do `profiles_private`; wyczyszczenie pola zeruje wszystkie trzy. Współrzędne nie mają żadnej reprezentacji w UI. Zapis `profiles_private` idzie tylko wtedy, gdy któreś pole B (lub współrzędne miejscowości) ma wartość albo wiersz już istnieje - kto nic z „O Tobie” nie wypełnił, nie dostaje pustego wiersza. Błąd = komunikat pod przyciskiem, panel zostaje otwarty (zasada z `NicknameModal`: nie udawać sukcesu). Sukces = `db.trackClick('profile_save')`, toast „Zapisano” (klucz `account.profileSaved`), `reloadProfile`, `history.back()`.
 
 **Zasady UX:**
 - Żadne pole nie ma gwiazdki ani słowa „wymagane”. Puste pole = placeholder, nie ostrzeżenie. Panel ma czytać się jak wizytówka do uzupełnienia, nie formularz do wypełnienia.
@@ -288,7 +288,7 @@ Granice muszą się zgadzać z constraintami w migracji; baza zostaje ostatnią 
 
 - i18n: wszystkie napisy w **pl/en/es/de/sl** (test `locales/parity.test.ts` to wymusza), włącznie z etykietami enumów (`myData.creatorKind_person` itd.) i komunikatami błędów (`myData.error_tooLong`, `myData.error_invalidUrl`, `myData.error_outOfRange`).
 - `account.nickname` → `account.myData` = „Moje dane”. `account.body` rozszerzone o „…oraz dane, które dobrowolnie podasz w Moich danych”.
-- `docs/legal/privacy-policy.md` (PL/EN/DE/ES): nowe wiersze w tabeli danych - „Opcjonalne pola profilu (bio, miejscowość, rodzaj konta, link)” cel: wyświetlanie w aplikacji; „Opcjonalne dane o Tobie (rok urodzenia, płeć, status zamieszkania, zajęcie, uczelnia, kierunek, źródło, współrzędne wybranej miejscowości)” cel: personalizacja i analiza korzystania z aplikacji, widoczne tylko dla Ciebie; „Kontekst rejestracji (przybliżona lokalizacja z IP, pozycja GPS jeśli wyrażono zgodę, platforma, wersja, dostawca logowania, źródło wejścia)” cel: analiza korzystania. Kolor avatara przestaje być „generowany losowo” - „wybierany przez użytkownika”.
+- `docs/legal/privacy-policy.md` (PL/EN/DE/ES): nowe wiersze w tabeli danych - „Opcjonalne pola profilu (bio, miejscowość, rodzaj konta, link)” cel: wyświetlanie w aplikacji; „Opcjonalne dane o Tobie (rok urodzenia, płeć, status zamieszkania, zajęcie, uczelnia, kierunek, źródło)” cel: personalizacja i analiza korzystania z aplikacji, widoczne tylko dla Ciebie; „Kontekst rejestracji (przybliżona lokalizacja z IP, pozycja GPS jeśli wyrażono zgodę, platforma, wersja, dostawca logowania, źródło wejścia)” cel: analiza korzystania. Kolor avatara przestaje być „generowany losowo” - „wybierany przez użytkownika”.
 - `docs/legal/compliance-requirements.md`: te same wiersze w tabeli sekcji 1, plus notatka: dane grupy B mogą posłużyć badaniom naukowym **dopiero po** dodaniu osobnej zgody (`research_consent_at`) - art. 6 ust. 1 lit. a z art. 89 RODO.
 
 ### 8. Kolejność wdrożenia
