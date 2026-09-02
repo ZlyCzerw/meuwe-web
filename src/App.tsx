@@ -9,7 +9,7 @@ import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHa
 import type { EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
-import { isNativePlatform, isAndroid } from './lib/platform'
+import { isNativePlatform, isAndroid, isIOS } from './lib/platform'
 import { createBackExitGate, BACK_EXIT_WINDOW_MS } from './lib/backExit'
 import { parseOAuthCallback } from './lib/oauthCallback'
 import { Geolocation } from '@capacitor/geolocation'
@@ -53,6 +53,7 @@ import AttendanceAskModal from './components/AttendanceAskModal'
 import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
 import { useEventChain } from './hooks/useEventChain'
 import { geoStrategy, listStrategy } from './lib/eventChain'
+import { shouldRecordSignup, buildSignupContext, gpsOnlyContext } from './lib/signupContext'
 import { MeuweLogo } from './components/MeuweLogo'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
@@ -114,6 +115,14 @@ export default function App() {
   const deepLinkIdRef = useRef<string | null>(
     new URLSearchParams(window.location.search).get('event')
   )
+  // Adres startowy, złapany przed tym, jak efekt montujący wyczyści ?event= z
+  // URL-a. Natywnie boot ma capacitor://localhost; prawdziwy deep link przychodzi
+  // przez appUrlOpen i nadpisuje to, dopóki kontekst rejestracji nie jest zapisany.
+  const startUrlRef = useRef<string>(window.location.href)
+  // 'unknown' → sprawdzamy; 'skip' → nie rejestracja; 'awaiting_gps' → zapisano
+  // bez GPS, czekamy na pozycję; 'done' → koniec. W refie, nie w state: to nie
+  // ma prawa niczego przerenderować.
+  const signupRef = useRef<'unknown' | 'skip' | 'awaiting_gps' | 'done'>('unknown')
   // Deep link / QR to a specific map spot: ?lat=..&lng=..[&zoom=..|&km=..] opens the map
   // centred there — as a guest when there's no session, or as the logged-in user when there
   // is one. `km` (the weekly digest sends it) names the distance to frame rather than a zoom
@@ -607,6 +616,7 @@ export default function App() {
     if (!isNativePlatform()) return
     let remove: (() => void) | undefined
     CapApp.addListener('appUrlOpen', ({ url }) => {
+      if (signupRef.current === 'unknown') startUrlRef.current = url
       // Powrót z logowania OAuth otwartego w przeglądarce (Android + Apple).
       const oauth = parseOAuthCallback(url)
       if (oauth) {
@@ -711,6 +721,46 @@ export default function App() {
     })
     return () => { cancelled = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Kontekst rejestracji: skąd, na czym i którędy powstało konto. Raz na konto,
+  // tylko dla kont młodszych niż doba (shouldRecordSignup) - starsze zostają z
+  // nullem zamiast dostać „rejestrację” w dniu wdrożenia. GPS dopisuje się
+  // drugim wywołaniem, gdy pozycja pojawi się w tej samej sesji.
+  useEffect(() => {
+    if (!session || !profile || signupRef.current !== 'unknown') return
+    let cancelled = false
+    ;(async () => {
+      const priv = await db.getProfilePrivate(session.user.id)
+      if (cancelled) return
+      if (!shouldRecordSignup({ profileCreatedAt: profile.created_at, alreadyRecorded: !!priv?.signup_recorded_at, now: Date.now() })) {
+        signupRef.current = 'skip'
+        return
+      }
+      let appVersion: string | null = null
+      if (isNativePlatform()) {
+        try { appVersion = (await CapApp.getInfo()).version } catch (err) { console.error('[signup] getInfo:', err) }
+      }
+      const ipGeo = await getIpLocation()
+      if (cancelled) return
+      const ctx = buildSignupContext({
+        ipGeo, gps: userPosRef.current,
+        platform: isIOS() ? 'ios' : isAndroid() ? 'android' : 'web',
+        appVersion, provider: session.user.app_metadata?.provider, startUrl: startUrlRef.current,
+      })
+      const { error } = await db.recordSignupContext(ctx)
+      if (error) { console.error('[signup] record_signup_context:', error); return }
+      signupRef.current = ctx.gpsLat != null ? 'done' : 'awaiting_gps'
+    })()
+    return () => { cancelled = true }
+  }, [session, profile])
+
+  useEffect(() => {
+    if (!session || !userPos || signupRef.current !== 'awaiting_gps') return
+    signupRef.current = 'done'
+    db.recordSignupContext(gpsOnlyContext(userPos)).then(({ error }) => {
+      if (error) console.error('[signup] gps follow-up:', error)
+    })
+  }, [session, userPos])
 
   // The server copy of the user's position — what the fan-out and the arrival
   // detection measure from.
