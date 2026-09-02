@@ -75,3 +75,22 @@ describe('ActionRow', () => {
     ])
   })
 })
+
+// Ikona z napisem mają siedzieć w środku przycisku. Wysokość wiersza rezerwuje
+// sam przycisk, nie etykieta — inaczej jednowierszowy napis klei się do góry
+// dwuwierszowej rezerwy i cała zawartość ląduje za wysoko.
+describe('ActionBtn layout', () => {
+  it('centres icon and label inside a button that keeps its own height', () => {
+    render(
+      <ActionRow>
+        <ActionBtn icon={<i />} label="Udostępnij" ariaLabel="Udostępnij" onClick={() => {}} />
+      </ActionRow>,
+    )
+    const btn = screen.getByRole('button', { name: 'Udostępnij' })
+    expect(btn.style.justifyContent).toBe('center')
+    expect(btn.style.minHeight).toBe('78px')
+    expect(btn.style.paddingTop).toBe(btn.style.paddingBottom)
+    const label = screen.getByText('Udostępnij')
+    expect(label.style.minHeight).toBe('')
+  })
+})

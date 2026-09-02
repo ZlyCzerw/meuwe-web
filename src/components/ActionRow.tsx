@@ -52,8 +52,13 @@ export function ActionBtn({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 5,
-        padding: '10px 6px 9px',
+        // Wysokość wiersza rezerwuje przycisk, nie etykieta: jednowierszowy
+        // napis i dwuwierszowy (wąski telefon) dają ten sam wiersz, a ikona
+        // z napisem siedzą w jego środku w obu przypadkach.
+        minHeight: 78,
+        padding: '8px 6px',
         background: 'transparent',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.5 : 1,
@@ -84,7 +89,6 @@ export function ActionBtn({
           color: INK,
           textAlign: 'center',
           lineHeight: 1.15,
-          minHeight: 24,
         }}
       >
         {label}
