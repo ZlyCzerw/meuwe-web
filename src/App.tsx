@@ -6,7 +6,7 @@ import { db } from './lib/supabase'
 import { shownName, initial } from './lib/profileDisplay'
 import { refineLangByGeo } from './lib/i18n'
 import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler, ensurePushRegistered, getDevicePushState } from './lib/push'
-import type { EventWithMeta } from './lib/types'
+import type { EventRow, EventWithMeta } from './lib/types'
 import Welcome from './screens/Welcome'
 import { Landing } from './pages/Landing'
 import { isNativePlatform, isAndroid, isIOS } from './lib/platform'
@@ -1049,11 +1049,21 @@ export default function App() {
     window.history.replaceState({ layer: 'create' }, '')
   }
 
-  function handleSubmit(_data: unknown) {
+  function handleSubmit(created: EventRow | null) {
     setCreateOpen(false)
     setCreatePos(null)
     setLocationPicked(false)
     setEventsRefreshKey(k => k + 1)
+    // Świeże wydarzenie ma być widoczne, a widać je tylko wtedy, gdy mapa stoi
+    // w jego miejscu I w jego dniu. Oś czasu potrafi zostać na wczoraj albo na
+    // zakresie sprzed tworzenia — wtedy pinezka nie mieści się w pobranym
+    // oknie czasu i nie pojawia się wcale. Ta sama para wywołań co przy wejściu
+    // z linku (efekt deepLinkEvent), tylko bez przesunięcia pod kartę: po
+    // utworzeniu żadna karta nie jest otwarta.
+    if (created) {
+      flySpotRef.current?.(created.lat, created.lng, 16)
+      showDayFnRef.current?.(new Date(created.start_time))
+    }
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 900)
     showToast(t('create.added'))

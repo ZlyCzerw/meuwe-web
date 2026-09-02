@@ -7,7 +7,7 @@ import ConflictModal from '../components/ConflictModal'
 import { C, F, INK } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { resolvePhotoUrls, type PhotoSlot } from '../lib/photoSlots'
-import type { EventWithMeta } from '../lib/types'
+import type { EventRow, EventWithMeta } from '../lib/types'
 import { isNativePlatform } from '../lib/platform'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
@@ -17,6 +17,11 @@ function toLocalDT(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+
+/** Domyślne ramy nowego wydarzenia: od teraz na trzy godziny. */
+const defaultStart = () => toLocalDT(new Date())
+const defaultEnd = () => toLocalDT(new Date(Date.now() + MS_3H))
 
 const MS_3H = 3 * 3_600_000
 const MS_48H = 48 * 3_600_000
@@ -52,7 +57,7 @@ function CreateSheet({
 }: {
   open: boolean
   onClose: () => void
-  onSubmit: (data: unknown) => void
+  onSubmit: (created: EventRow) => void
   defaultPos: { lat: number; lng: number } | null
   locationPicked: boolean
   onPickLocation: () => void
@@ -93,12 +98,8 @@ function CreateSheet({
     } catch { /* user cancelled */ }
   }
   const prefilledIdRef = useRef<string | null>(null)
-  const [startTime, setStartTime] = useState<string>(
-    () => toLocalDT(new Date())
-  )
-  const [endTime, setEndTime] = useState<string>(
-    () => toLocalDT(new Date(Date.now() + 3 * 3600000))
-  )
+  const [startTime, setStartTime] = useState<string>(() => defaultStart())
+  const [endTime, setEndTime] = useState<string>(() => defaultEnd())
   const [timeExpanded, setTimeExpanded] = useState(false)
   const [pickedAddress, setPickedAddress] = useState<string | null>(null)
   const [addressLoading, setAddressLoading] = useState(false)
@@ -185,13 +186,26 @@ function CreateSheet({
         setDesc('')
         setTags([])
         setPhotos([null, null, null])
-        setStartTime(toLocalDT(new Date()))
-        setEndTime(toLocalDT(new Date(Date.now() + 3 * 3_600_000)))
+        setStartTime(defaultStart())
+        setEndTime(defaultEnd())
         setTimeExpanded(false)
         setErr('')
       }
     }
   }, [editEvent?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Karta jest zamontowana przez całe życie aplikacji, więc domyślne godziny
+  // policzone przy montowaniu starzeją się razem z sesją: po godzinie od
+  // uruchomienia formularz proponowałby przeszłą porę. Odświeżamy je przy
+  // otwarciu, ale tylko gdy sekcja czasu jest zwinięta — pola dat są w niej
+  // schowane, więc zwinięta znaczy „użytkownik ich nie dotykał". Dzięki temu
+  // powrót z wyboru miejsca na mapie (karta zamyka się i otwiera) nie kasuje
+  // ustawionych godzin ani reszty szkicu.
+  useEffect(() => {
+    if (!open || editEvent || timeExpanded) return
+    setStartTime(defaultStart())
+    setEndTime(defaultEnd())
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function submit() {
     if (!title.trim() || submitting) return
@@ -280,9 +294,15 @@ function CreateSheet({
     setTags([])
     setDesc('')
     setPhotos([null, null, null])
+    // Godziny też: bez tego następne tworzenie startowało z datami poprzedniego
+    // wydarzenia, bo reset omijał jedyne dwa pola, które użytkownik wybiera
+    // ręcznie. Zwinięcie sekcji sprawia, że efekt niżej odświeży je przy
+    // kolejnym otwarciu, gdyby karta postała zamknięta parę godzin.
+    setStartTime(defaultStart())
+    setEndTime(defaultEnd())
     setTimeExpanded(false)
     setIsPrivate(false)
-    onSubmit(data)
+    onSubmit(data as EventRow)
   }
 
   return (
@@ -474,6 +494,7 @@ function CreateSheet({
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
                 <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeFrom')}</div>
                 <input
+                  data-testid="time-from"
                   type="datetime-local"
                   value={startTime}
                   min={startMinLocal}
@@ -485,6 +506,7 @@ function CreateSheet({
               <div style={{ flex: 1, padding: '10px 12px', background: '#fff', borderRadius: 14 }}>
                 <div style={{ fontSize: 10, color: C.inkSoft, fontWeight: 700, marginBottom: 4 }}>{t('create.timeTo')}</div>
                 <input
+                  data-testid="time-to"
                   type="datetime-local"
                   value={endTime}
                   min={endMinLocal}
