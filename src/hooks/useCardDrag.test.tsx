@@ -152,3 +152,119 @@ describe('useCardDrag', () => {
     expect(onCommitY).not.toHaveBeenCalled()
   })
 })
+
+/**
+ * Atrapa poziomego scrollera (kadr zdjęć): `closest('[data-hscroll]')` zwraca
+ * element z pozycją przewijania, resztę udaje jak wyżej.
+ */
+function scroller(scrollLeft: number, scrollWidth = 1200, clientWidth = 400) {
+  return { scrollLeft, scrollWidth, clientWidth }
+}
+
+function evOver(el: object, over: Record<string, unknown> = {}) {
+  return ev({ target: { closest: (sel: string) => (sel === '[data-hscroll]' ? el : null) }, ...over })
+}
+
+function setupWithKey(stepped = true) {
+  const onCommitX = vi.fn(() => stepped)
+  const onCommitY = vi.fn()
+  const hook = renderHook(
+    ({ resetKey }: { resetKey: string }) => useCardDrag({ enabled: true, onCommitX, onCommitY, resetKey }),
+    { initialProps: { resetKey: 'a' } },
+  )
+  return { ...hook, onCommitX, onCommitY }
+}
+
+/** Jeden pełny gest w lewo (na wschód) o `px` pikseli, zaczęty nad `el`. */
+function swipeLeftOver(result: { current: ReturnType<typeof useCardDrag> }, el: object, px: number) {
+  act(() => result.current.bind.onTouchStart(evOver(el, { touches: [finger(1, 300, 400)] })))
+  act(() => result.current.bind.onTouchMove(evOver(el, { touches: [finger(1, 300 - Math.min(px, 60), 400)] })))
+  act(() => result.current.bind.onTouchEnd(evOver(el, { changedTouches: [finger(1, 300 - px, 400)] })))
+}
+
+describe('useCardDrag over a horizontal scroller', () => {
+  // Zdjęcia jeszcze jadą: to ich gest, karta ani drgnie.
+  it('stays put while the scroller can still move that way', () => {
+    const { result, onCommitX } = setupWithKey()
+    const el = scroller(0)
+    act(() => result.current.bind.onTouchStart(evOver(el, { touches: [finger(1, 300, 400)] })))
+    act(() => result.current.bind.onTouchMove(evOver(el, { touches: [finger(1, 240, 400)] })))
+    expect(result.current.dx).toBe(0)
+    act(() => result.current.bind.onTouchEnd(evOver(el, { changedTouches: [finger(1, 140, 400)] })))
+    expect(onCommitX).not.toHaveBeenCalled()
+  })
+
+  // Ostatnie zdjęcie: pierwszy ruch dalej niesie kartę za palcem, ale nic nie
+  // zmienia — nawet daleko za progiem. Drugi ruch w tę samą stronę to już swipe.
+  it('bounces on the first push past the edge and swipes on the second', async () => {
+    const { result, onCommitX } = setupWithKey()
+    const atEnd = scroller(800)
+    act(() => result.current.bind.onTouchStart(evOver(atEnd, { touches: [finger(1, 300, 400)] })))
+    act(() => result.current.bind.onTouchMove(evOver(atEnd, { touches: [finger(1, 240, 400)] })))
+    expect(result.current.dx).toBe(-60)
+    act(() => result.current.bind.onTouchEnd(evOver(atEnd, { changedTouches: [finger(1, 100, 400)] })))
+    expect(onCommitX).not.toHaveBeenCalled()
+    expect(result.current.dx).toBe(0)
+    expect(result.current.transition).not.toBe('none')
+
+    swipeLeftOver(result, atEnd, 160)
+    expect(onCommitX).toHaveBeenCalledWith('east')
+  })
+
+  // Jedno zdjęcie stoi na obu krawędziach naraz: ta sama para gestów.
+  it('treats a single photo like an edge', () => {
+    const { result, onCommitX } = setupWithKey()
+    const single = scroller(0, 400, 400)
+    swipeLeftOver(result, single, 160)
+    expect(onCommitX).not.toHaveBeenCalled()
+    swipeLeftOver(result, single, 160)
+    expect(onCommitX).toHaveBeenCalledWith('east')
+  })
+
+  // Kto po odbiciu cofnął zdjęcia, ten rozbroił kartę: następne dojście do
+  // końca znów najpierw odbija.
+  it('disarms when the scroller is moved the other way', () => {
+    const { result, onCommitX } = setupWithKey()
+    const atEnd = scroller(800)
+    swipeLeftOver(result, atEnd, 160)          // odbicie, uzbrojone na wschód
+    act(() => result.current.bind.onTouchStart(evOver(atEnd, { touches: [finger(1, 100, 400)] })))
+    act(() => result.current.bind.onTouchMove(evOver(atEnd, { touches: [finger(1, 160, 400)] })))
+    act(() => result.current.bind.onTouchEnd(evOver(atEnd, { changedTouches: [finger(1, 260, 400)] })))
+    expect(result.current.dx).toBe(0)           // zdjęcia przewinęły się same
+    swipeLeftOver(result, atEnd, 160)          // znów odbicie, nie swipe
+    expect(onCommitX).not.toHaveBeenCalled()
+  })
+
+  // Odbicie w jedną stronę nie uzbraja drugiej.
+  it('keeps the two edges armed separately', () => {
+    const { result, onCommitX } = setupWithKey()
+    const single = scroller(0, 400, 400)
+    swipeLeftOver(result, single, 160)          // odbicie na wschód
+    act(() => result.current.bind.onTouchStart(evOver(single, { touches: [finger(1, 100, 400)] })))
+    act(() => result.current.bind.onTouchMove(evOver(single, { touches: [finger(1, 160, 400)] })))
+    expect(result.current.dx).toBe(60)          // karta jedzie za palcem…
+    act(() => result.current.bind.onTouchEnd(evOver(single, { changedTouches: [finger(1, 260, 400)] })))
+    expect(onCommitX).not.toHaveBeenCalled()    // …ale pierwszy raz na zachód to odbicie
+  })
+
+  // Nowe wydarzenie pod kartą zaczyna od zera — jego zdjęcia mają własny koniec.
+  it('disarms when the card content changes', () => {
+    const { result, rerender, onCommitX } = setupWithKey()
+    const atEnd = scroller(800)
+    swipeLeftOver(result, atEnd, 160)
+    rerender({ resetKey: 'b' })
+    swipeLeftOver(result, atEnd, 160)
+    expect(onCommitX).not.toHaveBeenCalled()
+  })
+
+  // Sznurek wyłączony (czat): scroller robi swoje, karta nigdy.
+  it('never touches the card when disabled', () => {
+    const onCommitX = vi.fn(() => true)
+    const { result } = renderHook(() => useCardDrag({ enabled: false, onCommitX, onCommitY: vi.fn(), resetKey: 'a' }))
+    const atEnd = scroller(800)
+    swipeLeftOver(result, atEnd, 160)
+    swipeLeftOver(result, atEnd, 160)
+    expect(result.current.dx).toBe(0)
+    expect(onCommitX).not.toHaveBeenCalled()
+  })
+})

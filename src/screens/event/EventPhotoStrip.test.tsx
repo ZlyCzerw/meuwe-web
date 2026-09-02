@@ -97,4 +97,14 @@ describe('EventPhotoStrip', () => {
     fireEvent.click(screen.getByLabelText('Next photo'))
     expect(screen.getByLabelText('Next photo')).toHaveStyle({ opacity: '0.4' })
   })
+
+  // useCardDrag pyta scroller pod palcem o krawędź; bez znacznika gest po
+  // zdjęciu traktowałby kartę jak zwykłą powierzchnię i przesuwał ją od razu.
+  it('marks both horizontal scrollers for the card drag', () => {
+    render(<EventPhotoStrip {...base} photos={['a.jpg', 'b.jpg']} tags={['music']} />)
+    const slide = screen.getAllByTestId('photo-slide')[0]
+    expect(slide.closest('[data-hscroll]')).not.toBeNull()
+    expect(screen.getByTestId('tag-bar')).toHaveAttribute('data-hscroll')
+    expect(screen.getByTestId('photo-frame')).not.toHaveAttribute('data-no-hswipe')
+  })
 })

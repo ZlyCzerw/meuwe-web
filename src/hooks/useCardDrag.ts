@@ -1,15 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
-import { resolveAxis, commitDir, type Axis } from '../lib/cardDrag'
+import { resolveAxis, commitDir, dirOf, resolveHMode, nextPrimed, type Axis } from '../lib/cardDrag'
 import type { Dir } from '../lib/eventChain'
 
 /**
- * 'ignored' nie wychodzi z resolveAxis — to gest poziomy, który zaczął się nad
- * czymś, co samo przewija się w poziomie (kadr zdjęcia, pasek tagów). Nie jest
- * ani sznurkiem, ani snapem: ma po prostu przelecieć obok.
+ * 'ignored' nie wychodzi z resolveAxis — to gest poziomy, który należy do
+ * czegoś innego: do wyłączonego sznurka albo do scrollera pod palcem (kadr
+ * zdjęć, pasek tagów), który ma jeszcze dokąd jechać. Nie jest ani sznurkiem,
+ * ani snapem: ma po prostu przelecieć obok.
  */
 type Locked = Axis | 'ignored'
 
-type Gesture = { id: number; x: number; y: number; axis: Locked; blocked: boolean }
+/** Tyle, ile potrzeba, żeby spytać scroller, czy stoi na krawędzi. */
+type HScroller = Pick<HTMLElement, 'scrollLeft' | 'scrollWidth' | 'clientWidth'>
+
+type Gesture = {
+  id: number; x: number; y: number; axis: Locked
+  /** Scroller, nad którym zaczął się gest; null poza kadrem. */
+  scroller: HScroller | null
+  /** Odbicie: karta jedzie za palcem, ale po puszczeniu nie ma prawa nic zmienić. */
+  bounce: boolean
+}
+
+/** Luz na subpiksele: iOS potrafi zatrzymać scrollLeft ułamek przed końcem. */
+const EDGE_SLACK_PX = 1
 
 const GLIDE = 'transform 260ms cubic-bezier(0.32,1.2,0.4,1)'
 
@@ -23,20 +36,33 @@ function findTouch(list: React.TouchList, id: number): React.Touch | null {
   return null
 }
 
-export function useCardDrag({ enabled, onCommitX, onCommitY }: {
+export function useCardDrag({ enabled, onCommitX, onCommitY, resetKey }: {
   /** Czy sznurek w ogóle działa w tym stanie karty (np. nie pod czatem). */
   enabled: boolean
   /** Zwraca, czy krok się udał — od tego zależy, czy karta wraca, czy wjeżdża. */
   onCommitX: (dir: Dir) => boolean
   onCommitY: (dy: number) => void
+  /**
+   * Zmiana tej wartości rozbraja odbicie (patrz `primed`). Podaje się tu id
+   * wydarzenia: nowa treść pod kartą ma własne zdjęcia i własny koniec.
+   */
+  resetKey?: string | null
 }) {
   const [dx, setDx] = useState(0)
   /** Czy przesunięcie ma być animowane. W trakcie ciągnięcia nigdy. */
   const [gliding, setGliding] = useState(false)
   const g = useRef<Gesture | null>(null)
   const raf = useRef(0)
+  /**
+   * Krawędź scrollera, która już raz odbiła kartą. Nad kadrem zdjęć pierwszy
+   * ruch poza ostatnie zdjęcie tylko odbija, drugi w tę samą stronę zmienia
+   * wydarzenie. Przewinięcie zdjęć w drugą stronę rozbraja. Ref, nie state: to
+   * nie ma prawa niczego przerenderować.
+   */
+  const primed = useRef<Dir | null>(null)
 
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
+  useEffect(() => { primed.current = null }, [resetKey])
 
   /** Sprężysty powrót z miejsca, w którym stanął palec. */
   function settle() {
@@ -79,8 +105,30 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     const target = e.target as HTMLElement
     g.current = {
       id: t.identifier, x: t.clientX, y: t.clientY, axis: 'none',
-      blocked: !!target.closest?.('[data-no-hswipe]'),
+      scroller: (target.closest?.('[data-hscroll]') as HScroller | null) ?? null,
+      bounce: false,
     }
+  }
+
+  /**
+   * Gest poziomy nad scrollerem: kto go dostaje — scroller, czy karta. Pytamy w
+   * chwili rozstrzygnięcia osi, nie na starcie, bo dopiero wtedy znamy kierunek.
+   */
+  function claimHorizontal(s: Gesture, ddx: number): Locked {
+    if (!enabled) return 'ignored'
+    if (!s.scroller) return 'horizontal'
+    const dir = dirOf(ddx)
+    const el = s.scroller
+    const mode = resolveHMode({
+      dir,
+      atStart: el.scrollLeft <= EDGE_SLACK_PX,
+      atEnd: el.scrollLeft + el.clientWidth >= el.scrollWidth - EDGE_SLACK_PX,
+      primed: primed.current,
+    })
+    primed.current = nextPrimed(mode, dir, primed.current)
+    if (mode === 'scroll') return 'ignored'
+    s.bounce = mode === 'bounce'
+    return 'horizontal'
   }
 
   function onTouchMove(e: React.TouchEvent) {
@@ -93,7 +141,7 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     if (s.axis === 'none') {
       const axis = resolveAxis(ddx, ddy)
       if (axis === 'none') return
-      s.axis = axis === 'horizontal' && (!enabled || s.blocked) ? 'ignored' : axis
+      s.axis = axis === 'horizontal' ? claimHorizontal(s, ddx) : axis
     }
     if (s.axis !== 'horizontal') return
     setDx(ddx)
@@ -108,6 +156,8 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     g.current = null
     if (s.axis === 'vertical') { onCommitY(t.clientY - s.y); return }
     if (s.axis !== 'horizontal') return
+    // Odbicie: palec poczuł koniec zdjęć, karta wraca i nic się nie zmienia.
+    if (s.bounce) { settle(); return }
     const width = (e.currentTarget as HTMLElement).clientWidth || window.innerWidth
     const dir = commitDir(t.clientX - s.x, width)
     // Krok bywa niemożliwy — koniec sznurka. Wtedy karta wraca stamtąd, gdzie

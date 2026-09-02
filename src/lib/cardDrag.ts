@@ -28,3 +28,35 @@ export function commitDir(dx: number, width: number): Dir | null {
   if (dx >= threshold) return 'west'
   return null
 }
+
+/** Kierunek, w który idzie palec: w lewo znaczy na wschód (patrz commitDir). */
+export function dirOf(dx: number): Dir {
+  return dx < 0 ? 'east' : 'west'
+}
+
+/**
+ * Co robi karta, gdy gest poziomy zaczął się nad czymś, co samo przewija się
+ * w poziomie (kadr zdjęć, pasek tagów).
+ *
+ *  scroll  scroller ma jeszcze dokąd jechać — karta milczy, przewija natywnie.
+ *  bounce  scroller stoi na krawędzi w tę stronę — karta jedzie za palcem, ale
+ *          po puszczeniu wraca. Palec czuje koniec zdjęć, nic się nie zmienia.
+ *  swipe   ta sama krawędź już raz odbiła — teraz to zwykły gest karty.
+ *
+ * Kolejność ma znaczenie: `scroll` wygrywa nawet z uzbrojeniem, bo kto cofnął
+ * zdjęcia, ten znów chce je przewijać, a nie zmieniać wydarzenie.
+ */
+export type HMode = 'scroll' | 'bounce' | 'swipe'
+
+export function resolveHMode(ctx: { dir: Dir; atStart: boolean; atEnd: boolean; primed: Dir | null }): HMode {
+  const atEdge = ctx.dir === 'east' ? ctx.atEnd : ctx.atStart
+  if (!atEdge) return 'scroll'
+  return ctx.primed === ctx.dir ? 'swipe' : 'bounce'
+}
+
+/** Stan uzbrojenia po geście: odbicie uzbraja, swipe utrzymuje, przewinięcie rozbraja. */
+export function nextPrimed(mode: HMode, dir: Dir, primed: Dir | null): Dir | null {
+  if (mode === 'scroll') return null
+  if (mode === 'bounce') return dir
+  return primed
+}

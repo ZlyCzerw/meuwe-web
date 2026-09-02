@@ -69,9 +69,6 @@ export default function EventPhotoStrip({
   return (
     <div
       data-testid="photo-frame"
-      // Kadr i pasek tagów przewijają się w poziomie same. Sznurek wydarzeń
-      // trzyma się od nich z daleka; pionowe snapy działają tu jak wszędzie.
-      data-no-hswipe
       style={{
         position: 'relative', aspectRatio: '16 / 9', maxHeight: MAX_FRAME_H,
         borderRadius: 20, overflow: 'hidden', marginBottom: 12,
@@ -82,9 +79,15 @@ export default function EventPhotoStrip({
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          // Zdjęcia przewijają się same, a sznurek wydarzeń pyta ten element,
+          // czy stoi na krawędzi (useCardDrag): póki jest dokąd jechać, gest
+          // należy do zdjęć; na ostatnim zdjęciu pierwszy ruch dalej odbija
+          // kartą, drugi zmienia wydarzenie. overscroll none, żeby iOS nie
+          // dokładał własnego gumowego odbicia scrollera pod odbiciem karty.
+          data-hscroll
           style={{
             display: 'flex', height: '100%', overflowX: 'auto', overflowY: 'hidden',
-            scrollSnapType: 'x mandatory', scrollbarWidth: 'none',
+            scrollSnapType: 'x mandatory', scrollbarWidth: 'none', overscrollBehaviorX: 'none',
           }}
         >
           {list.map((src, i) => (
@@ -176,10 +179,13 @@ export default function EventPhotoStrip({
       {tags.length > 0 && (
         <div
           data-testid="tag-bar"
+          // Ta sama umowa ze sznurkiem co przy zdjęciach: tagi jadą do końca,
+          // potem karta odbija, potem zmienia wydarzenie.
+          data-hscroll
           style={{
             position: 'absolute', bottom: 8, left: 0, right: 0, zIndex: 3,
             display: 'flex', gap: 6, overflowX: 'auto', padding: '0 10px',
-            scrollbarWidth: 'none',
+            scrollbarWidth: 'none', overscrollBehaviorX: 'none',
           }}
         >
           {/* Opakowanie nie jest ozdobą: TagChip nie ustawia własnego flexShrink,
