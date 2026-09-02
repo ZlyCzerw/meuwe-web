@@ -53,7 +53,7 @@ import AttendanceAskModal from './components/AttendanceAskModal'
 import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
 import { useEventChain } from './hooks/useEventChain'
 import { geoStrategy, listStrategy } from './lib/eventChain'
-import { shouldRecordSignup, buildSignupContext, gpsOnlyContext } from './lib/signupContext'
+import { shouldRecordSignup, buildSignupContext, gpsOnlyContext, rememberEntrySource, recallEntrySource } from './lib/signupContext'
 import { MeuweLogo } from './components/MeuweLogo'
 
 type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
@@ -119,6 +119,18 @@ export default function App() {
   // URL-a. Natywnie boot ma capacitor://localhost; prawdziwy deep link przychodzi
   // przez appUrlOpen i nadpisuje to, dopóki kontekst rejestracji nie jest zapisany.
   const startUrlRef = useRef<string>(window.location.href)
+  // Źródło wejścia (invite/digest/event_link), zapamiętane w sessionStorage od
+  // razu przy starcie - bo logowanie jest przekierowaniem OAuth: web wraca pod
+  // gołym /?code=…, a appUrlOpen na Androidzie dostaje tylko adres powrotu z
+  // OAuth. Bez tego signupSourceFromUrl widziałby 'direct' niemal zawsze.
+  // sessionStorage, nie localStorage: kolejna, niezwiązana wizyta ma zacząć
+  // czysto, a nie odziedziczyć źródło sprzed dnia. W inicjalizatorze refa, nie
+  // w ciele komponentu, żeby wołało się raz - nie przy każdym renderze.
+  const entrySourceRememberedRef = useRef(false)
+  if (!entrySourceRememberedRef.current) {
+    entrySourceRememberedRef.current = true
+    rememberEntrySource(window.location.href, sessionStorage)
+  }
   // 'unknown' → sprawdzamy; 'skip' → nie rejestracja; 'awaiting_gps' → zapisano
   // bez GPS, czekamy na pozycję; 'done' → koniec. W refie, nie w state: to nie
   // ma prawa niczego przerenderować.
@@ -616,7 +628,7 @@ export default function App() {
     if (!isNativePlatform()) return
     let remove: (() => void) | undefined
     CapApp.addListener('appUrlOpen', ({ url }) => {
-      if (signupRef.current === 'unknown') startUrlRef.current = url
+      if (signupRef.current === 'unknown') { startUrlRef.current = url; rememberEntrySource(url, sessionStorage) }
       // Powrót z logowania OAuth otwartego w przeglądarce (Android + Apple).
       const oauth = parseOAuthCallback(url)
       if (oauth) {
@@ -746,6 +758,7 @@ export default function App() {
         ipGeo, gps: userPosRef.current,
         platform: isIOS() ? 'ios' : isAndroid() ? 'android' : 'web',
         appVersion, provider: session.user.app_metadata?.provider, startUrl: startUrlRef.current,
+        entrySource: recallEntrySource(sessionStorage),
       })
       const { error } = await db.recordSignupContext(ctx)
       if (error) { console.error('[signup] record_signup_context:', error); return }

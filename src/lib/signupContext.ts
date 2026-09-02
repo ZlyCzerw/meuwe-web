@@ -51,6 +51,29 @@ export function signupProvider(raw: unknown): SignupProvider | null {
   return raw === 'google' || raw === 'apple' ? raw : null
 }
 
+export const ENTRY_SOURCE_KEY = 'meuwe_entry_src'
+
+/**
+ * Zapamiętaj źródło wejścia, jeśli adres jakieś niesie; 'direct' niczego nie
+ * nadpisuje. Bez tego przekierowanie OAuth (powrót gołym adresem, z ?code=…)
+ * kasowałoby zapamiętany link zaproszenia/digestu/wydarzenia, zanim
+ * buildSignupContext zdąży go zobaczyć.
+ */
+export function rememberEntrySource(url: string, storage: Pick<Storage, 'getItem' | 'setItem'>): void {
+  const source = signupSourceFromUrl(url)
+  if (source === 'direct') return
+  try { storage.setItem(ENTRY_SOURCE_KEY, source) } catch { /* private mode */ }
+}
+
+const KNOWN_SOURCES: readonly SignupSource[] = ['direct', 'event_link', 'digest', 'invite']
+
+/** Źródło zapamiętane przed przekierowaniem OAuth, albo null. */
+export function recallEntrySource(storage: Pick<Storage, 'getItem'>): SignupSource | null {
+  let raw: string | null
+  try { raw = storage.getItem(ENTRY_SOURCE_KEY) } catch { return null }
+  return (KNOWN_SOURCES as readonly string[]).includes(raw ?? '') ? raw as SignupSource : null
+}
+
 export function buildSignupContext(input: {
   ipGeo: { lat: number; lng: number; country: string } | null
   gps: { lat: number; lng: number } | null
@@ -58,6 +81,7 @@ export function buildSignupContext(input: {
   appVersion: string | null
   provider: unknown
   startUrl: string
+  entrySource?: SignupSource | null
 }): SignupContext {
   return {
     ipLat: input.ipGeo?.lat ?? null,
@@ -68,7 +92,7 @@ export function buildSignupContext(input: {
     platform: input.platform,
     appVersion: input.appVersion,
     provider: signupProvider(input.provider),
-    source: signupSourceFromUrl(input.startUrl),
+    source: input.entrySource ?? signupSourceFromUrl(input.startUrl),
   }
 }
 

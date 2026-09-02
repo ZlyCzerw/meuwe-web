@@ -1,7 +1,21 @@
 import { describe, it, expect } from 'vitest'
 import {
   shouldRecordSignup, signupSourceFromUrl, signupProvider, buildSignupContext, gpsOnlyContext, SIGNUP_WINDOW_MS,
+  rememberEntrySource, recallEntrySource, ENTRY_SOURCE_KEY,
 } from './signupContext'
+
+/** Atrapa storage w pamięci - żeby nie ciągnąć jsdom-owego sessionStorage do testu czystych funkcji. */
+function memoryStorage(): Storage {
+  const map = new Map<string, string>()
+  return {
+    getItem: (k: string) => map.get(k) ?? null,
+    setItem: (k: string, v: string) => { map.set(k, v) },
+    removeItem: (k: string) => { map.delete(k) },
+    clear: () => map.clear(),
+    key: () => null,
+    length: 0,
+  } as Storage
+}
 
 const NOW = Date.parse('2026-09-02T12:00:00Z')
 
@@ -60,6 +74,54 @@ describe('buildSignupContext', () => {
   })
   it('stores an empty country as null', () => {
     expect(buildSignupContext({ ipGeo: { lat: 1, lng: 2, country: '' }, gps: null, platform: 'web', appVersion: null, provider: 'google', startUrl: 'https://meuwe.eu/' }).country).toBeNull()
+  })
+})
+
+describe('rememberEntrySource / recallEntrySource', () => {
+  it('remembers invite from ?src=invite', () => {
+    const storage = memoryStorage()
+    rememberEntrySource('https://meuwe.eu/?src=invite', storage)
+    expect(storage.getItem(ENTRY_SOURCE_KEY)).toBe('invite')
+    expect(recallEntrySource(storage)).toBe('invite')
+  })
+
+  it('does not let an OAuth callback URL overwrite a remembered invite', () => {
+    const storage = memoryStorage()
+    rememberEntrySource('https://meuwe.eu/?src=invite', storage)
+    rememberEntrySource('https://meuwe.eu/?code=abc', storage)
+    expect(recallEntrySource(storage)).toBe('invite')
+  })
+
+  it('stores nothing for a direct URL', () => {
+    const storage = memoryStorage()
+    rememberEntrySource('https://meuwe.eu/', storage)
+    expect(storage.getItem(ENTRY_SOURCE_KEY)).toBeNull()
+    expect(recallEntrySource(storage)).toBeNull()
+  })
+
+  it('returns null for garbage', () => {
+    const storage = memoryStorage()
+    storage.setItem(ENTRY_SOURCE_KEY, 'nonsense')
+    expect(recallEntrySource(storage)).toBeNull()
+  })
+})
+
+describe('buildSignupContext prefers entrySource over startUrl', () => {
+  it('uses entrySource when given, ignoring the (OAuth callback) startUrl', () => {
+    expect(buildSignupContext({
+      ipGeo: null, gps: null, platform: 'web', appVersion: null, provider: 'google',
+      startUrl: 'https://meuwe.eu/?code=abc', entrySource: 'invite',
+    }).source).toBe('invite')
+  })
+  it('falls back to startUrl when entrySource is null/undefined', () => {
+    expect(buildSignupContext({
+      ipGeo: null, gps: null, platform: 'web', appVersion: null, provider: 'google',
+      startUrl: 'https://meuwe.eu/?src=digest', entrySource: null,
+    }).source).toBe('digest')
+    expect(buildSignupContext({
+      ipGeo: null, gps: null, platform: 'web', appVersion: null, provider: 'google',
+      startUrl: 'https://meuwe.eu/?src=digest',
+    }).source).toBe('digest')
   })
 })
 
