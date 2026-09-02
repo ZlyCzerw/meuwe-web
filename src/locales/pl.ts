@@ -1,5 +1,5 @@
 const pl = {
-  common: { loading: 'Ładowanie…', cancel: 'Anuluj', close: 'Zamknij' },
+  common: { loading: 'Ładowanie…', cancel: 'Anuluj', close: 'Zamknij', clear: 'Wyczyść' },
   conflict: {
     title: 'Miejsce zajęte',
     body: 'Wydarzenie w tym miejscu i czasie już istnieje, popraw czas wydarzenia lub zmień miejsce',
@@ -131,8 +131,6 @@ const pl = {
   account: {
     myData: 'Moje dane',
     nicknameHint: 'Od 2 do 30 znaków',
-    nicknameFailed: 'Nie udało się zapisać, spróbuj ponownie',
-    nickname_empty: 'Wpisz nazwę',
     nickname_tooShort: 'Nazwa jest za krótka',
     nickname_tooLong: 'Nazwa jest za długa',
     entry: 'Konto i dane',

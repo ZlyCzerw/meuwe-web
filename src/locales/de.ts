@@ -1,7 +1,7 @@
 import type { Resources } from './pl'
 
 const de: Resources = {
-  common: { loading: 'Laden…', cancel: 'Abbrechen', close: 'Schließen' },
+  common: { loading: 'Laden…', cancel: 'Abbrechen', close: 'Schließen', clear: 'Leeren' },
   conflict: {
     title: 'Platz belegt',
     body: 'An diesem Ort und zu dieser Zeit existiert bereits ein Event - passe die Zeit an oder ändere den Ort.',
@@ -139,8 +139,6 @@ const de: Resources = {
   account: {
     myData: 'Meine Daten',
     nicknameHint: 'Zwischen 2 und 30 Zeichen',
-    nicknameFailed: 'Speichern fehlgeschlagen, bitte erneut versuchen',
-    nickname_empty: 'Gib einen Namen ein',
     nickname_tooShort: 'Der Name ist zu kurz',
     nickname_tooLong: 'Der Name ist zu lang',
     entry: 'Konto und Daten',

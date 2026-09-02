@@ -1,7 +1,7 @@
 import type { Resources } from './pl'
 
 const sl: Resources = {
-  common: { loading: 'Nalaganje…', cancel: 'Prekliči', close: 'Zapri' },
+  common: { loading: 'Nalaganje…', cancel: 'Prekliči', close: 'Zapri', clear: 'Počisti' },
   conflict: {
     title: 'Mesto je zasedeno',
     body: 'Na tem mestu in ob tem času dogodek že obstaja - prilagodi čas ali premakni lokacijo.',
@@ -139,8 +139,6 @@ const sl: Resources = {
   account: {
     myData: 'Moji podatki',
     nicknameHint: 'Med 2 in 30 znaki',
-    nicknameFailed: 'Shranjevanje ni uspelo, poskusite znova',
-    nickname_empty: 'Vnesite ime',
     nickname_tooShort: 'Ime je prekratko',
     nickname_tooLong: 'Ime je predolgo',
     entry: 'Račun in podatki',
