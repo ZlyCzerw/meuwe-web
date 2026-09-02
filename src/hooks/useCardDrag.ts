@@ -1,22 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { resolveAxis, commitDir, dirOf, resolveHMode, type Axis } from '../lib/cardDrag'
+import { resolveAxis, commitDir, dirOf, resolveHMode, resolveVMode, type Axis } from '../lib/cardDrag'
 import type { Dir } from '../lib/eventChain'
 
 /**
- * 'ignored' nie wychodzi z resolveAxis — to gest poziomy, który należy do
- * czegoś innego: do wyłączonego sznurka albo do scrollera pod palcem (kadr
- * zdjęć, pasek tagów), który ma jeszcze dokąd jechać. Nie jest ani sznurkiem,
- * ani snapem: ma po prostu przelecieć obok.
+ * 'ignored' nie wychodzi z resolveAxis — to gest, który należy do czegoś
+ * innego: do wyłączonego sznurka albo do scrollera pod palcem (kadr zdjęć,
+ * pasek tagów, lista w trybie full), który ma jeszcze dokąd jechać. Nie jest
+ * ani sznurkiem, ani snapem: ma po prostu przelecieć obok.
  */
 type Locked = Axis | 'ignored'
 
 /** Tyle, ile potrzeba, żeby spytać scroller, czy stoi na krawędzi. */
 type HScroller = Pick<HTMLElement, 'scrollLeft' | 'scrollWidth' | 'clientWidth'>
+type VScroller = Pick<HTMLElement, 'scrollTop' | 'scrollHeight' | 'clientHeight'>
 
 type Gesture = {
   id: number; x: number; y: number; axis: Locked
-  /** Scroller, nad którym zaczął się gest; null poza kadrem. */
+  /** Poziomy scroller, nad którym zaczął się gest; null poza kadrem. */
   scroller: HScroller | null
+  /** Pionowy scroller pod palcem (lista w trybie full); null nad uchwytem. */
+  vscroller: VScroller | null
 }
 
 /** Luz na subpiksele: iOS potrafi zatrzymać scrollLeft ułamek przed końcem. */
@@ -91,6 +94,7 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     g.current = {
       id: t.identifier, x: t.clientX, y: t.clientY, axis: 'none',
       scroller: (target.closest?.('[data-hscroll]') as HScroller | null) ?? null,
+      vscroller: (target.closest?.('[data-vscroll]') as VScroller | null) ?? null,
     }
   }
 
@@ -110,6 +114,23 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     return mode === 'scroll' ? 'ignored' : 'horizontal'
   }
 
+  /**
+   * Gest pionowy nad treścią, która sama się przewija: karta dostaje go tylko
+   * wtedy, gdy palec idzie w dół przy samej górze (patrz resolveVMode). Uchwyt
+   * nie leży w scrollerze, więc zawsze rządzi kartą. `enabled` tego nie gasi —
+   * to przełącznik sznurka, nie snapów.
+   */
+  function claimVertical(s: Gesture, ddy: number): Locked {
+    if (!s.vscroller) return 'vertical'
+    const el = s.vscroller
+    const mode = resolveVMode({
+      down: ddy > 0,
+      atTop: el.scrollTop <= EDGE_SLACK_PX,
+      atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - EDGE_SLACK_PX,
+    })
+    return mode === 'scroll' ? 'ignored' : 'vertical'
+  }
+
   function onTouchMove(e: React.TouchEvent) {
     const s = g.current
     if (!s) return
@@ -120,7 +141,7 @@ export function useCardDrag({ enabled, onCommitX, onCommitY }: {
     if (s.axis === 'none') {
       const axis = resolveAxis(ddx, ddy)
       if (axis === 'none') return
-      s.axis = axis === 'horizontal' ? claimHorizontal(s, ddx) : axis
+      s.axis = axis === 'horizontal' ? claimHorizontal(s, ddx) : claimVertical(s, ddy)
     }
     if (s.axis !== 'horizontal') return
     setDx(ddx)

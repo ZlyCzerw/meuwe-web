@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveAxis, commitDir, dirOf, resolveHMode, AXIS_LOCK_PX, COMMIT_MIN_PX } from './cardDrag'
+import { resolveAxis, commitDir, dirOf, resolveHMode, resolveVMode, AXIS_LOCK_PX, COMMIT_MIN_PX } from './cardDrag'
 
 describe('resolveAxis', () => {
   it('holds off until the finger has actually travelled', () => {
@@ -66,5 +66,33 @@ describe('resolveHMode', () => {
   it('treats a single photo as both edges', () => {
     expect(resolveHMode({ dir: 'east', atStart: true, atEnd: true })).toBe('swipe')
     expect(resolveHMode({ dir: 'west', atStart: true, atEnd: true })).toBe('swipe')
+  })
+})
+
+// Gest pionowy nad treścią, która przewija się sama (lista w trybie full):
+// decyzja zapada przy starcie gestu. Palec w dół przy samej górze → karta;
+// wszystko inne → treść.
+describe('resolveVMode', () => {
+  it('hands a downward drag at the top of the content to the sheet', () => {
+    expect(resolveVMode({ down: true, atTop: true, atBottom: false })).toBe('sheet')
+  })
+
+  it('leaves a downward drag to the content once it has been scrolled', () => {
+    expect(resolveVMode({ down: true, atTop: false, atBottom: false })).toBe('scroll')
+  })
+
+  it('leaves an upward drag at the top to the content', () => {
+    expect(resolveVMode({ down: false, atTop: true, atBottom: false })).toBe('scroll')
+  })
+
+  // Symetria z poziomem: na dolnej krawędzi gest w górę też jest karty. W full
+  // nie ma dokąd rosnąć, więc nic się nie stanie — ale reguła zostaje jedna.
+  it('hands an upward drag at the bottom to the sheet', () => {
+    expect(resolveVMode({ down: false, atTop: false, atBottom: true })).toBe('sheet')
+  })
+
+  it('treats content that fits on screen as both edges', () => {
+    expect(resolveVMode({ down: true, atTop: true, atBottom: true })).toBe('sheet')
+    expect(resolveVMode({ down: false, atTop: true, atBottom: true })).toBe('sheet')
   })
 })

@@ -46,7 +46,25 @@ export function dirOf(dx: number): Dir {
  */
 export type HMode = 'scroll' | 'swipe'
 
+/** Wspólny rdzeń obu reguł: gest jest karty tylko wtedy, gdy scroller pod palcem stoi na krawędzi w tę stronę. */
+function claimsEdge(towardsEnd: boolean, atStart: boolean, atEnd: boolean): boolean {
+  return towardsEnd ? atEnd : atStart
+}
+
 export function resolveHMode(ctx: { dir: Dir; atStart: boolean; atEnd: boolean }): HMode {
-  const atEdge = ctx.dir === 'east' ? ctx.atEnd : ctx.atStart
-  return atEdge ? 'swipe' : 'scroll'
+  return claimsEdge(ctx.dir === 'east', ctx.atStart, ctx.atEnd) ? 'swipe' : 'scroll'
+}
+
+/**
+ * To samo dla pionu, nad treścią karty w trybie full: palec w dół przy samej
+ * górze zmniejsza kartę, każdy inny gest przewija treść. Decyzja zapada przy
+ * starcie gestu — treść, która dojedzie do góry w trakcie ciągnięcia, nie
+ * oddaje gestu karcie; nowy gest to nowa decyzja (tak robi Material i iOS,
+ * i tylko tak da się to zrobić bez preventDefault na pasywnym touchmove).
+ */
+export type VMode = 'scroll' | 'sheet'
+
+export function resolveVMode(ctx: { down: boolean; atTop: boolean; atBottom: boolean }): VMode {
+  // Palec w dół chce ku początkowi treści, więc "krawędź w tę stronę" to góra.
+  return claimsEdge(!ctx.down, ctx.atTop, ctx.atBottom) ? 'sheet' : 'scroll'
 }

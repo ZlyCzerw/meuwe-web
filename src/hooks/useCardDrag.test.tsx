@@ -229,3 +229,56 @@ describe('useCardDrag over a horizontal scroller', () => {
     expect(onCommitX).not.toHaveBeenCalled()
   })
 })
+
+/** Atrapa pionowego scrollera (lista w trybie full). */
+function vscroller(scrollTop: number, scrollHeight = 2000, clientHeight = 600) {
+  return { scrollTop, scrollHeight, clientHeight }
+}
+
+function evOverV(el: object | null, over: Record<string, unknown> = {}) {
+  return ev({ target: { closest: (sel: string) => (sel === '[data-vscroll]' ? el : null) }, ...over })
+}
+
+/** Pionowy gest o `dy` (dodatnie = w dół), zaczęty nad `el` (null = uchwyt). */
+function dragV(result: { current: ReturnType<typeof useCardDrag> }, el: object | null, dy: number) {
+  act(() => result.current.bind.onTouchStart(evOverV(el, { touches: [finger(1, 200, 300)] })))
+  act(() => result.current.bind.onTouchMove(evOverV(el, { touches: [finger(1, 200, 300 + Math.sign(dy) * 30)] })))
+  act(() => result.current.bind.onTouchEnd(evOverV(el, { changedTouches: [finger(1, 200, 300 + dy)] })))
+}
+
+describe('useCardDrag over a vertical scroller', () => {
+  it('hands a downward drag at the top of the content to the sheet', () => {
+    const { result, onCommitY } = setup()
+    dragV(result, vscroller(0), 120)
+    expect(onCommitY).toHaveBeenCalledWith(120)
+  })
+
+  // Treść już przewinięta: gest w dół jest jej, nawet jeśli po drodze dojedzie
+  // do góry — decyzja zapadła na starcie.
+  it('leaves a downward drag to scrolled content', () => {
+    const { result, onCommitY } = setup()
+    dragV(result, vscroller(240), 120)
+    expect(onCommitY).not.toHaveBeenCalled()
+  })
+
+  it('leaves an upward drag at the top to the content', () => {
+    const { result, onCommitY } = setup()
+    dragV(result, vscroller(0), -120)
+    expect(onCommitY).not.toHaveBeenCalled()
+  })
+
+  // Uchwyt nie leży w żadnym scrollerze: gest zawsze należy do karty.
+  it('always gives the handle to the sheet', () => {
+    const { result, onCommitY } = setup()
+    dragV(result, null, 120)
+    expect(onCommitY).toHaveBeenCalledWith(120)
+  })
+
+  // Pion nie podlega `enabled`: to przełącznik sznurka, nie snapów.
+  it('still collapses when the chain is disabled', () => {
+    const onCommitY = vi.fn()
+    const { result } = renderHook(() => useCardDrag({ enabled: false, onCommitX: vi.fn(() => true), onCommitY }))
+    dragV(result, vscroller(0), 120)
+    expect(onCommitY).toHaveBeenCalledWith(120)
+  })
+})

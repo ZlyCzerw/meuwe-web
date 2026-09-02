@@ -411,9 +411,10 @@ function EventSheet({
     // milczy.
     enabled: !!onChainStep && !chatOpen,
     onCommitX: dir => onChainStep?.(dir) ?? false,
-    // W trybie full lista przewija się natywnie i pionowy gest do niej należy —
-    // dokładnie jak przed sznurkiem.
-    onCommitY: dy => { if (!isFull) onVertical(dy) },
+    // W trybie full lista jest oznaczona jako scroller, więc hook sam oddaje
+    // jej gesty — poza ciągnięciem w dół przy samej górze, które zmniejsza
+    // kartę. Pod czatem karta stoi.
+    onCommitY: dy => { if (!chatOpen) onVertical(dy) },
   })
 
   if (!event) return null
@@ -489,7 +490,13 @@ function EventSheet({
               // zdarzenia scroll, które nigdy nie padnie.
               {...drag.bind}
               onWheel={!isFull ? (e) => { if (e.deltaY > 0) setSnap('full') } : undefined}
-              style={{ flex: 1, overflowY: isFull ? 'auto' : 'hidden', padding: '4px 20px 0' }}
+              // Scrollerem dla useCardDrag jest tylko w full: w half i peek
+              // overflow jest hidden i każdy gest pionowy należy do karty (gest
+              // w górę w half rozwija do full). overscroll none, żeby ciągnięcie
+              // w dół na górze treści nie odpalało pull-to-refresh ani gumy iOS
+              // równolegle ze zmniejszaniem karty.
+              data-vscroll={isFull || undefined}
+              style={{ flex: 1, overflowY: isFull ? 'auto' : 'hidden', padding: '4px 20px 0', overscrollBehaviorY: 'none' }}
             >
               {/* Wszystko, co widać w trybie half — to jest mierzone. */}
               <div ref={halfRef}>
