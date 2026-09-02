@@ -18,6 +18,7 @@ import { haversineKm } from '../lib/geo'
 import { isNativePlatform } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
 import { authorLabel, authorInitial } from '../lib/authorLabel'
+import { shownName, avatarColor } from '../lib/profileDisplay'
 import { truncateDescription } from '../lib/text'
 import { linkify } from '../lib/linkify'
 import { addToCalendar, type CalendarResult } from '../lib/calendar'
@@ -373,9 +374,8 @@ function EventSheet({
     // Nazwa wpisywana jest do wiadomości na stałe, więc bierzemy tę pokazywaną
     // dziś (nickname, a w jego braku nazwa od dostawcy). Starych wiadomości
     // zmiana nazwy nie dotyka — tak samo jak w każdym komunikatorze.
-    const authorName =
-      profile?.name_shown || profile?.display_name || session.user?.email?.split('@')[0] || '?'
-    const authorColor = profile?.avatar_color || C.primary
+    const authorName = shownName(profile, session.user?.email) || '?'
+    const authorColor = avatarColor(profile)
     const result = await db.sendMessage(event.id, text, authorName, authorColor)
     if (result?.error) setSendErr(t('event.sendError'))
   }

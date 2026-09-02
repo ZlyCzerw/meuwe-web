@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useSession } from './hooks/useSession'
 import { C, F } from './lib/tokens'
 import { db } from './lib/supabase'
+import { shownName, initial } from './lib/profileDisplay'
 import { refineLangByGeo } from './lib/i18n'
 import { registerServiceWorker, refreshPushSubscription, registerNativePushTapHandler, ensurePushRegistered, getDevicePushState } from './lib/push'
 import type { EventWithMeta } from './lib/types'
@@ -1231,7 +1232,7 @@ export default function App() {
         open={accountOpen && !isOverlay}
         onClose={() => window.history.back()}
         onDeleted={handleAccountDeleted}
-        currentName={profile?.name_shown || profile?.display_name || session?.user.email?.split('@')[0] || ''}
+        currentName={shownName(profile, session?.user.email)}
         onNicknameSaved={() => { reloadProfile(); showToast(t('account.nicknameSaved')) }}
       />
       {locationModalOpen && (
@@ -1241,7 +1242,7 @@ export default function App() {
         <InterestsOnboardingModal
           userId={session.user.id}
           radiusKm={interestsRadiusKm}
-          initial={(profile?.name_shown || profile?.display_name || session.user.email || '?')[0]}
+          initial={initial(profile, session.user.email)}
           onDone={finishInterestsStep}
         />
       )}

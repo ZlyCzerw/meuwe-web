@@ -15,6 +15,7 @@ import { resolvePushState } from '../lib/pushState'
 import type { DevicePushState } from '../lib/pushState'
 import { isAndroid, isIOS } from '../lib/platform'
 import type { Profile, Lang } from '../lib/types'
+import { shownName, initial, avatarColor } from '../lib/profileDisplay'
 
 function ProfilePanel({
   open,
@@ -132,18 +133,8 @@ function ProfilePanel({
     db.updateProfile({ id: session.user.id, interests: newArr }).then(() => reloadProfile())
   }
 
-  // name_shown to nazwa wybrana przez użytkownika, a w jej braku ta od dostawcy
-  // logowania. Po zmianie nazwy w panelu konta menu ma pokazywać nową, nie tę,
-  // z którą konto powstało.
-  const shownName = profile?.name_shown || profile?.display_name
-
-  const initials = session
-    ? (shownName || session.user.email || '?')[0].toUpperCase()
-    : '?'
-
-  const displayName = session
-    ? shownName || session.user.email?.split('@')[0] || ''
-    : t('profile.guest')
+  const initials = session ? initial(profile, session.user.email) : '?'
+  const displayName = session ? shownName(profile, session.user.email) : t('profile.guest')
 
   const currentLang = i18n.language as Lang
 
@@ -215,7 +206,7 @@ function ProfilePanel({
               width: 96,
               height: 96,
               borderRadius: '50%',
-              background: profile?.avatar_color || C.berry,
+              background: avatarColor(profile),
               border: `3px solid ${INK}`,
               boxShadow: `0 4px 0 ${INK}33`,
               marginBottom: 16,

@@ -139,3 +139,25 @@ describe('ProfilePanel notifications', () => {
     expect(await screen.findByText('Notifications blocked by the system')).toBeInTheDocument()
   })
 })
+
+describe('ProfilePanel identity', () => {
+  it('shows the initial of the name the user chose, not the provider name', async () => {
+    getDevicePushState.mockResolvedValue({ permission: 'granted', registered: true, confirmed: true })
+    render(
+      <ProfilePanel
+        open
+        onClose={() => {}}
+        session={session}
+        profile={{ ...profile(false), display_name: 'Kasia', nickname: 'Ala', name_shown: 'Ala' }}
+        onSignOut={() => {}}
+        reloadProfile={() => {}}
+        onOpenMyEvents={() => {}}
+        onOpenFollowedEvents={() => {}}
+        onOpenAccount={() => {}}
+      />
+    )
+    expect(await screen.findByText('Ala')).toBeInTheDocument()
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.queryByText('K')).not.toBeInTheDocument()
+  })
+})

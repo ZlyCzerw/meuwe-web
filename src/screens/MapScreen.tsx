@@ -15,6 +15,7 @@ import {
 } from '../lib/emptyState'
 import { pinHTML, meHTML, privateHTML, clusterHTML } from '../components/mapIcons'
 import { isCurrentlyLive } from '../lib/eventStatus'
+import { initial, avatarColor } from '../lib/profileDisplay'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
@@ -597,8 +598,8 @@ function MapScreen({
           <Avatar
             size={48}
             onClick={onOpenProfile}
-            initials={(profile?.display_name || session?.user?.email || '?')[0].toUpperCase()}
-            color={profile?.avatar_color || C.berry}
+            initials={initial(profile, session?.user?.email)}
+            color={avatarColor(profile)}
             hasUnread={unreadMenu}
           />
         </div>
