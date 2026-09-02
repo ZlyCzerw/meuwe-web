@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { C, INK, ALL_CATEGORIES } from '../lib/tokens'
+import { C, INK, ALL_CATEGORIES, SHADOW_BUTTON } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import CategoryChip from './CategoryChip'
 import { db } from '../lib/supabase'
@@ -200,7 +200,7 @@ export default function TagPickerModal({
               background: C.primary, color: '#fff',
               fontSize: 16, fontWeight: 800,
               border: `2.5px solid ${INK}`,
-              boxShadow: '0 6px 16px rgba(255,122,69,0.35)',
+              boxShadow: SHADOW_BUTTON,
             }}
           >
             {t('tagPicker.done')} · {selected.length > 0 ? t('tagPicker.selectedCount', { count: selected.length }) : t('tagPicker.selectedNone')}

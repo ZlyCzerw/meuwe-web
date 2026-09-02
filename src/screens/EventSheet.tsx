@@ -11,7 +11,7 @@ import ActionRow, { ActionBtn } from '../components/ActionRow'
 import EventPhotoStrip from './event/EventPhotoStrip'
 import EventChatPanel from './event/EventChatPanel'
 import PhotoLightbox from './event/PhotoLightbox'
-import { C, INK, F, TAG_META } from '../lib/tokens'
+import { C, INK, F, TAG_META, SHADOW_BUTTON } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
@@ -668,7 +668,7 @@ function EventSheet({
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                   <button
                     onClick={() => onEdit?.(event)}
-                    style={{ flex: 1, padding: '12px 16px', borderRadius: 999, background: C.primary, border: `2px solid ${INK}`, color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 12px rgba(255,122,69,0.30)' }}
+                    style={{ flex: 1, padding: '12px 16px', borderRadius: 999, background: C.primary, border: `2px solid ${INK}`, color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: SHADOW_BUTTON }}
                   >
                     {t('event.editEvent')}
                   </button>

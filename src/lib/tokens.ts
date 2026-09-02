@@ -9,6 +9,9 @@ export const C = {
 } as const
 
 export const INK = '#2D2B2A'
+/** Cień przycisków akcji: twarda podstawka jak pod przyciskiem dodawania
+ *  wydarzenia. Jeden wpis, żeby modale i mapa nie rozjeżdżały się z „+”. */
+export const SHADOW_BUTTON = `0 5px 0 ${INK}44`
 
 export const F = {
   display: '"Hanken Grotesk","Nunito",ui-rounded,system-ui,sans-serif',

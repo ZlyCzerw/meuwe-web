@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { C, INK, BLOBS } from '../lib/tokens';
+import { C, INK, BLOBS, SHADOW_BUTTON } from '../lib/tokens';
 
 export default function AddButton({
   size = 76,
@@ -61,7 +61,7 @@ export default function AddButton({
             left: -size * 0.06,
             top: -size * 0.06,
             overflow: 'visible',
-            filter: `drop-shadow(0 5px 0 ${INK}44)`,
+            filter: `drop-shadow(${SHADOW_BUTTON})`,
             transition: 'all 1.6s cubic-bezier(0.4,0,0.2,1)',
           }}
         >

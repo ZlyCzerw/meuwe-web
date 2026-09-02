@@ -110,3 +110,13 @@ describe('PushAskModal', () => {
     expect(updateProfile).not.toHaveBeenCalled()
   })
 })
+
+describe('PushAskModal button shadow', () => {
+  it('gives the enable button the shared hard button shadow, not an orange glow', async () => {
+    const { SHADOW_BUTTON } = await import('../lib/tokens')
+    render(<PushAskModal userId="u1" onEnabled={() => {}} onDecline={() => {}} onFailed={() => {}} />)
+    const btn = screen.getByRole('button', { name: /turn on notifications/i })
+    expect(SHADOW_BUTTON).toMatch(/^0 5px 0 /)
+    expect(btn.style.boxShadow).toBe(SHADOW_BUTTON)
+  })
+})

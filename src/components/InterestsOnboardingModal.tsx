@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { C, INK, F, ALL_CATEGORIES } from '../lib/tokens'
+import { C, INK, F, ALL_CATEGORIES, SHADOW_BUTTON } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { enablePushOnThisDevice } from '../lib/push'
 import CategoryChip from './CategoryChip'
@@ -186,7 +186,7 @@ export default function InterestsOnboardingModal({
             color: ready ? '#fff' : DISABLED_INK,
             fontSize: 16, fontWeight: 800,
             border: `2.5px solid ${ready ? INK : 'transparent'}`,
-            boxShadow: ready ? '0 6px 16px rgba(255,122,69,0.35)' : 'none',
+            boxShadow: ready ? SHADOW_BUTTON : 'none',
             transition: 'all 200ms ease',
             cursor: ready && !busy ? 'pointer' : 'default',
           }}

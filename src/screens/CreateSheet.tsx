@@ -4,7 +4,7 @@ import DragHandle from '../components/DragHandle'
 import TagChip from '../components/TagChip'
 import TagPickerModal from '../components/TagPickerModal'
 import ConflictModal from '../components/ConflictModal'
-import { C, F, INK } from '../lib/tokens'
+import { C, F, INK, SHADOW_BUTTON } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { resolvePhotoUrls, type PhotoSlot } from '../lib/photoSlots'
 import type { EventRow, EventWithMeta } from '../lib/types'
@@ -771,7 +771,7 @@ function CreateSheet({
             fontWeight: 800,
             border: `2.5px solid ${title.trim() ? INK : 'transparent'}`,
             boxShadow: title.trim()
-              ? '0 8px 20px rgba(255,122,69,0.35)'
+              ? SHADOW_BUTTON
               : 'none',
             display: 'flex',
             alignItems: 'center',

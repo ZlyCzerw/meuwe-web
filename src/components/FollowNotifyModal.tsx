@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { C, INK, F } from '../lib/tokens'
+import { C, INK, F, SHADOW_BUTTON } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { enablePushOnThisDevice } from '../lib/push'
 import { addToCalendar } from '../lib/calendar'
@@ -141,7 +141,7 @@ export default function FollowNotifyModal({
             style={{
               width: '100%', padding: '14px', borderRadius: 999,
               background: C.primary, color: '#fff', fontSize: 16, fontWeight: 800,
-              border: `2.5px solid ${INK}`, boxShadow: '0 6px 16px rgba(255,122,69,0.35)',
+              border: `2.5px solid ${INK}`, boxShadow: SHADOW_BUTTON,
               cursor: busy ? 'default' : 'pointer',
             }}
           >
@@ -154,7 +154,7 @@ export default function FollowNotifyModal({
             style={{
               width: '100%', padding: '14px', borderRadius: 999,
               background: C.primary, color: '#fff', fontSize: 16, fontWeight: 800,
-              border: `2.5px solid ${INK}`, boxShadow: '0 6px 16px rgba(255,122,69,0.35)',
+              border: `2.5px solid ${INK}`, boxShadow: SHADOW_BUTTON,
               cursor: busy ? 'default' : 'pointer',
             }}
           >

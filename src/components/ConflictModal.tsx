@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { C, INK, F, BLOBS } from '../lib/tokens'
+import { C, INK, F, BLOBS, SHADOW_BUTTON } from '../lib/tokens'
 
 // Cluster of three distinct meuwe blob pins (different shapes + colours) used as
 // the modal's illustration — same blob recipe as the map markers (mapIcons.ts).
@@ -58,7 +58,7 @@ export default function ConflictModal({ onClose }: { onClose: () => void }) {
           style={{
             width: '100%', padding: '14px', borderRadius: 999,
             background: C.primary, color: '#fff', fontSize: 16, fontWeight: 800,
-            border: `2.5px solid ${INK}`, boxShadow: '0 6px 16px rgba(255,122,69,0.35)',
+            border: `2.5px solid ${INK}`, boxShadow: SHADOW_BUTTON,
           }}
         >
           {t('conflict.ok')}

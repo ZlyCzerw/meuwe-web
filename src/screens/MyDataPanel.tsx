@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
-import { C, INK, F } from '../lib/tokens'
+import { C, INK, F, SHADOW_BUTTON } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import type { Profile } from '../lib/types'
 import { validateNickname, NICKNAME_MAX } from '../lib/nickname'
@@ -331,7 +331,7 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
             style={{
               width: '100%', padding: '14px', borderRadius: 999,
               background: C.primary, color: '#fff', fontSize: 16, fontWeight: 800,
-              border: `2.5px solid ${INK}`, boxShadow: '0 6px 16px rgba(232,90,42,0.28)',
+              border: `2.5px solid ${INK}`, boxShadow: SHADOW_BUTTON,
               cursor: busy ? 'default' : 'pointer',
             }}
           >

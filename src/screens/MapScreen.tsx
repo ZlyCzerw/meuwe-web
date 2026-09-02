@@ -3,7 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
-import { C, INK, F } from '../lib/tokens'
+import { C, INK, F, SHADOW_BUTTON } from '../lib/tokens'
 import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm, startupZoom, MAX_MAP_KM } from '../lib/geo'
@@ -786,7 +786,7 @@ function MapScreen({
                 background: C.primary, color: '#fff',
                 fontSize: 16, fontWeight: 800,
                 border: `2.5px solid ${INK}`,
-                boxShadow: '0 8px 20px rgba(255,122,69,0.35)',
+                boxShadow: SHADOW_BUTTON,
               }}
             >
               {t('map.confirmLocation')}
