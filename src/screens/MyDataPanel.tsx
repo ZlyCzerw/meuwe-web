@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '@supabase/supabase-js'
 import { C, INK, F } from '../lib/tokens'
@@ -35,6 +35,17 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
   const [nickname, setNickname] = useState('')
   const [color, setColor] = useState<string>(avatarColor(profile))
   const [form, setForm] = useState<ProfileForm>(emptyProfileForm())
+  // Tekst startowy pola miejscowości: ustawiany tylko przy otwarciu, nigdy z
+  // form.home - inaczej wyczyszczenie wyboru (onQueryChange) zmieniłoby
+  // initialQuery w tym samym renderze, a PlaceSearchInput nadpisałby nim to,
+  // co użytkownik właśnie wpisuje, zjadając pierwszy znak.
+  const [homeInitial, setHomeInitial] = useState('')
+  // Najnowszy profile z propsów, czytany wewnątrz efektu otwarcia - patrz niżej
+  // (jak overlayRef w App.tsx: odświeżany na każdym renderze, żeby efekt nie
+  // musiał zależeć od `profile` i nie resetował edycji przy jego zmianie).
+  const profileRef = useRef(profile)
+  // eslint-disable-next-line react-hooks/refs -- celowe odświeżanie "najnowszej wartości" na renderze, czytane tylko w efekcie, nigdy w trakcie renderu
+  profileRef.current = profile
   // Czy wiersz w profiles_private już istnieje: wtedy zapis idzie zawsze, bo
   // wyczyszczenie pola też jest zmianą do zapisania.
   const [privateExists, setPrivateExists] = useState(false)
@@ -44,18 +55,22 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
   const [saveError, setSaveError] = useState<string | null>(null)
 
   // Stan formularza odświeża się przy każdym otwarciu, nie przy montowaniu:
-  // panel jest zamontowany na stałe, jak AccountPanel.
+  // panel jest zamontowany na stałe, jak AccountPanel. Zależy tylko od [open,
+  // session]: gdyby zależał też od profile, odświeżenie profilu przez rodzica
+  // (np. po zapisie gdzie indziej) kasowałoby to, co użytkownik właśnie pisze
+  // w otwartym panelu. Aktualny profil czytamy z profileRef.
   useEffect(() => {
     if (!open || !session) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when the panel opens for a (possibly new) session
-    setNickname(profile?.nickname ?? '')
-    setColor(avatarColor(profile))
+    const p = profileRef.current
+    setNickname(p?.nickname ?? '')
+    setColor(avatarColor(p))
+    setHomeInitial(p?.home_name ?? '')
     setNickError(null); setErrors([]); setSaveError(null)
     const base: ProfileForm = {
       ...emptyProfileForm(),
-      bio: profile?.bio ?? '',
-      creatorKind: profile?.creator_kind ?? null,
-      linkUrl: profile?.link_url ?? '',
+      bio: p?.bio ?? '',
+      creatorKind: p?.creator_kind ?? null,
+      linkUrl: p?.link_url ?? '',
     }
     setForm(base)
     setPrivateExists(false)
@@ -65,9 +80,9 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
       setPrivateExists(!!priv)
       setForm(f => ({
         ...f,
-        home: profile?.home_name && priv?.home_lat != null && priv?.home_lng != null
-          ? { name: profile.home_name, lat: priv.home_lat, lng: priv.home_lng }
-          : profile?.home_name ? { name: profile.home_name, lat: NaN, lng: NaN } : null,
+        home: p?.home_name && priv?.home_lat != null && priv?.home_lng != null
+          ? { name: p.home_name, lat: priv.home_lat, lng: priv.home_lng }
+          : p?.home_name ? { name: p.home_name, lat: NaN, lng: NaN } : null,
         birthYear: priv?.birth_year != null ? String(priv.birth_year) : '',
         gender: priv?.gender ?? null,
         residenceStatus: priv?.residence_status ?? null,
@@ -78,7 +93,7 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
       }))
     })
     return () => { cancelled = true }
-  }, [open, session, profile])
+  }, [open, session])
 
   const set = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
     setForm(f => ({ ...f, [key]: value }))
@@ -236,7 +251,7 @@ export default function MyDataPanel({ open, onClose, session, profile, onSaved }
               placeholder={t('myData.homePlaceholder')}
               near={null}
               settlementsOnly
-              initialQuery={form.home?.name ?? ''}
+              initialQuery={homeInitial}
               labelFor={homeNameFromPlace}
               onSelect={r => set('home', { name: homeNameFromPlace(r), lat: r.lat, lng: r.lng })}
               // Ręczna zmiana tekstu unieważnia wybór: wartość istnieje tylko po wyborze z listy.

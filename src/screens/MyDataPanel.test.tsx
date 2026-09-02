@@ -22,16 +22,23 @@ vi.mock('../lib/supabase', () => ({
 
 // Photon nie jest tu potrzebny: pole miejscowości dostaje atrapę, która na
 // kliknięcie „pick” oddaje gotowy wynik, a na „clear” zgłasza pusty tekst.
+// initialQuery trafia też do capturedInitialQueries: to jedyny sposób z
+// zewnątrz sprawdzić, że MyDataPanel nie przelicza tego propa z form.home
+// przy każdej zmianie (patrz test o zjadanym pierwszym znaku).
+const capturedInitialQueries: (string | undefined)[] = []
 vi.mock('../components/PlaceSearchInput', () => ({
   default: ({ onSelect, onQueryChange, initialQuery }: {
     onSelect: (r: PlaceResult) => void; onQueryChange?: (q: string) => void; initialQuery?: string
-  }) => (
-    <div>
-      <span data-testid="home-query">{initialQuery}</span>
-      <button onClick={() => onSelect({ id: '1', primary: 'Rzeszów', secondary: 'Podkarpackie, Polska', lat: 50.04, lng: 22.0 })}>pick</button>
-      <button onClick={() => onQueryChange?.('')}>clear</button>
-    </div>
-  ),
+  }) => {
+    capturedInitialQueries.push(initialQuery)
+    return (
+      <div>
+        <span data-testid="home-query">{initialQuery}</span>
+        <button onClick={() => onSelect({ id: '1', primary: 'Rzeszów', secondary: 'Podkarpackie, Polska', lat: 50.04, lng: 22.0 })}>pick</button>
+        <button onClick={() => onQueryChange?.('')}>clear</button>
+      </div>
+    )
+  },
 }))
 
 const session = { user: { id: 'u1', email: 'a@b.c' } } as unknown as Session
@@ -54,6 +61,7 @@ function renderPanel(p: Profile = profile(), onSaved = vi.fn()) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  capturedInitialQueries.length = 0
   updateProfile.mockResolvedValue({ data: [{ id: 'u1' }], error: null })
   upsertProfilePrivate.mockResolvedValue({ data: [{ id: 'u1' }], error: null })
   getProfilePrivate.mockResolvedValue(null)
@@ -185,5 +193,54 @@ describe('MyDataPanel', () => {
     fireEvent.click(screen.getByText('Save'))
     expect(await screen.findByText('Could not save, please try again')).toBeInTheDocument()
     expect(onSaved).not.toHaveBeenCalled()
+  })
+
+  it('does not eat the first keystroke after clearing a selected town - initialQuery stays fixed', async () => {
+    getProfilePrivate.mockResolvedValue({
+      id: 'u1', birth_year: null, gender: null, residence_status: null, occupation: null,
+      university: null, field_of_study: null, found_via: null, home_lat: 50.04, home_lng: 22.0,
+      signup_ip_lat: null, signup_ip_lng: null, signup_country: null, signup_gps_lat: null, signup_gps_lng: null,
+      signup_platform: null, signup_app_version: null, signup_provider: null, signup_source: null,
+      signup_recorded_at: null, updated_at: '',
+    })
+    renderPanel(profile({ home_name: 'Rzeszów, Podkarpackie, Polska' }))
+    expect(await screen.findByTestId('home-query')).toHaveTextContent('Rzeszów, Podkarpackie, Polska')
+    // onQueryChange nulluje form.home - to jest sygnał "wpisujesz coś nowego".
+    // Gdyby initialQuery był liczony z form.home, ten sam render zmieniłby go
+    // na '', a atrapa (jak prawdziwy PlaceSearchInput) nadpisałaby nim to, co
+    // użytkownik właśnie wpisuje - stąd zjedzony pierwszy znak w prawdziwym
+    // komponencie. initialQuery ma zostać tym, co było przy otwarciu panelu.
+    fireEvent.click(screen.getByText('clear'))
+    expect(capturedInitialQueries[capturedInitialQueries.length - 1]).toBe('Rzeszów, Podkarpackie, Polska')
+  })
+
+  it('keeps in-progress edits when the parent hands in a fresh profile reference while open', async () => {
+    const p1 = profile()
+    const { rerender } = render(<MyDataPanel open onClose={() => {}} session={session} profile={p1} onSaved={() => {}} />)
+    await screen.findByLabelText('Name')
+    fireEvent.change(screen.getByLabelText('Bio'), { target: { value: 'w trakcie pisania' } })
+
+    // Nowy obiekt, te same wartości - jak po reloadProfile() u rodzica.
+    const p2 = { ...p1 }
+    rerender(<MyDataPanel open onClose={() => {}} session={session} profile={p2} onSaved={() => {}} />)
+
+    expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('w trakcie pisania')
+  })
+
+  it('resets to the new profile only after a close/reopen, not on a bare profile change', async () => {
+    const p1 = profile({ bio: 'stare bio' })
+    const { rerender } = render(<MyDataPanel open onClose={() => {}} session={session} profile={p1} onSaved={() => {}} />)
+    await screen.findByLabelText('Name')
+    expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('stare bio')
+
+    const p2 = profile({ bio: 'nowe bio' })
+    // Zmiana profilu w locie, panel wciąż otwarty: nic się nie resetuje.
+    rerender(<MyDataPanel open onClose={() => {}} session={session} profile={p2} onSaved={() => {}} />)
+    expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('stare bio')
+
+    // Zamknięcie i ponowne otwarcie z nowym profilem - dopiero to resetuje.
+    rerender(<MyDataPanel open={false} onClose={() => {}} session={session} profile={p2} onSaved={() => {}} />)
+    rerender(<MyDataPanel open onClose={() => {}} session={session} profile={p2} onSaved={() => {}} />)
+    await waitFor(() => expect((screen.getByLabelText('Bio') as HTMLTextAreaElement).value).toBe('nowe bio'))
   })
 })
