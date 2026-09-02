@@ -70,7 +70,7 @@ describe('validateProfileForm', () => {
   })
 
   it('rejects a link that is not a web address', () => {
-    for (const bad of ['tylko tekst', 'javascript:alert(1)', 'http://', 'https://nodot']) {
+    for (const bad of ['tylko tekst', 'javascript:alert(1)', 'http://', 'https://nodot', 'mailto:someone@example.com', 'facebook.com@phishing-site.co', 'https://user:pw@example.com', 'ftp://example.com']) {
       const res = validateProfileForm({ ...emptyProfileForm(), linkUrl: bad }, NOW)
       expect(res).toEqual({ ok: false, errors: [{ field: 'linkUrl', reason: 'invalidUrl' }] })
     }

@@ -106,10 +106,20 @@ function tidy(raw: string): string | null {
 function normalizeUrl(raw: string): { ok: true; value: string | null } | { ok: false; reason: ProfileFieldReason } {
   const t = tidy(raw)
   if (t === null) return { ok: true, value: null }
+
+  // Reject non-http(s) schemes: if it has a scheme and it's not http://, it's invalid
+  if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) {
+    return { ok: false, reason: 'invalidUrl' }
+  }
+
   const withScheme = /^https?:\/\//i.test(t) ? t : `https://${t}`
   let parsed: URL
   try { parsed = new URL(withScheme) } catch { return { ok: false, reason: 'invalidUrl' } }
   if (!/^https?:$/.test(parsed.protocol) || !parsed.hostname.includes('.')) return { ok: false, reason: 'invalidUrl' }
+
+  // Reject URLs with userinfo (username or password)
+  if (parsed.username !== '' || parsed.password !== '') return { ok: false, reason: 'invalidUrl' }
+
   if (withScheme.length > LINK_URL_MAX) return { ok: false, reason: 'tooLong' }
   return { ok: true, value: withScheme }
 }
