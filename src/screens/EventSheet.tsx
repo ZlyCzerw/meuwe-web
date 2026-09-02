@@ -414,9 +414,6 @@ function EventSheet({
     // W trybie full lista przewija się natywnie i pionowy gest do niej należy —
     // dokładnie jak przed sznurkiem.
     onCommitY: dy => { if (!isFull) onVertical(dy) },
-    // Nowe wydarzenie ma własne zdjęcia: odbicie na końcu poprzednich nie ma
-    // prawa uzbroić swipe'u na nich.
-    resetKey: event?.id ?? null,
   })
 
   if (!event) return null

@@ -39,24 +39,14 @@ export function dirOf(dx: number): Dir {
  * w poziomie (kadr zdjęć, pasek tagów).
  *
  *  scroll  scroller ma jeszcze dokąd jechać — karta milczy, przewija natywnie.
- *  bounce  scroller stoi na krawędzi w tę stronę — karta jedzie za palcem, ale
- *          po puszczeniu wraca. Palec czuje koniec zdjęć, nic się nie zmienia.
- *  swipe   ta sama krawędź już raz odbiła — teraz to zwykły gest karty.
+ *  swipe   scroller stoi na krawędzi w tę stronę — gest należy do karty.
  *
- * Kolejność ma znaczenie: `scroll` wygrywa nawet z uzbrojeniem, bo kto cofnął
- * zdjęcia, ten znów chce je przewijać, a nie zmieniać wydarzenie.
+ * Jedno zdjęcie stoi na obu krawędziach naraz, więc każdy ruch w bok jest
+ * swipe'em karty.
  */
-export type HMode = 'scroll' | 'bounce' | 'swipe'
+export type HMode = 'scroll' | 'swipe'
 
-export function resolveHMode(ctx: { dir: Dir; atStart: boolean; atEnd: boolean; primed: Dir | null }): HMode {
+export function resolveHMode(ctx: { dir: Dir; atStart: boolean; atEnd: boolean }): HMode {
   const atEdge = ctx.dir === 'east' ? ctx.atEnd : ctx.atStart
-  if (!atEdge) return 'scroll'
-  return ctx.primed === ctx.dir ? 'swipe' : 'bounce'
-}
-
-/** Stan uzbrojenia po geście: odbicie uzbraja, swipe utrzymuje, przewinięcie rozbraja. */
-export function nextPrimed(mode: HMode, dir: Dir, primed: Dir | null): Dir | null {
-  if (mode === 'scroll') return null
-  if (mode === 'bounce') return dir
-  return primed
+  return atEdge ? 'swipe' : 'scroll'
 }

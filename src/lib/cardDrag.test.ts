@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveAxis, commitDir, dirOf, resolveHMode, nextPrimed, AXIS_LOCK_PX, COMMIT_MIN_PX } from './cardDrag'
+import { resolveAxis, commitDir, dirOf, resolveHMode, AXIS_LOCK_PX, COMMIT_MIN_PX } from './cardDrag'
 
 describe('resolveAxis', () => {
   it('holds off until the finger has actually travelled', () => {
@@ -50,47 +50,21 @@ describe('dirOf', () => {
 })
 
 // Gest poziomy nad czymś, co samo przewija się w poziomie (kadr zdjęć, pasek
-// tagów). Trzy odpowiedzi: scroller jeszcze jedzie → karta milczy; scroller na
-// krawędzi → karta jedzie za palcem, ale wraca (odbicie, żeby palec poczuł
-// koniec); drugie odbicie w tę samą stronę → prawdziwy swipe karty.
+// tagów): póki scroller ma dokąd jechać, karta milczy; na krawędzi gest jest jej.
 describe('resolveHMode', () => {
   it('lets the scroller move while it still has somewhere to go', () => {
-    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: false, primed: null })).toBe('scroll')
-    expect(resolveHMode({ dir: 'west', atStart: false, atEnd: true, primed: null })).toBe('scroll')
+    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: false })).toBe('scroll')
+    expect(resolveHMode({ dir: 'west', atStart: false, atEnd: true })).toBe('scroll')
   })
 
-  it('bounces the card the first time the finger pushes past the edge', () => {
-    expect(resolveHMode({ dir: 'east', atStart: false, atEnd: true, primed: null })).toBe('bounce')
-    expect(resolveHMode({ dir: 'west', atStart: true, atEnd: false, primed: null })).toBe('bounce')
+  it('hands the gesture to the card once the finger pushes past the edge', () => {
+    expect(resolveHMode({ dir: 'east', atStart: false, atEnd: true })).toBe('swipe')
+    expect(resolveHMode({ dir: 'west', atStart: true, atEnd: false })).toBe('swipe')
   })
 
-  it('swipes the card once that same edge has already bounced', () => {
-    expect(resolveHMode({ dir: 'east', atStart: false, atEnd: true, primed: 'east' })).toBe('swipe')
-    expect(resolveHMode({ dir: 'west', atStart: true, atEnd: false, primed: 'west' })).toBe('swipe')
-  })
-
-  // Uzbrojenie w jedną stronę nic nie mówi o drugiej.
-  it('does not let a bounce on one edge arm the other', () => {
-    expect(resolveHMode({ dir: 'west', atStart: true, atEnd: true, primed: 'east' })).toBe('bounce')
-  })
-
-  // Jedno zdjęcie: obie krawędzie naraz, więc pierwszy ruch odbija, drugi przesuwa.
+  // Jedno zdjęcie: obie krawędzie naraz, więc każdy ruch w bok to swipe karty.
   it('treats a single photo as both edges', () => {
-    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: true, primed: null })).toBe('bounce')
-    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: true, primed: 'east' })).toBe('swipe')
-  })
-
-  // Scroller nie na krawędzi ma pierwszeństwo nawet po uzbrojeniu: kto cofnął
-  // zdjęcia, ten znów je przewija.
-  it('scrolls even when armed if the scroller can still move that way', () => {
-    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: false, primed: 'east' })).toBe('scroll')
-  })
-})
-
-describe('nextPrimed', () => {
-  it('arms on a bounce, keeps on a swipe, disarms on a scroll', () => {
-    expect(nextPrimed('bounce', 'east', null)).toBe('east')
-    expect(nextPrimed('swipe', 'east', 'east')).toBe('east')
-    expect(nextPrimed('scroll', 'west', 'east')).toBeNull()
+    expect(resolveHMode({ dir: 'east', atStart: true, atEnd: true })).toBe('swipe')
+    expect(resolveHMode({ dir: 'west', atStart: true, atEnd: true })).toBe('swipe')
   })
 })

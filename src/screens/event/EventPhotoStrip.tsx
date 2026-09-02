@@ -81,9 +81,9 @@ export default function EventPhotoStrip({
           onScroll={onScroll}
           // Zdjęcia przewijają się same, a sznurek wydarzeń pyta ten element,
           // czy stoi na krawędzi (useCardDrag): póki jest dokąd jechać, gest
-          // należy do zdjęć; na ostatnim zdjęciu pierwszy ruch dalej odbija
-          // kartą, drugi zmienia wydarzenie. overscroll none, żeby iOS nie
-          // dokładał własnego gumowego odbicia scrollera pod odbiciem karty.
+          // należy do zdjęć; na ostatnim zdjęciu ruch dalej przesuwa już całą
+          // kartę. overscroll none, żeby iOS nie dokładał gumowego odbicia
+          // scrollera pod jadącą kartą.
           data-hscroll
           style={{
             display: 'flex', height: '100%', overflowX: 'auto', overflowY: 'hidden',
@@ -180,7 +180,7 @@ export default function EventPhotoStrip({
         <div
           data-testid="tag-bar"
           // Ta sama umowa ze sznurkiem co przy zdjęciach: tagi jadą do końca,
-          // potem karta odbija, potem zmienia wydarzenie.
+          // potem gest przesuwa kartę.
           data-hscroll
           style={{
             position: 'absolute', bottom: 8, left: 0, right: 0, zIndex: 3,
