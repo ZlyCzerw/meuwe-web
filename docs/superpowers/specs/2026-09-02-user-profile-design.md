@@ -35,6 +35,7 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 | Lista pól | Grupy A/B/C poniżej. Odrzucone: ikona zamiast litery, linki społecznościowe ×3, „moje miejsce”, języki wydarzeń, weryfikacja, handle - do rozważenia osobno. |
 | Wejście do edycji | Dwa: `AccountPanel` → „Moje dane” (zastępuje „Nazwa użytkownika”) oraz tap na avatar w menu. Oba prowadzą w to samo miejsce. Edycja nazwy mieszka w „Moich danych”. |
 | Kolor avatara | Paleta 8 kolorów z tokenów aplikacji, nie dowolny picker. |
+| Miejscowość | Wybierana z listy jak w wyszukiwaniu na mapie (Photon), ograniczona do miejscowości. Zastępuje wolnotekstowe „gdzie działam”. Nazwa publiczna, współrzędne prywatne. |
 
 ## Pola
 
@@ -44,7 +45,7 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 |---|---|---|
 | `nickname`, `avatar_color` | istnieją | avatar_color dostaje UI |
 | `bio` | text, ≤ 160 znaków | jedno zdanie na karcie twórcy |
-| `home_label` | text, ≤ 60 | „Puerto de la Cruz” - gdzie działam; wolny tekst, bez geokodowania |
+| `home_name` | text, ≤ 80 | „Puerto de la Cruz, Santa Cruz de Tenerife” - miejscowość wybrana z listy Photon (tylko `place:city/town/village`), nigdy ulica ani adres |
 | `creator_kind` | `person` / `organizer` / `venue` / `community` | osoba prywatna vs lokal vs stowarzyszenie - dla rankingu (nie mieszać knajpy z sąsiadem) i dla badań |
 | `link_url` | text, ≤ 200 | jedna strona / Instagram |
 
@@ -59,6 +60,7 @@ Wszystkie nowe pola są **nieobowiązkowe**. Null znaczy „nie podano” i nigd
 | `university` | text, ≤ 80 | tylko przy `student`; UI pokazuje warunkowo |
 | `field_of_study` | text, ≤ 80 | jw. |
 | `found_via` | `friend` / `poster` / `social` / `store` / `university` / `other` | kanał pozyskania - marketing i badania |
+| `home_lat`, `home_lng` | float8 | współrzędne wybranej miejscowości (centroid z Photon). Prywatne, jak każda lokalizacja w tym projekcie; ranking i analiza czytają je przez `service_role`. Zapisywane i czyszczone razem z `home_name` - nigdy jedno bez drugiego |
 
 ### C. Automatyczne - `profiles_private`, zapisuje aplikacja, nieedytowalne
 
@@ -90,18 +92,18 @@ Uruchamiana ręcznie w Supabase Dashboard → SQL Editor, **najpierw staging**. 
 -- profiles: kolumny publiczne
 alter table public.profiles
   add column if not exists bio          text,
-  add column if not exists home_label   text,
+  add column if not exists home_name    text,
   add column if not exists creator_kind text,
   add column if not exists link_url     text;
 
 -- constrainty (każdy w bloku do $$ if not exists … $$):
 --   profiles_bio_len          check (bio is null or char_length(bio) <= 160)
---   profiles_home_label_len   check (home_label is null or char_length(home_label) <= 60)
+--   profiles_home_name_len    check (home_name is null or char_length(home_name) <= 80)
 --   profiles_creator_kind     check (creator_kind is null or creator_kind in ('person','organizer','venue','community'))
 --   profiles_link_url_len     check (link_url is null or char_length(link_url) <= 200)
 
 -- bez tego nowe kolumny są niewidoczne (reguła z 20260702_profiles_hide_location)
-grant select (bio, home_label, creator_kind, link_url) on public.profiles to anon, authenticated;
+grant select (bio, home_name, creator_kind, link_url) on public.profiles to anon, authenticated;
 
 -- profiles_private
 create table if not exists public.profiles_private (
@@ -113,6 +115,10 @@ create table if not exists public.profiles_private (
   university         text check (university is null or char_length(university) <= 80),
   field_of_study     text check (field_of_study is null or char_length(field_of_study) <= 80),
   found_via          text check (found_via is null or found_via in ('friend','poster','social','store','university','other')),
+  home_lat           float8,
+  home_lng           float8,
+  -- oba albo żadne
+  constraint profiles_private_home_pair check ((home_lat is null) = (home_lng is null)),
   signup_ip_lat      float8,
   signup_ip_lng      float8,
   signup_country     text,
@@ -223,7 +229,7 @@ Pięć istniejących kopii (`MapScreen:600`, `ProfilePanel:138-147`, `App.tsx:12
 ```ts
 export const AVATAR_COLORS = [C.primary, C.sky, C.grass, C.sunshine, C.berry, TAG_META.music.color, TAG_META.festival.color, TAG_META.art.color] as const
 export const DEFAULT_AVATAR_COLOR = '#FF7A45'   // to, co wpisuje handle_new_user
-export const BIO_MAX = 160, HOME_LABEL_MAX = 60, LINK_URL_MAX = 200, UNIVERSITY_MAX = 80, FIELD_MAX = 80
+export const BIO_MAX = 160, HOME_NAME_MAX = 80, LINK_URL_MAX = 200, UNIVERSITY_MAX = 80, FIELD_MAX = 80
 export const CREATOR_KINDS = ['person','organizer','venue','community'] as const
 export const GENDERS = ['female','male','other'] as const
 export const RESIDENCE_STATUSES = ['local','newcomer','visitor'] as const
@@ -240,7 +246,9 @@ export function validateProfileForm(form: ProfileForm, now: Date): { ok: true; v
 
 Granice muszą się zgadzać z constraintami w migracji; baza zostaje ostatnią linią obrony.
 
-**`types.ts`**: `Profile` dostaje `bio`, `home_label`, `creator_kind`, `link_url`. Nowy `ProfilePrivate` z polami B i C.
+**`types.ts`**: `Profile` dostaje `bio`, `home_name`, `creator_kind`, `link_url`. Nowy `ProfilePrivate` z polami B i C (w tym `home_lat/lng`).
+
+**`src/lib/placeSearch.ts`** (nowy, wyjęty z `SearchBar.tsx`): `searchPlaces(query, { lang, near, settlementsOnly, signal })` - zapytanie do Photon i dzisiejsze `parsePhoton` (dedup po nazwie, sortowanie po odległości, 5 wyników) jako czyste, testowalne funkcje. `settlementsOnly` dokłada `osm_tag=place:city&osm_tag=place:town&osm_tag=place:village`, więc lista nie zawiera ulic, lokali ani adresów. `SearchBar` zaczyna z tego korzystać - zachowanie na mapie bez zmian, to tylko przeniesienie kodu. Wynik (`PlaceResult`) niesie `primary`, `secondary`, `lat`, `lng`; etykieta do zapisu to `primary + ', ' + secondary` przycięte do `HOME_NAME_MAX`.
 
 **`supabase.ts`**:
 - `getProfile` - jawna lista kolumn rozszerzona o cztery nowe (nie `*`, jak dziś).
@@ -261,11 +269,11 @@ Granice muszą się zgadzać z constraintami w migracji; baza zostaje ostatnią 
 1. Przycisk „‹ Profil” jak w `AccountPanel`, tytuł „Moje dane” (`F.display`, 26, 900).
 2. **Avatar 96 px** z inicjałem (ten sam styl co w `ProfilePanel`: obrys `3px INK`, cień `0 4px 0 INK33`, `breathe-sm`), pod nim rząd **8 kółek koloru** (36 px, obrys `2.5px INK`; wybrane ma grubszy obrys i cień jak avatar). Tap = natychmiastowy podgląd na avatarze; zapis dopiero przy „Zapisz”.
 3. **Nazwa** - pole w stylu z `NicknameModal` (pigułka, obrys `2.5px INK`, czerwony `C.primaryPress` przy błędzie), podpis „Od 2 do 30 znaków”, ta sama walidacja `validateNickname`.
-4. **Sekcja „O mnie”** z podpisem *„Inni to widzą”*: bio (textarea 3 linie, licznik `n/160` w `C.inkSoft`), „Gdzie działam”, „Kim jestem” jako 4 chipy w stylu przełącznika języka z `ProfilePanel` (pigułka, obrys `2px INK`, wybrany `C.primary` z białym tekstem), „Link”.
+4. **Sekcja „O mnie”** z podpisem *„Inni to widzą”*: bio (textarea 3 linie, licznik `n/160` w `C.inkSoft`), **„Miejscowość”** - wyszukiwarka w stylu `SearchBar` (pigułka z lupą, rozwijana lista pod spodem): wpisujesz kilka liter, wybierasz z listy; wybrana miejscowość pokazuje się w polu, `×` czyści. Nie da się wpisać dowolnego tekstu - wartość istnieje tylko po wyborze z listy (albo jest pusta). Komponent `PlaceSearchInput` powstaje z `SearchBar` przez wyciągnięcie części wspólnej: `SearchBar` na mapie i pole w „Moich danych” renderują ten sam wygląd, różnią się placeholderem, filtrem miejscowości i tym, co robią z wynikiem. „Kim jestem” jako 4 chipy w stylu przełącznika języka z `ProfilePanel` (pigułka, obrys `2px INK`, wybrany `C.primary` z białym tekstem), „Link”.
 5. **Sekcja „O Tobie”** z podpisem *„Widzisz tylko Ty”* (ikona kłódki nie jest potrzebna - wystarczy tekst w `C.inkSoft`): rok urodzenia (input numeryczny, `inputMode="numeric"`), płeć (chipy), „Mieszkam tu” (chipy: od lat / od niedawna / przejazdem), zajęcie (chipy) - przy „student” rozwijają się pod spodem „Uczelnia” i „Kierunek” (animacja `fadeIn`), „Skąd wiesz o meuwe” (chipy).
 6. **Sticky dół**: „Zapisz” (pełna szerokość, `C.primary`, obrys `2.5px INK`, cień `0 6px 16px rgba(232,90,42,0.28)` - identyczny z przyciskiem w `NicknameModal`) i pod nim tekstowy „Anuluj”. Pasek ma tło `C.cream` i `padding-bottom: env(safe-area-inset-bottom)`.
 
-**Zapis:** jeden handler. Walidacja `validateNickname` + `validateProfileForm`; błędy pod polami. Następnie dwa żądania: `updateProfile` (nickname, avatar_color, bio, home_label, creator_kind, link_url) i `upsertProfilePrivate` (pola B). Zapis `profiles_private` idzie tylko wtedy, gdy któreś pole B ma wartość albo wiersz już istnieje - kto nic z „O Tobie” nie wypełnił, nie dostaje pustego wiersza. Błąd = komunikat pod przyciskiem, panel zostaje otwarty (zasada z `NicknameModal`: nie udawać sukcesu). Sukces = `db.trackClick('profile_save')`, toast „Zapisano” (klucz `account.profileSaved`), `reloadProfile`, `history.back()`.
+**Zapis:** jeden handler. Walidacja `validateNickname` + `validateProfileForm`; błędy pod polami. Następnie dwa żądania: `updateProfile` (nickname, avatar_color, bio, home_name, creator_kind, link_url) i `upsertProfilePrivate` (pola B + `home_lat/lng`). Miejscowość zapisuje się w obu tabelach naraz: nazwa do `profiles`, współrzędne do `profiles_private`; wyczyszczenie pola zeruje wszystkie trzy. Zapis `profiles_private` idzie tylko wtedy, gdy któreś pole B (lub współrzędne miejscowości) ma wartość albo wiersz już istnieje - kto nic z „O Tobie” nie wypełnił, nie dostaje pustego wiersza. Błąd = komunikat pod przyciskiem, panel zostaje otwarty (zasada z `NicknameModal`: nie udawać sukcesu). Sukces = `db.trackClick('profile_save')`, toast „Zapisano” (klucz `account.profileSaved`), `reloadProfile`, `history.back()`.
 
 **Zasady UX:**
 - Żadne pole nie ma gwiazdki ani słowa „wymagane”. Puste pole = placeholder, nie ostrzeżenie. Panel ma czytać się jak wizytówka do uzupełnienia, nie formularz do wypełnienia.
@@ -280,7 +288,7 @@ Granice muszą się zgadzać z constraintami w migracji; baza zostaje ostatnią 
 
 - i18n: wszystkie napisy w **pl/en/es/de/sl** (test `locales/parity.test.ts` to wymusza), włącznie z etykietami enumów (`myData.creatorKind_person` itd.) i komunikatami błędów (`myData.error_tooLong`, `myData.error_invalidUrl`, `myData.error_outOfRange`).
 - `account.nickname` → `account.myData` = „Moje dane”. `account.body` rozszerzone o „…oraz dane, które dobrowolnie podasz w Moich danych”.
-- `docs/legal/privacy-policy.md` (PL/EN/DE/ES): nowe wiersze w tabeli danych - „Opcjonalne pola profilu (bio, miejsce, rodzaj konta, link)” cel: wyświetlanie w aplikacji; „Opcjonalne dane o Tobie (rok urodzenia, płeć, status zamieszkania, zajęcie, uczelnia, kierunek, źródło)” cel: personalizacja i analiza korzystania z aplikacji, widoczne tylko dla Ciebie; „Kontekst rejestracji (przybliżona lokalizacja z IP, pozycja GPS jeśli wyrażono zgodę, platforma, wersja, dostawca logowania, źródło wejścia)” cel: analiza korzystania. Kolor avatara przestaje być „generowany losowo” - „wybierany przez użytkownika”.
+- `docs/legal/privacy-policy.md` (PL/EN/DE/ES): nowe wiersze w tabeli danych - „Opcjonalne pola profilu (bio, miejscowość, rodzaj konta, link)” cel: wyświetlanie w aplikacji; „Opcjonalne dane o Tobie (rok urodzenia, płeć, status zamieszkania, zajęcie, uczelnia, kierunek, źródło, współrzędne wybranej miejscowości)” cel: personalizacja i analiza korzystania z aplikacji, widoczne tylko dla Ciebie; „Kontekst rejestracji (przybliżona lokalizacja z IP, pozycja GPS jeśli wyrażono zgodę, platforma, wersja, dostawca logowania, źródło wejścia)” cel: analiza korzystania. Kolor avatara przestaje być „generowany losowo” - „wybierany przez użytkownika”.
 - `docs/legal/compliance-requirements.md`: te same wiersze w tabeli sekcji 1, plus notatka: dane grupy B mogą posłużyć badaniom naukowym **dopiero po** dodaniu osobnej zgody (`research_consent_at`) - art. 6 ust. 1 lit. a z art. 89 RODO.
 
 ### 8. Kolejność wdrożenia
@@ -297,8 +305,9 @@ Vitest, wzorem istniejących testów obok modułów:
 
 - `profileDisplay.test.ts`: kolejność name_shown → display_name → e-mail → `?`; inicjał wielką literą; kolor domyślny.
 - `profileFields.test.ts`: każda granica długości, `maxBirthYear`, normalizacja (trim, spacje, pusty → null, link bez schematu), niepoprawny URL, wartości spoza enumów odrzucone.
+- `placeSearch.test.ts`: `parsePhoton` (dedup, sortowanie po odległości, limit 5) przeniesiony jako test istniejącego zachowania; `searchPlaces` z `settlementsOnly` dokłada trzy parametry `osm_tag` do adresu.
 - `signupContext.test.ts`: `shouldRecordSignup` (2 h → true, 3 dni → false, już zapisane → false), `signupSourceFromUrl` dla czterech źródeł i dla adresu bez parametrów.
-- `MyDataPanel.test.tsx` (testing-library, jak `ProfilePanel.push.test.tsx`): pola studenta pojawiają się tylko przy `student`; tap na kolor zmienia avatar przed zapisem; zapis woła `updateProfile` i `upsertProfilePrivate` z znormalizowanymi wartościami; błąd zapisu zostawia panel otwarty z komunikatem; pusta sekcja „O Tobie” nie tworzy wiersza.
+- `MyDataPanel.test.tsx` (testing-library, jak `ProfilePanel.push.test.tsx`): pola studenta pojawiają się tylko przy `student`; tap na kolor zmienia avatar przed zapisem; wybór miejscowości z listy zapisuje `home_name` w `profiles` i `home_lat/lng` w `profiles_private`, a `×` zeruje wszystkie trzy; zapis woła `updateProfile` i `upsertProfilePrivate` z znormalizowanymi wartościami; błąd zapisu zostawia panel otwarty z komunikatem; pusta sekcja „O Tobie” nie tworzy wiersza.
 - Test regresji buga #7: `MapScreen` z profilem `{ display_name: 'Kasia', name_shown: 'Ala' }` renderuje avatar z „A”.
 
 Na koniec `npx tsc -b`, `npm test`, `npm run lint`.
