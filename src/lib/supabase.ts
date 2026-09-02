@@ -159,7 +159,7 @@ export const db = {
   // Jedyna tabela profilu, w której upsert jest właściwy: nie ma triggera, który
   // zakładałby wiersz przy rejestracji, więc pierwszy zapis musi go stworzyć.
   async upsertProfilePrivate(p: Partial<ProfilePrivate> & { id: string }) {
-    return supabase.from('profiles_private').upsert(p, { onConflict: 'id' }).select('id')
+    return supabase.from('profiles_private').upsert({ ...p, updated_at: new Date().toISOString() }, { onConflict: 'id' }).select('id')
   },
   // RPC „wypełnij tylko puste” - patrz migracja 20260902_profile_fields.
   async recordSignupContext(ctx: SignupContext) {
