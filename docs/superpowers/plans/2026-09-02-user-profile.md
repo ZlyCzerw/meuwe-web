@@ -2956,3 +2956,8 @@ Kolejność: PR `user_profile` → `staging` (Cloudflare buduje staging) → tes
 - Task 9 musiał też poprawić `src/dev/pushPreview.tsx` (importował usunięty `NicknameModal`) i trzeci render `ProfilePanel` w teście.
 - Fallback koloru avatara gościa zmienił się z `C.berry` na `DEFAULT_AVATAR_COLOR` (`C.primary`) — jeden domyślny kolor zamiast dwóch; dotyczy tylko avatara „?” bez sesji.
 - Kroki wymagające Supabase Dashboard i przeglądarki (migracja na staging, przejście ręczne, sprawdzenie `profiles_private` po rejestracji) NIE zostały wykonane w tej sesji — zostają dla właściciela przed merge.
+- Źródło wejścia jest zapamiętywane w `sessionStorage` (`meuwe_entry_src`) przy pierwszym renderze i przy `appUrlOpen`, bo przekierowanie OAuth wraca gołym adresem i wersja z planu zapisywałaby `direct` każdemu.
+- `MyDataPanel`: efekt resetu zależy od `[open, uid]`, nie od obiektu `session` (odświeżenie tokena tworzy nowy obiekt); `PlaceSearchInput` dostaje `key` zmieniany przy każdym otwarciu, żeby porzucony tekst nie wracał.
+- Miejscowość zapisana przed istnieniem wiersza `profiles_private` może mieć nazwę bez współrzędnych — spec mówił „nigdy jedno bez drugiego”; nazwę zostawiamy, punktu nie wymyślamy.
+- Toast po zapisie używa `myData.saved`, nie `account.profileSaved` z specu.
+- `upsertProfilePrivate` ustawia `updated_at` przy każdym zapisie.
