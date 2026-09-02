@@ -21,6 +21,7 @@ const en: Resources = {
   },
   map: {
     search: 'Search a place…',
+    searchAll: 'Search a place or event…',
     empty: 'All quiet here…',
     emptyCta: 'be the first!',
     emptyToday: 'Nothing within {{km}} km today',

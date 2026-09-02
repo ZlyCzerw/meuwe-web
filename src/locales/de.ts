@@ -21,6 +21,7 @@ const de: Resources = {
   },
   map: {
     search: 'Ort suchen…',
+    searchAll: 'Ort oder Event suchen…',
     empty: 'Hier ist es noch ruhig…',
     emptyCta: 'sei der Erste!',
     emptyToday: 'Heute nichts im Umkreis von {{km}} km',

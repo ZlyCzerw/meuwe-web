@@ -3,11 +3,18 @@
 // Pole „wpisz kilka liter, wybierz z listy”. Jedno dla mapy (SearchBar) i dla
 // miejscowości w Moich danych, żeby oba wyglądały identycznie. Wartość istnieje
 // tylko po wyborze z listy: samo wpisanie tekstu niczego nie wybiera.
+//
+// Mapa dokłada do listy wydarzenia (searchEvents + onSelectEvent): wtedy oba
+// pytania biegną równolegle, a lista pokazuje najpierw miejsca, potem
+// wydarzenia - podział miejsc na liście liczy lib/searchResults.
 
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { searchPlaces, photonLang, type PlaceResult } from '../lib/placeSearch'
-import { C, INK } from '../lib/tokens'
+import { mergeSearchResults, type EventHit, type SearchResult } from '../lib/searchResults'
+import { C, INK, TAG_META } from '../lib/tokens'
+
+const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 interface Props {
   placeholder: string
@@ -23,18 +30,25 @@ interface Props {
   dropdownZIndex?: number
   /** Id na samym `<input>` - żeby `<label htmlFor>` z zewnątrz miało cel. */
   id?: string
+  /** Gdy podane, lista zawiera też wydarzenia z tytułem pasującym do frazy. */
+  searchEvents?: (q: string) => Promise<EventHit[]>
+  onSelectEvent?: (e: EventHit) => void
 }
 
 export default function PlaceSearchInput({
   placeholder, near, onSelect, settlementsOnly = false, initialQuery = '',
   labelFor = r => r.primary, onQueryChange, dropdownZIndex = 20, id,
+  searchEvents, onSelectEvent,
 }: Props) {
   const { t, i18n } = useTranslation()
   const [query, setQuery] = useState(initialQuery)
-  const [results, setResults] = useState<PlaceResult[]>([])
+  const [results, setResults] = useState<SearchResult[]>([])
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  // Zapytanie o wydarzenia nie ma sygnału przerwania, więc spóźniona odpowiedź
+  // na starszą frazę poznaje się po numerze i ląduje w koszu.
+  const seqRef = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // stan pochodny z propsa liczony w renderze, nie w efekcie - patrz lint set-state-in-effect
@@ -48,14 +62,20 @@ export default function PlaceSearchInput({
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
+    const seq = ++seqRef.current
     setLoading(true)
-    try {
-      setResults(await searchPlaces(val, { lang: photonLang(i18n.language), near, settlementsOnly, signal: controller.signal }))
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') setResults([])
-    } finally {
-      setLoading(false)
-    }
+    const [places, events] = await Promise.allSettled([
+      searchPlaces(val, { lang: photonLang(i18n.language), near, settlementsOnly, signal: controller.signal }),
+      searchEvents ? searchEvents(val) : Promise.resolve([] as EventHit[]),
+    ])
+    if (seq !== seqRef.current) return
+    // Photon padł albo przerwany: lista miejsc pusta, wydarzenia i tak mogą być.
+    // Przerwanie zawsze oznacza nowszą frazę, którą łapie już seq wyżej.
+    setResults(mergeSearchResults(
+      places.status === 'fulfilled' ? places.value : [],
+      events.status === 'fulfilled' ? events.value : [],
+    ))
+    setLoading(false)
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -71,11 +91,21 @@ export default function PlaceSearchInput({
     search(val.trim())
   }
 
-  function handleSelect(item: PlaceResult) {
-    onSelect(item)
-    setQuery(labelFor(item))
+  function handleSelect(item: SearchResult) {
+    if (item.kind === 'place') {
+      onSelect(item.place)
+      setQuery(labelFor(item.place))
+    } else {
+      onSelectEvent?.(item.event)
+      setQuery(item.event.title)
+    }
     setResults([])
     inputRef.current?.blur()
+  }
+
+  function eventSecondary(e: EventHit): string {
+    const day = new Date(e.start_time).toLocaleDateString(LOC_MAP[i18n.language] || 'en-US', { day: 'numeric', month: 'short' })
+    return e.place_name ? `${day} · ${e.place_name}` : day
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -156,22 +186,42 @@ export default function PlaceSearchInput({
         }}>
           {results.map((item, idx) => {
             const isLast = idx === results.length - 1
+            const key = item.kind === 'place' ? item.place.id : `ev-${item.event.id}`
+            const primary = item.kind === 'place' ? item.place.primary : item.event.title
+            const secondary = item.kind === 'place' ? item.place.secondary : eventSecondary(item.event)
             return (
               <div
-                key={item.id}
+                key={key}
                 onMouseDown={() => handleSelect(item)}
-                style={{ padding: '10px 14px', borderBottom: isLast ? 'none' : `1px solid ${C.cream}`, cursor: 'pointer' }}
+                style={{
+                  padding: '10px 14px', borderBottom: isLast ? 'none' : `1px solid ${C.cream}`, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
                 onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = C.cream }}
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
               >
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.primary}
-                </div>
-                {item.secondary && (
-                  <div style={{ fontSize: 12, color: C.inkSoft, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
-                    {item.secondary}
-                  </div>
+                {item.kind === 'event' && (
+                  <span
+                    aria-hidden
+                    style={{
+                      flexShrink: 0, width: 28, height: 28, borderRadius: '50%',
+                      background: TAG_META[item.event.category]?.color ?? C.cream,
+                      border: `2px solid ${INK}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 14,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: TAG_META[item.event.category]?.glyph ?? '' }}
+                  />
                 )}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {primary}
+                  </div>
+                  {secondary && (
+                    <div style={{ fontSize: 12, color: C.inkSoft, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
+                      {secondary}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}

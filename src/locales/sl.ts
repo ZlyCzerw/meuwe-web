@@ -21,6 +21,7 @@ const sl: Resources = {
   },
   map: {
     search: 'Poišči kraj…',
+    searchAll: 'Poišči kraj ali dogodek…',
     empty: 'Tukaj je vse mirno…',
     emptyCta: 'bodi prvi!',
     emptyToday: 'Danes ni ničesar v {{km}} km',

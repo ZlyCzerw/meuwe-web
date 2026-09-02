@@ -19,6 +19,7 @@ import { initial, avatarColor } from '../lib/profileDisplay'
 import Avatar from '../components/Avatar'
 import AddButton from '../components/AddButton'
 import SearchBar from './SearchBar'
+import type { EventHit } from '../lib/searchResults'
 import TagPickerModal from '../components/TagPickerModal'
 import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 import EventPickerModal from '../components/EventPickerModal'
@@ -195,6 +196,32 @@ function MapScreen({
     adoptView(map, lat, lng, zoom)
     map.flyTo([lat, lng], zoom, { duration })
   }
+  // Przelot do wydarzenia, nad którym zaraz otworzy się karta: środek zjeżdża
+  // w dół, żeby pinezka wylądowała w widocznej górnej połowie ekranu
+  // (karta zasłania ~50% wysokości, przesunięcie o 25% centruje ją nad kartą).
+  function flyToEvent(map: L.Map, lat: number, lng: number) {
+    const zoom = 16
+    const offsetPx = window.innerHeight * 0.25
+    const target = map.project([lat, lng], zoom)
+    const shifted = map.unproject(target.add([0, offsetPx]), zoom)
+    flyAdopting(map, shifted.lat, shifted.lng, zoom, 0.7)
+  }
+  // Wydarzenie ma konkretny dzień, więc mapa go pokazuje - zakres z
+  // poprzedniego oglądania tylko by go rozmył.
+  function showDay(d: Date) {
+    const idx = dateToIdx(d)
+    setTimelineMode('day')
+    setRange({ startIdx: idx, endIdx: idx })
+  }
+  // Wynik z wyszukiwarki to lekki wiersz; karta chce pełnego wydarzenia
+  // (tagi, autor), więc dociąga je tą samą drogą co deep-link.
+  async function openSearchedEvent(hit: EventHit) {
+    const ev = await db.getEventById(hit.id)
+    if (!ev) return
+    showDay(new Date(ev.start_time))
+    if (leafRef.current) flyToEvent(leafRef.current, ev.lat, ev.lng)
+    onOpenEvent(ev)
+  }
 
   /** Pulls the view back far enough to take in something `km` away. */
   function widenTo(km: number) {
@@ -244,26 +271,12 @@ function MapScreen({
     // górnym, przyciski recenter w prawym dolnym, ADD na środku dołu.
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map)
     map.on('click', () => onMapClickRef.current?.())
-    onRegisterFlyTo?.((lat, lng) => {
-      // Offset center downward so the pin appears in the visible area above the event sheet.
-      // The sheet covers ~50% of screen height; shift by 25% to center the pin in the upper half.
-      const zoom = 16
-      const offsetPx = window.innerHeight * 0.25
-      const target = map.project([lat, lng], zoom)
-      const shifted = map.unproject(target.add([0, offsetPx]), zoom)
-      flyAdopting(map, shifted.lat, shifted.lng, zoom, 0.7)
-    })
+    onRegisterFlyTo?.((lat, lng) => flyToEvent(map, lat, lng))
     // Smart-link spot: center exactly on the point at the requested zoom, no sheet offset.
     onRegisterFlyToSpot?.((lat, lng, zoom) => {
       flyAdopting(map, lat, lng, Math.min(zoom, 19), 0.7)
     })
-    // Link prowadzi do konkretnego wydarzenia, więc pokazuje jego dzień —
-    // zakres z poprzedniego oglądania mapy tylko by go rozmył.
-    onRegisterShowDay?.(d => {
-      const idx = dateToIdx(d)
-      setTimelineMode('day')
-      setRange({ startIdx: idx, endIdx: idx })
-    })
+    onRegisterShowDay?.(showDay)
     map.on('moveend', () => {
       const up = userPosRef.current
       const center = map.getCenter()
@@ -608,7 +621,11 @@ function MapScreen({
       {/* Search bar */}
       {!pickingLocation && (
         <div style={{ position: 'absolute', top: 16, left: 80, right: 16, zIndex: 20 }}>
-          <SearchBar userPos={userPos} onSelect={p => { if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7) }} />
+          <SearchBar
+            userPos={userPos}
+            onSelect={p => { if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7) }}
+            onSelectEvent={openSearchedEvent}
+          />
         </div>
       )}
 

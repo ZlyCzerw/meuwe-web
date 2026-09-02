@@ -150,3 +150,43 @@ describe('authRedirectTo language prefix', () => {
     spy.mockRestore()
   })
 })
+
+describe('db.searchEvents', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  function chainRecorder(rows: unknown[]) {
+    const calls: [string, unknown[]][] = []
+    const chain: Record<string, (...a: unknown[]) => unknown> = {}
+    for (const m of ['select', 'ilike', 'eq', 'in', 'gte', 'order', 'limit']) {
+      chain[m] = (...a: unknown[]) => { calls.push([m, a]); return chain }
+    }
+    chain.then = (res) => (res as (v: unknown) => void)({ data: rows, error: null })
+    return { chain, calls }
+  }
+
+  it('asks for public, still-running events whose title contains the query', async () => {
+    const { chain, calls } = chainRecorder([{ id: 'e1', title: 'Festiwal' }])
+    const from = vi.spyOn(supabase, 'from').mockReturnValue(chain as never)
+
+    const out = await db.searchEvents('fest')
+
+    expect(from).toHaveBeenCalledWith('events')
+    expect(calls).toContainEqual(['ilike', ['title', '%fest%']])
+    expect(calls).toContainEqual(['eq', ['is_private', false]])
+    expect(calls).toContainEqual(['in', ['status', ['live', 'upcoming', 'extended']]])
+    const gte = calls.find(([m, a]) => m === 'gte' && a[0] === 'end_time')
+    expect(gte).toBeDefined()
+    expect(calls.some(([m]) => m === 'limit')).toBe(true)
+    expect(out).toEqual([{ id: 'e1', title: 'Festiwal' }])
+  })
+
+  it('returns an empty list when the query fails', async () => {
+    const chain: Record<string, (...a: unknown[]) => unknown> = {}
+    for (const m of ['select', 'ilike', 'eq', 'in', 'gte', 'order', 'limit']) chain[m] = () => chain
+    chain.then = (res) => (res as (v: unknown) => void)({ data: null, error: { message: 'boom' } })
+    vi.spyOn(supabase, 'from').mockReturnValue(chain as never)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(await db.searchEvents('x')).toEqual([])
+  })
+})

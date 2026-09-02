@@ -19,6 +19,7 @@ const pl = {
   },
   map: {
     search: 'Szukaj miejsca…',
+    searchAll: 'Szukaj miejsca lub wydarzenia…',
     empty: 'Tu jeszcze cisza…',
     emptyCta: 'bądź pierwszy!',
     emptyToday: 'Dziś nic w promieniu {{km}} km',

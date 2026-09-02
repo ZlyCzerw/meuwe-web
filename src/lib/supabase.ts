@@ -10,6 +10,7 @@ import { WEB_ORIGIN } from './appConfig'
 import { langFromPath } from './i18n'
 import { downscaleImage } from './imageResize'
 import { rangeWindow } from './timeline'
+import type { EventHit } from './searchResults'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -54,6 +55,9 @@ const PROFILE_PUBLIC = 'display_name:name_shown,avatar_color'
 
 /** Ceiling on rows one map query may return. See getEvents. */
 const MAP_EVENT_LIMIT = 1500
+/** Ile trafień po tytule pobiera wyszukiwarka - lista pokaże kilka, reszta jest
+ *  zapasem na sortowanie po odległości po stronie klienta. */
+const SEARCH_EVENT_LIMIT = 20
 
 export const db = {
   signInGoogle() {
@@ -374,6 +378,20 @@ export const db = {
       distStr: '',
       msgCount: countMap[e.id] ?? 0,
     })) as EventWithMsgCount[]
+  },
+  /** Wyszukiwarka na mapie: publiczne, trwające lub przyszłe wydarzenia
+   *  z frazą w tytule. Fraza ma być już oczyszczona (patrz sanitizeSearchQuery). */
+  async searchEvents(query: string): Promise<EventHit[]> {
+    const { data, error } = await supabase.from('events')
+      .select('id,title,category,place_name,start_time,lat,lng')
+      .ilike('title', `%${query}%`)
+      .eq('is_private', false)
+      .in('status', ['live', 'upcoming', 'extended'])
+      .gte('end_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(SEARCH_EVENT_LIMIT)
+    if (error) { console.error('[searchEvents]', error); return [] }
+    return (data || []) as EventHit[]
   },
   async getEventById(id: string): Promise<EventWithMeta | null> {
     // Use SECURITY DEFINER RPC to bypass RLS — needed so private events
