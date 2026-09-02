@@ -8,7 +8,9 @@ import { WEB_ORIGIN, ENABLE_CONTACT_PICKER } from './appConfig'
 export type InviteResult = 'shared' | 'copied' | 'dismissed' | 'failed'
 
 export async function shareInvite(text: string): Promise<InviteResult> {
-  const url = WEB_ORIGIN
+  // ?src=invite: dzięki temu konto założone z zaproszenia da się odróżnić od
+  // wejścia bezpośredniego (signupSourceFromUrl w lib/signupContext).
+  const url = `${WEB_ORIGIN}/?src=invite`
 
   if (isNativePlatform()) {
     try {
