@@ -5,19 +5,18 @@ import type { Session } from '@supabase/supabase-js'
 import DragHandle from '../components/DragHandle'
 import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
-import Avatar from '../components/Avatar'
 import StatusPill from '../components/StatusPill'
 import ActionRow, { ActionBtn } from '../components/ActionRow'
 import EventPhotoStrip from './event/EventPhotoStrip'
 import EventChatPanel from './event/EventChatPanel'
 import PhotoLightbox from './event/PhotoLightbox'
+import OrganizerRow from './event/OrganizerRow'
 import { C, INK, F, TAG_META, SHADOW_BUTTON } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
 import { haversineKm } from '../lib/geo'
 import { isNativePlatform } from '../lib/platform'
 import { computeStatus } from '../lib/eventStatus'
-import { authorLabel, authorInitial } from '../lib/authorLabel'
 import { shownName, avatarColor } from '../lib/profileDisplay'
 import { truncateDescription } from '../lib/text'
 import { linkify } from '../lib/linkify'
@@ -131,6 +130,7 @@ function EventSheet({
   onChatOpenChange,
   onChainStep,
   chainCanGo,
+  onOpenUser,
 }: {
   event: EventWithMeta
   onClose: () => void
@@ -150,6 +150,8 @@ function EventSheet({
   /** Zwraca, czy krok się udał; karta rysuje z tego dwie różne animacje. */
   onChainStep?: (dir: Dir) => boolean
   chainCanGo?: (dir: Dir) => boolean
+  /** Tap w organizatora; brak = wiersz zostaje zwykłym tekstem. */
+  onOpenUser?: (userId: string) => void
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -650,18 +652,13 @@ function EventSheet({
                 </div>
               )}
 
-              {/* Creator — compact inline */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Avatar size={28} initials={authorInitial(event.creator_id, event.profiles?.display_name, deletedLabels)} color={event.profiles?.avatar_color || C.sky} />
-                <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500 }}>
-                  {/* A null creator_id means the account was deleted and the
-                      event stayed. A missing name is something else entirely. */}
-                  {t('event.organizer')} <strong style={{ color: C.ink }}>{authorLabel(event.creator_id, event.profiles?.display_name, deletedLabels)}</strong>
-                </span>
-                {session?.user.id === event.creator_id && (
-                  <span style={{ marginLeft: 4, padding: '2px 8px', borderRadius: 999, background: C.primarySoft, color: C.primaryPress, fontSize: 11, fontWeight: 800 }}>{t('event.moderator')}</span>
-                )}
-              </div>
+              <OrganizerRow
+                creatorId={event.creator_id}
+                name={event.profiles?.display_name}
+                color={event.profiles?.avatar_color}
+                isModerator={session?.user.id === event.creator_id}
+                onOpen={id => onOpenUser?.(id)}
+              />
 
               {/* Edit + End (creator only, while not ended) */}
               {session?.user.id === event.creator_id && computedStatus !== 'ended' && (
