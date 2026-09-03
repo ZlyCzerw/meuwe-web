@@ -63,8 +63,8 @@ Aplikacja nie używa plików cookie. Używa localStorage urządzenia wyłącznie
 | Sign-up context: approximate location from IP address, GPS position (if you allowed it), platform, app version, sign-in provider, entry source | Usage analysis | Legitimate interest (Art. 6(1)(f) GDPR) |
 | Last known GPS location | Filtering nearby event notifications | Consent |
 | Push subscription (device endpoint) | Sending push notifications | Consent |
-| Event content and chat messages | Core app functionality | Consent |
 | Followed creators (the accounts you follow) | Automatically following their events and notifying you about them | Consent |
+| Event content and chat messages | Core app functionality | Consent |
 
 Your current GPS position is used locally only (map centring) and is not transmitted to the server during browsing.
 
@@ -107,8 +107,8 @@ The app does not use cookies. It uses device localStorage solely to store your l
 | Registrierungskontext: ungefährer Standort aus der IP-Adresse, GPS-Position (falls erlaubt), Plattform, App-Version, Anmeldeanbieter, Einstiegsquelle | Nutzungsanalyse | Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO) |
 | Letzter bekannter GPS-Standort | Filterung von Benachrichtigungen über nahegelegene Veranstaltungen | Einwilligung |
 | Push-Abonnement (Geräte-Endpoint) | Versand von Push-Benachrichtigungen | Einwilligung |
-| Veranstaltungsinhalte und Chat-Nachrichten | Kernfunktion der App | Einwilligung |
 | Gefolgte Veranstalter (Konten, denen du folgst) | Automatisches Folgen ihrer Veranstaltungen und Benachrichtigungen dazu | Einwilligung |
+| Veranstaltungsinhalte und Chat-Nachrichten | Kernfunktion der App | Einwilligung |
 
 Der aktuelle GPS-Standort wird ausschließlich lokal verwendet (Kartenzentrierung) und beim Surfen nicht an den Server übertragen.
 

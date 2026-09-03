@@ -28,7 +28,7 @@
 | Treść eventów (tytuł, opis, zdjęcia, lokalizacja) | Użytkownik tworzy | `events`, Supabase Storage | Funkcja główna |
 | Wiadomości na czacie eventów | Użytkownik pisze | `event_messages` | Funkcja czatu |
 | Wyciszenia powiadomień | Użytkownik ustawia | `notification_mutes` | Preferencje push |
-| Obserwowani twórcy (`user_follows`) | Użytkownik klika „Obserwuj" | `user_follows` (RLS: tylko własne wiersze) | Auto-obserwowanie wydarzeń twórcy, push o nowych. Kasowane w `archive_and_anonymize_user` |
+| Obserwowani twórcy (`user_follows`) | Użytkownik klika „Obserwuj” | `user_follows` (RLS: tylko własne wiersze) | Auto-obserwowanie wydarzeń twórcy, push o nowych. Kasowane w `archive_and_anonymize_user` |
 
 ---
 
