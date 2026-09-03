@@ -446,7 +446,11 @@ export const db = {
   // (trigger na user_follows), klient nie wie o tej regule.
   async followUser(creatorId: string) {
     const sess = await this.getSession(); if (!sess) return
-    return supabase.from('user_follows').insert({ follower_id: sess.user.id, creator_id: creatorId })
+    // upsert + ignoreDuplicates: drugie urządzenie albo nieaktualny is_following
+    // w karcie nie mają prawa pokazać followFailed przy naruszeniu PK - to
+    // wciąż "obserwuję", nie błąd.
+    return supabase.from('user_follows')
+      .upsert({ follower_id: sess.user.id, creator_id: creatorId }, { onConflict: 'follower_id,creator_id', ignoreDuplicates: true })
   },
   async unfollowUser(creatorId: string) {
     const sess = await this.getSession(); if (!sess) return

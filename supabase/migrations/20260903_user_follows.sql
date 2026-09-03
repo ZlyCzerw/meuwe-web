@@ -27,6 +27,9 @@ create policy "user_follows_own" on public.user_follows
 
 revoke all on public.user_follows from anon;
 grant select, insert, delete on public.user_follows to authenticated;
+-- Bez update: zmiana creator_id w istniejącym wierszu ominęłaby trigger
+-- "nowy obserwujący → bieżące wydarzenia" (odpala się tylko po insert).
+revoke update on public.user_follows from authenticated;
 
 -- ── 2. Nowy obserwujący → bieżące publiczne wydarzenia twórcy ────────────────
 -- security definer: event_follows ma RLS "tylko własne wiersze", a events chowa
@@ -192,3 +195,17 @@ revoke all on function public.archive_and_anonymize_user(uuid, text, text, text,
   from public, anon, authenticated;
 grant execute on function public.archive_and_anonymize_user(uuid, text, text, text, timestamptz)
   to service_role;
+
+-- ── 6. link_url: tylko http(s) ───────────────────────────────────────────────
+-- profiles_link_url_len (20260902) sprawdza tylko długość. link_url trafia w
+-- UserCard do href jako link innej osoby - baza ma to samo ograniczenie, co
+-- klient (normalizeUrl w profileFields.ts dopisuje https:// i odrzuca inne
+-- schematy przed zapisem), żeby wiersz wpisany z pominięciem klienta (np.
+-- wprost przez PostgREST) nie mógł zapisać javascript: ani innego schematu.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.profiles'::regclass and conname = 'profiles_link_url_scheme') then
+    alter table public.profiles add constraint profiles_link_url_scheme
+      check (link_url is null or link_url ~* '^https?://');
+  end if;
+end $$;
