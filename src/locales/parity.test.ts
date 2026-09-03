@@ -120,6 +120,16 @@ describe('cookie consent', () => {
   })
 })
 
+describe('followed users', () => {
+  it.each(Object.entries(LOCALES))('%s names the menu entry and the empty state', (_name, dict) => {
+    const d = dict as { profile: Record<string, unknown>; followedUsers?: Record<string, unknown> }
+    expect(typeof d.profile.followedUsers).toBe('string')
+    expect(d.profile.followedUsers).not.toBe('')
+    expect(typeof d.followedUsers?.empty).toBe('string')
+    expect(d.followedUsers?.empty).not.toBe('')
+  })
+})
+
 describe('user card', () => {
   // Karta cudzego profilu to pierwszy ekran, na którym ktoś ocenia obcą osobę -
   // surowy klucz zamiast "Obserwuj" podważa i kartę, i tę osobę.

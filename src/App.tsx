@@ -25,6 +25,7 @@ import ConfettiBurst from './components/ConfettiBurst'
 import AnimatedSplash from './components/AnimatedSplash'
 import MyEventsScreen from './screens/MyEventsScreen'
 import FollowedEventsScreen from './screens/FollowedEventsScreen'
+import FollowedUsersScreen from './screens/FollowedUsersScreen'
 import { StoreHint } from './components/StoreBadge'
 import { deviceStoreOs } from './lib/stores'
 import AppPromoSheet from './components/AppPromoSheet'
@@ -57,7 +58,7 @@ import { geoStrategy, listStrategy } from './lib/eventChain'
 import { shouldRecordSignup, buildSignupContext, gpsOnlyContext, rememberEntrySource, recallEntrySource } from './lib/signupContext'
 import { MeuweLogo } from './components/MeuweLogo'
 
-type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents'
+type Screen = 'loading' | 'welcome' | 'map' | 'myEvents' | 'followedEvents' | 'followedUsers'
 
 export default function App() {
   const { t, i18n } = useTranslation()
@@ -324,6 +325,7 @@ export default function App() {
       if (s.profileOpen) { setProfileOpen(false); return }
       if (s.screen === 'myEvents') { setScreen('map'); return }
       if (s.screen === 'followedEvents') { setScreen('map'); return }
+      if (s.screen === 'followedUsers') { setScreen('map'); return }
       // Na mapie — pushujemy z powrotem żeby nie wyjść z apki
       window.history.pushState({ layer: 'map' }, '')
     }
@@ -707,7 +709,7 @@ export default function App() {
       const s = navLayersRef.current
       const layerOpen = !!(s.authModal || s.userCardId || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
         s.createOpen || s.accountOpen || s.myDataOpen || s.profileOpen ||
-        s.screen === 'myEvents' || s.screen === 'followedEvents')
+        s.screen === 'myEvents' || s.screen === 'followedEvents' || s.screen === 'followedUsers')
       if (layerOpen) { window.history.back(); return }
       if (backExitRef.current.press()) { CapApp.minimizeApp(); return }
       showToast(i18n.t('map.backAgainToExit'), BACK_EXIT_WINDOW_MS)
@@ -1111,7 +1113,8 @@ export default function App() {
 
   const isMyEvents = screen === 'myEvents'
   const isFollowedEvents = screen === 'followedEvents'
-  const isOverlay = isMyEvents || isFollowedEvents
+  const isFollowedUsers = screen === 'followedUsers'
+  const isOverlay = isMyEvents || isFollowedEvents || isFollowedUsers
 
   // Otwarcie dokłada wpis do historii, zamknięcie go zdejmuje przez back() —
   // tak samo jak każda inna warstwa w tej aplikacji. Jeden obiekt na trzy
@@ -1269,6 +1272,18 @@ export default function App() {
         </div>
       )}
 
+      {/* FollowedUsers overlay — karta użytkownika otwiera się nad nim (zIndex 280) */}
+      {isFollowedUsers && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 50 }}>
+          <FollowedUsersScreen
+            session={session}
+            onBack={() => window.history.back()}
+            onOpenUser={openUserCard}
+            userCardOpen={!!userCardId}
+          />
+        </div>
+      )}
+
       <CreateSheet
         open={createOpen && !isOverlay}
         onClose={() => window.history.back()}
@@ -1312,6 +1327,10 @@ export default function App() {
         onOpenFollowedEvents={() => {
           setProfileOpen(false); setScreen('followedEvents')
           window.history.pushState({ layer: 'followedEvents' }, '')
+        }}
+        onOpenFollowedUsers={() => {
+          setProfileOpen(false); setScreen('followedUsers')
+          window.history.pushState({ layer: 'followedUsers' }, '')
         }}
         myEventsUnread={unread.hasOwned}
         followedUnread={unread.hasFollowed}

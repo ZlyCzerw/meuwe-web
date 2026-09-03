@@ -26,6 +26,7 @@ function ProfilePanel({
   reloadProfile,
   onOpenMyEvents,
   onOpenFollowedEvents,
+  onOpenFollowedUsers,
   onOpenAccount,
   onOpenMyData,
   myEventsUnread = false,
@@ -39,6 +40,7 @@ function ProfilePanel({
   reloadProfile: () => void
   onOpenMyEvents: () => void
   onOpenFollowedEvents: () => void
+  onOpenFollowedUsers: () => void
   onOpenAccount: () => void
   onOpenMyData: () => void
   myEventsUnread?: boolean
@@ -347,6 +349,26 @@ function ProfilePanel({
                   {t('profile.followedEvents')}
                 </div>
                 {followedUnread && <NotificationDot />}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
+            </button>
+
+            {/* Obserwowani użytkownicy */}
+            <button
+              onClick={onOpenFollowedUsers}
+              style={{
+                padding: '16px 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                borderBottom: `1px solid ${C.inkSoft}33`,
+              }}
+            >
+              <div style={{ fontFamily: F.display, fontSize: 17, fontWeight: 800, color: C.ink }}>
+                {t('profile.followedUsers')}
               </div>
               <div style={{ fontSize: 20, fontWeight: 900, color: C.ink }}>›</div>
             </button>

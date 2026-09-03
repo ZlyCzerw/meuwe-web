@@ -113,6 +113,7 @@ const de: Resources = {
     radius: 'Benachrichtigungsradius',
     myEvents: 'Meine Events',
     followedEvents: 'Verfolgt',
+    followedUsers: 'Gefolgte Nutzer',
     signOut: 'Abmelden',
     backToLogin: 'Zurück zur Anmeldung',
     language: 'Sprache',
@@ -322,6 +323,9 @@ const de: Resources = {
     loadFailed: 'Profil konnte nicht geladen werden',
     followFailed: 'Speichern fehlgeschlagen. Versuch es noch einmal',
     openProfile: 'Profil öffnen: {{name}}',
+  },
+  followedUsers: {
+    empty: 'Du folgst noch niemandem. Tippe in einer Veranstaltungskarte auf den Veranstalter.',
   },
   landing: {
     h1: 'meuwe — Karte lokaler Events in deiner Nähe',

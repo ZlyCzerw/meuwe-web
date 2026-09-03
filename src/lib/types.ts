@@ -58,6 +58,9 @@ export interface PublicProfile {
   is_following: boolean
 }
 
+/** Wiersz listy „Obserwowani użytkownicy” - publiczne kolumny profiles, bez liczników. */
+export type FollowedUser = Pick<PublicProfile, 'id' | 'display_name' | 'avatar_color' | 'bio' | 'home_name' | 'creator_kind'>
+
 /**
  * Dane, które widzi tylko właściciel (RLS auth.uid() = id) - to, co podał w
  * „O Tobie”, i to, co aplikacja zapisała sama przy rejestracji. Wiersz powstaje

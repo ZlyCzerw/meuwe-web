@@ -87,6 +87,7 @@ root.render(
       reloadProfile={() => {}}
       onOpenMyEvents={() => {}}
       onOpenFollowedEvents={() => {}}
+      onOpenFollowedUsers={() => {}}
       onOpenAccount={() => {}}
       onOpenMyData={() => {}}
     />

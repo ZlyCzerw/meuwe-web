@@ -47,6 +47,7 @@ function renderPanel(pushEnabled: boolean) {
       reloadProfile={() => {}}
       onOpenMyEvents={() => {}}
       onOpenFollowedEvents={() => {}}
+      onOpenFollowedUsers={() => {}}
       onOpenAccount={() => {}}
       onOpenMyData={() => {}}
     />
@@ -135,7 +136,7 @@ describe('ProfilePanel notifications', () => {
       <ProfilePanel
         open onClose={() => {}} session={session} profile={profile(true)}
         onSignOut={() => {}} reloadProfile={() => {}}
-        onOpenMyEvents={() => {}} onOpenFollowedEvents={() => {}}
+        onOpenMyEvents={() => {}} onOpenFollowedEvents={() => {}} onOpenFollowedUsers={() => {}}
         onOpenAccount={() => {}} onOpenMyData={() => {}}
       />
     )
@@ -156,6 +157,7 @@ describe('ProfilePanel identity', () => {
         reloadProfile={() => {}}
         onOpenMyEvents={() => {}}
         onOpenFollowedEvents={() => {}}
+        onOpenFollowedUsers={() => {}}
         onOpenAccount={() => {}}
         onOpenMyData={() => {}}
       />

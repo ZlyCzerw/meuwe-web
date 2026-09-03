@@ -113,6 +113,7 @@ const sl: Resources = {
     radius: 'Polmer obvestil',
     myEvents: 'Moji dogodki',
     followedEvents: 'Spremljam',
+    followedUsers: 'Spremljani uporabniki',
     signOut: 'Odjava',
     backToLogin: 'Nazaj na prijavo',
     language: 'Jezik',
@@ -322,6 +323,9 @@ const sl: Resources = {
     loadFailed: 'Profila ni bilo mogoče naložiti',
     followFailed: 'Shranjevanje ni uspelo. Poskusi znova',
     openProfile: 'Odpri profil: {{name}}',
+  },
+  followedUsers: {
+    empty: 'Še nikogar ne spremljaš. Tapni organizatorja v kartici dogodka.',
   },
   landing: {
     h1: 'meuwe — zemljevid lokalnih dogodkov v tvoji okolici',

@@ -1,5 +1,5 @@
 import { createClient, type Session } from '@supabase/supabase-js'
-import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate, PublicProfile } from './types'
+import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate, PublicProfile, FollowedUser } from './types'
 import type { SignupContext } from './signupContext'
 import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
@@ -455,6 +455,23 @@ export const db = {
   async unfollowUser(creatorId: string) {
     const sess = await this.getSession(); if (!sess) return
     return supabase.from('user_follows').delete().eq('follower_id', sess.user.id).eq('creator_id', creatorId)
+  },
+  // Lista obserwowanych twórców. Dwa zapytania jak w getFollowedEvents: klucz
+  // user_follows wskazuje auth.users, nie profiles, więc PostgREST nie umie
+  // tego złączyć jednym selectem. profiles ma publiczne kolumny dla każdego.
+  async getFollowedUsers(userId: string): Promise<FollowedUser[]> {
+    const { data: follows, error: fErr } = await supabase
+      .from('user_follows').select('creator_id').eq('follower_id', userId)
+    if (fErr) { console.error('[getFollowedUsers]', fErr); return [] }
+    const ids = (follows ?? []).map((f: { creator_id: string }) => f.creator_id)
+    if (ids.length === 0) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id,display_name:name_shown,avatar_color,bio,home_name,creator_kind')
+      .in('id', ids)
+      .order('name_shown', { ascending: true })
+    if (error) { console.error('[getFollowedUsers]', error); return [] }
+    return (data ?? []) as unknown as FollowedUser[]
   },
   async getEventFollowers(eventId: string): Promise<{ avatar_color: string | null; display_name: string | null }[]> {
     const { data } = await supabase.rpc('get_event_follower_colors', { p_event_id: eventId })

@@ -113,6 +113,7 @@ const en: Resources = {
     radius: 'Notification radius',
     myEvents: 'My events',
     followedEvents: 'Following',
+    followedUsers: 'Followed users',
     signOut: 'Sign out',
     backToLogin: 'Back to login',
     language: 'Language',
@@ -322,6 +323,9 @@ const en: Resources = {
     loadFailed: 'Could not load this profile',
     followFailed: 'Could not save. Try again',
     openProfile: 'Open profile: {{name}}',
+  },
+  followedUsers: {
+    empty: 'You don\'t follow anyone yet. Tap an organizer in an event card.',
   },
   landing: {
     h1: 'meuwe — a map of local events happening near you',

@@ -113,6 +113,7 @@ const es: Resources = {
     radius: 'Radio de notificaciones',
     myEvents: 'Mis eventos',
     followedEvents: 'Siguiendo',
+    followedUsers: 'Usuarios seguidos',
     signOut: 'Cerrar sesión',
     backToLogin: 'Volver al inicio de sesión',
     language: 'Idioma',
@@ -322,6 +323,9 @@ const es: Resources = {
     loadFailed: 'No se pudo cargar el perfil',
     followFailed: 'No se pudo guardar. Inténtalo de nuevo',
     openProfile: 'Abrir perfil: {{name}}',
+  },
+  followedUsers: {
+    empty: 'Aún no sigues a nadie. Toca al organizador en la ficha de un evento.',
   },
   landing: {
     h1: 'meuwe — mapa de eventos locales cerca de ti',

@@ -111,6 +111,7 @@ const pl = {
     radius: 'Promień powiadomień',
     myEvents: 'Moje wydarzenia',
     followedEvents: 'Obserwowane',
+    followedUsers: 'Obserwowani użytkownicy',
     signOut: 'Wyloguj',
     backToLogin: 'Powrót do logowania',
     language: 'Język',
@@ -320,6 +321,9 @@ const pl = {
     loadFailed: 'Nie udało się wczytać profilu',
     followFailed: 'Nie udało się zapisać. Spróbuj ponownie',
     openProfile: 'Otwórz profil: {{name}}',
+  },
+  followedUsers: {
+    empty: 'Nie obserwujesz jeszcze nikogo. Tapnij organizatora w karcie wydarzenia.',
   },
   landing: {
     h1: 'meuwe — mapa lokalnych wydarzeń w Twojej okolicy',
