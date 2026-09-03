@@ -69,6 +69,31 @@ describe('UserCard', () => {
     expect(screen.getByText(/9 followers/)).toBeInTheDocument()
     expect(followUser).toHaveBeenCalledWith('u2')
     expect(trackClick).toHaveBeenCalledWith('follow_user')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Following ✓' })).not.toBeDisabled())
+  })
+
+  it('treats a missing result as a failure (stale session) and reverts', async () => {
+    getPublicProfile.mockResolvedValue(profile())
+    followUser.mockResolvedValue(undefined)
+    render(<UserCard userId="u2" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: '+ Follow' }))
+    expect(await screen.findByText('Could not save. Try again')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Follow' })).toBeInTheDocument()
+    expect(screen.getByText(/8 followers/)).toBeInTheDocument()
+  })
+
+  it('ignores a second tap while the request is in flight', async () => {
+    getPublicProfile.mockResolvedValue(profile())
+    let resolve: (v: { error: null }) => void = () => {}
+    followUser.mockReturnValue(new Promise(r => { resolve = r }))
+    render(<UserCard userId="u2" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: '+ Follow' }))
+    const button = screen.getByRole('button', { name: 'Following ✓' })
+    fireEvent.click(button)
+    expect(followUser).toHaveBeenCalledTimes(1)
+    expect(unfollowUser).not.toHaveBeenCalled()
+    resolve({ error: null })
+    await waitFor(() => expect(button).not.toBeDisabled())
   })
 
   it('unfollows on the second tap', async () => {

@@ -69,7 +69,7 @@ export default function UserCard({
     db.trackClick(next ? 'follow_user' : 'unfollow_user')
     const res = next ? await db.followUser(userId) : await db.unfollowUser(userId)
     setBusy(false)
-    if (res && res.error) {
+    if (!res || res.error) {
       setFollowing(!next)
       setFollowers(n => n - (next ? 1 : -1))
       setFailed(true)
@@ -191,6 +191,7 @@ export default function UserCard({
               <>
                 <button
                   onClick={toggleFollow}
+                  disabled={busy}
                   style={{
                     marginTop: 20, width: '100%', padding: '14px', borderRadius: 999,
                     background: following ? '#fff' : C.primary,
