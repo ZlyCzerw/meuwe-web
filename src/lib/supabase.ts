@@ -1,5 +1,5 @@
 import { createClient, type Session } from '@supabase/supabase-js'
-import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate } from './types'
+import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate, PublicProfile } from './types'
 import type { SignupContext } from './signupContext'
 import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
@@ -434,6 +434,24 @@ export const db = {
     const sess = await this.getSession(); if (!sess) return
     await supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
   },
+  // Karta użytkownika: profil, liczniki i "czy obserwuję" w jednym strzale.
+  // RPC jest security definer, bo liczniki z RLS "tylko własne wiersze" byłyby
+  // fałszywe. Brak wiersza (profil usunięty) = null, jak getProfile.
+  async getPublicProfile(userId: string): Promise<PublicProfile | null> {
+    const { data, error } = await supabase.rpc('get_public_profile', { p_user_id: userId }).maybeSingle()
+    if (error) { console.error('[getPublicProfile]', error); return null }
+    return (data as PublicProfile | null) ?? null
+  },
+  // Obserwowanie twórcy. Auto-obserwacja jego wydarzeń dzieje się w bazie
+  // (trigger na user_follows), klient nie wie o tej regule.
+  async followUser(creatorId: string) {
+    const sess = await this.getSession(); if (!sess) return
+    return supabase.from('user_follows').insert({ follower_id: sess.user.id, creator_id: creatorId })
+  },
+  async unfollowUser(creatorId: string) {
+    const sess = await this.getSession(); if (!sess) return
+    return supabase.from('user_follows').delete().eq('follower_id', sess.user.id).eq('creator_id', creatorId)
+  },
   async getEventFollowers(eventId: string): Promise<{ avatar_color: string | null; display_name: string | null }[]> {
     const { data } = await supabase.rpc('get_event_follower_colors', { p_event_id: eventId })
     return (data || []).map((r: any) => ({ avatar_color: r.avatar_color ?? null, display_name: r.display_name ?? null }))
@@ -549,6 +567,7 @@ export const db = {
     | 'push_ask_enable' | 'digest_open'
     | 'event_calendar' | 'store_ios' | 'store_android'
     | 'invite_friends' | 'delete_account' | 'nickname_save' | 'profile_save'
+    | 'follow_user' | 'unfollow_user'
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})

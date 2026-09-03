@@ -39,6 +39,26 @@ export interface Profile {
 }
 
 /**
+ * Cudzy profil na karcie użytkownika - wynik RPC get_public_profile.
+ * display_name to profiles.name_shown pod tym samym aliasem, co PROFILE_PUBLIC
+ * w supabase.ts, żeby każdy ekran czytał jedno pole.
+ */
+export interface PublicProfile {
+  id: string
+  display_name: string | null
+  avatar_color: string | null
+  bio: string | null
+  home_name: string | null
+  creator_kind: CreatorKind | null
+  link_url: string | null
+  /** Publiczne wydarzenia twórcy, łącznie z zakończonymi - to jego dorobek. */
+  events_count: number
+  followers_count: number
+  /** Czy zalogowany użytkownik obserwuje ten profil; dla gościa zawsze false. */
+  is_following: boolean
+}
+
+/**
  * Dane, które widzi tylko właściciel (RLS auth.uid() = id) - to, co podał w
  * „O Tobie”, i to, co aplikacja zapisała sama przy rejestracji. Wiersz powstaje
  * leniwie, przy pierwszym zapisie, więc może go nie być.
