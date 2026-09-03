@@ -106,7 +106,7 @@ Po policzeniu odbiorców z promienia i tagów funkcja pobiera `event_follows.use
 
 `filterDeliverable` dalej jest jedyną bramką (push włączony, urządzenie, wyciszenie) - obserwowanie twórcy nie omija żadnej z tych reguł.
 
-Pozostałe funkcje (`push-event-start`, `push-event-updated`, `push-new-message`) nie wymagają zmian: czytają `event_follows`.
+`push-event-start` też pobiera `event_follows.user_id` dla wydarzenia i przekazuje jako `followerIds` - dla wydarzeń publicznych ta sama suma geo/tagi ∪ obserwujących, co wyżej. `push-event-updated` i `push-new-message` czytają `event_follows` wprost i nie wymagają zmian.
 
 ## 3. Klient
 

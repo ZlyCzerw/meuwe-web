@@ -64,19 +64,20 @@ Deno.serve(async (req) => {
   for (const event of events) {
     // Wydarzenie prywatne nie ma zasięgu geograficznego — liczą się wyłącznie
     // obserwujący i twórca (który obserwuje własne wydarzenie). Tagi nie
-    // rozszerzają tego kręgu.
+    // rozszerzają tego kręgu. Publiczne wydarzenie dostaje geo/tagi ∪
+    // obserwujących - w event_follows są od utworzenia (trigger) także
+    // obserwujący twórcy, nie tylko ci, którzy zaobserwowali to wydarzenie
+    // wprost.
     let tags: string[] = []
-    let followerIds: string[] = []
-    if (event.is_private) {
-      const { data: followRows, error: followErr } = await admin
-        .from('event_follows').select('user_id').eq('event_id', event.id)
-      if (followErr) {
-        // Nie oznaczamy jako powiadomionego — cron spróbuje ponownie.
-        console.error(`[push-event-start] event ${event.id}: błąd pobrania obserwujących, pomijam:`, followErr)
-        continue
-      }
-      followerIds = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
-    } else {
+    const { data: followRows, error: followErr } = await admin
+      .from('event_follows').select('user_id').eq('event_id', event.id)
+    if (followErr) {
+      // Nie oznaczamy jako powiadomionego — cron spróbuje ponownie.
+      console.error(`[push-event-start] event ${event.id}: błąd pobrania obserwujących, pomijam:`, followErr)
+      continue
+    }
+    const followerIds = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
+    if (!event.is_private) {
       const { data: tagRows } = await admin
         .from('event_tags').select('tag').eq('event_id', event.id)
       tags = (tagRows ?? []).map((r: { tag: string }) => r.tag)
