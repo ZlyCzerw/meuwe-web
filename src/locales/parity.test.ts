@@ -9,6 +9,9 @@ const NEW_EVENT_KEYS = [
   'attend', 'attending', 'readMore', 'readLess',
   'backToEvent', 'photoPrev', 'photoNext', 'sendMessage',
   'chainPrev', 'chainNext',
+  'views',
+  'viewCount_one', 'viewCount_two', 'viewCount_few', 'viewCount_many', 'viewCount_other',
+  'viewerCount_one', 'viewerCount_two', 'viewerCount_few', 'viewerCount_many', 'viewerCount_other',
 ] as const
 
 const MAP_TIMELINE_KEYS = ['modeDay', 'modeRange', 'closeTimeline'] as const

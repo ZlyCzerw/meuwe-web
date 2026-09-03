@@ -398,8 +398,13 @@ export default function App() {
     setTimeout(tryFly, 100)
   }, [screen, deepLinkEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Analytics
-  useEffect(() => { if (selEvent) track.viewEvent(selEvent.id, selEvent.title) }, [selEvent])
+  // Analytics + licznik wyświetleń w bazie (każde otwarcie karty; własne
+  // otwarcia twórcy odrzuca sama funkcja record_event_view).
+  useEffect(() => {
+    if (!selEvent) return
+    track.viewEvent(selEvent.id, selEvent.title)
+    db.recordEventView(selEvent.id)
+  }, [selEvent])
 
   // Interest signal for the app nudge: distinct events opened. The same signal
   // counts towards asking for notifications, kept in its own ledger because the

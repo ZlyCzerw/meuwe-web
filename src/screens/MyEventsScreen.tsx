@@ -208,6 +208,18 @@ export default function MyEventsScreen({
                       {t('event.messages')}
                     </div>
                   </div>
+                  {/* Otwarcia karty - liczy się każde otwarcie przez kogoś innego niż twórca. */}
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    padding: '6px 10px', borderRadius: 14, background: C.cream,
+                  }}>
+                    <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
+                      {ev.viewCount ?? 0}
+                    </div>
+                    <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      {t('event.views')}
+                    </div>
+                  </div>
                 </div>
               </div>
             )

@@ -190,3 +190,57 @@ describe('db.searchEvents', () => {
     expect(await db.searchEvents('x')).toEqual([])
   })
 })
+
+describe('event views', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('records a card open through the record_event_view RPC', () => {
+    const rpc = vi.spyOn(supabase, 'rpc').mockReturnValue({
+      then: (res: (v: unknown) => void) => res({ data: null, error: null }),
+    } as never)
+    db.recordEventView('e1')
+    expect(rpc).toHaveBeenCalledWith('record_event_view', { p_event_id: 'e1' })
+  })
+
+  it('maps view stats per event; events without rows are simply absent', async () => {
+    vi.spyOn(supabase, 'rpc').mockReturnValue(
+      Promise.resolve({ data: [{ event_id: 'e1', views: '7', viewers: '3' }], error: null }) as never,
+    )
+    expect(await db.getEventViewStats(['e1', 'e2'])).toEqual({ e1: { views: 7, viewers: 3 } })
+  })
+
+  it('does not call the RPC for an empty id list', async () => {
+    const rpc = vi.spyOn(supabase, 'rpc')
+    expect(await db.getEventViewStats([])).toEqual({})
+    expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it('returns nothing when the stats RPC fails', async () => {
+    vi.spyOn(supabase, 'rpc').mockReturnValue(
+      Promise.resolve({ data: null, error: { message: 'boom' } }) as never,
+    )
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await db.getEventViewStats(['e1'])).toEqual({})
+  })
+})
+
+describe('getMyEvents view counts', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('attaches the view count from get_event_view_stats, defaulting to 0', async () => {
+    const chain: Record<string, unknown> = {}
+    for (const m of ['select', 'eq', 'order']) chain[m] = () => chain
+    chain.then = (res: (v: unknown) => void) => res({
+      data: [{ id: 'e1', event_tags: [] }, { id: 'e2', event_tags: [] }], error: null,
+    })
+    vi.spyOn(supabase, 'from').mockReturnValue(chain as never)
+    vi.spyOn(supabase, 'rpc').mockImplementation(((name: string) => Promise.resolve(
+      name === 'get_event_view_stats'
+        ? { data: [{ event_id: 'e1', views: 7, viewers: 3 }], error: null }
+        : { data: [{ event_id: 'e1', msg_count: 2 }], error: null },
+    )) as never)
+
+    const out = await db.getMyEvents('me')
+    expect(out.map(e => [e.id, e.msgCount, e.viewCount])).toEqual([['e1', 2, 7], ['e2', 0, 0]])
+  })
+})

@@ -87,3 +87,13 @@ describe('MyEventsScreen quick actions', () => {
     expect(screen.queryByRole('button', { name: 'End event' })).not.toBeInTheDocument()
   })
 })
+
+describe('MyEventsScreen view counter', () => {
+  it('shows how many times the card was opened next to the message count', async () => {
+    getMyEvents.mockResolvedValue([event('e1', 'Koncert', { msgCount: 2, viewCount: 7 })])
+    render(<MyEventsScreen session={session} onBack={() => {}} onOpenEvent={() => {}} onEdit={() => {}} />)
+    await screen.findByText('Koncert')
+    expect(screen.getByText('7')).toBeInTheDocument()
+    expect(screen.getByText('views')).toBeInTheDocument()
+  })
+})

@@ -11,6 +11,7 @@ import EventPhotoStrip from './event/EventPhotoStrip'
 import EventChatPanel from './event/EventChatPanel'
 import PhotoLightbox from './event/PhotoLightbox'
 import OrganizerRow from './event/OrganizerRow'
+import ViewStatsRow from './event/ViewStatsRow'
 import { C, INK, F, TAG_META, SHADOW_BUTTON } from '../lib/tokens'
 import type { Category } from '../lib/tokens'
 import { db } from '../lib/supabase'
@@ -32,7 +33,7 @@ import FollowNotifyModal from '../components/FollowNotifyModal'
 import ChainArrow from '../components/ChainArrow'
 import { useCardDrag } from '../hooks/useCardDrag'
 import type { Dir } from '../lib/eventChain'
-import type { EventWithMeta, Message } from '../lib/types'
+import type { EventWithMeta, EventViewStats, Message } from '../lib/types'
 
 type Snap = 'peek' | 'half' | 'full'
 
@@ -170,6 +171,12 @@ function EventSheet({
   const [calendarHint, setCalendarHint] = useState<'ok' | 'failed' | null>(null)
   const [calendarChooser, setCalendarChooser] = useState(false)
   const [followers, setFollowers] = useState<{ avatar_color: string | null; display_name: string | null }[]>([])
+  // Wyświetlenia karty - pobierane i pokazywane tylko twórcy; RLS i tak
+  // nie zwróciłoby cudzych, więc nie ma po co pytać. Trzymane razem z id
+  // wydarzenia: po kroku sznurkiem stary wynik nie pasuje do nowej karty
+  // i nie wolno go pokazać, a zerowanie stanu w efekcie robiłoby dodatkowy render.
+  const [viewStats, setViewStats] = useState<{ id: string; stats: EventViewStats } | null>(null)
+  const ownStats = viewStats?.id === event.id ? viewStats.stats : null
   const [halfContentH, setHalfContentH] = useState(0)
   const halfRef = useRef<HTMLDivElement | null>(null)
 
@@ -285,6 +292,16 @@ function EventSheet({
     : followers.length <= 3
       ? t(followers.length === 1 ? 'follow.followsThis' : 'follow.followThis')
       : t(followers.length - 3 === 1 ? 'follow.othersFollowOne' : 'follow.othersFollowMany', { count: followers.length - 3 })
+
+  useEffect(() => {
+    if (!event?.id || !session || session.user.id !== event.creator_id) return
+    const id = event.id
+    let alive = true
+    db.getEventViewStats([id]).then(m => {
+      if (alive) setViewStats({ id, stats: m[id] ?? { views: 0, viewers: 0 } })
+    })
+    return () => { alive = false }
+  }, [event?.id, event?.creator_id, session])
 
   useEffect(() => {
     if (!event?.id || !session) return
@@ -659,6 +676,10 @@ function EventSheet({
                 isModerator={session?.user.id === event.creator_id}
                 onOpen={onOpenUser}
               />
+
+              {session?.user.id === event.creator_id && ownStats && (
+                <ViewStatsRow views={ownStats.views} viewers={ownStats.viewers} />
+              )}
 
               {/* Edit + End (creator only, while not ended) */}
               {session?.user.id === event.creator_id && computedStatus !== 'ended' && (

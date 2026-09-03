@@ -121,6 +121,18 @@ export interface EventWithMeta extends EventRow {
 
 export interface EventWithMsgCount extends EventWithMeta {
   msgCount: number
+  /** Otwarcia karty; tylko własne wydarzenia (getMyEvents), cudzych RLS nie zwraca. */
+  viewCount?: number
+}
+
+/**
+ * Wyświetlenia karty wydarzenia - wynik RPC get_event_view_stats, dostępny
+ * tylko twórcy. views = wszystkie otwarcia razem z gośćmi, viewers = ilu
+ * zalogowanych użytkowników otwierało kartę.
+ */
+export interface EventViewStats {
+  views: number
+  viewers: number
 }
 
 export interface Message {

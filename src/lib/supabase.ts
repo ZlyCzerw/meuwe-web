@@ -1,5 +1,5 @@
 import { createClient, type Session } from '@supabase/supabase-js'
-import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate, PublicProfile, FollowedUser } from './types'
+import type { EventWithMeta, EventWithMsgCount, Message, Profile, ProfilePrivate, PublicProfile, FollowedUser, EventViewStats } from './types'
 import type { SignupContext } from './signupContext'
 import { bboxDeltas, haversineKm, MAX_MAP_KM } from './geo'
 import { PROBE_DAYS, type ProbeEvent } from './emptyState'
@@ -358,17 +358,21 @@ export const db = {
 
     const eventIds = (data || []).map((e: any) => e.id)
     let countMap: Record<string, number> = {}
+    let viewMap: Record<string, EventViewStats> = {}
 
     if (eventIds.length > 0) {
       // Single SQL COUNT query via RPC — replaces fetching all message rows
-      const { data: counts, error: countErr } = await supabase
-        .rpc('get_event_message_counts', { event_ids: eventIds })
+      const [{ data: counts, error: countErr }, views] = await Promise.all([
+        supabase.rpc('get_event_message_counts', { event_ids: eventIds }),
+        this.getEventViewStats(eventIds),
+      ])
       if (countErr) console.error('[getMyEvents] count rpc error:', countErr)
       if (counts) {
         ;(counts as { event_id: string; msg_count: number }[]).forEach(r => {
           countMap[r.event_id] = r.msg_count
         })
       }
+      viewMap = views
     }
 
     return (data || []).map((e: any) => ({
@@ -377,6 +381,7 @@ export const db = {
       distKm: 0,
       distStr: '',
       msgCount: countMap[e.id] ?? 0,
+      viewCount: viewMap[e.id]?.views ?? 0,
     })) as EventWithMsgCount[]
   },
   /** Wyszukiwarka na mapie: publiczne, trwające lub przyszłe wydarzenia
@@ -594,6 +599,21 @@ export const db = {
   ) {
     // fire-and-forget — never block UI on analytics
     supabase.from('analytics_clicks').insert({ action }).then(() => {})
+  },
+  /** Otwarcie karty wydarzenia. Fire-and-forget: baza sama pomija twórcę. */
+  recordEventView(eventId: string) {
+    supabase.rpc('record_event_view', { p_event_id: eventId }).then(() => {})
+  },
+  /** Wyświetlenia własnych wydarzeń; cudze RLS po prostu pomija. */
+  async getEventViewStats(eventIds: string[]): Promise<Record<string, EventViewStats>> {
+    if (eventIds.length === 0) return {}
+    const { data, error } = await supabase.rpc('get_event_view_stats', { event_ids: eventIds })
+    if (error) { console.error('[getEventViewStats]', error); return {} }
+    const out: Record<string, EventViewStats> = {}
+    ;((data ?? []) as { event_id: string; views: number | string; viewers: number | string }[]).forEach(r => {
+      out[r.event_id] = { views: Number(r.views), viewers: Number(r.viewers) }
+    })
+    return out
   },
   async markEventRead(eventId:string) {
     const sess=await this.getSession(); if(!sess) return
