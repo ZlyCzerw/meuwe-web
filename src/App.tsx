@@ -50,6 +50,7 @@ import { track } from './lib/analytics'
 import { getIpLocation } from './lib/geo'
 import { shouldWriteLocation, type WrittenLocation } from './lib/location'
 import AttendanceAskModal from './components/AttendanceAskModal'
+import UserCard from './components/UserCard'
 import { pickAttendanceAsk, type AskCandidate } from './lib/attendanceAsk'
 import { useEventChain } from './hooks/useEventChain'
 import { geoStrategy, listStrategy } from './lib/eventChain'
@@ -103,6 +104,9 @@ export default function App() {
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
   const [editingEvent, setEditingEvent] = useState<EventWithMeta | null>(null)
   const [authModal, setAuthModal] = useState<'event' | 'chat' | null>(null)
+  // Karta cudzego profilu - warstwa historii jak czat: otwarcie robi pushState,
+  // gest wstecz zamyka ją, a nie kartę wydarzenia pod nią.
+  const [userCardId, setUserCardId] = useState<string | null>(null)
   const [deepLinkEvent, setDeepLinkEvent] = useState<EventWithMeta | null>(null)
   const [initialMapZoom, setInitialMapZoom] = useState(15)
   // The zoom goToMap settled on. MapScreen reads it when the first GPS fix
@@ -245,6 +249,7 @@ export default function App() {
   const navRestoredRef = useRef(false)
   const navLayersRef = useRef({
     authModal,
+    userCardId,
     eventChatOpen,
     selEvent,
     myEventSelected,
@@ -277,6 +282,7 @@ export default function App() {
     inviteModalOpen,
     pushAskOpen,
     attendanceAskOpen,
+    userCardOpen: !!userCardId,
     updateOpen: !!pendingUpdate,
   }
   const screenIsClear = () => !!overlayRef.current && isScreenClear(overlayRef.current)
@@ -285,6 +291,7 @@ export default function App() {
     navStateRef.current = { screen, myEventSelected, followedEventSelected }
     navLayersRef.current = {
       authModal,
+      userCardId,
       eventChatOpen,
       selEvent,
       myEventSelected,
@@ -295,13 +302,15 @@ export default function App() {
       profileOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModal, eventChatOpen, selEvent, createOpen, accountOpen, myDataOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, userCardId, eventChatOpen, selEvent, createOpen, accountOpen, myDataOpen, profileOpen])
 
   useEffect(() => {
     function onPopState() {
       const s = navLayersRef.current
       // Zamknij najwyższą otwartą warstwę
       if (s.authModal) { setAuthModal(null); return }
+      // Karta użytkownika leży nad wydarzeniem i czatem; logowanie nad nią.
+      if (s.userCardId) { setUserCardId(null); return }
       // Logowanie otwiera się nad czatem, czat nad wydarzeniem — kolejność
       // gałęzi jest tu jedyną definicją tego, co leży na czym.
       if (s.eventChatOpen) { setEventChatOpen(false); return }
@@ -329,7 +338,7 @@ export default function App() {
   // uczciwszy niż sześć powtórzeń tej samej linijki.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset warstwy, gdy karty już nie ma
-    if (!selEvent && !myEventSelected && !followedEventSelected) setEventChatOpen(false)
+    if (!selEvent && !myEventSelected && !followedEventSelected) { setEventChatOpen(false); setUserCardId(null) }
   }, [selEvent, myEventSelected, followedEventSelected])
 
   useEffect(() => {
@@ -1119,6 +1128,11 @@ export default function App() {
     },
   }
 
+  const openUserCard = (id: string) => {
+    setUserCardId(id)
+    window.history.pushState({ layer: 'userCard' }, '')
+  }
+
   // Single MapScreen instance shared between 'map' and 'myEvents' to prevent remount on screen switch
   return (
     <>
@@ -1197,6 +1211,7 @@ export default function App() {
           onProfileChanged={reloadProfile}
           onChainStep={dir => { const next = myChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={myChain.canGo}
+          onOpenUser={openUserCard}
           {...eventChatProps}
         />
       )}
@@ -1214,6 +1229,7 @@ export default function App() {
           onProfileChanged={reloadProfile}
           onChainStep={dir => { const next = followedChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={followedChain.canGo}
+          onOpenUser={openUserCard}
           {...eventChatProps}
         />
       )}
@@ -1231,6 +1247,7 @@ export default function App() {
           onProfileChanged={reloadProfile}
           onChainStep={dir => { const next = mapChain.go(dir); if (next) flyToFnRef.current?.(next.lat, next.lng); return !!next }}
           chainCanGo={mapChain.canGo}
+          onOpenUser={openUserCard}
           {...eventChatProps}
         />
       )}
@@ -1381,6 +1398,14 @@ export default function App() {
             setAttendanceAskOpen(false)
             setAttendanceCandidate(null)
           }}
+        />
+      )}
+      {userCardId && (
+        <UserCard
+          userId={userCardId}
+          session={session}
+          onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
+          onClose={() => window.history.back()}
         />
       )}
       {authModal && (
