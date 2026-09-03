@@ -30,6 +30,8 @@ export interface OverlayFlags {
   inviteModalOpen: boolean
   pushAskOpen: boolean
   attendanceAskOpen: boolean
+  /** Karta cudzego profilu, otwierana z wiersza organizatora w karcie wydarzenia. */
+  userCardOpen: boolean
   /** The "there is a new version" sheet; its blocking twin needs no flag. */
   updateOpen: boolean
 }
@@ -52,5 +54,6 @@ export function isScreenClear(f: OverlayFlags): boolean {
     && !f.inviteModalOpen
     && !f.pushAskOpen
     && !f.attendanceAskOpen
+    && !f.userCardOpen
     && !f.updateOpen
 }
