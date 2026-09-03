@@ -65,6 +65,47 @@ describe('selectEventAudience — public events', () => {
   })
 })
 
+describe('selectEventAudience — public events with creator followers', () => {
+  // Obserwowanie twórcy to jawne "chcę wiedzieć o wszystkim od tej osoby" -
+  // promień i tagi nie mają tu głosu.
+  it('adds followers regardless of distance and interests', () => {
+    const ids = selectEventAudience({
+      isPrivate: false,
+      tags: ['music'],
+      followerIds: ['far-sport-fan'],
+      profiles: [NEARBY_MUSIC, NEARBY_SPORT],
+      ...EVENT,
+    })
+    expect([...ids].sort()).toEqual(['far-sport-fan', 'near-music'])
+  })
+
+  it('does not duplicate a follower who is also nearby', () => {
+    const ids = selectEventAudience({
+      isPrivate: false,
+      tags: [],
+      followerIds: ['near-music'],
+      profiles: [NEARBY_MUSIC, NEARBY_SPORT],
+      ...EVENT,
+    })
+    expect([...ids].sort()).toEqual(['near-music', 'near-sport'])
+  })
+
+  // Twórca obserwuje własne wydarzenie od chwili utworzenia, więc zawsze jest
+  // w followerIds - i nadal nie ma dostać powiadomienia o sobie.
+  it('still drops the creator when they are among the followers', () => {
+    const ids = selectEventAudience({
+      isPrivate: false,
+      tags: [],
+      creatorId: 'creator',
+      excludeCreator: true,
+      followerIds: ['creator', 'far-music'],
+      profiles: [NEARBY_SPORT],
+      ...EVENT,
+    })
+    expect([...ids].sort()).toEqual(['far-music', 'near-sport'])
+  })
+})
+
 describe('selectEventAudience — private events', () => {
   it('never fans out by location or interests, even to a perfect tag match', () => {
     const ids = selectEventAudience({
