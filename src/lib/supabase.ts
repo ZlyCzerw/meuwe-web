@@ -430,9 +430,11 @@ export const db = {
     const sess = await this.getSession(); if (!sess) return
     await supabase.from('event_follows').insert({ user_id: sess.user.id, event_id: eventId })
   },
+  // Zwraca wynik, żeby lista „Obserwowane” mogła cofnąć optymistyczne usunięcie
+  // wiersza; karta wydarzenia ignoruje zwrot jak dotąd.
   async unfollowEvent(eventId: string) {
     const sess = await this.getSession(); if (!sess) return
-    await supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
+    return supabase.from('event_follows').delete().eq('user_id', sess.user.id).eq('event_id', eventId)
   },
   // Karta użytkownika: profil, liczniki i "czy obserwuję" w jednym strzale.
   // RPC jest security definer, bo liczniki z RLS "tylko własne wiersze" byłyby

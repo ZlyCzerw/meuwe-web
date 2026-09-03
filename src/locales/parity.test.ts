@@ -130,6 +130,18 @@ describe('followed users', () => {
   })
 })
 
+describe('list quick actions', () => {
+  // Przyciski „−” i „Zakończyć?” w listach mają tylko ikonę; etykieta z i18n
+  // jest jedynym tekstem, jaki dostaje czytnik ekranu.
+  it.each(Object.entries(LOCALES))('%s names unfollow and the end confirmation', (_name, dict) => {
+    const d = dict as { follow: Record<string, unknown>; event: Record<string, unknown> }
+    expect(typeof d.follow.unfollow).toBe('string')
+    expect(d.follow.unfollow).not.toBe('')
+    expect(typeof d.event.endConfirm).toBe('string')
+    expect(d.event.endConfirm).not.toBe('')
+  })
+})
+
 describe('user card', () => {
   // Karta cudzego profilu to pierwszy ekran, na którym ktoś ocenia obcą osobę -
   // surowy klucz zamiast "Obserwuj" podważa i kartę, i tę osobę.

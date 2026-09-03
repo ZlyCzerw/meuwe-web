@@ -11,6 +11,7 @@ import { computeStatus } from '../lib/eventStatus'
 import { muteEvent, unmuteEvent, getEventMutes } from '../lib/push'
 import type { EventWithMsgCount } from '../lib/types'
 import NotificationDot from '../components/NotificationDot'
+import ListActionButton, { MinusIcon } from '../components/ListActionButton'
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
@@ -53,6 +54,18 @@ export default function FollowedEventsScreen({
     } else {
       await muteEvent(session.user.id, eventId)
       setMutes(prev => new Set([...prev, eventId]))
+    }
+  }
+
+  // Wiersz znika od razu; nieudany zapis (albo brak sesji, gdy db zwraca
+  // undefined) przywraca go na to samo miejsce.
+  async function handleUnfollow(ev: EventWithMsgCount) {
+    const before = events
+    setEvents(prev => prev.filter(e => e.id !== ev.id))
+    const res = await db.unfollowEvent(ev.id)
+    if (!res || res.error) {
+      console.error('[unfollowEvent]', res?.error)
+      setEvents(before)
     }
   }
 
@@ -130,6 +143,9 @@ export default function FollowedEventsScreen({
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                  <ListActionButton label={t('follow.unfollow')} onClick={() => handleUnfollow(ev)}>
+                    <MinusIcon />
+                  </ListActionButton>
                   {/* Mute toggle */}
                   <button
                     onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}

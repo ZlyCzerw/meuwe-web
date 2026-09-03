@@ -49,6 +49,7 @@ const pl = {
     loginToWrite: 'Zaloguj się aby pisać',
     today: 'DZIŚ',
     endEvent: 'Zakończ wydarzenie',
+    endConfirm: 'Zakończyć?',
     editEvent: 'Edytuj wydarzenie',
     moderator: 'Moderator',
     sectionLive: 'Trwające',
@@ -304,7 +305,7 @@ const pl = {
   auth: { createEventPrompt: 'Tylko zalogowani użytkownicy mogą dodawać wydarzenia', chatPrompt: 'Tylko zalogowani użytkownicy mogą pisać wiadomości' , signInFailed: 'Nie udało się zalogować, spróbuj ponownie'},
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
-  follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'weźmie udział', followThis: 'wezmą udział', othersFollowOne: 'i {{count}} weźmie udział', othersFollowMany: 'i {{count}} innych weźmie udział' },
+  follow: { follow: 'Obserwuj', unfollow: 'Przestań obserwować', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'weźmie udział', followThis: 'wezmą udział', othersFollowOne: 'i {{count}} weźmie udział', othersFollowMany: 'i {{count}} innych weźmie udział' },
   userCard: {
     follow: '+ Obserwuj',
     following: 'Obserwujesz ✓',

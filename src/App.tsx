@@ -1194,6 +1194,7 @@ export default function App() {
               flyToFnRef.current?.(ev.lat, ev.lng)
               window.history.pushState({ layer: 'event' }, '')
             }}
+            onEdit={handleEdit}
             isUnread={unread.isUnread}
           />
         </div>

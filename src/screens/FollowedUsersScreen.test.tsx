@@ -7,8 +7,12 @@ import '../lib/i18n'
 import i18n from 'i18next'
 
 const getFollowedUsers = vi.fn<(id: string) => Promise<FollowedUser[]>>()
+const unfollowUser = vi.fn()
 vi.mock('../lib/supabase', () => ({
-  db: { getFollowedUsers: (id: string) => getFollowedUsers(id) },
+  db: {
+    getFollowedUsers: (id: string) => getFollowedUsers(id),
+    unfollowUser: (...a: unknown[]) => unfollowUser(...a),
+  },
   supabase: {},
 }))
 
@@ -24,6 +28,7 @@ const tomek: FollowedUser = {
 beforeEach(() => {
   vi.clearAllMocks()
   i18n.changeLanguage('en')
+  unfollowUser.mockResolvedValue({ error: null })
 })
 
 describe('FollowedUsersScreen', () => {
@@ -65,6 +70,27 @@ describe('FollowedUsersScreen', () => {
     rerender(<FollowedUsersScreen session={session} onBack={() => {}} onOpenUser={() => {}} userCardOpen={false} />)
     await waitFor(() => expect(getFollowedUsers).toHaveBeenCalledTimes(2))
     expect(await screen.findByText("You don't follow anyone yet. Tap an organizer in an event card.")).toBeInTheDocument()
+  })
+
+  it('unfollows from the minus button without opening the card', async () => {
+    getFollowedUsers.mockResolvedValue([kasia, tomek])
+    const onOpenUser = vi.fn()
+    render(<FollowedUsersScreen session={session} onBack={() => {}} onOpenUser={onOpenUser} />)
+    await screen.findByText('Kasia')
+    fireEvent.click(screen.getAllByRole('button', { name: 'Unfollow' })[0])
+    expect(screen.queryByText('Kasia')).not.toBeInTheDocument()
+    expect(screen.getByText('Tomek')).toBeInTheDocument()
+    await waitFor(() => expect(unfollowUser).toHaveBeenCalledWith('u2'))
+    expect(onOpenUser).not.toHaveBeenCalled()
+  })
+
+  it('puts the user back when unfollowing fails', async () => {
+    getFollowedUsers.mockResolvedValue([kasia])
+    unfollowUser.mockResolvedValue({ error: { message: 'boom' } })
+    render(<FollowedUsersScreen session={session} onBack={() => {}} onOpenUser={() => {}} />)
+    await screen.findByText('Kasia')
+    fireEvent.click(screen.getByRole('button', { name: 'Unfollow' }))
+    expect(await screen.findByText('Kasia')).toBeInTheDocument()
   })
 
   it('goes back', async () => {

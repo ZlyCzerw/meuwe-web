@@ -51,6 +51,7 @@ const sl: Resources = {
     loginToWrite: 'Prijavi se za pisanje',
     today: 'DANES',
     endEvent: 'Zaključi dogodek',
+    endConfirm: 'Zaključim?',
     editEvent: 'Uredi dogodek',
     moderator: 'Moderator',
     sectionLive: 'V živo',
@@ -306,7 +307,7 @@ const sl: Resources = {
   auth: { createEventPrompt: 'Dogodke lahko dodajajo samo prijavljeni uporabniki', chatPrompt: 'Sporočila lahko pišejo samo prijavljeni uporabniki' , signInFailed: 'Prijava ni uspela, poskusite znova'},
   status: { live: 'V živo', upcoming: 'Kmalu', extended: 'Še aktivno', ended: 'Končano' },
   share: { share: 'Deli', linkCopied: 'Povezava kopirana!' },
-  follow: { follow: 'Spremljaj', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'gre zraven', followThis: 'gredo zraven', othersFollowOne: 'in še {{count}} drug gre zraven', othersFollowMany: 'in še {{count}} drugih gre zraven' },
+  follow: { follow: 'Spremljaj', unfollow: 'Prenehaj spremljati', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'gre zraven', followThis: 'gredo zraven', othersFollowOne: 'in še {{count}} drug gre zraven', othersFollowMany: 'in še {{count}} drugih gre zraven' },
   userCard: {
     follow: '+ Spremljaj',
     following: 'Spremljaš ✓',

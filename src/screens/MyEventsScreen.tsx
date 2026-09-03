@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { useTranslation } from 'react-i18next'
 import OrganicBlob from '../components/OrganicBlob'
@@ -11,23 +11,29 @@ import { computeStatus } from '../lib/eventStatus'
 import { muteEvent, unmuteEvent, getEventMutes } from '../lib/push'
 import type { EventWithMsgCount } from '../lib/types'
 import NotificationDot from '../components/NotificationDot'
+import ListActionButton, { PencilIcon, StopIcon } from '../components/ListActionButton'
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
 // Height cap (~5 cards) applied to each section only when all three sections
 // are shown. With 1 or 2 sections they instead flex-fill the available height.
 const FIVE_ROWS = 450
+/** Ile czasu pigułka „Zakończyć?” czeka na drugi tap. */
+const END_CONFIRM_MS = 3000
 
 export default function MyEventsScreen({
   session,
   onBack,
   onOpenEvent,
+  onEdit,
   isUnread,
 }: {
   session: Session | null
   onBack: () => void
   /** Lista w kolejności wyświetlania — po niej chodzi sznurek w tym ekranie. */
   onOpenEvent: (ev: EventWithMsgCount, ordered: EventWithMsgCount[]) => void
+  /** Ołówek w wierszu; App prowadzi do tego samego arkusza, co „Edytuj” w karcie. */
+  onEdit?: (ev: EventWithMsgCount) => void
   isUnread?: (id: string) => boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -35,6 +41,29 @@ export default function MyEventsScreen({
   const [events, setEvents] = useState<EventWithMsgCount[]>([])
   const [loading, setLoading] = useState(true)
   const [mutes, setMutes] = useState<Set<string>>(new Set())
+  // Zakończenie z listy idzie w dwóch tapach: pierwszy zamienia ikonę w pigułkę
+  // „Zakończyć?”, drugi (w ciągu ENDCONFIRM_MS) kończy. Ikona 32 px leży obok
+  // dzwonka - jeden tap byłby za łatwy do trafienia przypadkiem.
+  const [endConfirmId, setEndConfirmId] = useState<string | null>(null)
+  const endConfirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (endConfirmTimer.current) clearTimeout(endConfirmTimer.current) }, [])
+
+  function askEnd(id: string) {
+    if (endConfirmTimer.current) clearTimeout(endConfirmTimer.current)
+    setEndConfirmId(id)
+    endConfirmTimer.current = setTimeout(() => setEndConfirmId(null), END_CONFIRM_MS)
+  }
+
+  async function handleEnd(ev: EventWithMsgCount) {
+    if (endConfirmTimer.current) clearTimeout(endConfirmTimer.current)
+    setEndConfirmId(null)
+    const res = await db.endEvent(ev.id)
+    if (res?.error) {
+      console.error('[endEvent]', res.error)
+      return
+    }
+    setEvents(prev => prev.map(e => e.id === ev.id ? { ...e, status: 'ended' } : e))
+  }
 
   useEffect(() => {
     if (!session) return
@@ -131,6 +160,22 @@ export default function MyEventsScreen({
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                  {/* Edycja i zakończenie - tylko póki wydarzenie trwa, jak w karcie */}
+                  {computedStatus !== 'ended' && (
+                    <>
+                      <ListActionButton label={t('event.editEvent')} onClick={() => onEdit?.(ev)}>
+                        <PencilIcon />
+                      </ListActionButton>
+                      <ListActionButton
+                        label={t('event.endEvent')}
+                        active={endConfirmId === ev.id}
+                        activeLabel={t('event.endConfirm')}
+                        onClick={() => endConfirmId === ev.id ? handleEnd(ev) : askEnd(ev.id)}
+                      >
+                        <StopIcon />
+                      </ListActionButton>
+                    </>
+                  )}
                   {/* Mute toggle */}
                   <button
                     onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}

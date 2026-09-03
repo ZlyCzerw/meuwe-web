@@ -9,6 +9,7 @@ import { db } from '../lib/supabase'
 import { authorInitial } from '../lib/authorLabel'
 import { avatarColor } from '../lib/profileDisplay'
 import type { FollowedUser } from '../lib/types'
+import ListActionButton, { MinusIcon } from '../components/ListActionButton'
 
 // Lista obserwowanych twórców, wejście z menu bocznego pod „Obserwowane”.
 // Tap w wiersz otwiera tę samą kartę użytkownika, co organizator w karcie
@@ -43,6 +44,17 @@ export default function FollowedUsersScreen({
   }, [session, userCardOpen])
 
   const deletedLabels = { deleted: t('account.deletedUser'), unknown: '?' }
+
+  // Wiersz znika od razu; nieudany zapis (albo brak sesji) przywraca go.
+  async function handleUnfollow(u: FollowedUser) {
+    const before = users
+    setUsers(prev => prev.filter(x => x.id !== u.id))
+    const res = await db.unfollowUser(u.id)
+    if (!res || res.error) {
+      console.error('[unfollowUser]', res?.error)
+      setUsers(before)
+    }
+  }
 
   const pill = {
     padding: '2px 8px', borderRadius: 999, background: C.cream,
@@ -121,6 +133,9 @@ export default function FollowedUsersScreen({
                 </div>
               )}
             </div>
+            <ListActionButton label={t('follow.unfollow')} onClick={() => handleUnfollow(u)}>
+              <MinusIcon />
+            </ListActionButton>
             <div style={{ fontSize: 20, fontWeight: 900, color: C.ink, flexShrink: 0 }}>›</div>
           </button>
         ))}

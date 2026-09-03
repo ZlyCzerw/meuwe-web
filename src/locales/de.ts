@@ -51,6 +51,7 @@ const de: Resources = {
     loginToWrite: 'Anmelden zum Schreiben',
     today: 'HEUTE',
     endEvent: 'Event beenden',
+    endConfirm: 'Beenden?',
     editEvent: 'Event bearbeiten',
     moderator: 'Moderator',
     sectionLive: 'Laufende',
@@ -306,7 +307,7 @@ const de: Resources = {
   auth: { createEventPrompt: 'Nur angemeldete Nutzer können Veranstaltungen hinzufügen', chatPrompt: 'Nur angemeldete Nutzer können Nachrichten schreiben' , signInFailed: 'Anmeldung fehlgeschlagen, bitte erneut versuchen'},
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
-  follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'ist dabei', followThis: 'sind dabei', othersFollowOne: 'und {{count}} weiterer ist dabei', othersFollowMany: 'und {{count}} weitere sind dabei' },
+  follow: { follow: 'Folgen', unfollow: 'Nicht mehr folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'ist dabei', followThis: 'sind dabei', othersFollowOne: 'und {{count}} weiterer ist dabei', othersFollowMany: 'und {{count}} weitere sind dabei' },
   userCard: {
     follow: '+ Folgen',
     following: 'Du folgst ✓',
