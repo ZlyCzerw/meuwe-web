@@ -19,6 +19,7 @@
 | Kontekst rejestracji: przybliżona lokalizacja z adresu IP, pozycja GPS (jeśli wyraziłeś zgodę), platforma, wersja aplikacji, dostawca logowania, źródło wejścia | Analiza korzystania z aplikacji | Uzasadniony interes (art. 6 ust. 1 lit. f RODO) |
 | Ostatnia znana lokalizacja GPS | Filtrowanie powiadomień o wydarzeniach w okolicy | Zgoda |
 | Subskrypcja push (endpoint urządzenia) | Wysyłanie powiadomień | Zgoda |
+| Obserwowani twórcy (lista kont, które obserwujesz) | Automatyczne obserwowanie ich wydarzeń i powiadomienia o nich | Zgoda |
 | Treść wydarzeń i wiadomości na czacie | Funkcja główna aplikacji | Zgoda |
 
 Bieżąca lokalizacja GPS jest używana wyłącznie lokalnie (centrowanie mapy) i nie jest przesyłana na serwer podczas przeglądania.
@@ -63,6 +64,7 @@ Aplikacja nie używa plików cookie. Używa localStorage urządzenia wyłącznie
 | Last known GPS location | Filtering nearby event notifications | Consent |
 | Push subscription (device endpoint) | Sending push notifications | Consent |
 | Event content and chat messages | Core app functionality | Consent |
+| Followed creators (the accounts you follow) | Automatically following their events and notifying you about them | Consent |
 
 Your current GPS position is used locally only (map centring) and is not transmitted to the server during browsing.
 
@@ -106,6 +108,7 @@ The app does not use cookies. It uses device localStorage solely to store your l
 | Letzter bekannter GPS-Standort | Filterung von Benachrichtigungen über nahegelegene Veranstaltungen | Einwilligung |
 | Push-Abonnement (Geräte-Endpoint) | Versand von Push-Benachrichtigungen | Einwilligung |
 | Veranstaltungsinhalte und Chat-Nachrichten | Kernfunktion der App | Einwilligung |
+| Gefolgte Veranstalter (Konten, denen du folgst) | Automatisches Folgen ihrer Veranstaltungen und Benachrichtigungen dazu | Einwilligung |
 
 Der aktuelle GPS-Standort wird ausschließlich lokal verwendet (Kartenzentrierung) und beim Surfen nicht an den Server übertragen.
 
@@ -148,6 +151,7 @@ Die App verwendet keine Cookies. Sie nutzt den localStorage des Geräts ausschli
 | Contexto de registro: ubicación aproximada por dirección IP, posición GPS (si la autorizaste), plataforma, versión de la app, proveedor de inicio de sesión, origen de entrada | Análisis de uso | Interés legítimo (art. 6.1.f RGPD) |
 | Última ubicación GPS conocida | Filtrado de notificaciones de eventos cercanos | Consentimiento |
 | Suscripción push (endpoint del dispositivo) | Envío de notificaciones push | Consentimiento |
+| Creadores seguidos (cuentas que sigues) | Seguimiento automático de sus eventos y notificaciones sobre ellos | Consentimiento |
 | Contenido de eventos y mensajes de chat | Funcionalidad principal de la app | Consentimiento |
 
 Tu posición GPS actual se usa únicamente de forma local (centrado del mapa) y no se transmite al servidor durante la navegación.
