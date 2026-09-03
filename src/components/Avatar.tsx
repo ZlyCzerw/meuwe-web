@@ -14,8 +14,8 @@ export default function Avatar({
   color?: string;
   initials?: string;
 }) {
-  return (
-    <button onClick={onClick} style={{ position: 'relative', width: size, height: size }}>
+  const circle = (
+    <>
       <div
         style={{
           width: size,
@@ -39,6 +39,20 @@ export default function Avatar({
       {hasUnread && (
         <NotificationDot size={22} style={{ position: 'absolute', top: -6, right: -6 }} />
       )}
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div style={{ position: 'relative', width: size, height: size }}>
+        {circle}
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={onClick} style={{ position: 'relative', width: size, height: size }}>
+      {circle}
     </button>
   );
 }
