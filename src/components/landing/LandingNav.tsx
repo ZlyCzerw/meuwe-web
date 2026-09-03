@@ -204,7 +204,7 @@ function handleAnchor(anchor: string) {
 
   return (
     <>
-      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
+      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}${menuOpen ? ' menu-open' : ''}`}>
         <a
           className="lp-nav-logo"
           href="/#hero"

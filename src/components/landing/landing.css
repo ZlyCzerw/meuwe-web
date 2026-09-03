@@ -18,6 +18,9 @@
   background: rgba(255, 246, 236, 0.91);
   box-shadow: 0 1px 0 rgba(45,43,42,0.07);
 }
+/* Przy otwartym menu pasek jest tak samo kryjący jak menu pod nim — inaczej
+   granica między nimi rysuje się jako pas w innym odcieniu. */
+.lp-nav.menu-open { background: #FFF6EC; }
 .lp-nav-logo { text-decoration: none; cursor: pointer; }
 .lp-nav-links {
   display: flex; gap: 36px; list-style: none;
@@ -335,9 +338,8 @@
 
 .lp-mobile-menu {
   position: fixed; top: 66px; left: 0; right: 0; z-index: 299;
-  background: rgba(255, 246, 236, 0.42);
-  backdrop-filter: blur(32px) saturate(1.8);
-  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  /* Kryjące tło: przez półprzezroczyste prześwitywał hero i menu było nieczytelne. */
+  background: #FFF6EC;
   border-bottom: 1px solid rgba(45,43,42,0.08);
   box-shadow: 0 12px 40px rgba(45,43,42,0.08);
   display: flex; flex-direction: column;
