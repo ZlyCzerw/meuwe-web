@@ -23,6 +23,15 @@ describe('OrganizerRow', () => {
     expect(screen.getByText('Deleted account')).toBeInTheDocument()
   })
 
+  // EventSheet przekazuje onOpenUser wprost - bez niego (np. miejsce montowania
+  // bez obsługi karty użytkownika) wiersz nie udaje przycisku.
+  it('is plain text without an onOpen handler even for a live creator', () => {
+    i18n.changeLanguage('en')
+    render(<OrganizerRow creatorId="u2" name="Kasia" color="#4FC3F7" isModerator={false} />)
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.getByText('Kasia')).toBeInTheDocument()
+  })
+
   it('marks the moderator', () => {
     i18n.changeLanguage('en')
     render(<OrganizerRow creatorId="me" name="Ja" color={null} isModerator onOpen={() => {}} />)

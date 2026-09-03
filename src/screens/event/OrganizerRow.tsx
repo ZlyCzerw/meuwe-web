@@ -25,13 +25,13 @@ export default function OrganizerRow({
   name: string | null | undefined
   color: string | null | undefined
   isModerator: boolean
-  onOpen: (userId: string) => void
+  onOpen?: (userId: string) => void
 }) {
   const { t } = useTranslation()
   const deletedLabels = { deleted: t('account.deletedUser'), unknown: '?' }
   const label = authorLabel(creatorId, name, deletedLabels)
   const initial = authorInitial(creatorId, name, deletedLabels)
-  const open = creatorId ? () => onOpen(creatorId) : undefined
+  const open = creatorId && onOpen ? () => onOpen(creatorId) : undefined
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>

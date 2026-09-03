@@ -657,7 +657,7 @@ function EventSheet({
                 name={event.profiles?.display_name}
                 color={event.profiles?.avatar_color}
                 isModerator={session?.user.id === event.creator_id}
-                onOpen={id => onOpenUser?.(id)}
+                onOpen={onOpenUser}
               />
 
               {/* Edit + End (creator only, while not ended) */}

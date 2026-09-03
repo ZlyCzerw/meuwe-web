@@ -23,6 +23,23 @@ function linkLabel(url: string): string {
   return url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
 }
 
+/**
+ * `link_url` jest wpisywany przez inną osobę i trafia tu jako `href` -
+ * bez tej bramki `javascript:` czy inny niebezpieczny schemat renderowałby
+ * się jako klikalny link. Baza (constraint `profiles_link_url_scheme`)
+ * pilnuje tego samego przy zapisie, to jest druga linia obrony przy render.
+ */
+function safeHttpLink(url: string | null): string | null {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+  } catch {
+    return null
+  }
+  return cleanLink(url)
+}
+
 export default function UserCard({
   userId,
   session,
@@ -78,14 +95,18 @@ export default function UserCard({
 
   const profile = load.state === 'ready' ? load.profile : null
   const color = profile?.avatar_color || C.sky
-  const link = profile?.link_url ? cleanLink(profile.link_url) : null
+  const link = profile ? safeHttpLink(profile.link_url) : null
 
   return (
     <div
       data-testid="user-card-backdrop"
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 320,
+        // 280: nad EventSheet (40) i AppPromoSheet (240), ale pod arkuszem
+        // logowania (300) - gość klikający "+ Obserwuj" musi zobaczyć
+        // logowanie nad kartą, nie pod nią. Nic innego nie otwiera się nad
+        // kartą - isScreenClear liczy userCardOpen jako zajęty ekran.
+        position: 'fixed', inset: 0, zIndex: 280,
         background: 'rgba(45,43,42,0.45)', animation: 'fadeIn 180ms ease',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}

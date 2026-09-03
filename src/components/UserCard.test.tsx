@@ -6,13 +6,13 @@ import type { PublicProfile } from '../lib/types'
 import '../lib/i18n'
 import i18n from 'i18next'
 
-const getPublicProfile = vi.fn<() => Promise<PublicProfile | null>>()
+const getPublicProfile = vi.fn<(id: string) => Promise<PublicProfile | null>>()
 const followUser = vi.fn()
 const unfollowUser = vi.fn()
 const trackClick = vi.fn()
 vi.mock('../lib/supabase', () => ({
   db: {
-    getPublicProfile: () => getPublicProfile(),
+    getPublicProfile: (id: string) => getPublicProfile(id),
     followUser: (...a: unknown[]) => followUser(...a),
     unfollowUser: (...a: unknown[]) => unfollowUser(...a),
     trackClick: (...a: unknown[]) => trackClick(...a),
@@ -50,6 +50,7 @@ describe('UserCard', () => {
     expect(screen.getByText(/12 events/)).toBeInTheDocument()
     expect(screen.getByText(/8 followers/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'example.org/kasia' })).toHaveAttribute('href', 'https://example.org/kasia')
+    expect(getPublicProfile).toHaveBeenCalledWith('u2')
   })
 
   // Puste pole to brak pigułki, nie pigułka z pustym środkiem.
@@ -61,6 +62,22 @@ describe('UserCard', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 
+  // link_url jest wpisywany przez inną osobę - schemat inny niż http(s)
+  // nie może stać się klikalnym linkiem.
+  it('renders no link for a non-http(s) link_url', async () => {
+    getPublicProfile.mockResolvedValue(profile({ link_url: 'javascript:alert(1)' }))
+    render(<UserCard userId="u2" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
+    await screen.findByText('Kasia')
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('renders a link for an http(s) link_url', async () => {
+    getPublicProfile.mockResolvedValue(profile({ link_url: 'http://example.org' }))
+    render(<UserCard userId="u2" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
+    await screen.findByText('Kasia')
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'http://example.org/')
+  })
+
   it('follows optimistically: label and counter change before the request resolves', async () => {
     getPublicProfile.mockResolvedValue(profile())
     render(<UserCard userId="u2" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
@@ -69,6 +86,7 @@ describe('UserCard', () => {
     expect(screen.getByText(/9 followers/)).toBeInTheDocument()
     expect(followUser).toHaveBeenCalledWith('u2')
     expect(trackClick).toHaveBeenCalledWith('follow_user')
+    expect(screen.getByText('You also follow every event this person posts')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Following ✓' })).not.toBeDisabled())
   })
 

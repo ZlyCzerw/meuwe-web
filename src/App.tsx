@@ -705,7 +705,7 @@ export default function App() {
     let remove: (() => void) | undefined
     CapApp.addListener('backButton', () => {
       const s = navLayersRef.current
-      const layerOpen = !!(s.authModal || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
+      const layerOpen = !!(s.authModal || s.userCardId || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
         s.createOpen || s.accountOpen || s.myDataOpen || s.profileOpen ||
         s.screen === 'myEvents' || s.screen === 'followedEvents')
       if (layerOpen) { window.history.back(); return }
