@@ -304,6 +304,23 @@ const pl = {
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
   follow: { follow: 'Obserwuj', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'weźmie udział', followThis: 'wezmą udział', othersFollowOne: 'i {{count}} weźmie udział', othersFollowMany: 'i {{count}} innych weźmie udział' },
+  userCard: {
+    follow: '+ Obserwuj',
+    following: 'Obserwujesz ✓',
+    followingHint: 'Obserwujesz też wszystkie wydarzenia tej osoby',
+    thisIsYou: 'To Ty',
+    eventsCount_one: '{{count}} wydarzenie',
+    eventsCount_few: '{{count}} wydarzenia',
+    eventsCount_many: '{{count}} wydarzeń',
+    eventsCount_other: '{{count}} wydarzeń',
+    followersCount_one: '{{count}} obserwujący',
+    followersCount_few: '{{count}} obserwujących',
+    followersCount_many: '{{count}} obserwujących',
+    followersCount_other: '{{count}} obserwujących',
+    loadFailed: 'Nie udało się wczytać profilu',
+    followFailed: 'Nie udało się zapisać. Spróbuj ponownie',
+    openProfile: 'Otwórz profil: {{name}}',
+  },
   landing: {
     h1: 'meuwe — mapa lokalnych wydarzeń w Twojej okolicy',
     nav: {

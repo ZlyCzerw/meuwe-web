@@ -306,6 +306,23 @@ const es: Resources = {
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
   share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },
   follow: { follow: 'Seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir', followsThis: 'va a ir', followThis: 'van a ir', othersFollowOne: 'y {{count}} más va a ir', othersFollowMany: 'y {{count}} más van a ir' },
+  userCard: {
+    follow: '+ Seguir',
+    following: 'Siguiendo ✓',
+    followingHint: 'También sigues todos los eventos de esta persona',
+    thisIsYou: 'Eres tú',
+    eventsCount_one: '{{count}} evento',
+    eventsCount_few: '{{count}} eventos',
+    eventsCount_many: '{{count}} eventos',
+    eventsCount_other: '{{count}} eventos',
+    followersCount_one: '{{count}} seguidor',
+    followersCount_few: '{{count}} seguidores',
+    followersCount_many: '{{count}} seguidores',
+    followersCount_other: '{{count}} seguidores',
+    loadFailed: 'No se pudo cargar el perfil',
+    followFailed: 'No se pudo guardar. Inténtalo de nuevo',
+    openProfile: 'Abrir perfil: {{name}}',
+  },
   landing: {
     h1: 'meuwe — mapa de eventos locales cerca de ti',
     nav: {

@@ -37,6 +37,13 @@ const LANDING_COOKIES_KEYS = [
   'necessary', 'necessaryDesc', 'analytics', 'analyticsDesc', 'privacy',
 ] as const
 
+const USER_CARD_KEYS = [
+  'follow', 'following', 'followingHint', 'thisIsYou',
+  'eventsCount_one', 'eventsCount_few', 'eventsCount_many', 'eventsCount_other',
+  'followersCount_one', 'followersCount_few', 'followersCount_many', 'followersCount_other',
+  'loadFailed', 'followFailed', 'openProfile',
+] as const
+
 const LOCALES = { pl, en, es, de, sl }
 
 describe('locale parity', () => {
@@ -109,6 +116,18 @@ describe('cookie consent', () => {
     for (const key of LANDING_COOKIES_KEYS) {
       expect(typeof cookies[key]).toBe('string')
       expect(cookies[key]).not.toBe('')
+    }
+  })
+})
+
+describe('user card', () => {
+  // Karta cudzego profilu to pierwszy ekran, na którym ktoś ocenia obcą osobę -
+  // surowy klucz zamiast "Obserwuj" podważa i kartę, i tę osobę.
+  it.each(Object.entries(LOCALES))('%s carries every userCard key', (_name, dict) => {
+    const userCard = (dict as { userCard?: Record<string, unknown> }).userCard ?? {}
+    for (const key of USER_CARD_KEYS) {
+      expect(typeof userCard[key]).toBe('string')
+      expect(userCard[key]).not.toBe('')
     }
   })
 })

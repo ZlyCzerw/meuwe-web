@@ -306,6 +306,23 @@ const en: Resources = {
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
   follow: { follow: 'Follow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'is going', followThis: 'are going', othersFollowOne: 'and {{count}} other is going', othersFollowMany: 'and {{count}} others are going' },
+  userCard: {
+    follow: '+ Follow',
+    following: 'Following ✓',
+    followingHint: 'You also follow every event this person posts',
+    thisIsYou: 'This is you',
+    eventsCount_one: '{{count}} event',
+    eventsCount_few: '{{count}} events',
+    eventsCount_many: '{{count}} events',
+    eventsCount_other: '{{count}} events',
+    followersCount_one: '{{count}} follower',
+    followersCount_few: '{{count}} followers',
+    followersCount_many: '{{count}} followers',
+    followersCount_other: '{{count}} followers',
+    loadFailed: 'Could not load this profile',
+    followFailed: 'Could not save. Try again',
+    openProfile: 'Open profile: {{name}}',
+  },
   landing: {
     h1: 'meuwe — a map of local events happening near you',
     nav: {

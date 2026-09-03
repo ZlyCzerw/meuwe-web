@@ -306,6 +306,23 @@ const sl: Resources = {
   status: { live: 'V živo', upcoming: 'Kmalu', extended: 'Še aktivno', ended: 'Končano' },
   share: { share: 'Deli', linkCopied: 'Povezava kopirana!' },
   follow: { follow: 'Spremljaj', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'gre zraven', followThis: 'gredo zraven', othersFollowOne: 'in še {{count}} drug gre zraven', othersFollowMany: 'in še {{count}} drugih gre zraven' },
+  userCard: {
+    follow: '+ Spremljaj',
+    following: 'Spremljaš ✓',
+    followingHint: 'Spremljaš tudi vse dogodke te osebe',
+    thisIsYou: 'To si ti',
+    eventsCount_one: '{{count}} dogodek',
+    eventsCount_few: '{{count}} dogodki',
+    eventsCount_many: '{{count}} dogodkov',
+    eventsCount_other: '{{count}} dogodkov',
+    followersCount_one: '{{count}} sledilec',
+    followersCount_few: '{{count}} sledilci',
+    followersCount_many: '{{count}} sledilcev',
+    followersCount_other: '{{count}} sledilcev',
+    loadFailed: 'Profila ni bilo mogoče naložiti',
+    followFailed: 'Shranjevanje ni uspelo. Poskusi znova',
+    openProfile: 'Odpri profil: {{name}}',
+  },
   landing: {
     h1: 'meuwe — zemljevid lokalnih dogodkov v tvoji okolici',
     nav: {

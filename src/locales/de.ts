@@ -306,6 +306,23 @@ const de: Resources = {
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
   follow: { follow: 'Folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'ist dabei', followThis: 'sind dabei', othersFollowOne: 'und {{count}} weiterer ist dabei', othersFollowMany: 'und {{count}} weitere sind dabei' },
+  userCard: {
+    follow: '+ Folgen',
+    following: 'Du folgst ✓',
+    followingHint: 'Du folgst auch allen Veranstaltungen dieser Person',
+    thisIsYou: 'Das bist du',
+    eventsCount_one: '{{count}} Veranstaltung',
+    eventsCount_few: '{{count}} Veranstaltungen',
+    eventsCount_many: '{{count}} Veranstaltungen',
+    eventsCount_other: '{{count}} Veranstaltungen',
+    followersCount_one: '{{count}} Follower',
+    followersCount_few: '{{count}} Follower',
+    followersCount_many: '{{count}} Follower',
+    followersCount_other: '{{count}} Follower',
+    loadFailed: 'Profil konnte nicht geladen werden',
+    followFailed: 'Speichern fehlgeschlagen. Versuch es noch einmal',
+    openProfile: 'Profil öffnen: {{name}}',
+  },
   landing: {
     h1: 'meuwe — Karte lokaler Events in deiner Nähe',
     nav: {
