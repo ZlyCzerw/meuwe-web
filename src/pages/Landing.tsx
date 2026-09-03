@@ -8,6 +8,7 @@ import { FeaturesSection } from '../components/landing/sections/FeaturesSection'
 import { PrivateSection } from '../components/landing/sections/PrivateSection'
 import { DownloadCTASection } from '../components/landing/sections/DownloadCTASection'
 import { LandingFooter } from '../components/landing/sections/LandingFooter'
+import { CookieConsent } from '../components/landing/CookieConsent'
 
 interface Props {
   onSignIn: (mode: 'google' | 'apple' | 'skip') => void
@@ -71,6 +72,7 @@ export function Landing({ onSignIn }: Props) {
       <PrivateSection />
       <DownloadCTASection />
       <LandingFooter />
+      <CookieConsent />
     </main>
   )
 }

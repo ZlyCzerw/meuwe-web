@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LandingNav } from '../components/landing/LandingNav'
 import { LandingFooter } from '../components/landing/sections/LandingFooter'
+import { CookieConsent } from '../components/landing/CookieConsent'
 import { renderArticle } from '../lib/renderArticle'
 import { supabase } from '../lib/supabase'
 import { C, F } from '../lib/tokens'
@@ -313,6 +314,7 @@ export default function Blog() {
       </div>
 
       <LandingFooter />
+      <CookieConsent />
     </div>
   )
 }

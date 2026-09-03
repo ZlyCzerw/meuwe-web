@@ -158,14 +158,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap"/>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DMHV2VVXHF"></script>
+    <!-- Google tag (gtag.js) w Consent Mode v2. Stan domyślny musi paść ZANIM
+         gtag.js się załaduje, dlatego inline script stoi przed tagiem async.
+         Ten inline script jest pinowany hashem w public/_headers (CSP) —
+         po każdej zmianie tutaj odpal `npx vitest run src/csp.test.ts`,
+         test wypisze, czego się spodziewa. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      // Bez zgody Google dostaje tylko anonimowe pingi: bez cookies i bez
+      // identyfikatora. Zgodę zapisuje src/lib/consent.ts pod tym samym kluczem.
+      // Natywna apka (Capacitor) nie ma banera, więc mierzy się jak dotąd.
+      var meuweAnalytics = 'denied';
+      try {
+        var c = JSON.parse(localStorage.getItem('meuwe_consent') || 'null');
+        var native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        if ((c && c.v === 1 && c.analytics === true) || native) meuweAnalytics = 'granted';
+      } catch (e) {}
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: meuweAnalytics
+      });
       gtag('js', new Date());
       gtag('config', 'G-DMHV2VVXHF');
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DMHV2VVXHF"></script>
   </head>
   <body>
     <!-- Odpowiednik prerenderu dla robotów, które nie wykonują JS. React montuje

@@ -157,12 +157,14 @@
   margin: 0 0 18px;
 }
 .lp-footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; }
-.lp-footer-col a {
-  font-size: 14px; font-weight: 600;
+.lp-footer-col a, .lp-footer-linkbtn {
+  font-family: inherit; font-size: 14px; font-weight: 600;
   color: rgba(255,246,236,0.5); text-decoration: none;
   transition: color 0.2s; cursor: pointer;
 }
-.lp-footer-col a:hover { color: rgba(255,246,236,0.9); }
+/* Przycisk w stopce wygląda jak link — otwiera ustawienia cookies, nie nawiguje. */
+.lp-footer-linkbtn { background: transparent; border: none; padding: 0; text-align: left; }
+.lp-footer-col a:hover, .lp-footer-linkbtn:hover { color: rgba(255,246,236,0.9); }
 .lp-footer-bottom {
   border-top: 1px solid rgba(255,246,236,0.07);
   padding-top: 28px; display: flex; justify-content: space-between;
@@ -396,4 +398,89 @@
     height: 22px !important;
     border-radius: 0 0 14px 14px !important;
   }
+}
+
+/* ── COOKIE CONSENT ────────────────────────────────────────── */
+@keyframes lp-cookie-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lp-cookie {
+  position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 500; width: 360px; max-width: calc(100vw - 40px);
+  box-sizing: border-box; padding: 20px 20px 16px;
+  background: #fff; border: 1.5px solid rgba(45,43,42,0.1);
+  border-radius: 20px; box-shadow: 0 12px 40px rgba(45,43,42,0.14);
+  font-family: "Nunito", system-ui, sans-serif; color: #2D2B2A;
+  /* Wjeżdża z opóźnieniem, żeby nie skakać razem z pierwszym renderem hero. */
+  animation: lp-cookie-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.9s both;
+}
+.lp-cookie.settings { animation-delay: 0s; }
+.lp-cookie-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.lp-cookie-title {
+  font-family: "Hanken Grotesk", system-ui, sans-serif;
+  font-weight: 900; font-size: 16px; letter-spacing: -0.3px; line-height: 1.25;
+}
+.lp-cookie-close {
+  flex-shrink: 0; width: 28px; height: 28px; margin: -6px -8px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; border-radius: 50%;
+  color: #8A8580; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.lp-cookie-close:hover { background: #FFF0DF; color: #2D2B2A; }
+.lp-cookie-body {
+  margin: 8px 0 14px; font-weight: 600; font-size: 13.5px; line-height: 1.5; color: #6B6560;
+}
+.lp-cookie-body a { color: #2D2B2A; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.lp-cookie-body a:hover { color: #FF7A45; }
+.lp-cookie-actions { display: flex; gap: 8px; }
+.lp-cookie-btn {
+  flex: 1; min-width: 0; padding: 10px 14px;
+  font-family: "Nunito", system-ui, sans-serif; font-weight: 800; font-size: 13.5px;
+  color: #2D2B2A; background: transparent;
+  border: 1.5px solid rgba(45,43,42,0.18); border-radius: 999px;
+  cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+.lp-cookie-btn:hover { background: #FFF0DF; border-color: rgba(45,43,42,0.3); }
+.lp-cookie-btn.primary { background: #2D2B2A; color: #FFF6EC; border-color: #2D2B2A; }
+.lp-cookie-btn.primary:hover { background: #FF7A45; border-color: #FF7A45; transform: scale(1.03); }
+.lp-cookie-link {
+  display: inline-block; margin-top: 10px; padding: 0;
+  background: transparent; border: none; cursor: pointer;
+  font-family: "Nunito", system-ui, sans-serif; font-weight: 700; font-size: 12.5px;
+  color: #8A8580; text-decoration: none; transition: color 0.15s;
+}
+.lp-cookie-link:hover { color: #2D2B2A; text-decoration: underline; text-underline-offset: 2px; }
+.lp-cookie-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px 0; border-top: 1px solid rgba(45,43,42,0.08);
+}
+.lp-cookie-head + .lp-cookie-row { margin-top: 10px; }
+.lp-cookie-row + .lp-cookie-actions { margin-top: 4px; }
+.lp-cookie-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lp-cookie-row-label { font-weight: 800; font-size: 14px; }
+.lp-cookie-row-desc { font-weight: 600; font-size: 12.5px; line-height: 1.45; color: #6B6560; }
+.lp-cookie-switch {
+  flex-shrink: 0; position: relative; width: 42px; height: 24px; padding: 0;
+  background: rgba(45,43,42,0.18); border: none; border-radius: 999px;
+  cursor: pointer; transition: background 0.2s;
+}
+.lp-cookie-switch.on { background: #FF7A45; }
+.lp-cookie-switch:disabled { cursor: default; opacity: 0.55; }
+.lp-cookie-knob {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(45,43,42,0.25);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.lp-cookie-switch.on .lp-cookie-knob { transform: translateX(18px); }
+@media (max-width: 560px) {
+  .lp-cookie {
+    right: 12px; left: 12px; width: auto; max-width: none;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 18px 16px 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-cookie { animation: none; }
+  .lp-cookie-knob, .lp-cookie-switch, .lp-cookie-btn { transition: none; }
 }

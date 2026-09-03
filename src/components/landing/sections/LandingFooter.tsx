@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import '../landing.css'
 import { MeuweLogo } from '../../MeuweLogo'
+import { openCookieSettings } from '../../../lib/consent'
 
 export function LandingFooter() {
   const { t } = useTranslation()
@@ -37,7 +38,7 @@ export function LandingFooter() {
             <ul>
               <li><a href="/terms.html">{t('landing.footer.terms')}</a></li>
               <li><a href="/privacy.html">{t('landing.footer.privacy')}</a></li>
-              <li><a href="#">{t('landing.footer.cookies')}</a></li>
+              <li><button type="button" className="lp-footer-linkbtn" onClick={openCookieSettings}>{t('landing.footer.cookies')}</button></li>
             </ul>
           </div>
         </div>

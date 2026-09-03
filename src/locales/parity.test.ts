@@ -32,6 +32,11 @@ const MY_DATA_KEYS = [
   'error_tooLong', 'error_invalidUrl', 'error_outOfRange',
 ] as const
 
+const LANDING_COOKIES_KEYS = [
+  'title', 'body', 'acceptAll', 'necessaryOnly', 'customize', 'save', 'close',
+  'necessary', 'necessaryDesc', 'analytics', 'analyticsDesc', 'privacy',
+] as const
+
 const LOCALES = { pl, en, es, de, sl }
 
 describe('locale parity', () => {
@@ -93,5 +98,17 @@ describe('my data panel', () => {
     expect(typeof d.account.myData).toBe('string')
     // Modal nazwy zniknął; jego klucze nie mają prawa zostać jako martwe.
     expect(d.account.nicknameTitle).toBeUndefined()
+  })
+})
+
+describe('cookie consent', () => {
+  // Baner zgody to pierwsza rzecz, jaką widzi nowy gość — surowy klucz zamiast
+  // tekstu na przycisku „Akceptuj" podważa całą resztę strony.
+  it.each(Object.entries(LOCALES))('%s carries every cookie consent key', (_name, dict) => {
+    const cookies = (dict as { landing: { cookies?: Record<string, unknown> } }).landing.cookies ?? {}
+    for (const key of LANDING_COOKIES_KEYS) {
+      expect(typeof cookies[key]).toBe('string')
+      expect(cookies[key]).not.toBe('')
+    }
   })
 })
