@@ -1,15 +1,45 @@
 import React from 'react';
 import { C, INK, BLOBS } from '../lib/tokens';
 
-// Rączki i nóżki trzymanego bloba: punkt zaczepienia na brzegu ciała i koniec
-// kończyny, w jednostkach viewBoxa ciała (0–100). Wysuwają się skalowaniem od
-// zaczepu, więc wyglądają, jakby wyrastały z bloba, a nie pojawiały znikąd.
-const LIMBS: { ox: number; oy: number; ex: number; ey: number }[] = [
-  { ox: 12, oy: 50, ex: -30, ey: 26 },  // lewa rączka
-  { ox: 88, oy: 50, ex: 130, ey: 26 },  // prawa rączka
-  { ox: 36, oy: 88, ex: 16, ey: 130 },  // lewa nóżka
-  { ox: 64, oy: 88, ex: 84, ey: 130 },  // prawa nóżka
+// Rączki i nóżki trzymanego bloba, w jednostkach viewBoxa ciała (0–100).
+// Rączki krótkie, rozłożone szeroko, z trzema palcami. Nóżki w kształcie L:
+// pionowa nóżka i pozioma stópka skierowana na zewnątrz. Wysuwają się
+// skalowaniem od zaczepu, więc wyglądają, jakby wyrastały z bloba.
+type Limb = { ox: number; oy: number; ex: number; ey: number; kind: 'hand' | 'foot' }
+const LIMBS: Limb[] = [
+  { ox: 12, oy: 50, ex: -9, ey: 38, kind: 'hand' },   // lewa rączka
+  { ox: 88, oy: 50, ex: 109, ey: 38, kind: 'hand' },  // prawa rączka
+  { ox: 36, oy: 88, ex: 36, ey: 108, kind: 'foot' },  // lewa nóżka
+  { ox: 64, oy: 88, ex: 64, ey: 108, kind: 'foot' },  // prawa nóżka
 ];
+
+const FINGER_LEN = 10;
+const FINGER_SPREAD = (32 * Math.PI) / 180;
+const FOOT_LEN = 10;
+
+function LimbTip({ l }: { l: Limb }) {
+  if (l.kind === 'hand') {
+    const dir = Math.atan2(l.ey - l.oy, l.ex - l.ox);
+    return (
+      <>
+        {[-1, 0, 1].map(k => {
+          const a = dir + k * FINGER_SPREAD;
+          return (
+            <line key={k} x1={l.ex} y1={l.ey}
+              x2={l.ex + Math.cos(a) * FINGER_LEN} y2={l.ey + Math.sin(a) * FINGER_LEN}
+              stroke={INK} strokeWidth={3.2} strokeLinecap="round" />
+          );
+        })}
+      </>
+    );
+  }
+  // Stópka: pozioma kreska od pięty na zewnątrz ciała.
+  const outward = l.ox < 50 ? -1 : 1;
+  return (
+    <line x1={l.ex} y1={l.ey} x2={l.ex + outward * FOOT_LEN} y2={l.ey}
+      stroke={INK} strokeWidth={4.5} strokeLinecap="round" />
+  );
+}
 
 const LIMB_EASE = 'cubic-bezier(.34,1.56,.64,1)';
 
@@ -50,8 +80,8 @@ export default function OrganicBlob({
               transition: `transform 180ms ${held ? LIMB_EASE : 'ease-in'}`,
             }}
           >
-            <line x1={l.ox} y1={l.oy} x2={l.ex} y2={l.ey} stroke={INK} strokeWidth={5} strokeLinecap="round" />
-            <circle cx={l.ex} cy={l.ey} r={5.5} fill={INK} />
+            <line x1={l.ox} y1={l.oy} x2={l.ex} y2={l.ey} stroke={INK} strokeWidth={4.5} strokeLinecap="round" />
+            <LimbTip l={l} />
           </g>
         ))}
       </svg>
