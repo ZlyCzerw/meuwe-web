@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import type React from 'react'
 import { useTranslation } from 'react-i18next'
 import OrganicBlob from '../components/OrganicBlob'
 import BlobFace from '../components/BlobFace'
 import { MeuweLogo } from '../components/MeuweLogo'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
+import { BURST_AT } from '../hooks/blobPhysics'
 import { db } from '../lib/supabase'
 import { isNativePlatform, mobileOS } from '../lib/platform'
 import StoreBadge from '../components/StoreBadge'
@@ -33,9 +35,25 @@ function noticeDismissed(): boolean {
  */
 const CTA_MAX_W = 304
 
+// Ucieczka spod kursora ma sens tylko tam, gdzie kursor istnieje. Na dotyku
+// „hover" to palec już na ekranie, więc blob i tak jest złapany.
+const HOVER_CAPABLE = typeof window !== 'undefined'
+  && typeof window.matchMedia === 'function'
+  && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
+/** Współrzędne zdarzenia w układzie warstwy blobów (na landingu hero nie zaczyna się w 0,0 okna). */
+function localTo(layer: HTMLElement | null, e: React.PointerEvent): { x: number; y: number } {
+  const r = layer?.getBoundingClientRect()
+  return { x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0) }
+}
+
 export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'apple' | 'skip') => void }) {
   const { t } = useTranslation()
-  const blobs = useBlobPhysics(6)
+  const { blobs, layerRef, grab, drag, release, setPointer } = useBlobPhysics()
+  const local = (e: React.PointerEvent) => {
+    const p = localTo(layerRef.current, e)
+    return [p.x, p.y] as const
+  }
   // Wbudowana przeglądarka Facebooka i spółki: sprawdzone raz, przy montowaniu,
   // bo user agent nie zmienia się w trakcie życia ekranu.
   const [webviewNotice, setWebviewNotice] = useState(() => isInAppBrowser() && !noticeDismissed())
@@ -46,31 +64,63 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
   const native = isNativePlatform()
 
   return (
-    <div style={{
+    <div
+      onPointerMove={HOVER_CAPABLE ? (e) => setPointer(localTo(layerRef.current, e)) : undefined}
+      onPointerLeave={HOVER_CAPABLE ? () => setPointer(null) : undefined}
+      style={{
       ...(native ? { position: 'fixed', inset: 0 } : { width: '100%', height: '100%', position: 'relative' }),
       background: `linear-gradient(180deg,${C.cream} 0%,#FFF1E0 40%,#FFE8DC 75%,#FFE0E8 100%)`,
       overflow: 'hidden', display: 'flex', flexDirection: 'column',
     }}>
-      {/* Physics blobs — behind all UI (zIndex 0) */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {blobs.map(b => (
-          <div
-            key={b.id}
-            style={{
-              position: 'absolute',
-              left: b.x - b.size / 2,
-              top: b.y - b.size / 2,
-            }}
-          >
-            <OrganicBlob
-              size={b.size}
-              color={b.color}
-              idx={b.blobIdx}
-              animated
-              face={<BlobFace size={b.size * 0.55} />}
-            />
-          </div>
-        ))}
+      {/* Physics blobs — behind all UI (zIndex 0). The layer itself lets touches
+          through; only the blobs catch them, so buttons above stay untouched. */}
+      <div
+        ref={layerRef}
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}
+      >
+        {blobs.map(b => {
+          const held = b.state === 'held'
+          const grabbable = b.state === 'free' && !b.big
+          // Duży: krótki „oddech" po wchłonięciu, przysiad po odbiciu od ściany.
+          const bodyTransform = b.pose === 'bump' ? 'scale(1.08)' : b.pose === 'squash' ? 'scale(0.93)' : 'scale(1)'
+          return (
+            <div
+              key={b.id}
+              onPointerDown={grabbable ? (e) => {
+                if (grab(b.id, ...local(e))) {
+                  e.preventDefault()
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                }
+              } : undefined}
+              onPointerMove={held ? (e) => drag(...local(e)) : undefined}
+              onPointerUp={held ? release : undefined}
+              onPointerCancel={held ? release : undefined}
+              style={{
+                position: 'absolute',
+                left: b.x - b.size / 2 + b.jitterX,
+                top: b.y - b.size / 2 + b.jitterY,
+                zIndex: held ? 2 : b.big ? 1 : 0,
+                pointerEvents: grabbable || held ? 'auto' : 'none',
+                cursor: held ? 'grabbing' : grabbable ? 'grab' : 'default',
+                touchAction: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                transform: bodyTransform,
+                transition: 'transform 120ms ease-out',
+              }}
+            >
+              <OrganicBlob
+                size={b.size}
+                color={b.color}
+                idx={b.blobIdx}
+                animated={b.state !== 'absorbing'}
+                held={held}
+                face={<BlobFace size={b.size * 0.55} mood={held ? 'surprised' : b.mass >= BURST_AT ? 'surprised' : 'happy'} />}
+              />
+            </div>
+          )
+        })}
       </div>
 
       {/* Logo + tagline */}

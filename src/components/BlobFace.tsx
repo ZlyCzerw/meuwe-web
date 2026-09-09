@@ -1,6 +1,6 @@
 import { INK } from '../lib/tokens';
 
-export default function BlobFace({ size = 28, mood = 'happy' }: { size?: number; mood?: 'happy' | 'sleepy' }) {
+export default function BlobFace({ size = 28, mood = 'happy' }: { size?: number; mood?: 'happy' | 'sleepy' | 'surprised' }) {
   const eyeY = mood === 'sleepy' ? 11 : 10;
   const eyes =
     mood === 'sleepy' ? (
@@ -17,7 +17,10 @@ export default function BlobFace({ size = 28, mood = 'happy' }: { size?: number;
   return (
     <svg width={size} height={size * 0.9} viewBox="0 0 36 28" style={{ display: 'block' }}>
       {eyes}
-      <path d="M11 18 q7 6 14 0" stroke={INK} strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      {mood === 'surprised'
+        // Otwarta buzia do „blee" — blob właśnie wylądował pod palcem.
+        ? <ellipse cx="18" cy="19" rx="3.2" ry="4.2" fill={INK} />
+        : <path d="M11 18 q7 6 14 0" stroke={INK} strokeWidth="2.4" fill="none" strokeLinecap="round" />}
     </svg>
   );
 }
