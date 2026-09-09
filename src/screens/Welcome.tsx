@@ -123,11 +123,14 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         })}
       </div>
 
-      {/* Logo + tagline */}
+      {/* Logo + tagline. Oba kontenery UI leżą nad blobami i zajmują całą
+          szerokość, więc same przepuszczają kliknięcia (pointerEvents: none),
+          a łapią je tylko ich klikalne dzieci. Inaczej puste tło między logo
+          a przyciskami zasłaniałoby bloby przed myszką. */}
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '0 32px', position: 'relative', zIndex: 1,
+        padding: '0 32px', position: 'relative', zIndex: 1, pointerEvents: 'none',
       }}>
         <MeuweLogo height={62} animated />
         <div style={{
@@ -143,11 +146,12 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
       <div style={{
         // Native has no store badges below, so it keeps the roomier bottom inset.
         padding: `0 24px calc(${native ? 52 : 24}px + env(safe-area-inset-bottom))`,
-        position: 'relative', zIndex: 1,
+        position: 'relative', zIndex: 1, pointerEvents: 'none',
       }}>
         <button
           onClick={() => onSignIn('google')}
           style={{
+            pointerEvents: 'auto',
             width: '100%', maxWidth: CTA_MAX_W, margin: '0 auto',
             padding: '16px 24px', borderRadius: 999,
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
@@ -166,6 +170,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         <button
           onClick={() => onSignIn('apple')}
           style={{
+            pointerEvents: 'auto',
             width: '100%', maxWidth: CTA_MAX_W, margin: '12px auto 0',
             padding: '16px 24px', borderRadius: 999,
             background: '#000', border: `2.5px solid ${INK}`, boxShadow: `0 4px 0 ${INK}33`,
@@ -187,12 +192,13 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
             // system browser can't open (target=_blank → "Failed to open URL" Code=115).
             // Point at the absolute hosted page so Capacitor opens it in the system browser.
             const termsHref = native ? 'https://meuwe.eu/terms.html' : '/terms.html'
-            return <>{before}<a href={termsHref} target="_blank" rel="noopener noreferrer" style={{ color: C.inkSoft, textDecoration: 'underline' }}>{word}</a>{after}</>
+            return <>{before}<a href={termsHref} target="_blank" rel="noopener noreferrer" style={{ color: C.inkSoft, textDecoration: 'underline', pointerEvents: 'auto' }}>{word}</a>{after}</>
           })()}
         </div>
         <button
           onClick={() => { db.trackClick('browse_guest'); onSignIn('skip') }}
           style={{
+            pointerEvents: 'auto',
             marginTop: 12, width: '100%', padding: '12px',
             fontSize: 14, color: C.inkSoft, fontWeight: 700, textAlign: 'center',
             background: 'none', border: 'none', cursor: 'pointer',
@@ -207,7 +213,7 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
           const os = mobileOS()
           const shown = os ? [os] : (['ios', 'android'] as const)
           return (
-            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', pointerEvents: 'auto' }}>
               {shown.map(s => <StoreBadge key={s} os={s} />)}
             </div>
           )
