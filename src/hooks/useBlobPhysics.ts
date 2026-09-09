@@ -63,7 +63,9 @@ export function useBlobPhysics(): BlobControls {
       const now = Date.now()
       const { w, h } = size()
 
-      const { blobs: stepped, events } = stepBlobs(blobsRef.current, now, { w, h, pointer: pointerRef.current })
+      const { blobs: stepped, events } = stepBlobs(blobsRef.current, now, {
+        w, h, pointer: pointerRef.current, allocId: () => ++nextId.current,
+      })
       const alive = stepped.filter(b => !isOffScreen(b, w, h))
       commit(alive)
 

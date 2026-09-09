@@ -6,7 +6,8 @@ import BlobFace from '../components/BlobFace'
 import { MeuweLogo } from '../components/MeuweLogo'
 import { C, INK, F } from '../lib/tokens'
 import { useBlobPhysics } from '../hooks/useBlobPhysics'
-import { BURST_AT } from '../hooks/blobPhysics'
+import { isAttached } from '../hooks/blobPhysics'
+import BlobLiquid, { VISUAL_SCALE } from '../components/BlobLiquid'
 import { db } from '../lib/supabase'
 import { isNativePlatform, mobileOS } from '../lib/platform'
 import StoreBadge from '../components/StoreBadge'
@@ -78,11 +79,11 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         ref={layerRef}
         style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}
       >
-        {blobs.map(b => {
+        {blobs.filter(b => !b.big && !isAttached(b)).map(b => {
           const held = b.state === 'held'
-          const grabbable = b.state === 'free' && !b.big
-          // Duży: krótki „oddech" po wchłonięciu, przysiad po odbiciu od ściany.
-          const bodyTransform = b.pose === 'bump' ? 'scale(1.08)' : b.pose === 'squash' ? 'scale(0.93)' : 'scale(1)'
+          const grabbable = b.state === 'free'
+          // Fizyczna średnica to widoczna średnica (patrz VISUAL_SCALE w BlobLiquid).
+          const s = b.size * VISUAL_SCALE
           return (
             <div
               key={b.id}
@@ -97,30 +98,30 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
               onPointerCancel={held ? release : undefined}
               style={{
                 position: 'absolute',
-                left: b.x - b.size / 2 + b.jitterX,
-                top: b.y - b.size / 2 + b.jitterY,
-                zIndex: held ? 2 : b.big ? 1 : 0,
+                left: b.x - s / 2,
+                top: b.y - s / 2,
+                zIndex: held ? 2 : 0,
                 pointerEvents: grabbable || held ? 'auto' : 'none',
                 cursor: held ? 'grabbing' : grabbable ? 'grab' : 'default',
                 touchAction: 'none',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 WebkitTouchCallout: 'none',
-                transform: bodyTransform,
-                transition: 'transform 120ms ease-out',
               }}
             >
               <OrganicBlob
-                size={b.size}
+                size={s}
                 color={b.color}
                 idx={b.blobIdx}
-                animated={b.state !== 'absorbing'}
+                animated
                 held={held}
-                face={<BlobFace size={b.size * 0.55} mood={held ? 'surprised' : b.mass >= BURST_AT ? 'surprised' : 'happy'} />}
+                face={<BlobFace size={s * 0.55} mood={held ? 'surprised' : 'happy'} />}
               />
             </div>
           )
         })}
+        {/* Duży zielony i to, co w niego wpływa — jedna ciecz. */}
+        <BlobLiquid blobs={blobs.filter(b => b.big || isAttached(b))} />
       </div>
 
       {/* Logo + tagline. Oba kontenery UI leżą nad blobami i zajmują całą
