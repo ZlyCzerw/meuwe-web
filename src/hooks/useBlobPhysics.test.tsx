@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useBlobPhysics } from './useBlobPhysics'
-import { MAX_BLOBS } from './blobPhysics'
+import { MAX_BLOBS, BIG_COLOR } from './blobPhysics'
 
 vi.mock('../lib/blobSounds', () => ({
   playBlee: vi.fn(),
@@ -99,6 +99,67 @@ describe('useBlobPhysics', () => {
     expect(b.state).toBe('free')
     expect(Math.hypot(b.vx, b.vy)).toBe(0)
     expect(playWii).not.toHaveBeenCalled()
+  })
+
+  describe('big blob', () => {
+    // Zamień pierwszego bloba w dużego o masie 4 przez chwyt-i-podmianę: hook nie
+    // wystawia settera, więc dosuwamy go stanem z fizyki — czwórka w klastrze.
+    function withBig() {
+      const hook = renderHook(() => useBlobPhysics())
+      const ids = hook.result.current.blobs.slice(0, 4).map(b => b.id)
+      // Ułóż czwórkę w rządek, dokładnie stycznie, przez chwyt i upuszczenie.
+      ids.forEach((id, i) => {
+        act(() => { hook.result.current.grab(id, 100 + i * 40, 300) })
+        act(() => { hook.result.current.release() })
+        tick()
+      })
+      // Zlanie trwa ABSORB_MS; przewiń.
+      for (let i = 0; i < 100; i++) tick()
+      const big = hook.result.current.blobs.find(b => b.big)!
+      return { hook, big }
+    }
+
+    it('melts a touching four into one green blob', () => {
+      const { big, hook } = withBig()
+      expect(big).toBeDefined()
+      expect(big.color).toBe(BIG_COLOR)
+      expect(hook.result.current.blobs.filter(b => b.big)).toHaveLength(1)
+    })
+
+    it('grab keeps the touch offset, looks at the finger and speaks lower', () => {
+      const { big, hook } = withBig()
+      const fx = big.x + 30, fy = big.y
+      let ok = false
+      act(() => { ok = hook.result.current.grab(big.id, fx, fy) })
+      expect(ok).toBe(true)
+      const held = hook.result.current.blobs.find(b => b.id === big.id)!
+      expect(held.state).toBe('held')
+      expect(held.x).toBeCloseTo(big.x)
+      expect(held.look.x).toBeCloseTo(1)
+      expect(held.look.y).toBeCloseTo(0)
+      const pitch = vi.mocked(playBlee).mock.calls.at(-1)![0]
+      expect(pitch).toBeLessThan(1)
+      act(() => { hook.result.current.drag(fx + 50, fy + 20) })
+      const dragged = hook.result.current.blobs.find(b => b.id === big.id)!
+      expect(dragged.x).toBeCloseTo(big.x + 50)
+      expect(dragged.y).toBeCloseTo(big.y + 20)
+    })
+
+    it('a flung big blob is slower than a small one flung the same way', () => {
+      const { big, hook } = withBig()
+      const small = hook.result.current.blobs.find(b => !b.big && b.state === 'free')!
+      const fling = (id: number) => {
+        act(() => { hook.result.current.grab(id, 100, 100) })
+        for (let i = 1; i <= 4; i++) act(() => { vi.advanceTimersByTime(16); hook.result.current.drag(100 + i * 40, 100) })
+        act(() => { hook.result.current.release() })
+        return hook.result.current.blobs.find(b => b.id === id)!.vx
+      }
+      const vSmall = fling(small.id)
+      const vBig = fling(big.id)
+      expect(vBig).toBeGreaterThan(0)
+      expect(vBig).toBeLessThan(vSmall)
+      expect(hook.result.current.blobs.find(b => b.id === big.id)!.look).toEqual({ x: 0, y: 0 })
+    })
   })
 
   it('refills the pool from the edge after a blob is thrown off screen', () => {

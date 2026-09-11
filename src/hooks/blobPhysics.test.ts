@@ -36,6 +36,7 @@ function blob(overrides: Partial<BlobParticle> & { id: number }): BlobParticle {
     state: 'free', mass: 1, big: false, coreSize: size,
     absorbingInto: null, absorbStart: 0, absorbFrom: null, absorbT: 0, wobble: 0,
     burstAt: null, shake: 0, jitterX: 0, jitterY: 0, squashUntil: 0, squash: 0,
+    look: { x: 0, y: 0 },
     ...overrides,
   }
 }
@@ -474,6 +475,25 @@ describe('stepBlobs: big blob', () => {
     const { blobs: [r] } = step([s], 100)
     expect(r.state).toBe('free')
     expect(r.absorbingInto).toBeNull()
+  })
+
+  it('a held big blob still swallows a free small one, but stays put', () => {
+    const g = bigBlob({ id: 1, x: 200, y: 400, state: 'held', vx: 0, vy: 0 })
+    const s = blob({ id: 2, x: 280, y: 400, vx: -3, vy: 0, size: 60 })
+    const { blobs: r } = step([g, s], 0)
+    const big = r.find(b => b.id === 1)!
+    const small = r.find(b => b.id === 2)!
+    expect(small.state).toBe('absorbing')
+    expect(big.state).toBe('held')
+    expect(big.x).toBe(200)
+    expect(big.mass).toBe(5)
+  })
+
+  it('two held blobs never interact', () => {
+    const g = bigBlob({ id: 1, x: 200, y: 400, state: 'held' })
+    const s = blob({ id: 2, x: 250, y: 400, size: 60, state: 'held' })
+    const { blobs: r } = step([g, s], 0)
+    expect(r.find(b => b.id === 2)!.state).toBe('held')
   })
 
   it('does not absorb a held blob', () => {

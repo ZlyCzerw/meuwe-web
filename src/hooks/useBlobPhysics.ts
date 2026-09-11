@@ -13,13 +13,23 @@ const WII_MIN_SPEED = CRUISE_MAX * 2
 /** Ile ostatnich pozycji palca pamiętamy do wyliczenia prędkości rzutu. */
 const SAMPLE_KEEP = 10
 
-type Held = { id: number; samples: PointerSample[] }
+/**
+ * Trzymany blob. Mały skacze środkiem pod palec; duży jedzie z zachowanym
+ * przesunięciem od miejsca dotknięcia (offX/offY = środek − palec), bo skok
+ * dwustupikselowego ciała pod palec wyglądałby jak teleport.
+ */
+type Held = { id: number; samples: PointerSample[]; offX: number; offY: number; big: boolean }
+
+function lookAt(dx: number, dy: number): { x: number; y: number } {
+  const d = Math.hypot(dx, dy)
+  return d < 1 ? { x: 0, y: 0 } : { x: dx / d, y: dy / d }
+}
 
 export type BlobControls = {
   blobs: BlobParticle[]
   /** Warstwa, w której żyją bloby; wyznacza ściany i układ współrzędnych. */
   layerRef: React.RefObject<HTMLDivElement | null>
-  /** Złap bloba pod palcem. Zwraca false, gdy tego nie da się złapać (duży, wchłaniany…). */
+  /** Złap bloba pod palcem. Zwraca false, gdy tego nie da się złapać (wchłaniany, odłamek…). */
   grab: (id: number, x: number, y: number) => boolean
   drag: (x: number, y: number) => void
   release: () => void
@@ -102,12 +112,18 @@ export function useBlobPhysics(): BlobControls {
   const grab = useCallback((id: number, x: number, y: number): boolean => {
     if (heldRef.current) return false
     const target = blobsRef.current.find(b => b.id === id)
-    if (!target || target.state !== 'free' || target.big) return false
-    heldRef.current = { id, samples: [{ x, y, t: Date.now() }] }
+    if (!target || target.state !== 'free') return false
+    const offX = target.big ? target.x - x : 0
+    const offY = target.big ? target.y - y : 0
+    heldRef.current = { id, samples: [{ x, y, t: Date.now() }], offX, offY, big: target.big }
     commit(blobsRef.current.map(b => b.id === id
-      ? { ...b, x, y, vx: 0, vy: 0, state: 'held', clusterId: null, clusterUntil: 0 }
+      ? {
+        ...b, x: x + offX, y: y + offY, vx: 0, vy: 0, state: 'held',
+        clusterId: null, clusterUntil: 0, look: lookAt(-offX, -offY),
+      }
       : b))
-    playBlee()
+    // Im cięższy, tym niższy głosik.
+    playBlee(Math.max(0.3, 1 / Math.sqrt(target.mass)))
     return true
   }, [])
 
@@ -116,15 +132,21 @@ export function useBlobPhysics(): BlobControls {
     if (!held) return
     held.samples.push({ x, y, t: Date.now() })
     if (held.samples.length > SAMPLE_KEEP) held.samples.shift()
-    commit(blobsRef.current.map(b => b.id === held.id ? { ...b, x, y } : b))
+    commit(blobsRef.current.map(b => b.id === held.id
+      ? { ...b, x: x + held.offX, y: y + held.offY, look: lookAt(-held.offX, -held.offY) }
+      : b))
   }, [])
 
   const release = useCallback(() => {
     const held = heldRef.current
     if (!held) return
     heldRef.current = null
-    const { vx, vy } = flingVelocity(held.samples, Date.now())
-    commit(blobsRef.current.map(b => b.id === held.id ? { ...b, vx, vy, state: 'free' } : b))
+    const fling = flingVelocity(held.samples, Date.now())
+    const target = blobsRef.current.find(b => b.id === held.id)
+    // Ciężki leci ospale: ten sam ruch palca daje prędkość podzieloną przez pierwiastek z masy.
+    const k = target ? 1 / Math.sqrt(target.mass) : 1
+    const vx = fling.vx * k, vy = fling.vy * k
+    commit(blobsRef.current.map(b => b.id === held.id ? { ...b, vx, vy, state: 'free', look: { x: 0, y: 0 } } : b))
     if (Math.hypot(vx, vy) >= WII_MIN_SPEED) playWii()
   }, [])
 

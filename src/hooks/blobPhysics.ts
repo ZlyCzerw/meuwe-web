@@ -90,6 +90,8 @@ export type BlobParticle = {
   squashUntil: number
   /** …i jak mocno w tej klatce (0–1). */
   squash: number
+  /** Trzymany duży: kierunek od środka do palca (znormalizowany), oczy patrzą tam. */
+  look: { x: number; y: number }
 }
 
 export type BlobEnv = {
@@ -139,6 +141,7 @@ function base(id: number, size: number): Omit<BlobParticle, 'x' | 'y' | 'vx' | '
     jitterY: 0,
     squashUntil: 0,
     squash: 0,
+    look: { x: 0, y: 0 },
   }
 }
 
@@ -229,8 +232,15 @@ function unpair(blob: BlobParticle): BlobParticle {
   }
 }
 
-function collidable(b: BlobParticle): boolean {
-  return b.state === 'free'
+/**
+ * Wolne bloby zderzają się ze sobą. Trzymany duży też łapie wolne małe — można go
+ * trzymać i „karmić" — ale trzymany mały jest poza grą, a dwa trzymane nigdy.
+ */
+function canCollide(a: BlobParticle, b: BlobParticle): boolean {
+  if (a.state === 'free' && b.state === 'free') return true
+  const heldBig = (x: BlobParticle) => x.state === 'held' && x.big
+  const freeSmall = (x: BlobParticle) => x.state === 'free' && !x.big
+  return (heldBig(a) && freeSmall(b)) || (heldBig(b) && freeSmall(a))
 }
 
 /** Przyklejony do dużego: wchłaniany albo zlewający się w czwórce. */
@@ -421,7 +431,7 @@ export function stepBlobs(
   for (let i = 0; i < next.length; i++) {
     for (let j = i + 1; j < next.length; j++) {
       const a = next[i], b = next[j]
-      if (!collidable(a) || !collidable(b) || !checkCollision(a, b)) continue
+      if (!canCollide(a, b) || !checkCollision(a, b)) continue
 
       if (a.big || b.big) {
         // Mniejszy dosuwa się do brzegu większego i wpada w niego; większy

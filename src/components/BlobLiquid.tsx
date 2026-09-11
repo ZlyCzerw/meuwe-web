@@ -1,5 +1,5 @@
 import { BLOBS, INK } from '../lib/tokens'
-import BlobFace from './BlobFace'
+import BlobFace, { type BlobMood } from './BlobFace'
 import { BURST_AT, MERGE_START, isAttached, type BlobParticle } from '../hooks/blobPhysics'
 
 /**
@@ -27,7 +27,7 @@ type Shape = {
   transform: string
   faceTransform: string
   stroke: number
-  face: { size: number; opacity: number; mood: 'happy' | 'surprised' } | null
+  face: { size: number; opacity: number; mood: BlobMood; look?: { x: number; y: number } } | null
 }
 
 /**
@@ -68,8 +68,11 @@ export default function BlobLiquid({ blobs }: { blobs: BlobParticle[] }) {
     const fade = b.big
       ? (b.size > 24 ? 1 : 0)
       : (b.absorbT < MERGE_START ? 1 : Math.max(0, 1 - (b.absorbT - MERGE_START) / (1 - MERGE_START) * 2))
+    // Trzymany duży robi wielkie oczy i patrzy na palec; przy masie do wybuchu — zaskoczenie.
+    const mood: BlobMood = b.big && b.state === 'held' ? 'startled'
+      : b.big && b.mass >= BURST_AT ? 'surprised' : 'happy'
     const face: Shape['face'] = fade > 0
-      ? { size: b.size * 0.65, opacity: fade, mood: b.big && b.mass >= BURST_AT ? 'surprised' : 'happy' }
+      ? { size: b.size * 0.65, opacity: fade, mood, look: mood === 'startled' ? b.look : undefined }
       : null
     shapes.push({ key: b.id, d: BLOBS[b.blobIdx % BLOBS.length], color: b.color, transform, faceTransform, stroke: strokeUnits(b.size) * 2, face })
   }
@@ -103,7 +106,7 @@ export default function BlobLiquid({ blobs }: { blobs: BlobParticle[] }) {
       {shapes.map(s => s.face && (
         <g key={s.key} transform={`${s.faceTransform} translate(${-s.face.size / 2} ${-s.face.size * 0.45})`}
           opacity={s.face.opacity}>
-          <BlobFace size={s.face.size} mood={s.face.mood} />
+          <BlobFace size={s.face.size} mood={s.face.mood} look={s.face.look} />
         </g>
       ))}
     </svg>

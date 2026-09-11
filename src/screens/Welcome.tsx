@@ -122,6 +122,41 @@ export default function Welcome({ onSignIn }: { onSignIn: (mode: 'google' | 'app
         })}
         {/* Duży zielony i to, co w niego wpływa — jedna ciecz. */}
         <BlobLiquid blobs={blobs.filter(b => b.big || isAttached(b))} />
+        {/* Ciecz nie łapie wskaźnika (SVG z filtrem), więc duży dostaje niewidzialną
+            okrągłą tarczę do chwytania nad nią. Jedzie z zachowanym przesunięciem
+            od miejsca dotknięcia, a nie skacze środkiem pod palec. */}
+        {blobs.filter(b => b.big && (b.state === 'free' || b.state === 'held')).map(b => {
+          const held = b.state === 'held'
+          return (
+            <div
+              key={`grip-${b.id}`}
+              onPointerDown={!held ? (e) => {
+                if (grab(b.id, ...local(e))) {
+                  e.preventDefault()
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                }
+              } : undefined}
+              onPointerMove={held ? (e) => drag(...local(e)) : undefined}
+              onPointerUp={held ? release : undefined}
+              onPointerCancel={held ? release : undefined}
+              style={{
+                position: 'absolute',
+                left: b.x - b.size / 2,
+                top: b.y - b.size / 2,
+                width: b.size,
+                height: b.size,
+                borderRadius: '50%',
+                zIndex: 2,
+                pointerEvents: 'auto',
+                cursor: held ? 'grabbing' : 'grab',
+                touchAction: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+              }}
+            />
+          )
+        })}
       </div>
 
       {/* Logo + tagline. Oba kontenery UI leżą nad blobami i zajmują całą

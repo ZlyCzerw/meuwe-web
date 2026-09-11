@@ -38,8 +38,11 @@ function envelope(ac: AudioContext, at: number, peak: number, attack: number, en
   return g
 }
 
-/** Wysoki, piskliwy „blee": ton lekko opada, a formant przesuwa się z „b" w „ee". */
-export function playBlee(): void {
+/**
+ * Wysoki, piskliwy „blee": ton lekko opada, a formant przesuwa się z „b" w „ee".
+ * `pitch` skaluje wysokość: 1 dla małego bloba, mniej dla ciężkiego zielonego.
+ */
+export function playBlee(pitch = 1): void {
   const ac = audio()
   if (!ac) return
   const t = ac.currentTime
@@ -47,14 +50,14 @@ export function playBlee(): void {
 
   const osc = ac.createOscillator()
   osc.type = 'sawtooth'
-  osc.frequency.setValueAtTime(560, t)
-  osc.frequency.exponentialRampToValueAtTime(400, t + dur)
+  osc.frequency.setValueAtTime(560 * pitch, t)
+  osc.frequency.exponentialRampToValueAtTime(400 * pitch, t + dur)
 
   const formant = ac.createBiquadFilter()
   formant.type = 'bandpass'
   formant.Q.value = 4
-  formant.frequency.setValueAtTime(900, t)
-  formant.frequency.exponentialRampToValueAtTime(2600, t + 0.12)
+  formant.frequency.setValueAtTime(900 * pitch, t)
+  formant.frequency.exponentialRampToValueAtTime(2600 * pitch, t + 0.12)
 
   const soften = ac.createBiquadFilter()
   soften.type = 'lowpass'
