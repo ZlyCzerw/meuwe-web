@@ -27,7 +27,7 @@ function profile(over: Partial<PublicProfile> = {}): PublicProfile {
     id: 'u2', display_name: 'Kasia', avatar_color: '#4FC3F7',
     bio: 'Organizuję potańcówki', home_name: 'Puerto de la Cruz',
     creator_kind: 'organizer', link_url: 'https://example.org/kasia',
-    events_count: 12, followers_count: 8, is_following: false,
+    events_count: 12, followers_count: 8, is_following: false, is_system: false,
     ...over,
   }
 }
@@ -149,6 +149,17 @@ describe('UserCard', () => {
     render(<UserCard userId="me" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
     expect(await screen.findByText('This is you')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '+ Follow' })).not.toBeInTheDocument()
+  })
+
+  // Konto systemowe (meuwe team ze scrapera): obserwacja jest zablokowana w
+  // bazie, więc karta nie proponuje czegoś, co zawsze skończyłoby się błędem.
+  it('shows no follow button on a system profile', async () => {
+    getPublicProfile.mockResolvedValue(profile({ id: 'team', display_name: 'meuwe team', is_system: true, followers_count: 0 }))
+    render(<UserCard userId="team" session={session} onAuthNeeded={() => {}} onClose={() => {}} />)
+    expect(await screen.findByText('meuwe team')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Follow' })).not.toBeInTheDocument()
+    expect(screen.queryByText('This is you')).not.toBeInTheDocument()
+    expect(screen.getByText(/0 followers/)).toBeInTheDocument()
   })
 
   it('reports a missing profile', async () => {

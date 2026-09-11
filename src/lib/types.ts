@@ -56,6 +56,11 @@ export interface PublicProfile {
   followers_count: number
   /** Czy zalogowany użytkownik obserwuje ten profil; dla gościa zawsze false. */
   is_following: boolean
+  /**
+   * Konto systemowe (meuwe team, właściciel wydarzeń ze scrapera). Nie da się
+   * go obserwować: baza odrzuca insert do user_follows, karta chowa przycisk.
+   */
+  is_system: boolean
 }
 
 /** Wiersz listy „Obserwowani użytkownicy” - publiczne kolumny profiles, bez liczników. */

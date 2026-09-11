@@ -206,9 +206,11 @@ export default function UserCard({
               </a>
             )}
 
+            {/* Konto systemowe: obserwacja jest zablokowana w bazie, więc karta
+                nie proponuje przycisku, który zawsze skończyłby się followFailed. */}
             {isMe ? (
               <div style={{ marginTop: 20, fontSize: 14, fontWeight: 700, color: C.inkSoft }}>{t('userCard.thisIsYou')}</div>
-            ) : (
+            ) : profile.is_system ? null : (
               <>
                 <button
                   onClick={toggleFollow}
