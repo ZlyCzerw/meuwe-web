@@ -159,66 +159,72 @@ export default function MyEventsScreen({
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                  {/* Edycja i zakończenie - tylko póki wydarzenie trwa, jak w karcie */}
-                  {computedStatus !== 'ended' && (
-                    <>
-                      <ListActionButton label={t('event.editEvent')} onClick={() => onEdit?.(ev)}>
-                        <PencilIcon />
-                      </ListActionButton>
-                      <ListActionButton
-                        label={t('event.endEvent')}
-                        active={endConfirmId === ev.id}
-                        activeLabel={t('event.endConfirm')}
-                        onClick={() => endConfirmId === ev.id ? handleEnd(ev) : askEnd(ev.id)}
-                      >
-                        <StopIcon />
-                      </ListActionButton>
-                    </>
-                  )}
-                  {/* Mute toggle */}
-                  <button
-                    onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}
-                    title={mutes.has(ev.id) ? t('event.muteOff') : t('event.muteOn')}
-                    style={{
-                      width: 32, height: 32, borderRadius: '50%',
-                      background: mutes.has(ev.id) ? C.cream : 'transparent',
-                      border: `1.5px solid ${mutes.has(ev.id) ? INK + '33' : 'transparent'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, cursor: 'pointer',
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                      stroke={mutes.has(ev.id) ? C.inkSoft : C.ink}
-                      strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                      {mutes.has(ev.id) && <line x1="1" y1="1" x2="23" y2="23"/>}
-                    </svg>
-                  </button>
-                  {/* Message count */}
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    padding: '6px 10px', borderRadius: 14, background: C.cream,
-                  }}>
-                    <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
-                      {ev.msgCount}
+                {/* Prawa kolumna: liczniki na górze, ikony akcji pod nimi - w jednym rzędzie na telefonie nachodziły na tytuł */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {/* Message count */}
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      padding: '6px 10px', borderRadius: 14, background: C.cream,
+                    }}>
+                      <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
+                        {ev.msgCount}
+                      </div>
+                      <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        {t('event.messages')}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      {t('event.messages')}
+                    {/* Otwarcia karty - liczy się każde otwarcie przez kogoś innego niż twórca. */}
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      padding: '6px 10px', borderRadius: 14, background: C.cream,
+                    }}>
+                      <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
+                        {ev.viewCount ?? 0}
+                      </div>
+                      <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        {t('event.views')}
+                      </div>
                     </div>
                   </div>
-                  {/* Otwarcia karty - liczy się każde otwarcie przez kogoś innego niż twórca. */}
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    padding: '6px 10px', borderRadius: 14, background: C.cream,
-                  }}>
-                    <div style={{ fontFamily: F.display, fontSize: 16, fontWeight: 900, color: C.primary }}>
-                      {ev.viewCount ?? 0}
-                    </div>
-                    <div style={{ fontSize: 9, color: C.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      {t('event.views')}
-                    </div>
+                  {/* Rząd ma szerokość liczników; pigułka „Zakończyć?” wystaje w lewo nad tekst zamiast ściskać tytuł */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end', width: 0, minWidth: '100%' }}>
+                    {/* Edycja i zakończenie - tylko póki wydarzenie trwa, jak w karcie */}
+                    {computedStatus !== 'ended' && (
+                      <>
+                        <ListActionButton label={t('event.editEvent')} onClick={() => onEdit?.(ev)}>
+                          <PencilIcon />
+                        </ListActionButton>
+                        <ListActionButton
+                          label={t('event.endEvent')}
+                          active={endConfirmId === ev.id}
+                          activeLabel={t('event.endConfirm')}
+                          onClick={() => endConfirmId === ev.id ? handleEnd(ev) : askEnd(ev.id)}
+                        >
+                          <StopIcon />
+                        </ListActionButton>
+                      </>
+                    )}
+                    {/* Mute toggle */}
+                    <button
+                      onClick={e => { e.stopPropagation(); handleToggleMute(ev.id) }}
+                      title={mutes.has(ev.id) ? t('event.muteOff') : t('event.muteOn')}
+                      style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: mutes.has(ev.id) ? C.cream : 'transparent',
+                        border: `1.5px solid ${mutes.has(ev.id) ? INK + '33' : 'transparent'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 16, cursor: 'pointer',
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke={mutes.has(ev.id) ? C.inkSoft : C.ink}
+                        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        {mutes.has(ev.id) && <line x1="1" y1="1" x2="23" y2="23"/>}
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
