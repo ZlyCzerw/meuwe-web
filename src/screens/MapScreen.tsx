@@ -33,6 +33,11 @@ import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
+// Najdalej, jak da się oddalić telefon: na ekranie 375×812 zoom 8 to ok.
+// 140×300 km, czyli ~40 tys. km² - mniej więcej jedno województwo. Wydarzenia
+// i tak przychodzą tylko z MAX_MAP_KM, więc szerszy widok pokazywałby pustą mapę.
+// Na desktopie ekran jest szeroki, więc ten sam zoom objąłby pół kraju - tam bez limitu.
+const MIN_ZOOM_MOBILE = 8
 
 // CARTO wymaga klucza do kafelków rastrowych — bez niego wracają ze znakiem
 // wodnym „API key required” na całej mapie. Klucz jedzie w URL-u kafelka, więc
@@ -260,7 +265,10 @@ function MapScreen({
     if (leafRef.current || !mapRef.current) return
     const initialPos = initialCenter || userPosRef.current
     const start = initialPos || lastKnownPos || ipPos || WARSAW
-    const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
+    const map = L.map(mapRef.current, {
+      zoomControl: false, attributionControl: false,
+      minZoom: isDesktop ? undefined : MIN_ZOOM_MOBILE,
+    })
       .setView([start.lat, start.lng], initialZoom)
     L.tileLayer(TILE_URL, {
       attribution: TILE_ATTRIBUTION,
