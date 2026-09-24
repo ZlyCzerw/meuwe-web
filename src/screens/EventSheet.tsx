@@ -319,10 +319,16 @@ function EventSheet({
     return () => db.unsub(followChanRef.current)
   }, [event?.id])
 
+  // Krok po sznurku z karty rozwiniętej na pełny ekran zostawia ją rozwiniętą
+  // — ktoś, kto czyta opisy jeden po drugim, nie musi za każdym razem ciągnąć
+  // karty w górę. Nowe wydarzenie otwarte z mapy czy listy zaczyna od half.
+  const keepFullRef = useRef(false)
+
   useEffect(() => {
     if (!event?.id) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset to half when a new event opens
-    setSnap('half')
+    const keepFull = keepFullRef.current
+    keepFullRef.current = false
+    setSnap(prev => (keepFull ? prev : 'half'))
     setDescOpen(false)
     db.getMessages(event.id).then(setMessages)
     db.unsub(chanRef.current)
@@ -348,13 +354,25 @@ function EventSheet({
 
   // Reset scroll when event opens or snap returns to half
   useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = 0
+  }, [event?.id])
+  useEffect(() => {
     if (listRef.current && !isFull) listRef.current.scrollTop = 0
-  }, [event?.id, isFull])
+  }, [isFull])
 
-  // App podaje onChainStep jako świeżo domkniętą funkcję przy każdym renderze.
+  // Swipe, daszki i strzałki klawiatury przechodzą tędy, żeby wszystkie trzy
+  // tak samo zostawiały kartę na pełnym ekranie.
+  function chainStep(dir: Dir): boolean {
+    if (!onChainStep) return false
+    const moved = onChainStep(dir)
+    if (moved && isFull) keepFullRef.current = true
+    return moved
+  }
+
+  // chainStep jest świeżo domkniętą funkcją przy każdym renderze.
   // Przez ref nasłuch podpina się raz, zamiast odpinać i podpinać w kółko.
-  const chainStepRef = useRef(onChainStep)
-  useEffect(() => { chainStepRef.current = onChainStep }, [onChainStep])
+  const chainStepRef = useRef(onChainStep ? chainStep : undefined)
+  useEffect(() => { chainStepRef.current = onChainStep ? chainStep : undefined })
 
   // Strzałki klawiatury robią to samo, co daszki — ale nie wtedy, gdy ktoś
   // pisze wiadomość albo patrzy na warstwę leżącą nad kartą.
@@ -429,7 +447,7 @@ function EventSheet({
     // Czat leży na całej karcie i ma własne przewijanie; sznurek pod nim
     // milczy.
     enabled: !!onChainStep && !chatOpen,
-    onCommitX: dir => onChainStep?.(dir) ?? false,
+    onCommitX: chainStep,
     // W trybie full lista jest oznaczona jako scroller, więc hook sam oddaje
     // jej gesty — poza ciągnięciem w dół przy samej górze, które zmniejsza
     // kartę. Pod czatem karta stoi.
@@ -785,14 +803,14 @@ function EventSheet({
             <ChainArrow
               dir="left" label={t('event.chainPrev')}
               disabled={!chainCanGo?.('west')}
-              onClick={() => onChainStep('west')}
+              onClick={() => chainStep('west')}
             />
           </div>
           <div style={{ position: 'absolute', right: -44, top: '50%', transform: 'translateY(-50%)', zIndex: 41 }}>
             <ChainArrow
               dir="right" label={t('event.chainNext')}
               disabled={!chainCanGo?.('east')}
-              onClick={() => onChainStep('east')}
+              onClick={() => chainStep('east')}
             />
           </div>
         </>
