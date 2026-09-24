@@ -26,7 +26,7 @@ import EventPickerModal from '../components/EventPickerModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
 import { overlapChainInView } from '../lib/pinOverlap'
 import { nextFetchView, type FetchView } from '../lib/mapView'
-import { useDeviceHeading } from '../hooks/useDeviceHeading'
+import { subscribeDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
 import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, isInRange, type DayRange } from '../lib/timeline'
 import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
@@ -110,7 +110,6 @@ function MapScreen({
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
   countRender('MapScreen')
-  const heading = useDeviceHeading(true)
 
   const mapRef = useRef<HTMLDivElement>(null)
   const leafRef = useRef<L.Map | null>(null)
@@ -371,15 +370,23 @@ function MapScreen({
   }, [userPos])
 
   // Direction indicator — rotate the me-marker's orbiting chevron to the compass
-  // heading. Updates the DOM node directly (cheap, fires often); userPos in deps
-  // re-applies after the marker is (re)created. Hidden when no heading available.
-  useEffect(() => {
+  // heading. Kurs żyje w refie i trafia prosto do DOM: jako stan re-renderował
+  // cały ekran przy każdym odczycie czujnika. userPos re-applies after the
+  // marker is (re)created. Hidden when no heading available.
+  const headingRef = useRef<number | null>(null)
+  function applyHeading() {
     const ind = meRef.current?.getElement()?.querySelector('.me-heading') as HTMLElement | null
     if (!ind) return
-    if (heading == null) { ind.style.opacity = '0'; return }
-    ind.style.transform = `rotate(${heading}deg)`
+    const h = headingRef.current
+    if (h == null) { ind.style.opacity = '0'; return }
+    ind.style.transform = `rotate(${h}deg)`
     ind.style.opacity = '1'
-  }, [heading, userPos])
+  }
+  useEffect(() => subscribeDeviceHeading(h => {
+    headingRef.current = h
+    applyHeading()
+  }), [])
+  useEffect(() => { applyHeading() }, [userPos])
 
   // IP-based coarse center: apply once, before any GPS fix, without claiming a
   // "real" center — so the first GPS fix still auto-centers (see centeredRef).
