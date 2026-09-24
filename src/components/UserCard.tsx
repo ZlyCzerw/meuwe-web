@@ -13,8 +13,9 @@ import type { PublicProfile } from '../lib/types'
 //
 // Obserwowanie jest optymistyczne: etykieta i licznik zmieniają się od razu,
 // a nieudany zapis cofa oba i mówi o tym pod przyciskiem - "Obserwujesz ✓"
-// na ekranie musi znaczyć, że wiersz jest w bazie. Auto-obserwacja wydarzeń
-// twórcy dzieje się w bazie (trigger), karta tylko o niej mówi.
+// na ekranie musi znaczyć, że wiersz jest w bazie. Obserwacja twórcy daje
+// powiadomienia o jego wydarzeniach (push-new-event, push-event-start), ale nie
+// zapisuje na nie jako uczestnika - karta tylko o tym mówi.
 
 type Load = { state: 'loading' } | { state: 'failed' } | { state: 'ready'; profile: PublicProfile }
 

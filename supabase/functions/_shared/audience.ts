@@ -4,8 +4,9 @@
 // are hidden by RLS from everyone except the creator and the users following
 // them, so a notification about one may only reach that same set. Tags change
 // nothing here — a private event with tags is still private. Public events
-// additionally reach the event's followers - at insert time those are the
-// creator's followers, added by a database trigger.
+// additionally reach the event's followers and the creator's followers
+// (user_follows) - following a person means hearing about their events, not
+// being signed up for them.
 
 export const MAX_RADIUS_KM = 50
 
@@ -41,12 +42,17 @@ export function selectEventAudience(opts: {
   creatorId?: string | null
   /** Followers of this event — reached regardless of distance and interests. */
   followerIds?: string[]
+  /**
+   * Followers of the creator (user_follows) — like followerIds, but only for
+   * public events: a private event stays with the people following it.
+   */
+  creatorFollowerIds?: string[]
   /** True when the creator triggered the notification themselves. */
   excludeCreator?: boolean
 }): string[] {
   const {
     isPrivate, tags, profiles, lat, lng,
-    creatorId = null, followerIds = [], excludeCreator = false,
+    creatorId = null, followerIds = [], creatorFollowerIds = [], excludeCreator = false,
   } = opts
 
   if (isPrivate) {
@@ -65,9 +71,9 @@ export function selectEventAudience(opts: {
     return haversineKm(p.last_lat, p.last_lng, lat, lng) <= radius
   }).map((p) => p.id)
 
-  // Obserwujący twórcy (w event_follows od chwili utworzenia, przez trigger
-  // w bazie) dochodzą niezależnie od promienia i tagów - to ich wybór.
-  const ids = new Set([...geo, ...followerIds])
+  // Obserwujący wydarzenie i obserwujący twórcę dochodzą niezależnie od
+  // promienia i tagów - to ich wybór.
+  const ids = new Set([...geo, ...followerIds, ...creatorFollowerIds])
   if (excludeCreator && creatorId) ids.delete(creatorId)
   return [...ids]
 }

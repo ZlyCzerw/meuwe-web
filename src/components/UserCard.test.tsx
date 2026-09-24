@@ -86,7 +86,7 @@ describe('UserCard', () => {
     expect(screen.getByText(/9 followers/)).toBeInTheDocument()
     expect(followUser).toHaveBeenCalledWith('u2')
     expect(trackClick).toHaveBeenCalledWith('follow_user')
-    expect(screen.getByText('You also follow every event this person posts')).toBeInTheDocument()
+    expect(screen.getByText("You'll be notified about every new event this person posts")).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Following ✓' })).not.toBeDisabled())
   })
 

@@ -65,9 +65,8 @@ Deno.serve(async (req) => {
     // Wydarzenie prywatne nie ma zasięgu geograficznego — liczą się wyłącznie
     // obserwujący i twórca (który obserwuje własne wydarzenie). Tagi nie
     // rozszerzają tego kręgu. Publiczne wydarzenie dostaje geo/tagi ∪
-    // obserwujących - w event_follows są od utworzenia (trigger) także
-    // obserwujący twórcy, nie tylko ci, którzy zaobserwowali to wydarzenie
-    // wprost.
+    // obserwujących wydarzenie ∪ obserwujących twórcę (user_follows - ci nie
+    // są zapisani jako uczestnicy, ale o starcie chcą wiedzieć).
     let tags: string[] = []
     const { data: followRows, error: followErr } = await admin
       .from('event_follows').select('user_id').eq('event_id', event.id)
@@ -77,10 +76,20 @@ Deno.serve(async (req) => {
       continue
     }
     const followerIds = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
+    let creatorFollowerIds: string[] = []
     if (!event.is_private) {
       const { data: tagRows } = await admin
         .from('event_tags').select('tag').eq('event_id', event.id)
       tags = (tagRows ?? []).map((r: { tag: string }) => r.tag)
+      if (event.creator_id) {
+        const { data: fanRows, error: fanErr } = await admin
+          .from('user_follows').select('follower_id').eq('creator_id', event.creator_id)
+        if (fanErr) {
+          console.error(`[push-event-start] event ${event.id}: błąd pobrania obserwujących twórcę, pomijam:`, fanErr)
+          continue
+        }
+        creatorFollowerIds = (fanRows ?? []).map((r: { follower_id: string }) => r.follower_id)
+      }
     }
 
     const audienceIds = selectEventAudience({
@@ -91,6 +100,7 @@ Deno.serve(async (req) => {
       lng: event.lng,
       creatorId: event.creator_id,
       followerIds,
+      creatorFollowerIds,
     })
 
     // Jedna bramka dla wszystkich: push_enabled, wyciszenia tego wydarzenia i

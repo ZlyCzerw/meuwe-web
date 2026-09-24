@@ -345,7 +345,7 @@ const pl = {
   userCard: {
     follow: '+ Obserwuj',
     following: 'Obserwujesz ✓',
-    followingHint: 'Obserwujesz też wszystkie wydarzenia tej osoby',
+    followingHint: 'Dostaniesz powiadomienie o każdym nowym wydarzeniu tej osoby',
     thisIsYou: 'To Ty',
     eventsCount_one: '{{count}} wydarzenie',
     eventsCount_few: '{{count}} wydarzenia',

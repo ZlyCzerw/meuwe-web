@@ -92,14 +92,24 @@ Deno.serve(async (req) => {
   // Język pobiera filterDeliverable dla finalnej listy, więc to zapytanie —
   // idące po wszystkich aktywnych profilach — nie musi go ciągnąć.
 
-  // Obserwujący twórcy są już w event_follows: trigger w bazie dopisał ich w
-  // tej samej transakcji, co insert wydarzenia. Twórca też tu jest - wypada
-  // niżej przez excludeCreator.
+  // Świeżo wstawione wydarzenie obserwuje zwykle tylko twórca - wypada niżej
+  // przez excludeCreator.
   const { data: followRows, error: followErr } = await admin
     .from('event_follows').select('user_id').eq('event_id', eventId)
   if (followErr) console.error('[push-new-event] follows error:', followErr)
   const followerIds: string[] = (followRows ?? []).map((r: { user_id: string }) => r.user_id)
   console.log(`[push-new-event] event followers at insert: ${followerIds.length}`)
+
+  // Obserwujący twórcy dostają powiadomienie, ale nie są zapisywani jako
+  // uczestnicy - dlatego czytamy ich z user_follows, nie z event_follows.
+  let creatorFollowerIds: string[] = []
+  if (creatorId) {
+    const { data: fanRows, error: fanErr } = await admin
+      .from('user_follows').select('follower_id').eq('creator_id', creatorId)
+    if (fanErr) console.error('[push-new-event] creator followers error:', fanErr)
+    creatorFollowerIds = (fanRows ?? []).map((r: { follower_id: string }) => r.follower_id)
+  }
+  console.log(`[push-new-event] creator followers: ${creatorFollowerIds.length}`)
 
   // Event bez tagów trafia do wszystkich w okolicy, z tagami — tylko do
   // zainteresowanych. Twórca nie dostaje powiadomienia o własnym wydarzeniu.
@@ -111,6 +121,7 @@ Deno.serve(async (req) => {
     lng: eventLng,
     creatorId,
     followerIds,
+    creatorFollowerIds,
     excludeCreator: true,
   })
 

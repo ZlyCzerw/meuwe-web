@@ -347,7 +347,7 @@ const sl: Resources = {
   userCard: {
     follow: '+ Spremljaj',
     following: 'Spremljaš ✓',
-    followingHint: 'Spremljaš tudi vse dogodke te osebe',
+    followingHint: 'Obvestili te bomo o vsakem novem dogodku te osebe',
     thisIsYou: 'To si ti',
     eventsCount_one: '{{count}} dogodek',
     eventsCount_few: '{{count}} dogodki',

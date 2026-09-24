@@ -65,9 +65,8 @@ describe('selectEventAudience — public events', () => {
   })
 })
 
-describe('selectEventAudience — public events with creator followers', () => {
-  // Obserwowanie twórcy to jawne "chcę wiedzieć o wszystkim od tej osoby" -
-  // promień i tagi nie mają tu głosu.
+describe('selectEventAudience — public events with event followers', () => {
+  // "Wezmę udział" to jawny wybór - promień i tagi nie mają tu głosu.
   it('adds followers regardless of distance and interests', () => {
     const ids = selectEventAudience({
       isPrivate: false,
@@ -103,6 +102,48 @@ describe('selectEventAudience — public events with creator followers', () => {
       ...EVENT,
     })
     expect([...ids].sort()).toEqual(['far-music', 'near-sport'])
+  })
+})
+
+describe('selectEventAudience — creator followers (user_follows)', () => {
+  // Obserwowanie twórcy to jawne "chcę wiedzieć o wszystkim od tej osoby" -
+  // promień i tagi nie mają tu głosu.
+  it('reaches them regardless of distance and interests', () => {
+    const ids = selectEventAudience({
+      isPrivate: false,
+      tags: ['music'],
+      creatorFollowerIds: ['far-sport-fan'],
+      profiles: [NEARBY_MUSIC, NEARBY_SPORT],
+      ...EVENT,
+    })
+    expect([...ids].sort()).toEqual(['far-sport-fan', 'near-music'])
+  })
+
+  it('does not duplicate someone who follows both the creator and the event', () => {
+    const ids = selectEventAudience({
+      isPrivate: false,
+      tags: [],
+      followerIds: ['fan'],
+      creatorFollowerIds: ['fan'],
+      profiles: [],
+      ...EVENT,
+    })
+    expect(ids).toEqual(['fan'])
+  })
+
+  // Wydarzenie prywatne widzą tylko jego obserwujący - obserwowanie twórcy
+  // nie otwiera go nikomu innemu, także w powiadomieniu.
+  it('are left out of a private event', () => {
+    const ids = selectEventAudience({
+      isPrivate: true,
+      tags: [],
+      creatorId: 'creator',
+      followerIds: ['guest'],
+      creatorFollowerIds: ['fan'],
+      profiles: [],
+      ...EVENT,
+    })
+    expect([...ids].sort()).toEqual(['creator', 'guest'])
   })
 })
 

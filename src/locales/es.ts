@@ -347,7 +347,7 @@ const es: Resources = {
   userCard: {
     follow: '+ Seguir',
     following: 'Siguiendo ✓',
-    followingHint: 'También sigues todos los eventos de esta persona',
+    followingHint: 'Te avisaremos de cada nuevo evento de esta persona',
     thisIsYou: 'Eres tú',
     eventsCount_one: '{{count}} evento',
     eventsCount_few: '{{count}} eventos',
