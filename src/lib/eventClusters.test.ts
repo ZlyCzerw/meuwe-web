@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { clusterPublicEvents, formatClusterCount } from './eventClusters'
 import type { EventWithMeta } from './types'
+import { zonesOverlapSpatially } from './zoneConflict'
 
 let idc = 0
 function ev(over: Partial<EventWithMeta> = {}): EventWithMeta {
@@ -54,5 +55,66 @@ describe('formatClusterCount', () => {
   it('>9 -> ">9"', () => {
     expect(formatClusterCount(10)).toBe('>9')
     expect(formatClusterCount(42)).toBe('>9')
+  })
+})
+
+// Wzorzec: implementacja sprzed siatki, słowo w słowo.
+function legacyCluster(events: EventWithMeta[]): EventWithMeta[][] {
+  const pub = events.filter(e => !e.is_private)
+  const used = new Array(pub.length).fill(false)
+  const clusters: EventWithMeta[][] = []
+  for (let i = 0; i < pub.length; i++) {
+    if (used[i]) continue
+    used[i] = true
+    const anchor = pub[i]
+    const group = [anchor]
+    for (let j = i + 1; j < pub.length; j++) {
+      if (used[j]) continue
+      if (zonesOverlapSpatially(anchor, pub[j])) { used[j] = true; group.push(pub[j]) }
+    }
+    group.sort((a, b) => Date.parse(a.start_time) - Date.parse(b.start_time))
+    clusters.push(group)
+  }
+  return clusters
+}
+
+function seeded(seed: number) {
+  let s = seed >>> 0
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296 }
+}
+
+const ids1 = (cs: EventWithMeta[][]) => cs.map(c => c.map(e => e.id))
+
+describe('clusterPublicEvents - grid matches the pairwise sweep', () => {
+  const M = 111320
+  for (const [label, lat0] of [['Rzeszów', 50.04], ['Teneryfa', 28.3], ['Gdańsk', 54.35]] as const) {
+    it(`same groups in the same order around ${label}`, () => {
+      const r = seeded(lat0 * 1000)
+      const cosL = Math.cos((lat0 * Math.PI) / 180)
+      const evs: EventWithMeta[] = []
+      for (let i = 0; i < 600; i++) {
+        const base = evs.length && r() < 0.4 ? evs[Math.floor(r() * evs.length)] : null
+        // obok istniejącego: 0-4 m, czyli także tuż pod i tuż nad progiem 3 m
+        const dN = base ? (r() * 8 - 4) : (r() - 0.5) * 2000
+        const dE = base ? (r() * 8 - 4) : (r() - 0.5) * 2000
+        const lat = (base ? base.lat : lat0) + dN / M
+        const lng = (base ? base.lng : 22) + dE / (M * cosL)
+        const h = Math.floor(r() * 5)
+        evs.push(ev({
+          id: `r${i}`, lat, lng, is_private: r() < 0.05,
+          start_time: `2026-07-14T1${h}:00:00.000Z`, end_time: `2026-07-14T1${h + 1}:00:00.000Z`,
+        }))
+      }
+      const legacy = legacyCluster(evs)
+      expect(legacy.filter(c => c.length > 1).length).toBeGreaterThan(20) // dane naprawdę tworzą klastry
+      expect(ids1(clusterPublicEvents(evs))).toEqual(ids1(legacy))
+    })
+  }
+
+  it('exactly on a grid line still groups with a neighbour 1 m away', () => {
+    const cell = 3 / M
+    const a = ev({ id: 'a', lat: cell * 16680, lng: 22 })
+    const b = ev({ id: 'b', lat: cell * 16680 - 1 / M, lng: 22 })
+    expect(ids1(clusterPublicEvents([a, b]))).toEqual([['a', 'b']])
   })
 })

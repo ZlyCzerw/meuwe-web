@@ -183,3 +183,4 @@ Do uzupełnienia przy wdrożeniu (krok 0 i po każdym kroku).
 | 2 (obrazki) | Android / iPhone | do zmierzenia | | | | |
 | 3 (kadrowanie + klik/z-index) | desktop | - | - | - | 4,4; w DOM: z14 85, z12 416, z8 1510 (wszystkie) | 32 / 11 / 19 / 12 / 15 / 23 |
 | 3 | Android / iPhone | do zmierzenia | | | | |
+| 4 (siatka klastrów) | desktop | - | - | - | 4,4; z8 1728, z12 416 | 21 / 10 / 12 / 24 |

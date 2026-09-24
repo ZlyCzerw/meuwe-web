@@ -13,8 +13,8 @@ export interface ZonePin {
   id?: string
 }
 
-const M_PER_DEG_LAT = 111320
-const ZONE_SIDE_M = 3 // two 1.5 m half-squares -> overlap when centres < 3 m per axis
+export const M_PER_DEG_LAT = 111320
+export const ZONE_SIDE_M = 3 // two 1.5 m half-squares -> overlap when centres < 3 m per axis
 
 export function zonesOverlapSpatially(
   a: { lat: number; lng: number },
