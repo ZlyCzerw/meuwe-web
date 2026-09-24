@@ -1,6 +1,6 @@
 # Płynność mapy przy wielu pinezkach - projekt
 
-**Status:** kierunek zatwierdzony w rozmowie 2026-09-24 (wariant A), czeka na przegląd specu i plan wdrożenia.
+**Status:** wdrożone na gałęzi `perf/map-pins` (wariant A). Canvas (B) odłożony - decyzja 2026-09-24 po pomiarach na telefonie.
 
 ## Po co
 
@@ -184,3 +184,10 @@ Do uzupełnienia przy wdrożeniu (krok 0 i po każdym kroku).
 | 3 (kadrowanie + klik/z-index) | desktop | - | - | - | 4,4; w DOM: z14 85, z12 416, z8 1510 (wszystkie) | 32 / 11 / 19 / 12 / 15 / 23 |
 | 3 | Android / iPhone | do zmierzenia | | | | |
 | 4 (siatka klastrów) | desktop | - | - | - | 4,4; z8 1728, z12 416 | 21 / 10 / 12 / 24 |
+| końcowy (+ dokładanie co klatkę) | Pixel 8 Pro, APK debug z buildem produkcyjnym, prawdziwe wydarzenia (~290 przy z8) | subiektywnie: wyraźnie lepiej, przy dużym oddaleniu nadal pojedyncze zacięcia | - | - | - | - |
+
+### Wnioski z diagnozy na telefonie (2026-09-24)
+
+Pinch syntetyzowany przez CDP (`Input.synthesizePinchGesture`), z8 ⇄ z10/z14, po kilka powtórzeń na wariant. Zacięcia (suma klatek > 50 ms na gest) w stanie końcowym: 150-450 ms. Wyłączenie animacji CSS, ukrycie kafelków, zamiana obrazków SVG na PNG, ukrycie samego obrazka albo samej kropki - bez wpływu. Ukrycie halo - częściowa poprawa. Ukrycie całej zawartości markerów - zacięcia znikają.
+
+Pozostały koszt to malowanie i layerize ~290 osobnych markerów DOM w każdej klatce pincha (Leaflet przesuwa każdy na `zoom`); najdłuższe klatki 80-140 ms to Paint + Layerize na wątku głównym. W obrębie markerów DOM nie ma już jednego drogiego elementu do usunięcia - dalszy krok to canvas (wariant B), odłożony jako osobny projekt.
