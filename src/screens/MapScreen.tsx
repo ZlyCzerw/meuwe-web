@@ -8,6 +8,7 @@ import type { EventWithMeta, Profile } from '../lib/types'
 import { useEvents } from '../hooks/useEvents'
 import { haversineKm, startupZoom, MAX_MAP_KM } from '../lib/geo'
 import { db } from '../lib/supabase'
+import { reversePlaceLabel } from '../lib/placeSearch'
 import { enablePushOnThisDevice } from '../lib/push'
 import {
   summariseProbe, pickEmptyStateVariant, shouldOfferWayOut,
@@ -267,9 +268,16 @@ function MapScreen({
   // a dopiero na końcu od miejsca, na które patrzy mapa.
   // Memo po liczbach, nie po obiekcie: kompas re-renderuje ten ekran kilkadziesiąt
   // razy na sekundę, a lista sortuje od nowa przy każdej zmianie punktu.
-  // Miejsce wybrane w wyszukiwarce listy staje się jej punktem odniesienia.
-  // Żyje tylko, dopóki lista jest otwarta — ponowne otwarcie zaczyna od użytkownika.
-  const [listPlace, setListPlace] = useState<{ lat: number; lng: number } | null>(null)
+  // Punkt odniesienia listy, gdy to nie użytkownik: środek mapy odsuniętej od
+  // niego w chwili otwarcia listy albo miejsce wybrane w jej wyszukiwarce.
+  // Label to tekst pola; null — nazwa środka mapy jeszcze w drodze. Żyje tylko,
+  // dopóki lista jest otwarta. Puste pole wraca do użytkownika.
+  type ListPlace = { lat: number; lng: number; label: string | null; key: number }
+  const [listPlace, setListPlace] = useState<ListPlace | null>(null)
+  const listPlaceSeqRef = useRef(0)
+  // Nazwa środka mapy przychodzi z sieci; jeśli ktoś zdążył już pisać w polu,
+  // spóźniona nazwa nie może mu go nadpisać.
+  const listTypedRef = useRef(false)
   const [listWasOpen, setListWasOpen] = useState(eventListOpen)
   if (listWasOpen !== eventListOpen) {
     setListWasOpen(eventListOpen)
@@ -682,6 +690,29 @@ function MapScreen({
     syncMounted(false)
   }), [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Lista startuje od tego, na co patrzy użytkownik: mapa odsunięta od niego
+   * (ten sam próg co przycisk powrotu) daje listę wokół środka mapy, z nazwą
+   * tego miejsca w polu wyszukiwania. Mapa na użytkowniku — lista wokół niego.
+   */
+  function openEventList() {
+    const map = leafRef.current
+    const me = userPos || lastKnownPos || ipPos
+    const c = map?.getCenter()
+    if (c && (!me || haversineKm(c.lat, c.lng, me.lat, me.lng) > 0.3)) {
+      const key = ++listPlaceSeqRef.current
+      listTypedRef.current = false
+      setListPlace({ lat: c.lat, lng: c.lng, label: null, key })
+      reversePlaceLabel(c.lat, c.lng).then(label => {
+        if (!label || listTypedRef.current) return
+        setListPlace(p => (p && p.key === key ? { ...p, label } : p))
+      })
+    } else {
+      setListPlace(null)
+    }
+    onOpenEventList?.()
+  }
+
   function doRecenter() {
     const p = userPos || lastKnownPos || ipPos || WARSAW
     if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7)
@@ -817,7 +848,7 @@ function MapScreen({
           (recenter: bottom 53, right 24, 48 px). */}
       {!pickingLocation && (
         <button
-          onClick={() => onOpenEventList?.()}
+          onClick={openEventList}
           aria-label={t('eventList.open')}
           style={{
             position: 'absolute', bottom: 53, left: 24, zIndex: 20,
@@ -940,12 +971,16 @@ function MapScreen({
           onOpenFilterPicker={() => setFilterModalOpen(true)}
           refreshKey={eventsRefreshKey}
           placeChosen={!!listPlace}
+          searchText={listPlace ? (listPlace.label ?? t('eventList.mapCenter')) : ''}
+          onSearchQueryChange={q => {
+            if (q) { listTypedRef.current = true; return }
+            setListPlace(null)
+          }}
           onSearchPlace={p => {
-            setListPlace({ lat: p.lat, lng: p.lng })
+            setListPlace({ lat: p.lat, lng: p.lng, label: p.label, key: ++listPlaceSeqRef.current })
             if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7)
           }}
           onSearchEvent={hit => { onEventListPicked?.(); openSearchedEvent(hit) }}
-          onClearPlace={() => setListPlace(null)}
           onClose={() => onCloseEventList?.()}
           onSelect={ev => {
             onEventListPicked?.()

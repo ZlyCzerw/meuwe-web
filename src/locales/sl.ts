@@ -51,6 +51,7 @@ const sl: Resources = {
     countNearPlace_few: '{{count}} dogodki do {{km}} km od izbranega kraja',
     countNearPlace_many: '{{count}} dogodkov do {{km}} km od izbranega kraja',
     countNearPlace_other: '{{count}} dogodkov do {{km}} km od izbranega kraja',
+    mapCenter: 'Središče zemljevida',
     empty: 'Tu nismo našli ničesar',
     emptyHint: 'Poskusite druge dni, filtre ali poiščite drug kraj',
     interactions: 'Zanimanje: sporočila in sledilci',

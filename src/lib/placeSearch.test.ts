@@ -1,6 +1,6 @@
 // src/lib/placeSearch.test.ts
 import { describe, it, expect } from 'vitest'
-import { parsePhoton, photonUrl, photonLang, PLACE_RESULT_LIMIT, type PhotonFeature } from './placeSearch'
+import { parsePhoton, photonUrl, photonLang, reverseLabel, PLACE_RESULT_LIMIT, type PhotonFeature } from './placeSearch'
 
 function feature(name: string, lat: number, lng: number, extra: Partial<PhotonFeature['properties']> = {}): PhotonFeature {
   return { geometry: { coordinates: [lng, lat] }, properties: { osm_id: Math.round(lat * 1000 + lng), name, ...extra } }
@@ -51,5 +51,30 @@ describe('photonLang', () => {
     expect(photonLang('de')).toBe('de')
     expect(photonLang('pl')).toBe('en')
     expect(photonLang('sl')).toBe('en')
+  })
+})
+
+describe('reverseLabel', () => {
+  const p = (props: Record<string, string>) => ({ properties: props })
+  it('names an area and its town', () => {
+    expect(reverseLabel(p({ name: 'Rynek', osm_key: 'highway', city: 'Rzeszów' }))).toBe('Rynek, Rzeszów')
+  })
+  it('prefers the street over a shop or bar that happens to stand there', () => {
+    expect(reverseLabel(p({ name: 'Poppy', osm_key: 'shop', street: 'Marszałkowska', city: 'Warszawa' })))
+      .toBe('Marszałkowska, Warszawa')
+  })
+  it('leaves the house number out: the map centre is not an address', () => {
+    expect(reverseLabel(p({ street: 'Lubelska', housenumber: '59', city: 'Rzeszów' }))).toBe('Lubelska, Rzeszów')
+  })
+  it('does not repeat the town when the point is the town itself', () => {
+    expect(reverseLabel(p({ name: 'Rzeszów', osm_key: 'place', city: 'Rzeszów' }))).toBe('Rzeszów')
+  })
+  it('uses the district, then a stray name, then the town', () => {
+    expect(reverseLabel(p({ district: 'Śródmieście', city: 'Warszawa' }))).toBe('Śródmieście, Warszawa')
+    expect(reverseLabel(p({ name: 'Poppy', osm_key: 'shop', city: 'Warszawa' }))).toBe('Poppy, Warszawa')
+    expect(reverseLabel(p({ city: 'Warszawa' }))).toBe('Warszawa')
+  })
+  it('gives null when there is nothing to call the point', () => {
+    expect(reverseLabel(p({}))).toBeNull()
   })
 })

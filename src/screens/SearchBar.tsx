@@ -11,14 +11,16 @@ import { sanitizeSearchQuery, sortEventHits, type EventHit } from '../lib/search
 
 interface Props {
   userPos: { lat: number; lng: number } | null
-  onSelect: (p: { lat: number; lng: number }) => void
+  onSelect: (p: { lat: number; lng: number; label: string }) => void
   onSelectEvent?: (e: EventHit) => void
   /** Każda ręczna zmiana tekstu, także wyczyszczenie. */
   onQueryChange?: (q: string) => void
   dropdownZIndex?: number
+  /** Tekst w polu na start i przy każdej zmianie tej wartości. */
+  initialQuery?: string
 }
 
-function SearchBar({ userPos, onSelect, onSelectEvent, onQueryChange, dropdownZIndex }: Props) {
+function SearchBar({ userPos, onSelect, onSelectEvent, onQueryChange, dropdownZIndex, initialQuery }: Props) {
   const { t } = useTranslation()
   const searchEvents = onSelectEvent
     ? async (q: string) => {
@@ -31,7 +33,8 @@ function SearchBar({ userPos, onSelect, onSelectEvent, onQueryChange, dropdownZI
     <PlaceSearchInput
       placeholder={t(onSelectEvent ? 'map.searchAll' : 'map.search')}
       near={userPos}
-      onSelect={r => onSelect({ lat: r.lat, lng: r.lng })}
+      onSelect={r => onSelect({ lat: r.lat, lng: r.lng, label: r.primary })}
+      initialQuery={initialQuery}
       searchEvents={searchEvents}
       onSelectEvent={onSelectEvent}
       onQueryChange={onQueryChange}

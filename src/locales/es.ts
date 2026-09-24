@@ -51,6 +51,7 @@ const es: Resources = {
     countNearPlace_few: '{{count}} eventos a menos de {{km}} km del lugar elegido',
     countNearPlace_many: '{{count}} eventos a menos de {{km}} km del lugar elegido',
     countNearPlace_other: '{{count}} eventos a menos de {{km}} km del lugar elegido',
+    mapCenter: 'Centro del mapa',
     empty: 'No encontramos nada aquí',
     emptyHint: 'Prueba otros días, filtros o busca otro lugar',
     interactions: 'Interés: mensajes y seguidores',

@@ -89,3 +89,41 @@ export async function searchPlaces(
   const data = await res.json()
   return parsePhoton(data.features ?? [], opts.near)
 }
+
+type ReverseProps = {
+  name?: string; osm_key?: string; street?: string; housenumber?: string
+  district?: string; locality?: string; city?: string
+}
+
+/** Obiekty, których nazwa opisuje okolicę; reszta (sklep, lokal) to przypadek. */
+const AREA_KEYS = ['place', 'highway', 'boundary']
+
+/**
+ * Nazwa okolicy punktu dla człowieka: „Rynek, Rzeszów”, „Marszałkowska,
+ * Warszawa”, „Śródmieście, Warszawa”. Środek mapy to nie adres, więc bez numeru
+ * domu, a nazwa sklepu czy baru, który akurat tam stoi, idzie na sam koniec
+ * kolejki. Null, gdy Photon nie zna niczego w pobliżu.
+ */
+export function reverseLabel(f: { properties: ReverseProps }): string | null {
+  const { name, osm_key, street, district, locality, city } = f.properties
+  const areaName = name && osm_key && AREA_KEYS.includes(osm_key) ? name : undefined
+  const main = areaName || street || district || locality || name || city
+  if (!main) return null
+  return city && city !== main ? `${main}, ${city}` : main
+}
+
+/**
+ * Co jest w punkcie (lat, lng) — pierwszy obiekt z Photon /reverse. Nazwy
+ * lokalne („Warszawa”, nie „Warsaw”): to nazwa miejsca, nie tłumaczenie UI.
+ */
+export async function reversePlaceLabel(lat: number, lng: number, signal?: AbortSignal): Promise<string | null> {
+  try {
+    const params = new URLSearchParams({ lat: String(lat), lon: String(lng), lang: 'default', limit: '1' })
+    const res = await fetch(`https://photon.komoot.io/reverse?${params}`, { signal })
+    const data = await res.json()
+    const f = data.features?.[0]
+    return f ? reverseLabel(f) : null
+  } catch {
+    return null
+  }
+}

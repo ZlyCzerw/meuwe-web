@@ -31,16 +31,18 @@ export default function EventListModal({
   origin, range, onRangeChange, mode, onModeChange,
   selectedFilters, onToggleFilter, onClearFilters, onOpenFilterPicker,
   refreshKey, onSelect, onClose,
-  placeChosen, onSearchPlace, onSearchEvent, onClearPlace,
+  placeChosen, searchText, onSearchPlace, onSearchEvent, onSearchQueryChange,
 }: {
   /** Punkt, wokół którego lista szuka: użytkownik albo wybrane miejsce. */
   origin: { lat: number; lng: number }
   /** Czy `origin` to miejsce wybrane w wyszukiwarce (a nie użytkownik). */
   placeChosen: boolean
-  onSearchPlace: (p: { lat: number; lng: number }) => void
+  /** Co stoi w polu wyszukiwania: nazwa miejsca, od którego liczy lista. */
+  searchText: string
+  onSearchPlace: (p: { lat: number; lng: number; label: string }) => void
   onSearchEvent: (hit: EventHit) => void
-  /** Wyczyszczone pole: lista wraca do okolicy użytkownika. */
-  onClearPlace: () => void
+  /** Ręczna zmiana tekstu; puste pole wraca listę do okolicy użytkownika. */
+  onSearchQueryChange: (q: string) => void
   range: DayRange
   onRangeChange: (r: DayRange) => void
   mode: TimelineMode
@@ -150,7 +152,8 @@ export default function EventListModal({
             userPos={origin}
             onSelect={p => { savedScroll = 0; if (scrollRef.current) scrollRef.current.scrollTop = 0; onSearchPlace(p) }}
             onSelectEvent={onSearchEvent}
-            onQueryChange={q => { if (!q && placeChosen) onClearPlace() }}
+            onQueryChange={onSearchQueryChange}
+            initialQuery={searchText}
             dropdownZIndex={30}
           />
         </div>
