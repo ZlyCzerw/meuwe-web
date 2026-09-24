@@ -13,9 +13,12 @@ interface Props {
   userPos: { lat: number; lng: number } | null
   onSelect: (p: { lat: number; lng: number }) => void
   onSelectEvent?: (e: EventHit) => void
+  /** Każda ręczna zmiana tekstu, także wyczyszczenie. */
+  onQueryChange?: (q: string) => void
+  dropdownZIndex?: number
 }
 
-function SearchBar({ userPos, onSelect, onSelectEvent }: Props) {
+function SearchBar({ userPos, onSelect, onSelectEvent, onQueryChange, dropdownZIndex }: Props) {
   const { t } = useTranslation()
   const searchEvents = onSelectEvent
     ? async (q: string) => {
@@ -31,6 +34,8 @@ function SearchBar({ userPos, onSelect, onSelectEvent }: Props) {
       onSelect={r => onSelect({ lat: r.lat, lng: r.lng })}
       searchEvents={searchEvents}
       onSelectEvent={onSelectEvent}
+      onQueryChange={onQueryChange}
+      dropdownZIndex={dropdownZIndex}
     />
   )
 }

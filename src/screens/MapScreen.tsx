@@ -267,7 +267,15 @@ function MapScreen({
   // a dopiero na końcu od miejsca, na które patrzy mapa.
   // Memo po liczbach, nie po obiekcie: kompas re-renderuje ten ekran kilkadziesiąt
   // razy na sekundę, a lista sortuje od nowa przy każdej zmianie punktu.
-  const originRaw = userPos || lastKnownPos || ipPos || mapCenter || WARSAW
+  // Miejsce wybrane w wyszukiwarce listy staje się jej punktem odniesienia.
+  // Żyje tylko, dopóki lista jest otwarta — ponowne otwarcie zaczyna od użytkownika.
+  const [listPlace, setListPlace] = useState<{ lat: number; lng: number } | null>(null)
+  const [listWasOpen, setListWasOpen] = useState(eventListOpen)
+  if (listWasOpen !== eventListOpen) {
+    setListWasOpen(eventListOpen)
+    if (!eventListOpen) setListPlace(null)
+  }
+  const originRaw = listPlace || userPos || lastKnownPos || ipPos || mapCenter || WARSAW
   const listOrigin = useMemo(() => ({ lat: originRaw.lat, lng: originRaw.lng }), [originRaw.lat, originRaw.lng])
   const { events, loading, ready } = useEvents(
     fetchView, idxToOffset(range.startIdx), idxToOffset(range.endIdx), eventsRefreshKey,
@@ -805,16 +813,15 @@ function MapScreen({
         />
       </div>}
 
-      {/* Lista wydarzeń: w połowie drogi między lewą krawędzią a ADD (76 px, na
-          środku), na wysokości środka ADD. */}
+      {/* Lista wydarzeń: lustrzane odbicie przycisku powrotu do pozycji
+          (recenter: bottom 53, right 24, 48 px). */}
       {!pickingLocation && (
         <button
           onClick={() => onOpenEventList?.()}
           aria-label={t('eventList.open')}
           style={{
-            position: 'absolute', bottom: 24 + 38 - 26, left: 'calc((50% - 38px) / 2)',
-            transform: 'translateX(-50%)', zIndex: 10,
-            width: 52, height: 52, borderRadius: '50%',
+            position: 'absolute', bottom: 53, left: 24, zIndex: 20,
+            width: 48, height: 48, borderRadius: '50%',
             background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
@@ -932,6 +939,13 @@ function MapScreen({
           onClearFilters={() => setSelectedFilters([])}
           onOpenFilterPicker={() => setFilterModalOpen(true)}
           refreshKey={eventsRefreshKey}
+          placeChosen={!!listPlace}
+          onSearchPlace={p => {
+            setListPlace({ lat: p.lat, lng: p.lng })
+            if (leafRef.current) flyAdopting(leafRef.current, p.lat, p.lng, 15, 0.7)
+          }}
+          onSearchEvent={hit => { onEventListPicked?.(); openSearchedEvent(hit) }}
+          onClearPlace={() => setListPlace(null)}
           onClose={() => onCloseEventList?.()}
           onSelect={ev => {
             onEventListPicked?.()

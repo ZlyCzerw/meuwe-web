@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F, TAG_META, BLOBS } from '../lib/tokens'
 import type { EventWithMeta } from '../lib/types'
@@ -12,6 +12,8 @@ import DayTimeline, { type TimelineMode } from './DayTimeline'
 import OrganicBlob from './OrganicBlob'
 import BlobFace from './BlobFace'
 import StatusPill from './StatusPill'
+import SearchBar from '../screens/SearchBar'
+import type { EventHit } from '../lib/searchResults'
 
 const LOC_MAP: Record<string, string> = { pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', sl: 'sl-SI' }
 
@@ -29,8 +31,16 @@ export default function EventListModal({
   origin, range, onRangeChange, mode, onModeChange,
   selectedFilters, onToggleFilter, onClearFilters, onOpenFilterPicker,
   refreshKey, onSelect, onClose,
+  placeChosen, onSearchPlace, onSearchEvent, onClearPlace,
 }: {
+  /** Punkt, wokół którego lista szuka: użytkownik albo wybrane miejsce. */
   origin: { lat: number; lng: number }
+  /** Czy `origin` to miejsce wybrane w wyszukiwarce (a nie użytkownik). */
+  placeChosen: boolean
+  onSearchPlace: (p: { lat: number; lng: number }) => void
+  onSearchEvent: (hit: EventHit) => void
+  /** Wyczyszczone pole: lista wraca do okolicy użytkownika. */
+  onClearPlace: () => void
   range: DayRange
   onRangeChange: (r: DayRange) => void
   mode: TimelineMode
@@ -45,7 +55,6 @@ export default function EventListModal({
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
-  const [query, setQuery] = useState('')
 
   // Środek zapytania zaokrąglony do ~1 km: GPS drga co kilka metrów, a nowe
   // pobranie przy każdym drgnięciu nic nie wnosi. Odległości w kafelkach i tak
@@ -55,8 +64,8 @@ export default function EventListModal({
   const view = useMemo(() => ({ lat: qLat, lng: qLng, km: MAX_MAP_KM }), [qLat, qLng])
   const { events, loading } = useEvents(view, idxToOffset(range.startIdx), idxToOffset(range.endIdx), refreshKey)
   const items = useMemo(
-    () => listEvents(events, { filters: selectedFilters, query, from: origin }),
-    [events, selectedFilters, query, origin],
+    () => listEvents(events, { filters: selectedFilters, from: origin }),
+    [events, selectedFilters, origin],
   )
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -106,7 +115,7 @@ export default function EventListModal({
 
       {/* Nagłówek: tytuł, zamknięcie, wyszukiwanie, filtry */}
       <div style={{
-        position: 'relative', zIndex: 1, flexShrink: 0,
+        position: 'relative', zIndex: 2, flexShrink: 0,
         padding: 'calc(16px + env(safe-area-inset-top)) 0 8px',
         display: 'flex', flexDirection: 'column', gap: 12,
       }}>
@@ -116,7 +125,7 @@ export default function EventListModal({
               {t('eventList.title')}
             </div>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, marginTop: 2 }}>
-              {loading && !items.length ? t('common.loading') : t('eventList.count', { count: items.length, km: MAX_MAP_KM })}
+              {loading && !items.length ? t('common.loading') : t(placeChosen ? 'eventList.countNearPlace' : 'eventList.count', { count: items.length, km: MAX_MAP_KM })}
             </div>
           </div>
           <button
@@ -134,36 +143,16 @@ export default function EventListModal({
           </button>
         </div>
 
+        {/* To samo pole co na mapie: miejsce albo wydarzenie. Miejsce przestawia
+            punkt, wokół którego lista szuka i od którego liczy odległości. */}
         <div style={{ padding: '0 16px' }}>
-          <div style={{
-            background: '#fff', borderRadius: 999, border: `2px solid ${INK}`,
-            boxShadow: `0 3px 0 ${INK}22`, padding: '10px 16px',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 20 20" style={{ flexShrink: 0 }}>
-              <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M13 13 L17 17" stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-            <input
-              value={query}
-              onChange={e => { setQuery(e.target.value); savedScroll = 0; if (scrollRef.current) scrollRef.current.scrollTop = 0 }}
-              placeholder={t('eventList.search')}
-              aria-label={t('eventList.search')}
-              style={{
-                flex: 1,
-                // >=16px: iOS nie przybliża strony po wejściu w pole.
-                fontSize: 16, fontWeight: 600, color: C.ink,
-                border: 'none', outline: 'none', background: 'transparent', minWidth: 0,
-              }}
-            />
-            {query && (
-              <button
-                aria-label={t('common.clear')}
-                onClick={() => setQuery('')}
-                style={{ flexShrink: 0, color: C.inkSoft, fontSize: 16, fontWeight: 900, lineHeight: 1, padding: '0 2px' }}
-              >×</button>
-            )}
-          </div>
+          <SearchBar
+            userPos={origin}
+            onSelect={p => { savedScroll = 0; if (scrollRef.current) scrollRef.current.scrollTop = 0; onSearchPlace(p) }}
+            onSelectEvent={onSearchEvent}
+            onQueryChange={q => { if (!q && placeChosen) onClearPlace() }}
+            dropdownZIndex={30}
+          />
         </div>
 
         <AdaptiveFilterBar
