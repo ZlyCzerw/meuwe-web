@@ -336,6 +336,12 @@ const pl = {
   status: { live: 'Trwa', upcoming: 'Wkrótce', extended: 'Wciąż aktywne', ended: 'Zakończone' },
   share: { share: 'Udostępnij', linkCopied: 'Link skopiowany!' },
   follow: { follow: 'Obserwuj', unfollow: 'Przestań obserwować', following: 'Obserwujesz', loginRequired: 'Zaloguj się, aby obserwować', followsThis: 'weźmie udział', followThis: 'wezmą udział', othersFollowOne: 'i {{count}} weźmie udział', othersFollowMany: 'i {{count}} innych weźmie udział' },
+  attendees: {
+    title: 'Wezmą udział',
+    open: 'Pokaż, kto weźmie udział',
+    loadFailed: 'Nie udało się wczytać listy. Spróbuj ponownie za chwilę.',
+    empty: 'Na razie nikt się nie zapisał',
+  },
   userCard: {
     follow: '+ Obserwuj',
     following: 'Obserwujesz ✓',

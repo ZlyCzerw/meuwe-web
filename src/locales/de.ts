@@ -338,6 +338,12 @@ const de: Resources = {
   status: { live: 'Läuft', upcoming: 'Bald', extended: 'Noch aktiv', ended: 'Beendet' },
   share: { share: 'Teilen', linkCopied: 'Link kopiert!' },
   follow: { follow: 'Folgen', unfollow: 'Nicht mehr folgen', following: 'Folgst du', loginRequired: 'Anmelden zum Folgen', followsThis: 'ist dabei', followThis: 'sind dabei', othersFollowOne: 'und {{count}} weiterer ist dabei', othersFollowMany: 'und {{count}} weitere sind dabei' },
+  attendees: {
+    title: 'Sind dabei',
+    open: 'Zeigen, wer dabei ist',
+    loadFailed: 'Die Liste konnte nicht geladen werden. Versuch es gleich noch einmal.',
+    empty: 'Noch hat sich niemand angemeldet',
+  },
   userCard: {
     follow: '+ Folgen',
     following: 'Du folgst ✓',

@@ -50,6 +50,20 @@ describe('EventPhotoStrip', () => {
     expect(screen.getByTestId('followers-bar')).toHaveTextContent('obserwuje to')
   })
 
+  it('opens the attendee list from the followers bar', () => {
+    const onOpenFollowers = vi.fn()
+    render(
+      <EventPhotoStrip
+        {...base}
+        followers={[{ avatar_color: '#fff', display_name: 'Ala' }]}
+        followersLabel="weźmie udział"
+        onOpenFollowers={onOpenFollowers}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('followers-bar'))
+    expect(onOpenFollowers).toHaveBeenCalledTimes(1)
+  })
+
   it('reports a request to close the card', () => {
     const onClose = vi.fn()
     render(<EventPhotoStrip {...base} onClose={onClose} />)

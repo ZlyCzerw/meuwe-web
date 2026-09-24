@@ -338,6 +338,12 @@ const en: Resources = {
   status: { live: 'Live', upcoming: 'Soon', extended: 'Still active', ended: 'Ended' },
   share: { share: 'Share', linkCopied: 'Link copied!' },
   follow: { follow: 'Follow', unfollow: 'Unfollow', following: 'Following', loginRequired: 'Sign in to follow', followsThis: 'is going', followThis: 'are going', othersFollowOne: 'and {{count}} other is going', othersFollowMany: 'and {{count}} others are going' },
+  attendees: {
+    title: 'Going',
+    open: 'Show who\'s going',
+    loadFailed: 'Couldn\'t load the list. Try again in a moment.',
+    empty: 'Nobody has signed up yet',
+  },
   userCard: {
     follow: '+ Follow',
     following: 'Following ✓',

@@ -486,6 +486,14 @@ export const db = {
     const { data } = await supabase.rpc('get_event_follower_colors', { p_event_id: eventId })
     return (data || []).map((r: any) => ({ avatar_color: r.avatar_color ?? null, display_name: r.display_name ?? null }))
   },
+  // Pełna lista do modala uczestników: z id, bo wiersz otwiera profil osoby.
+  // null = nie udało się pobrać (inaczej niż pusta lista).
+  async getEventAttendees(eventId: string): Promise<{ user_id: string; display_name: string | null; avatar_color: string | null }[] | null> {
+    const { data, error } = await supabase.rpc('get_event_attendees', { p_event_id: eventId })
+    if (error) { console.error('[getEventAttendees]', error); return null }
+    return ((data || []) as { user_id: string; display_name: string | null; avatar_color: string | null }[])
+      .map(r => ({ user_id: r.user_id, display_name: r.display_name ?? null, avatar_color: r.avatar_color ?? null }))
+  },
   async getFollowedEvents(userId: string): Promise<EventWithMsgCount[]> {
     const { data: follows } = await supabase
       .from('event_follows').select('event_id').eq('user_id', userId)

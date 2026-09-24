@@ -132,6 +132,8 @@ function EventSheet({
   onChainStep,
   chainCanGo,
   onOpenUser,
+  onOpenAttendees,
+  attendeesOpen,
 }: {
   event: EventWithMeta
   onClose: () => void
@@ -153,6 +155,9 @@ function EventSheet({
   chainCanGo?: (dir: Dir) => boolean
   /** Tap w organizatora; brak = wiersz zostaje zwykłym tekstem. */
   onOpenUser?: (userId: string) => void
+  /** Otwiera listę osób, które wezmą udział (warstwa w App, nad kartą). */
+  onOpenAttendees?: (eventId: string) => void
+  attendeesOpen?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const [snap, setSnap] = useState<Snap>('half')
@@ -383,7 +388,7 @@ function EventSheet({
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      if (chatOpen || photoModal !== null || notifyReason || calendarChooser) return
+      if (chatOpen || attendeesOpen || photoModal !== null || notifyReason || calendarChooser) return
       e.preventDefault()
       // Klawisz idzie za daszkiem, nie za palcem. Swipe w lewo znaczy wschód,
       // bo karta wyjeżdża w lewo i następna nadchodzi z prawej — ale przy
@@ -393,7 +398,7 @@ function EventSheet({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [chatOpen, photoModal, notifyReason, calendarChooser])
+  }, [chatOpen, attendeesOpen, photoModal, notifyReason, calendarChooser])
 
   async function send() {
     if (!input.trim() || !session) return
@@ -543,6 +548,7 @@ function EventSheet({
                   tags={event.tags ?? []}
                   followers={followers}
                   followersLabel={followersLabel}
+                  onOpenFollowers={onOpenAttendees ? () => onOpenAttendees(event.id) : undefined}
                   onClose={onClose}
                   onOpenPhoto={setPhotoModal}
                 />

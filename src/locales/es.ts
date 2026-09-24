@@ -338,6 +338,12 @@ const es: Resources = {
   status: { live: 'En curso', upcoming: 'Pronto', extended: 'Aún activo', ended: 'Terminado' },
   share: { share: 'Compartir', linkCopied: '¡Enlace copiado!' },
   follow: { follow: 'Seguir', unfollow: 'Dejar de seguir', following: 'Siguiendo', loginRequired: 'Inicia sesión para seguir', followsThis: 'va a ir', followThis: 'van a ir', othersFollowOne: 'y {{count}} más va a ir', othersFollowMany: 'y {{count}} más van a ir' },
+  attendees: {
+    title: 'Van a ir',
+    open: 'Ver quién va a ir',
+    loadFailed: 'No se pudo cargar la lista. Inténtalo de nuevo en un momento.',
+    empty: 'Todavía nadie se ha apuntado',
+  },
   userCard: {
     follow: '+ Seguir',
     following: 'Siguiendo ✓',

@@ -25,6 +25,7 @@ export default function EventPhotoStrip({
   tags,
   followers,
   followersLabel,
+  onOpenFollowers,
   onClose,
   onOpenPhoto,
 }: {
@@ -33,6 +34,8 @@ export default function EventPhotoStrip({
   tags: string[]
   followers: { avatar_color: string | null; display_name: string | null }[]
   followersLabel: string
+  /** Otwiera pełną listę osób, które wezmą udział. */
+  onOpenFollowers?: () => void
   onClose: () => void
   onOpenPhoto: (idx: number) => void
 }) {
@@ -116,9 +119,16 @@ export default function EventPhotoStrip({
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 96, background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)', pointerEvents: 'none', zIndex: 1 }} />
 
       {followers.length > 0 && (
-        <div
+        <button
+          type="button"
           data-testid="followers-bar"
-          style={{ position: 'absolute', top: 10, left: 10, zIndex: 3, display: 'flex', alignItems: 'center', gap: 7 }}
+          title={t('attendees.open')}
+          onClick={e => { e.stopPropagation(); onOpenFollowers?.() }}
+          disabled={!onOpenFollowers}
+          style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 3, display: 'flex', alignItems: 'center', gap: 7,
+            padding: 0, background: 'none', border: 'none', cursor: onOpenFollowers ? 'pointer' : 'default',
+          }}
         >
           <div style={{ display: 'flex' }}>
             {followers.slice(0, MAX_FACES).map((f, i) => (
@@ -138,7 +148,7 @@ export default function EventPhotoStrip({
             fontFamily: F.body, fontSize: 11.5, fontWeight: 800, color: '#fff',
             textShadow: '0 1px 3px rgba(0,0,0,0.5)', whiteSpace: 'nowrap',
           }}>{followersLabel}</span>
-        </div>
+        </button>
       )}
 
       <button

@@ -338,6 +338,12 @@ const sl: Resources = {
   status: { live: 'V živo', upcoming: 'Kmalu', extended: 'Še aktivno', ended: 'Končano' },
   share: { share: 'Deli', linkCopied: 'Povezava kopirana!' },
   follow: { follow: 'Spremljaj', unfollow: 'Prenehaj spremljati', following: 'Spremljam', loginRequired: 'Prijavi se za spremljanje', followsThis: 'gre zraven', followThis: 'gredo zraven', othersFollowOne: 'in še {{count}} drug gre zraven', othersFollowMany: 'in še {{count}} drugih gre zraven' },
+  attendees: {
+    title: 'Gredo zraven',
+    open: 'Pokaži, kdo gre zraven',
+    loadFailed: 'Seznama ni bilo mogoče naložiti. Poskusi znova čez trenutek.',
+    empty: 'Zaenkrat se še nihče ni prijavil',
+  },
   userCard: {
     follow: '+ Spremljaj',
     following: 'Spremljaš ✓',

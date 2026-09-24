@@ -32,6 +32,8 @@ export interface OverlayFlags {
   attendanceAskOpen: boolean
   /** Karta cudzego profilu, otwierana z wiersza organizatora w karcie wydarzenia. */
   userCardOpen: boolean
+  /** Lista osób, które wezmą udział, otwierana z paska awatarów w karcie wydarzenia. */
+  attendeesOpen: boolean
   /** The "there is a new version" sheet; its blocking twin needs no flag. */
   updateOpen: boolean
   /** Pełnoekranowa lista wydarzeń otwierana przyciskiem na mapie. */
@@ -57,6 +59,7 @@ export function isScreenClear(f: OverlayFlags): boolean {
     && !f.pushAskOpen
     && !f.attendanceAskOpen
     && !f.userCardOpen
+    && !f.attendeesOpen
     && !f.updateOpen
     && !f.eventListOpen
 }
