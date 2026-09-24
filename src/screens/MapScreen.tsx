@@ -30,6 +30,8 @@ import { useDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
 import { TODAY_IDX, idxToOffset, idxToDate, dateToIdx, isInRange, type DayRange } from '../lib/timeline'
 import DayTimeline, { type TimelineMode } from '../components/DayTimeline'
+import { countRender, timed, perfPinsParam, exposeMap } from '../dev/perfProbe'
+import { makePerfEvents } from '../dev/perfPins'
 
 const WARSAW = { lat: 52.2297, lng: 21.0122 }
 const IP_ZOOM = 11 // coarse city-level zoom for an IP-based guess (GPS uses 15)
@@ -107,6 +109,7 @@ function MapScreen({
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
+  countRender('MapScreen')
   const heading = useDeviceHeading(true)
 
   const mapRef = useRef<HTMLDivElement>(null)
@@ -244,15 +247,25 @@ function MapScreen({
   const { events, loading, ready } = useEvents(
     fetchView, idxToOffset(range.startIdx), idxToOffset(range.endIdx), eventsRefreshKey,
   )
+  // ?perfPins=N (tylko dev): syntetyczne wydarzenia do pomiarów wydajności.
+  // Wyliczane raz, wokół punktu startowego mapy.
+  const [perfEvents] = useState<EventWithMeta[]>(() => {
+    const n = perfPinsParam()
+    return n ? makePerfEvents(n, initialCenter || userPos || lastKnownPos || ipPos || WARSAW) : []
+  })
+  const allEvents = useMemo(
+    () => perfEvents.length ? [...events, ...perfEvents] : events,
+    [events, perfEvents],
+  )
   // An event matches a filter if it IS that category or carries it as a tag (handles custom tags too).
   // Memoised because the pins effect keys off it: an inline filter() is a new
   // array every render, and on a phone the compass re-renders this screen
   // dozens of times a second.
   const visibleEvents = useMemo(
     () => selectedFilters.length
-      ? events.filter(e => selectedFilters.some(f => e.category === f || (e.tags?.includes(f) ?? false)))
-      : events,
-    [events, selectedFilters],
+      ? allEvents.filter(e => selectedFilters.some(f => e.category === f || (e.tags?.includes(f) ?? false)))
+      : allEvents,
+    [allEvents, selectedFilters],
   )
 
   const poolKey = `${[...selectedFilters].sort().join(',')}|${range.startIdx}-${range.endIdx}`
@@ -315,6 +328,7 @@ function MapScreen({
     })
     ro.observe(mapRef.current)
     leafRef.current = map
+    exposeMap(map)
     // If GPS already fired before this map instance was ready (e.g. StrictMode double-init),
     // add the me marker immediately using the always-current ref.
     if (initialPos && !meRef.current) {
@@ -508,7 +522,7 @@ function MapScreen({
   // most of what "the pins arrive in batches" looked like — and with a filter
   // selected it ran on every render, which on a phone means every compass
   // reading.
-  useEffect(() => {
+  useEffect(() => timed('pins', () => {
     const map = leafRef.current
     if (!map) return
 
@@ -579,7 +593,7 @@ function MapScreen({
       marker.on('click', d.onClick)
       pinsRef.current[id] = { marker, sig: d.sig }
     })
-  }, [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function doRecenter() {
     const p = userPos || lastKnownPos || ipPos || WARSAW

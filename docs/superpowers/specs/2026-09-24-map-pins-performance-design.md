@@ -175,4 +175,5 @@ Do uzupełnienia przy wdrożeniu (krok 0 i po każdym kroku).
 
 | Krok | Urządzenie | fps pinch | fps pan | renderów/s w spoczynku | DOM/pinezka | efekt pinezek (ms) |
 |---|---|---|---|---|---|---|
-| 0 | | | | | | |
+| 0 | desktop (Browser pane, dev) | - | - | - | 10,7 (1734 ikon na z8 i z12, wszystkie w DOM) | 99 / 86 / 22 / 39 (kolejne przebiegi) |
+| 0 | Android / iPhone | do zmierzenia (Procedura B na commicie Task 1) | | | | |
