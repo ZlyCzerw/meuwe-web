@@ -1,32 +1,45 @@
-import { BLOBS, TAG_META, type Category } from '../lib/tokens'
+import { TAG_META, type Category } from '../lib/tokens'
 import { isCurrentlyLive } from '../lib/eventStatus'
 import { formatClusterCount } from '../lib/eventClusters'
+import { pinImageUrl, PIN_IMG_W, PIN_IMG_H, BADGE_IMG, BADGE_IMG_H } from './pinImages'
+
+// Pinezka to obrazek z pinImages.ts (blob + cień + glif) plus to, czego obrazek
+// nie umie: pulsujące halo, kropka pod spodem i liczba w odznace, pisana
+// fontem strony, do którego <img> nie ma dostępu.
+
+function halosHTML(color: string): string {
+  const ring = (delay: string) =>
+    `<div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${color};animation:halo 2.8s${delay} ease-out infinite;opacity:0;pointer-events:none"></div>`
+  return ring('') + ring(' 1.4s')
+}
+
+function imgHTML(url: string, w: number, h: number): string {
+  return `<img src="${url}" width="${w}" height="${h}" alt="" draggable="false" style="position:absolute;top:0;left:0;width:${w}px;height:${h}px;pointer-events:none">`
+}
+
+function pinBody(url: string, haloColor: string, dotColor: string, live: boolean, scale: number, extra = ''): string {
+  const scaleStyle = scale !== 1 ? `transform:scale(${scale.toFixed(3)});transform-origin:bottom center;` : ''
+  return `<div style="position:relative;width:44px;height:56px;">`
+    + `<div style="position:absolute;top:0;left:0;width:44px;height:44px;${scaleStyle}">`
+    + (live ? halosHTML(haloColor) : '')
+    + imgHTML(url, PIN_IMG_W, PIN_IMG_H)
+    + `</div>`
+    + `<div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${dotColor};border:2.5px solid #2D2B2A"></div>`
+    + extra
+    + `</div>`
+}
+
+function knownCategory(category: string): Category {
+  return (TAG_META[category as Category] ? category : 'party') as Category
+}
 
 export function pinHTML(category: string, idx: number, _dbStatus?: string, startTime?: string, endTime?: string, scale = 1): string {
-  const meta = TAG_META[category as Category] || TAG_META.party
-  const path = BLOBS[idx % BLOBS.length]
-  const isLive = startTime && endTime
+  const cat = knownCategory(category)
+  const color = TAG_META[cat].color
+  const live = startTime && endTime
     ? isCurrentlyLive({ start_time: startTime, end_time: endTime })
     : false
-  const halos = isLive ? `
-    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s ease-out infinite;opacity:0;pointer-events:none"></div>
-    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid ${meta.color};animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
-  ` : ''
-  const scaleStyle = scale !== 1 ? `transform:scale(${scale.toFixed(3)});transform-origin:bottom center;` : ''
-  // The glyph box is inset:0 rather than a top offset: it has to be the full
-  // 44x44 for the glyph to land on the blob's centre. Sized to its own line box
-  // instead, it sat 3px high in every pin. All three BLOBS centre within 0.4px
-  // of that box's centre, so one rule covers them.
-  return `<div style="position:relative;width:44px;height:56px;">
-    <div style="position:absolute;top:0;left:0;width:44px;height:44px;${scaleStyle}">
-      ${halos}
-      <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A22)">
-        <path d="${path}" fill="${meta.color}" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none">${meta.glyph}</div>
-    </div>
-    <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${meta.color};border:2.5px solid #2D2B2A"></div>
-  </div>`
+  return pinBody(pinImageUrl({ kind: 'public', category: cat, blob: idx }), color, color, live, scale)
 }
 
 export function meHTML(): string {
@@ -54,51 +67,29 @@ export function meHTML(): string {
 }
 
 export function privateHTML(isLive = false): string {
-  const halos = isLive ? `
-    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid #2D2B2A;animation:halo 2.8s ease-out infinite;opacity:0;pointer-events:none"></div>
-    <div style="position:absolute;top:-10px;left:-10px;width:64px;height:64px;border-radius:50%;border:2.5px solid #2D2B2A;animation:halo 2.8s 1.4s ease-out infinite;opacity:0;pointer-events:none"></div>
-  ` : ''
-  const path = BLOBS[0]
-  return `<div style="position:relative;width:44px;height:56px;">
-    <div style="position:absolute;top:0;left:0;width:44px;height:44px;">
-      ${halos}
-      <svg width="44" height="44" viewBox="-3 -3 106 106" style="overflow:visible;filter:drop-shadow(0 3px 0 #2D2B2A44)">
-        <path d="${path}" fill="white" stroke="#2D2B2A" stroke-width="5" stroke-linejoin="round"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
-        <svg width="30" height="25" viewBox="0 0 26 22" fill="none">
-          <ellipse cx="7.5" cy="7" rx="6" ry="5" fill="#2D2B2A"/>
-          <ellipse cx="18.5" cy="7" rx="6" ry="5" fill="#2D2B2A"/>
-          <rect x="11" y="3" width="4" height="8" fill="#2D2B2A"/>
-          <ellipse cx="7.5" cy="7" rx="3" ry="2.5" fill="white"/>
-          <ellipse cx="18.5" cy="7" rx="3" ry="2.5" fill="white"/>
-          <path d="M8 18Q13 22 18 18" stroke="#2D2B2A" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-    </div>
-    <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:white;border:2.5px solid #2D2B2A"></div>
-  </div>`
+  return pinBody(pinImageUrl({ kind: 'private' }), '#2D2B2A', 'white', isLive, 1)
 }
 
 // Representative pin for a same-zone cluster (size >= 2): the normal pin plus a
 // comic circle badge (white, ink outline, no tail) in the upper-right carrying
-// the event count. Same 44x56 icon box as pinHTML.
+// the event count. Same 44x56 icon box as pinHTML; the badge sits in the pin's
+// own container rather than in an extra wrapper.
 export function clusterHTML(
   category: string,
   idx: number,
-  dbStatus: string | undefined,
+  _dbStatus: string | undefined,
   startTime: string,
   endTime: string,
   count: number,
 ): string {
+  const cat = knownCategory(category)
+  const color = TAG_META[cat].color
+  const live = isCurrentlyLive({ start_time: startTime, end_time: endTime })
   const label = formatClusterCount(count)
   const fontSize = label.length > 1 ? 11 : 14
-  const badge = `<div style="position:absolute;top:-8px;right:-8px;width:28px;height:28px;pointer-events:none">
-    <svg width="28" height="28" viewBox="0 0 100 100" style="filter:drop-shadow(0 2px 0 #2D2B2A22)"><circle cx="50" cy="50" r="46.5" fill="#fff" stroke="#2D2B2A" stroke-width="7"/></svg>
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk','Nunito',sans-serif;font-size:${fontSize}px;font-weight:900;color:#2D2B2A">${label}</div>
-  </div>`
-  return `<div style="position:relative;width:44px;height:56px">
-    ${pinHTML(category, idx, dbStatus, startTime, endTime, 1)}
-    ${badge}
-  </div>`
+  const badge = `<div style="position:absolute;top:-8px;right:-8px;width:28px;height:28px;pointer-events:none">`
+    + imgHTML(pinImageUrl({ kind: 'badge' }), BADGE_IMG, BADGE_IMG_H)
+    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk','Nunito',sans-serif;font-size:${fontSize}px;font-weight:900;color:#2D2B2A">${label}</div>`
+    + `</div>`
+  return pinBody(pinImageUrl({ kind: 'public', category: cat, blob: idx }), color, color, live, 1, badge)
 }

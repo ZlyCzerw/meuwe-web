@@ -14,6 +14,7 @@ import {
   type NearbyProbe, type EmptyVariant,
 } from '../lib/emptyState'
 import { pinHTML, meHTML, privateHTML, clusterHTML } from '../components/mapIcons'
+import { warmPinImages } from '../components/pinImages'
 import { isCurrentlyLive } from '../lib/eventStatus'
 import { initial, avatarColor } from '../lib/profileDisplay'
 import Avatar from '../components/Avatar'
@@ -290,6 +291,10 @@ function MapScreen({
     // Lewy dolny róg to jedyny wolny narożnik mapy: awatar siedzi w lewym
     // górnym, przyciski recenter w prawym dolnym, ADD na środku dołu.
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map)
+    // Obrazki pinezek dekodowane z góry, w wolnej chwili: pierwsza pinezka
+    // danej kategorii nie mignie pustym pudełkiem. iOS nie ma requestIdleCallback.
+    if ('requestIdleCallback' in window) window.requestIdleCallback(warmPinImages)
+    else setTimeout(warmPinImages, 200)
     map.on('click', () => onMapClickRef.current?.())
     onRegisterFlyTo?.((lat, lng) => flyToEvent(map, lat, lng))
     // Smart-link spot: center exactly on the point at the requested zoom, no sheet offset.

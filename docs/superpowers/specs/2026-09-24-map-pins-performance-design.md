@@ -179,3 +179,5 @@ Do uzupełnienia przy wdrożeniu (krok 0 i po każdym kroku).
 | 0 | Android / iPhone | do zmierzenia (Procedura B na commicie Task 1) | | | | |
 | 1 (kompas) | desktop | - | - | 0 w 3 s (bez kompasu na desktopie) | bez zmian | bez zmian |
 | 1 (kompas) | Android / iPhone | do zmierzenia (rendery/s z kompasem, strzałka na iOS po tapnięciu) | | | | |
+| 2 (obrazki) | desktop | - | - | - | 4,4 (1734 ikon) | 71 / 55 / 21 / 37 |
+| 2 (obrazki) | Android / iPhone | do zmierzenia | | | | |
