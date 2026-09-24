@@ -26,6 +26,7 @@ import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 import EventPickerModal from '../components/EventPickerModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
 import { overlapChainInView } from '../lib/pinOverlap'
+import { pinsToMount, planMount } from '../lib/pinCulling'
 import { nextFetchView, type FetchView } from '../lib/mapView'
 import { subscribeDeviceHeading } from '../hooks/useDeviceHeading'
 import { MeuweLogo } from '../components/MeuweLogo'
@@ -116,8 +117,15 @@ function MapScreen({
   const leafRef = useRef<L.Map | null>(null)
   const meRef = useRef<L.Marker | null>(null)
   // Markers by event id, each remembered with the look it was built for, so a
-  // pin whose look has not changed is left alone instead of rebuilt.
-  const pinsRef = useRef<Record<string, { marker: L.Marker; sig: string }>>({})
+  // pin whose look has not changed is left alone instead of rebuilt. `mounted`
+  // mówi, czy marker wisi na mapie: poza kadrem (z zapasem) czeka tu z gotową
+  // ikoną, a jego halo nie animuje się na próżno.
+  type Pin = { marker: L.Marker; sig: string; z: number; lat: number; lng: number; mounted: boolean }
+  const pinsRef = useRef<Record<string, Pin>>({})
+  // Klik markera czyta handler stąd: podpinany raz przy tworzeniu, a nie
+  // przepinany na każdym markerze przy każdej zmianie wydarzeń.
+  const clickRef = useRef<Record<string, () => void>>({})
+  const syncMountedRef = useRef<(addOnly: boolean) => void>(() => {})
   const userPosRef = useRef<{ lat: number; lng: number } | null>(userPos)
   useEffect(() => { userPosRef.current = userPos }, [userPos])
   const onMapClickRef = useRef(onMapClick)
@@ -303,6 +311,7 @@ function MapScreen({
     })
     onRegisterShowDay?.(showDay)
     map.on('moveend', () => {
+      syncMountedRef.current(false)
       const up = userPosRef.current
       const center = map.getCenter()
       if (up) {
@@ -316,6 +325,15 @@ function MapScreen({
         adoptView(map, center.lat, center.lng, map.getZoom())
       }, 300)
     })
+    // W trakcie ruchu dokładamy pinezki wjeżdżające w kadr, co ~200 ms, żeby
+    // przy szybkim rzucie mapą nie pojawiały się dopiero po zatrzymaniu.
+    let lastMoveSync = 0
+    map.on('move', () => {
+      const now = performance.now()
+      if (now - lastMoveSync < 200) return
+      lastMoveSync = now
+      syncMountedRef.current(true)
+    })
     // The state the map opens on is a view too — without this, a map that
     // starts at the right zoom and is never moved fetches for no view at all.
     adoptView(map, start.lat, start.lng, initialZoom)
@@ -327,6 +345,7 @@ function MapScreen({
     // visible part of the map" true from the moment it is visible.
     const ro = new ResizeObserver(() => {
       map.invalidateSize(false)
+      syncMountedRef.current(false)
       const c = map.getCenter()
       adoptView(map, c.lat, c.lng, map.getZoom())
     })
@@ -343,7 +362,7 @@ function MapScreen({
     // The markers belong to this map instance; leaving them in the ref would
     // hand a StrictMode remount a set of pins attached to a destroyed map,
     // which the diff would then happily try to reuse.
-    return () => { ro.disconnect(); meRef.current = null; pinsRef.current = {}; map.remove(); leafRef.current = null }
+    return () => { ro.disconnect(); meRef.current = null; pinsRef.current = {}; clickRef.current = {}; map.remove(); leafRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Me marker — update on userPos change; center map only on first GPS fix
@@ -525,6 +544,20 @@ function MapScreen({
     flyAdopting(map, origin.lat, origin.lng, target, 0.7)
   }
 
+  // Na mapie wisi to, co jest w kadrze albo do pół ekranu od niego.
+  function syncMounted(addOnly: boolean) {
+    const map = leafRef.current
+    if (!map) return
+    const b = map.getBounds().pad(0.5)
+    const want = pinsToMount(pinsRef.current, {
+      south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast(),
+    })
+    const { add, remove } = planMount(pinsRef.current, want, addOnly)
+    for (const id of add) { pinsRef.current[id].marker.addTo(map); pinsRef.current[id].mounted = true }
+    for (const id of remove) { pinsRef.current[id].marker.remove(); pinsRef.current[id].mounted = false }
+  }
+  useEffect(() => { syncMountedRef.current = syncMounted })
+
   // Pins — update on events change. Private events render individually; public
   // events are grouped by 3x3 m zone: singletons open the half-sheet directly,
   // clusters (>= 2) show a count badge and open the event picker.
@@ -587,24 +620,35 @@ function MapScreen({
       delete pinsRef.current[id]
     })
 
+    const clicks: Record<string, () => void> = {}
     Object.entries(desired).forEach(([id, d]) => {
+      clicks[id] = d.onClick
       const pin = pinsRef.current[id]
       if (pin) {
         if (pin.sig !== d.sig) {
+          // Działa też na markerze zdjętym z mapy: ikona czeka na powrót w kadr.
           pin.marker.setIcon(iconFor(d.html))
           pin.marker.setLatLng([d.lat, d.lng])
           pin.sig = d.sig
+          pin.lat = d.lat
+          pin.lng = d.lng
         }
-        // Cheap and always worth doing: the handler closes over this run's
-        // event objects, and the offset follows a count that moves on its own.
-        pin.marker.setZIndexOffset(d.zIndexOffset)
-        pin.marker.off('click').on('click', d.onClick)
+        // The offset follows a count that moves on its own, but touching it
+        // re-sorts the marker pane - only when it actually changed.
+        if (pin.z !== d.zIndexOffset) {
+          pin.marker.setZIndexOffset(d.zIndexOffset)
+          pin.z = d.zIndexOffset
+        }
         return
       }
-      const marker = L.marker([d.lat, d.lng], { icon: iconFor(d.html), zIndexOffset: d.zIndexOffset }).addTo(map)
-      marker.on('click', d.onClick)
-      pinsRef.current[id] = { marker, sig: d.sig }
+      const marker = L.marker([d.lat, d.lng], { icon: iconFor(d.html), zIndexOffset: d.zIndexOffset })
+      marker.on('click', () => clickRef.current[id]?.())
+      pinsRef.current[id] = { marker, sig: d.sig, z: d.zIndexOffset, lat: d.lat, lng: d.lng, mounted: false }
     })
+    // The handlers close over this run's event objects.
+    clickRef.current = clicks
+
+    syncMounted(false)
   }), [visibleEvents]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function doRecenter() {
