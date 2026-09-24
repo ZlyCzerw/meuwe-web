@@ -258,6 +258,9 @@ function MapScreen({
   // ?perfPins=N (tylko dev): syntetyczne wydarzenia do pomiarów wydajności.
   // Wyliczane raz, wokół punktu startowego mapy.
   const [perfEvents] = useState<EventWithMeta[]>(() => {
+    // Warunek wprost przy wywołaniu: bez niego bundler zostawiał generator w
+    // buildzie produkcyjnym, bo nie widzi, że perfPinsParam() daje tam 0.
+    if (!import.meta.env.DEV) return []
     const n = perfPinsParam()
     return n ? makePerfEvents(n, initialCenter || userPos || lastKnownPos || ipPos || WARSAW) : []
   })
@@ -325,14 +328,17 @@ function MapScreen({
         adoptView(map, center.lat, center.lng, map.getZoom())
       }, 300)
     })
-    // W trakcie ruchu dokładamy pinezki wjeżdżające w kadr, co ~200 ms, żeby
-    // przy szybkim rzucie mapą nie pojawiały się dopiero po zatrzymaniu.
-    let lastMoveSync = 0
+    // W trakcie ruchu dokładamy pinezki wjeżdżające w kadr raz na klatkę: przy
+    // szybkim rzucie mapa przejeżdża kilka ekranów na sekundę, a co 200 ms
+    // zapas pół ekranu nie nadążał i brzeg kadru stał pusty. Jedno przejście to
+    // pętla po pinezkach bez dotykania DOM-u, więc klatka tego nie odczuwa.
+    let moveFrame = 0
     map.on('move', () => {
-      const now = performance.now()
-      if (now - lastMoveSync < 200) return
-      lastMoveSync = now
-      syncMountedRef.current(true)
+      if (moveFrame) return
+      moveFrame = requestAnimationFrame(() => {
+        moveFrame = 0
+        syncMountedRef.current(true)
+      })
     })
     // The state the map opens on is a view too — without this, a map that
     // starts at the right zoom and is never moved fetches for no view at all.
