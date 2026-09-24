@@ -41,6 +41,12 @@ describe('listEvents', () => {
     expect(listEvents([a, b], { filters: [], from: null }).map(e => e.id)).toEqual(['b', 'a'])
   })
 
+  it('drops what lies beyond the radius, like the corners of the fetched square', () => {
+    const inside = ev('inside', { lat: 50.4 })   // ~44 km
+    const corner = ev('corner', { lat: 50.44, lng: 22.69 }) // ~70 km, still inside a 50 km square
+    expect(listEvents([inside, corner], { filters: [], from: me, maxKm: 50 }).map(e => e.id)).toEqual(['inside'])
+  })
+
   it('matches a filter by category or by tag, like the map does', () => {
     const byCat = ev('cat', { category: 'food' })
     const byTag = ev('tag', { category: 'music', tags: ['food'] })

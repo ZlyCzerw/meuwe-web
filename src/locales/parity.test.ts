@@ -162,7 +162,7 @@ describe('event list labels', () => {
     'open', 'title',
     'count_one', 'count_two', 'count_few', 'count_many', 'count_other',
     'countNearPlace_one', 'countNearPlace_two', 'countNearPlace_few', 'countNearPlace_many', 'countNearPlace_other',
-    'mapCenter', 'empty', 'emptyHint', 'interactions',
+    'mapCenter', 'showMore', 'empty', 'emptyHint', 'interactions',
   ] as const
   it.each(Object.entries(LOCALES))('%s carries every event list key', (_name, dict) => {
     const list = (dict as { eventList: Record<string, unknown> }).eventList

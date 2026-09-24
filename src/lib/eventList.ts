@@ -7,16 +7,20 @@ import type { EventWithMeta } from './types'
  */
 export function listEvents(
   events: EventWithMeta[],
-  { filters, from }: {
+  { filters, from, maxKm = Infinity }: {
     filters: string[]
     /** Skąd liczyć odległość. Null — zostaje ta, którą policzyło zapytanie. */
     from: { lat: number; lng: number } | null
+    /** Promień listy. Baza oddaje kwadrat, a lista obiecuje „do X km” — rogi
+     *  kwadratu leżą dalej i nie mogą się w niej znaleźć. */
+    maxKm?: number
   },
 ): EventWithMeta[] {
   return events
     // Dopasowanie filtra tak samo jak na mapie: kategoria albo tag.
     .filter(e => !filters.length || filters.some(f => e.category === f || (e.tags?.includes(f) ?? false)))
     .map(e => from ? { ...e, distKm: haversineKm(from.lat, from.lng, e.lat, e.lng) } : e)
+    .filter(e => e.distKm <= maxKm)
     .sort((a, b) => a.distKm - b.distKm || a.start_time.localeCompare(b.start_time))
 }
 

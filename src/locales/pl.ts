@@ -50,6 +50,7 @@ const pl = {
     countNearPlace_many: '{{count}} wydarzeń do {{km}} km od wybranego miejsca',
     countNearPlace_other: '{{count}} wydarzeń do {{km}} km od wybranego miejsca',
     mapCenter: 'Środek mapy',
+    showMore: 'Pokaż więcej (+{{km}} km)',
     empty: 'Nic tu nie znaleźliśmy',
     emptyHint: 'Zmień dni, filtry albo wyszukaj inne miejsce',
     interactions: 'Zainteresowanie: wiadomości i obserwujący',

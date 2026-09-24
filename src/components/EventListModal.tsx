@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { C, INK, F, TAG_META, BLOBS } from '../lib/tokens'
 import type { EventWithMeta } from '../lib/types'
@@ -63,11 +63,20 @@ export default function EventListModal({
   // liczą się od dokładnego punktu.
   const qLat = Math.round(origin.lat * 100) / 100
   const qLng = Math.round(origin.lng * 100) / 100
-  const view = useMemo(() => ({ lat: qLat, lng: qLng, km: MAX_MAP_KM }), [qLat, qLng])
+  // Promień rośnie o MAX_MAP_KM z każdym „Pokaż więcej”. Nowy punkt odniesienia
+  // (inne miejsce, powrót do użytkownika) to nowa okolica — zaczyna od początku.
+  const [radiusKm, setRadiusKm] = useState(MAX_MAP_KM)
+  const originKey = `${qLat},${qLng}`
+  const [radiusFor, setRadiusFor] = useState(originKey)
+  if (radiusFor !== originKey) {
+    setRadiusFor(originKey)
+    setRadiusKm(MAX_MAP_KM)
+  }
+  const view = useMemo(() => ({ lat: qLat, lng: qLng, km: radiusKm }), [qLat, qLng, radiusKm])
   const { events, loading } = useEvents(view, idxToOffset(range.startIdx), idxToOffset(range.endIdx), refreshKey)
   const items = useMemo(
-    () => listEvents(events, { filters: selectedFilters, from: origin }),
-    [events, selectedFilters, origin],
+    () => listEvents(events, { filters: selectedFilters, from: origin, maxKm: radiusKm }),
+    [events, selectedFilters, origin, radiusKm],
   )
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -127,7 +136,7 @@ export default function EventListModal({
               {t('eventList.title')}
             </div>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, marginTop: 2 }}>
-              {loading && !items.length ? t('common.loading') : t(placeChosen ? 'eventList.countNearPlace' : 'eventList.count', { count: items.length, km: MAX_MAP_KM })}
+              {loading && !items.length ? t('common.loading') : t(placeChosen ? 'eventList.countNearPlace' : 'eventList.count', { count: items.length, km: radiusKm })}
             </div>
           </div>
           <button
@@ -170,6 +179,7 @@ export default function EventListModal({
       {/* Lista */}
       <div
         ref={scrollRef}
+        className="meuwe-scroll"
         onScroll={e => { savedScroll = e.currentTarget.scrollTop }}
         style={{
           position: 'relative', zIndex: 1, flex: 1, minHeight: 0, overflowY: 'auto',
@@ -281,6 +291,41 @@ export default function EventListModal({
             </button>
           )
         })}
+
+        {/* Dalej: kolejne MAX_MAP_KM promienia. Nowe wydarzenia są dalsze niż
+            wszystkie dotychczasowe, więc dochodzą pod spodem, a przewinięcie
+            zostaje tam, gdzie było. */}
+        {!(loading && !items.length) && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 4px' }}>
+            <button
+              onClick={() => setRadiusKm(km => km + MAX_MAP_KM)}
+              disabled={loading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 22px', borderRadius: 999,
+                background: '#fff', color: C.ink,
+                border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
+                fontFamily: F.display, fontSize: 14, fontWeight: 800,
+                cursor: loading ? 'default' : 'pointer',
+              }}
+            >
+              {loading ? (
+                <div style={{
+                  width: 14, height: 14, borderRadius: '50%',
+                  border: '2.5px solid rgba(255,122,69,0.25)', borderTopColor: C.primary,
+                  animation: 'spin 0.9s linear infinite',
+                }} />
+              ) : (
+                <span style={{
+                  width: 18, height: 18, borderRadius: '50%', background: C.primary, color: '#fff',
+                  border: `1.5px solid ${INK}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 900, lineHeight: 1,
+                }}>+</span>
+              )}
+              {t(loading ? 'common.loading' : 'eventList.showMore', { km: MAX_MAP_KM })}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Wybór dni — zawsze rozwinięty */}
