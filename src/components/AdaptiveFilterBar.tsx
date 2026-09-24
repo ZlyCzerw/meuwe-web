@@ -12,6 +12,8 @@ type Props = {
   onToggle: (cat: string) => void
   onClear: () => void
   onOpenPicker: () => void
+  /** W przepływie strony (np. w liście wydarzeń) zamiast przypięty nad mapą. */
+  inline?: boolean
 }
 
 const allStyle = (active: boolean): CSSProperties => ({
@@ -40,7 +42,7 @@ const plusStyle = (on: boolean): CSSProperties => ({
   fontSize: 20, fontWeight: 700, lineHeight: 1, transition: 'all 180ms ease',
 })
 
-export default function AdaptiveFilterBar({ selectedFilters, onToggle, onClear, onOpenPicker }: Props) {
+export default function AdaptiveFilterBar({ selectedFilters, onToggle, onClear, onOpenPicker, inline = false }: Props) {
   const { t, i18n } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const allMeasureRef = useRef<HTMLButtonElement>(null)
@@ -89,7 +91,7 @@ export default function AdaptiveFilterBar({ selectedFilters, onToggle, onClear, 
   return (
     <>
       <div ref={containerRef} style={{
-        position: 'absolute', top: 76, left: 0, right: 0, zIndex: 10,
+        ...(inline ? { position: 'relative' as const } : { position: 'absolute' as const, top: 76, left: 0, right: 0, zIndex: 10 }),
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: GAP, padding: '0 16px',
       }}>

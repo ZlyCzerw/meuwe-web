@@ -29,7 +29,7 @@ function translateToIdx(tx: number) {
  * dostaje zakres i oddaje nowy zakres.
  */
 export default function DayTimeline({
-  open, onOpenChange, mode, onModeChange, range, onRangeChange,
+  open, onOpenChange, mode, onModeChange, range, onRangeChange, alwaysOpen = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -37,6 +37,8 @@ export default function DayTimeline({
   onModeChange: (m: TimelineMode) => void
   range: DayRange
   onRangeChange: (r: DayRange) => void
+  /** Pasek bez zwijania — lista wydarzeń trzyma go stale na wierzchu. */
+  alwaysOpen?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -175,7 +177,7 @@ export default function DayTimeline({
     return `${dayLabel} · ${short(from)}`
   })()
 
-  if (!open) {
+  if (!open && !alwaysOpen) {
     return (
       <button onClick={() => onOpenChange(true)} style={{
         padding: '10px 20px', borderRadius: 999,
@@ -300,7 +302,7 @@ export default function DayTimeline({
           }}
         >›</button>
 
-        <button
+        {!alwaysOpen && <button
           onPointerDown={e => e.stopPropagation()}
           onClick={() => onOpenChange(false)}
           aria-label={t('map.closeTimeline')}
@@ -308,7 +310,7 @@ export default function DayTimeline({
             flexShrink: 0, width: 24, color: INK, fontWeight: 900, opacity: 0.5, fontSize: 16,
             background: 'transparent', border: 'none', cursor: 'pointer',
           }}
-        >×</button>
+        >×</button>}
       </div>
     </div>
   )

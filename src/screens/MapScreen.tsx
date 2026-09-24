@@ -24,6 +24,7 @@ import type { EventHit } from '../lib/searchResults'
 import TagPickerModal from '../components/TagPickerModal'
 import AdaptiveFilterBar from '../components/AdaptiveFilterBar'
 import EventPickerModal from '../components/EventPickerModal'
+import EventListModal from '../components/EventListModal'
 import { clusterPublicEvents } from '../lib/eventClusters'
 import { overlapChainInView } from '../lib/pinOverlap'
 import { pinsToMount, planMount } from '../lib/pinCulling'
@@ -78,6 +79,10 @@ function MapScreen({
   onRegisterFlyToSpot,
   onRegisterShowDay,
   onPoolChange,
+  eventListOpen = false,
+  onOpenEventList,
+  onCloseEventList,
+  onEventListPicked,
 }: {
   session: Session | null
   profile: Profile | null
@@ -108,6 +113,12 @@ function MapScreen({
    * są zbudowane. Zmiana podpisu — inny filtr, inny dzień — resetuje sznurek.
    */
   onPoolChange?: (events: EventWithMeta[], poolKey: string) => void
+  /** Pełnoekranowa lista wydarzeń. Stan trzyma App, bo zamyka ją też wstecz. */
+  eventListOpen?: boolean
+  onOpenEventList?: () => void
+  onCloseEventList?: () => void
+  /** Lista zamyka się, bo wybrano z niej wydarzenie (a nie krzyżykiem). */
+  onEventListPicked?: () => void
 }) {
   const { t, i18n } = useTranslation()
   const loc = LOC_MAP[i18n.language] || 'en-US'
@@ -252,6 +263,12 @@ function MapScreen({
   }
 
   const eventsPos = mapCenter || initialCenter || userPos || lastKnownPos || ipPos || WARSAW
+  // Lista liczy odległości od użytkownika; bez GPS od tego, co o nim wiadomo,
+  // a dopiero na końcu od miejsca, na które patrzy mapa.
+  // Memo po liczbach, nie po obiekcie: kompas re-renderuje ten ekran kilkadziesiąt
+  // razy na sekundę, a lista sortuje od nowa przy każdej zmianie punktu.
+  const originRaw = userPos || lastKnownPos || ipPos || mapCenter || WARSAW
+  const listOrigin = useMemo(() => ({ lat: originRaw.lat, lng: originRaw.lng }), [originRaw.lat, originRaw.lng])
   const { events, loading, ready } = useEvents(
     fetchView, idxToOffset(range.startIdx), idxToOffset(range.endIdx), eventsRefreshKey,
   )
@@ -788,6 +805,29 @@ function MapScreen({
         />
       </div>}
 
+      {/* Lista wydarzeń: w połowie drogi między lewą krawędzią a ADD (76 px, na
+          środku), na wysokości środka ADD. */}
+      {!pickingLocation && (
+        <button
+          onClick={() => onOpenEventList?.()}
+          aria-label={t('eventList.open')}
+          style={{
+            position: 'absolute', bottom: 24 + 38 - 26, left: 'calc((50% - 38px) / 2)',
+            transform: 'translateX(-50%)', zIndex: 10,
+            width: 52, height: 52, borderRadius: '50%',
+            background: '#fff', border: `2.5px solid ${INK}`, boxShadow: `0 3px 0 ${INK}33`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
+            <circle cx="4" cy="5" r="2" fill={C.primary} stroke={INK} strokeWidth="1.3" />
+            <circle cx="4" cy="11" r="2" fill={C.primary} stroke={INK} strokeWidth="1.3" />
+            <circle cx="4" cy="17" r="2" fill={C.primary} stroke={INK} strokeWidth="1.3" />
+            <path d="M9 5 H19 M9 11 H19 M9 17 H16" stroke={INK} strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+
       {/* ADD button */}
       {!pickingLocation && (
         <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
@@ -877,6 +917,28 @@ function MapScreen({
             </button>
           </div>
         </>
+      )}
+
+      {/* Pełnoekranowa lista wydarzeń — filtry i dni wspólne z mapą */}
+      {eventListOpen && !pickingLocation && (
+        <EventListModal
+          origin={listOrigin}
+          range={range}
+          onRangeChange={setRange}
+          mode={timelineMode}
+          onModeChange={setTimelineMode}
+          selectedFilters={selectedFilters}
+          onToggleFilter={toggleFilter}
+          onClearFilters={() => setSelectedFilters([])}
+          onOpenFilterPicker={() => setFilterModalOpen(true)}
+          refreshKey={eventsRefreshKey}
+          onClose={() => onCloseEventList?.()}
+          onSelect={ev => {
+            onEventListPicked?.()
+            if (leafRef.current) flyToEvent(leafRef.current, ev.lat, ev.lng)
+            onOpenEvent(ev)
+          }}
+        />
       )}
 
       {/* Event picker — same-zone cluster */}

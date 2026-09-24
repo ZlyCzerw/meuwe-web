@@ -34,6 +34,8 @@ export interface OverlayFlags {
   userCardOpen: boolean
   /** The "there is a new version" sheet; its blocking twin needs no flag. */
   updateOpen: boolean
+  /** Pełnoekranowa lista wydarzeń otwierana przyciskiem na mapie. */
+  eventListOpen: boolean
 }
 
 /** True only on a bare map, with nothing above it. */
@@ -56,4 +58,5 @@ export function isScreenClear(f: OverlayFlags): boolean {
     && !f.attendanceAskOpen
     && !f.userCardOpen
     && !f.updateOpen
+    && !f.eventListOpen
 }

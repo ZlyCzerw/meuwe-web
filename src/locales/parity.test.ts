@@ -156,3 +156,18 @@ describe('user card', () => {
     }
   })
 })
+
+describe('event list labels', () => {
+  const KEYS = [
+    'open', 'title', 'search',
+    'count_one', 'count_two', 'count_few', 'count_many', 'count_other',
+    'empty', 'emptyHint', 'interactions',
+  ] as const
+  it.each(Object.entries(LOCALES))('%s carries every event list key', (_name, dict) => {
+    const list = (dict as { eventList: Record<string, unknown> }).eventList
+    for (const key of KEYS) {
+      expect(typeof list[key]).toBe('string')
+      expect(list[key]).not.toBe('')
+    }
+  })
+})

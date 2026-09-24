@@ -59,6 +59,8 @@ const MAP_EVENT_LIMIT = 1500
  *  zapasem na sortowanie po odległości po stronie klienta. */
 const SEARCH_EVENT_LIMIT = 20
 
+let eventsChannelSeq = 0
+
 export const db = {
   signInGoogle() {
     if (isNativePlatform()) {
@@ -654,7 +656,10 @@ export const db = {
       .subscribe()
   },
   subscribeEvents(cb:()=>void) {
-    return supabase.channel('events:all')
+    // Każdy słuchacz dostaje własny kanał. supabase.channel() dla tej samej
+    // nazwy oddaje już zasubskrybowany kanał, a dopięcie do niego .on() rzuca
+    // wyjątkiem — tak wywracała się aplikacja, gdy obok mapy otwierała się lista.
+    return supabase.channel(`events:all:${++eventsChannelSeq}`)
       .on('postgres_changes',{event:'*',schema:'public',table:'events'},()=>cb())
       .subscribe()
   },

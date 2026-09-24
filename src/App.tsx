@@ -83,6 +83,7 @@ export default function App() {
   const selEvent = mapChain.current
   const [createOpen, setCreateOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [eventListOpen, setEventListOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [myDataOpen, setMyDataOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -259,6 +260,7 @@ export default function App() {
     accountOpen,
     myDataOpen,
     profileOpen,
+    eventListOpen,
     screen,
   })
 
@@ -285,6 +287,7 @@ export default function App() {
     attendanceAskOpen,
     userCardOpen: !!userCardId,
     updateOpen: !!pendingUpdate,
+    eventListOpen,
   }
   const screenIsClear = () => !!overlayRef.current && isScreenClear(overlayRef.current)
 
@@ -301,9 +304,10 @@ export default function App() {
       accountOpen,
       myDataOpen,
       profileOpen,
+      eventListOpen,
       screen,
     }
-  }, [screen, myEventSelected, followedEventSelected, authModal, userCardId, eventChatOpen, selEvent, createOpen, accountOpen, myDataOpen, profileOpen])
+  }, [screen, myEventSelected, followedEventSelected, authModal, userCardId, eventChatOpen, selEvent, createOpen, accountOpen, myDataOpen, profileOpen, eventListOpen])
 
   useEffect(() => {
     function onPopState() {
@@ -323,6 +327,7 @@ export default function App() {
       if (s.myDataOpen) { setMyDataOpen(false); return }
       if (s.accountOpen) { setAccountOpen(false); return }
       if (s.profileOpen) { setProfileOpen(false); return }
+      if (s.eventListOpen) { setEventListOpen(false); return }
       if (s.screen === 'myEvents') { setScreen('map'); return }
       if (s.screen === 'followedEvents') { setScreen('map'); return }
       if (s.screen === 'followedUsers') { setScreen('map'); return }
@@ -713,7 +718,7 @@ export default function App() {
     CapApp.addListener('backButton', () => {
       const s = navLayersRef.current
       const layerOpen = !!(s.authModal || s.userCardId || s.eventChatOpen || s.selEvent || s.myEventSelected || s.followedEventSelected ||
-        s.createOpen || s.accountOpen || s.myDataOpen || s.profileOpen ||
+        s.createOpen || s.accountOpen || s.myDataOpen || s.profileOpen || s.eventListOpen ||
         s.screen === 'myEvents' || s.screen === 'followedEvents' || s.screen === 'followedUsers')
       if (layerOpen) { window.history.back(); return }
       if (backExitRef.current.press()) { CapApp.minimizeApp(); return }
@@ -1172,6 +1177,22 @@ export default function App() {
           }
         }}
         onAuthNeeded={() => { setAuthModal('event'); window.history.pushState({ layer: 'auth' }, '') }}
+        eventListOpen={eventListOpen && !isOverlay}
+        onOpenEventList={() => {
+          if (!isOverlay) {
+            mapChain.close(); setCreateOpen(false); setProfileOpen(false); setEventListOpen(true)
+            window.history.pushState({ layer: 'eventList' }, '')
+          }
+        }}
+        // Zamknięcie krzyżykiem idzie przez historię, jak każda warstwa — wtedy
+        // systemowe wstecz i ✕ zostawiają ją w tym samym stanie.
+        onCloseEventList={() => window.history.back()}
+        onEventListPicked={() => {
+          // Wybór wydarzenia podmienia wpis listy na mapę, zanim karta dołoży
+          // swój — inaczej wstecz spod karty wracałoby do zamkniętej już listy.
+          window.history.replaceState({ layer: 'map' }, '')
+          setEventListOpen(false)
+        }}
         userPos={userPos}
         lastKnownPos={lastKnownPos}
         ipPos={ipPos}
